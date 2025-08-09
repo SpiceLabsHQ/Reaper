@@ -1,0 +1,12 @@
+# Directories
+.claude/
+projects/
+shell-snapshots/
+statsig/
+todos/
+
+# Files
+.credentials.json
+SPICE.md.backup-*
+acli-credentials
+settings.local.json
