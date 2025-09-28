@@ -88,7 +88,7 @@ AI agents that provide specialized development capabilities:
 
 Custom slash commands for enhanced workflow:
 
-- **spice:work-on.md**: Intelligent work assignment and task management
+- **spice:orchestrate.md**: Intelligent work assignment and task management
 - **spice:status-worktrees.md**: Worktree status monitoring and management
 
 ## 🔑 Key Features
@@ -116,6 +116,89 @@ Custom slash commands for enhanced workflow:
 - Workflow automation: status transitions, comment updates
 - Support for Epic → Story → Sub-task hierarchies
 - Pre-work ticket validation and blocker checking
+
+## 🚀 Development Workflow
+
+### Full Development Pipeline
+
+The complete development workflow follows this orchestrated pattern:
+
+```
+spice:orchestrate → Code Agent → Quality Gates → Integration
+```
+
+#### 1. Task Initiation: `spice:orchestrate`
+- Analyzes requirements and selects appropriate specialized agent
+- Assigns work to the most suitable code agent based on task type
+- Monitors progress and determines completion readiness
+
+#### 2. Code Implementation Phase
+**Code agents execute the core development work:**
+
+- **`bug-fixer`**: Systematic bug reproduction and fixing using TDD methodology
+- **`feature-developer`**: New feature implementation with SOLID principles and comprehensive testing
+- **`refactoring-specialist`**: Code improvement and technical debt elimination
+- **`security-auditor`**: Security vulnerability assessment and remediation
+
+**Key Characteristics:**
+- Agents work independently with full autonomy
+- Follow proven methodologies (TDD, SOLID principles)
+- Generate comprehensive reports on completion
+- Include test coverage, documentation, and validation results
+
+#### 3. Completion Assessment
+**Orchestrator determines work completion based solely on agent reports:**
+- Reviews agent-generated completion reports
+- Validates that acceptance criteria are met
+- Confirms proper testing and documentation
+- **Does not directly read files, run tests, or modify code**
+- Makes go/no-go decisions for quality gate progression
+
+#### 4. Quality Gate Sequence
+**If work is deemed complete, sequential quality validation begins:**
+
+**a) `test-runner` Agent**
+- Executes comprehensive test suites
+- Validates 80%+ coverage requirements
+- Runs linting and type checking
+- Performs build validation
+- **Must pass before proceeding**
+
+**b) `code-reviewer` Agent**
+- Conducts thorough code quality review
+- Analyzes security vulnerabilities
+- Validates best practices compliance
+- Checks adherence to coding standards
+- **Must pass before proceeding**
+
+**c) `security-auditor` Agent**
+- Performs comprehensive security analysis
+- Scans for vulnerabilities and compliance issues
+- Validates authentication and authorization patterns
+- Reviews data handling and encryption practices
+- **Must pass before integration**
+
+#### 5. Iteration Loop
+**If any quality gate fails:**
+- Work returns to appropriate code agent for remediation
+- Specific issues are addressed based on quality gate feedback
+- Process repeats until all quality gates pass
+- Full traceability maintained throughout iterations
+
+#### 6. Integration and Completion
+**Only after all quality gates pass:**
+- Code integration to develop branch
+- Jira ticket status updates
+- Cleanup of temporary branches and worktrees
+- Final documentation and deployment preparation
+
+### Workflow Benefits
+
+- **Separation of Concerns**: Orchestrator focuses on workflow, agents focus on execution
+- **Quality Assurance**: Multi-layered validation prevents defects from reaching production
+- **Iterative Improvement**: Failed quality gates provide specific feedback for remediation
+- **Audit Trail**: Complete traceability from task initiation to integration
+- **Consistency**: Standardized workflow regardless of task complexity
 
 ## 🚀 Usage Patterns
 

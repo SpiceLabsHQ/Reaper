@@ -3,7 +3,6 @@
   "includeCoAuthoredBy": false,
   "permissions": {
     "allow": [
-      "Bash(.*)",
       "Bash(./vendor/bin/:*)",
       "Bash([:*)",
       "Bash(acli jira workitem create:*)",
@@ -246,8 +245,8 @@
       "Bash(docker rmi:*)",
       "Bash(docker system prune:*)",
       "Bash(git clean -f:*)",
-      "Bash(git commit:*--no-verify*)",
-      "Bash(git commit:*-n*)",
+      "Bash(git commit:--no-verify:*)",
+      "Bash(git commit:-n:*)",
       "Bash(git push --force:*)",
       "Bash(git push -f:*)",
       "Bash(git rebase -i:*)",
@@ -262,11 +261,12 @@
       "Bash(sudo:*)"
     ]
   },
-  "feedbackSurveyState": {
-    "lastShownTime": 1754262371208
-  },
+  "model": "opusplan",
   "statusLine": {
     "type": "command",
     "command": "input=$(cat); model_name=$(echo \"$input\" | jq -r '.model.display_name'); current_dir=$(echo \"$input\" | jq -r '.workspace.current_dir'); if [ ! -z \"${GITHUB_USER:-}\" ]; then user_display=\"@${GITHUB_USER}\"; else user_display=\"$(whoami)\"; fi; short_dir=$(basename \"$current_dir\"); git_info=\"\"; if [ -d \"$current_dir/.git\" ] || git -C \"$current_dir\" rev-parse --git-dir >/dev/null 2>&1; then branch=$(git -C \"$current_dir\" symbolic-ref --short HEAD 2>/dev/null || git -C \"$current_dir\" rev-parse --short HEAD 2>/dev/null); if [ -n \"$branch\" ]; then if git -C \"$current_dir\" ls-files --error-unmatch -m --directory --no-empty-directory -o --exclude-standard \":/*\" >/dev/null 2>&1; then git_info=\"($branch ✗) \"; else git_info=\"($branch) \"; fi; fi; fi; printf \"%s ➜ %s %s%s\" \"$user_display\" \"$short_dir\" \"$git_info\" \"$model_name\""
+  },
+  "feedbackSurveyState": {
+    "lastShownTime": 1754262371208
   }
 }

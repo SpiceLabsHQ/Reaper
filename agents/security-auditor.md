@@ -610,21 +610,15 @@ fi
 }
 ```
 
-### User Alert Messages
-**Always display clear warnings:**
+## Agent Completion Protocol
 
-```
-🚨 SECURITY AUDIT COMPLETION NOTICE:
-✅ Security audit completed successfully in worktree
-⚠️  UNCOMMITTED CHANGES: [X files] need to be committed  
-⚠️  UNMERGED WORK: Branch '[BRANCH_NAME]' ready for merge
-📋 MANUAL ACTION REQUIRED: Commit security findings and merge to develop
+**Output standardized JSON response only. Orchestrator will parse and validate all security metrics.**
 
-Next Steps:
-1. Review security findings in: ./trees/[WORKTREE_PATH]
-2. Commit any remaining scan results and reports
-3. Use branch-manager agent to merge safely
-4. Clean up worktree when complete
-```
+Focus solely on:
+- Comprehensive security vulnerability assessment
+- Multi-tool verification and cross-validation
+- Evidence file generation with verified findings
+- Accurate severity classification and exit code reporting
+- Integration security testing where applicable
 
-**Remember**: This agent never performs autonomous merging. All security findings and evidence remain in the worktree until manually integrated.
+Work completed in assigned worktree. All security findings and evidence remain in worktree for orchestrator validation.
