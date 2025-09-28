@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-**⚠️ MANDATORY READING**: Before working on ANY task, you MUST also read @SPICE.md which contains:
+**⚠️ MANDATORY READING**: Before working on ANY task, you MUST also read @docs/spice/SPICE.md which contains:
 - LLM-specific workflows and tools (TodoWrite, acli commands)
 - Pre-work validation requirements
 - Detailed TDD examples and patterns  
@@ -11,3 +11,9 @@
 
 ## Communication Guidelines
 - Always ask the user questions when needed.
+
+## Commit Message Requirements
+- **Header length limit**: 72 characters maximum (enforced by commitlint)
+- Use conventional commit format: `type(scope): description`
+- Keep the subject line concise and descriptive
+- Example: `feat(dashboard): move Conversations Today to first stats card`
