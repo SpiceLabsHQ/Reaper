@@ -2,13 +2,116 @@
 
 **Task**: [ARGUMENTS]
 
-## Pre-Flight Validation
-- **Empty/Missing** → REFUSE: "Provide Jira key and/or task description"
-- **No Jira Key** (PROJ-123 format) → ASK for ticket
-- **Key Only** → Lookup ticket details first
+## Pre-Flight Validation & Input Processing
+
+### 1. Parse User Input for Required Elements
+Extract and validate from [ARGUMENTS]:
+
+```bash
+# Parse user input
+JIRA_KEY=""
+TASK_DESCRIPTION=""
+WORKTREE_SPECIFIED=""
+
+# Extract Jira key pattern (PROJ-123) or --no-jira flag
+if echo "$ARGUMENTS" | grep -qE '\b[A-Z]+-[0-9]+\b'; then
+    JIRA_KEY=$(echo "$ARGUMENTS" | grep -oE '\b[A-Z]+-[0-9]+\b' | head -1)
+elif echo "$ARGUMENTS" | grep -q -- "--no-jira"; then
+    JIRA_KEY="--no-jira"
+fi
+
+# Extract worktree if specified
+if echo "$ARGUMENTS" | grep -q "./trees/"; then
+    WORKTREE_SPECIFIED=$(echo "$ARGUMENTS" | grep -o './trees/[^ ]*' | head -1)
+fi
+
+# Rest is task description
+TASK_DESCRIPTION=$(echo "$ARGUMENTS" | sed -E 's/\b[A-Z]+-[0-9]+\b//g' | sed 's/--no-jira//g' | sed 's|./trees/[^ ]*||g' | xargs)
+```
+
+### 2. Validation Rules
+- **Missing Jira Key AND no --no-jira flag** → ASK: "Provide Jira ticket ID (PROJ-123 format) or use --no-jira flag"
+- **Empty task description** → ASK: "Provide detailed task description"
+- **Jira key only, no description** → Lookup ticket details for implementation plan
+
+### 3. Generate Required Inputs for Agents
+```bash
+# Set defaults if not specified
+if [ -z "$WORKTREE_SPECIFIED" ] && [ "$JIRA_KEY" != "--no-jira" ]; then
+    WORKTREE_PATH="./trees/${JIRA_KEY}-work"
+elif [ -z "$WORKTREE_SPECIFIED" ] && [ "$JIRA_KEY" = "--no-jira" ]; then
+    WORKTREE_PATH="./trees/task-$(date +%s)"
+else
+    WORKTREE_PATH="$WORKTREE_SPECIFIED"
+fi
+
+# Implementation plan sources (in priority order):
+# 1. Jira ticket description (if using Jira)
+# 2. Task description from user
+# 3. Ask user for more details
+if [ "$JIRA_KEY" != "--no-jira" ] && [ -n "$JIRA_KEY" ]; then
+    IMPLEMENTATION_PLAN="See Jira ticket $JIRA_KEY for requirements and acceptance criteria"
+elif [ -n "$TASK_DESCRIPTION" ]; then
+    IMPLEMENTATION_PLAN="$TASK_DESCRIPTION"
+else
+    echo "ERROR: Need either Jira ticket with requirements or detailed task description"
+    exit 1
+fi
+```
 
 ## Your Role: Quality-Enforcing Orchestration Supervisor
 Coordinate specialized agents with rigorous quality loops. NO substandard work progresses.
+
+### Agent Deployment Pattern (MANDATORY)
+**Every agent call MUST use this template with parsed inputs:**
+
+```bash
+# Standard agent deployment template using pre-flight parsed inputs
+Task --subagent_type [AGENT_TYPE] \
+  --description "[BRIEF_DESCRIPTION]" \
+  --prompt "JIRA_KEY: $JIRA_KEY
+WORKTREE: $WORKTREE_PATH
+PLAN: $IMPLEMENTATION_PLAN
+SCOPE: [SPECIFIC_SCOPE]
+RESTRICTION: [SPECIFIC_RESTRICTIONS]
+QUALITY: [QUALITY_REQUIREMENTS]
+[ADDITIONAL_CONTEXT]"
+```
+
+**Example Usage:**
+```bash
+# After parsing: JIRA_KEY="PROJ-123", WORKTREE_PATH="./trees/PROJ-123-auth", IMPLEMENTATION_PLAN="Fix login bug with special characters"
+
+Task --subagent_type bug-fixer \
+  --description "Fix authentication bug" \
+  --prompt "JIRA_KEY: PROJ-123
+WORKTREE: ./trees/PROJ-123-auth
+PLAN: Fix login bug with special characters in email addresses - write failing test, implement minimal fix
+SCOPE: Work only on authentication module (src/auth.js, tests/auth.test.js)
+RESTRICTION: Do NOT modify user management or database modules
+QUALITY: 80% test coverage, zero linting errors, TDD methodology"
+```
+
+### Input Scenario Examples
+**The orchestrator handles these user input patterns:**
+
+1. **Full specification**: `"PROJ-123 ./trees/PROJ-123-auth Fix login bug with special characters"`
+   - JIRA_KEY="PROJ-123"
+   - WORKTREE_PATH="./trees/PROJ-123-auth"
+   - IMPLEMENTATION_PLAN="Fix login bug with special characters"
+
+2. **Jira only**: `"PROJ-123"`
+   - JIRA_KEY="PROJ-123"
+   - WORKTREE_PATH="./trees/PROJ-123-work" (auto-generated)
+   - IMPLEMENTATION_PLAN="See Jira ticket PROJ-123 for requirements"
+
+3. **No Jira**: `"--no-jira Fix the auth system to handle edge cases"`
+   - JIRA_KEY="--no-jira"
+   - WORKTREE_PATH="./trees/task-1234567890" (timestamp)
+   - IMPLEMENTATION_PLAN="Fix the auth system to handle edge cases"
+
+4. **Missing requirements**: `"Fix something"`
+   - ERROR: "Provide Jira ticket ID (PROJ-123 format) or use --no-jira flag"
 
 ## Critical Agent Instruction Template
 **EVERY agent deployment MUST include these 4 critical instructions:**
@@ -33,11 +136,15 @@ Consolidate → Test Runner Loop → Code Review Loop → Security Audit Loop �
 
 ### 1. PLAN (Mandatory)
 Deploy workflow-planner to analyze and design consolidation strategy:
-```
-Task --subagent_type workflow-planner
-"SCOPE: Analyze [ARGUMENTS] for parallel opportunities and consolidation sequence
-RESTRICTION: Do NOT implement anything, ONLY plan
+```bash
+# Use parsed inputs from pre-flight validation
+Task --subagent_type workflow-planner \
+  --description "Plan implementation strategy" \
+  --prompt "JIRA_KEY: $JIRA_KEY
 WORKTREE: Work from root directory for planning
+PLAN: $IMPLEMENTATION_PLAN
+SCOPE: Analyze task for parallel opportunities and consolidation sequence
+RESTRICTION: Do NOT implement anything, ONLY plan
 QUALITY: Map file overlaps, identify conflict risks, design merge sequence
 SIZE CONSTRAINTS: Each work package max 5 files, 500 LOC, 2 hours work
 CONTEXT SAFETY: Ensure no package risks agent context exhaustion"
@@ -96,6 +203,57 @@ Task --subagent_type [bug-fixer|feature-developer|refactoring-specialist]
 RESTRICTION: Do NOT work outside [specified files/modules]
 WORKTREE: Work in ./trees/PROJ-XXX-[component] ONLY
 QUALITY: 80% real coverage, zero linting errors, SOLID principles, TDD methodology"
+```
+
+## 3.1 INFORMATION HANDOFF PROTOCOL
+
+**Critical**: Orchestrator must extract and pass key information between agents for context.
+
+### From Code Agents → Test Runner
+Extract from code agent JSON and pass forward:
+```
+Task --subagent_type test-runner
+"SCOPE: Validate testing for [component] implementation
+CONTEXT FROM CODE AGENT:
+- Files Modified: [response.files_modified]
+- Feature Scope: [response.narrative_report.summary]
+- Test Strategy Needed: [unit|integration|both]
+- Known Complexity Areas: [response.implementation_notes]
+RESTRICTION: Do NOT modify business logic, ONLY test validation
+WORKTREE: Test in ./trees/PROJ-XXX-[component]
+QUALITY: Verify 80%+ real coverage, all tests pass, linting clean"
+```
+
+### From Test Runner → Code Reviewer
+Extract from test runner JSON and pass forward:
+```
+Task --subagent_type code-reviewer
+"SCOPE: Review code quality for [component] implementation
+CONTEXT FROM PREVIOUS AGENTS:
+- Files Modified: [code_agent.files_modified]
+- Test Coverage: [test_runner.coverage_metrics.coverage_percentage]%
+- Coverage Gaps: [test_runner.coverage_gaps]
+- Test Results: [test_runner.test_metrics.tests_passed]/[test_runner.test_metrics.tests_total] passed
+- Areas of Concern: [test_runner.narrative_report.recommendations]
+RESTRICTION: Do NOT implement features, ONLY review and recommend
+WORKTREE: Review ./trees/PROJ-XXX-[component]
+QUALITY: SOLID principles, security patterns, best practices, maintainability"
+```
+
+### From Code Reviewer → Security Auditor
+Extract from code reviewer JSON and pass forward:
+```
+Task --subagent_type security-auditor
+"SCOPE: Security vulnerability assessment for [component]
+CONTEXT FROM PREVIOUS AGENTS:
+- Files Modified: [code_agent.files_modified]
+- Security Concerns Noted: [code_reviewer.security_findings]
+- Sensitive Code Areas: [code_reviewer.sensitive_files]
+- Architecture Changes: [code_reviewer.architecture_impact]
+- Quality Issues: [code_reviewer.quality_metrics.critical_issues]
+RESTRICTION: Focus on security vulnerabilities and compliance
+WORKTREE: Audit ./trees/PROJ-XXX-[component]
+QUALITY: Zero critical/high vulnerabilities, security best practices"
 ```
 
 #### 3b. Test Runner Quality Loop
@@ -169,14 +327,22 @@ QUALITY: Zero critical/high vulnerabilities, security best practices"
 
 **All agents return standardized JSON. YOU must validate every response:**
 
-#### Expected JSON Structure from All Agents:
+#### STANDARDIZED JSON SCHEMA FROM ALL AGENTS:
+**All agents MUST return JSON in this exact structure:**
 ```json
 {
   "agent_metadata": {
-    "agent_name": "feature-developer|bug-fixer|test-runner|code-reviewer|security-auditor",
+    "agent_type": "bug-fixer|feature-developer|test-runner|code-reviewer|security-auditor",
+    "agent_version": "1.0.0",
+    "execution_id": "unique-identifier",
     "jira_key": "PROJ-123",
     "worktree_path": "./trees/PROJ-123-component",
     "timestamp": "2024-01-15T10:30:00Z"
+  },
+  "narrative_report": {
+    "summary": "Brief human-readable summary of work completed",
+    "details": "Detailed explanation of findings, approach, and results",
+    "recommendations": "Actionable recommendations for next steps or issues found"
   },
   "test_metrics": {
     "tests_total": 147,
@@ -220,24 +386,39 @@ QUALITY: Zero critical/high vulnerabilities, security best practices"
 ```
 
 #### JSON Validation Rules (YOU MUST ENFORCE):
-1. **test_exit_code**: 0 = pass, non-zero = fail
-2. **coverage_percentage**: Must be ≥80% for application code
-3. **lint_exit_code**: Must be 0 (zero linting errors)
-4. **all_checks_passed**: Must be true to proceed
-5. **requires_iteration**: If true, repeat the quality loop
-6. **files_modified**: Must match specified scope
+1. **pre_work_validation.validation_passed**: Must be true to proceed
+2. **pre_work_validation.exit_reason**: Must be null (if not null, agent exited due to missing requirements)
+3. **test_exit_code**: 0 = pass, non-zero = fail
+4. **coverage_percentage**: Must be ≥80% for application code
+5. **lint_exit_code**: Must be 0 (zero linting errors)
+6. **all_checks_passed**: Must be true to proceed
+7. **requires_iteration**: If true, repeat the quality loop
+8. **files_modified**: Must match specified scope
 
-#### Independent Verification Commands:
+#### Debug Mode Commands (Use ONLY When Agent JSON Is Suspicious):
 ```bash
-# Only if agent JSON claims seem suspicious
-(cd [WORKTREE_PATH] && npm test) || echo "Agent lied about test results"
-(cd [WORKTREE_PATH] && npm run lint) || echo "Agent lied about linting"
-git status --porcelain || echo "Uncommitted changes detected"
+# WARNING: Use ONLY to debug suspicious agent behavior - NOT for primary validation
+echo "⚠️ DEBUGGING AGENT OUTPUT - Suspicious data detected in JSON"
+echo "Expected: [AGENT_CLAIM], Verifying: [SPECIFIC_ISSUE]"
+
+# Debug commands to verify agent claims
+(cd [WORKTREE_PATH] && npm test) || echo "DEBUG: Actual test result differs from agent report"
+(cd [WORKTREE_PATH] && npm run lint) || echo "DEBUG: Actual lint result differs from agent report"
+git status --porcelain && echo "DEBUG: Uncommitted changes found despite agent claims"
+
+# Report discrepancy and continue with agent data
+echo "DISCREPANCY FOUND: Agent reported X but verification shows Y"
+echo "PROCEEDING WITH: Agent data (assume verification tool issue unless proven otherwise)"
 ```
 
 ### 7. RED FLAGS FOR AGENT JSON RESPONSES
 
 **IMMEDIATELY REJECT and re-run agent if JSON shows:**
+
+#### Pre-Work Validation Failures:
+- `pre_work_validation.validation_passed: false`
+- `pre_work_validation.exit_reason` is not null
+- Missing `pre_work_validation` section entirely
 
 #### Suspicious Test Claims:
 - `test_exit_code: 0` but `tests_failed > 0`
@@ -263,16 +444,41 @@ git status --porcelain || echo "Uncommitted changes detected"
 
 **Action on Red Flags:**
 ```bash
+# If pre-work validation failed, provide missing requirements
+if [[ "$EXIT_REASON" != "null" ]]; then
+  echo "Agent exited due to: $EXIT_REASON"
+  echo "Providing missing requirements and retrying..."
+  # Provide the missing JIRA_KEY, WORKTREE_PATH, or IMPLEMENTATION_PLAN
+fi
+
 # Send agent back to work with specific failures
 Task --subagent_type [SAME_AGENT] \
-  "RETRY: Previous attempt failed validation.
+  "JIRA_KEY: [JIRA_KEY] (or --no-jira)
+   WORKTREE: [WORKTREE_PATH]
+   PLAN: [IMPLEMENTATION_PLAN]
+   RETRY: Previous attempt failed validation.
    SPECIFIC FAILURES: [list red flags found]
    SCOPE: [same scope as before]
-   WORKTREE: [same worktree]
    QUALITY: Fix the specific issues and provide valid JSON evidence"
 ```
 
-### 8. QUALITY GATES (JSON-BASED VALIDATION)
+### 8. VALIDATION PHILOSOPHY
+
+**PRIMARY**: Trust agent reports as the sole source of truth for all validation decisions.
+
+**Agent JSON is authoritative** - make ALL decisions based on structured JSON responses from agents:
+- Quality gate pass/fail decisions
+- Iteration requirements
+- Completion status
+- Blocking issues
+
+**Direct verification ONLY for debugging suspicious agent behavior**:
+- When JSON parsing fails
+- When required fields are missing
+- When logical inconsistencies exist (e.g., test_exit_code: 0 but tests_failed > 0)
+- When extreme outliers suggest agent malfunction (e.g., 100% coverage on first attempt)
+
+### 8.1 QUALITY GATES (JSON-BASED VALIDATION)
 
 **Parse agent JSON and enforce these requirements:**
 
@@ -373,10 +579,16 @@ if (response.validation_status.requires_iteration) {
 #### Sample Validation Logic:
 ```bash
 # Extract and validate key metrics from agent JSON
+PRE_WORK_PASSED=$(echo "$AGENT_JSON" | jq '.pre_work_validation.validation_passed')
+EXIT_REASON=$(echo "$AGENT_JSON" | jq -r '.pre_work_validation.exit_reason')
 TEST_EXIT=$(echo "$AGENT_JSON" | jq '.test_metrics.test_exit_code')
 COVERAGE=$(echo "$AGENT_JSON" | jq '.coverage_metrics.coverage_percentage')
 LINT_EXIT=$(echo "$AGENT_JSON" | jq '.lint_metrics.lint_exit_code')
 ALL_PASSED=$(echo "$AGENT_JSON" | jq '.validation_status.all_checks_passed')
+
+# Validate pre-work first
+[ "$PRE_WORK_PASSED" != "true" ] && echo "FAIL: Pre-work validation failed: $EXIT_REASON" && exit 1
+[ "$EXIT_REASON" != "null" ] && echo "FAIL: Agent exited due to: $EXIT_REASON" && exit 1
 
 # Validate each metric
 [ "$TEST_EXIT" != "0" ] && echo "FAIL: Tests failed with exit code $TEST_EXIT" && exit 1
