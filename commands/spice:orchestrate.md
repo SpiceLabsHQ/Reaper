@@ -277,6 +277,181 @@ WORKTREE: Audit ./trees/PROJ-XXX-[component]
 QUALITY: Zero critical/high vulnerabilities, security best practices"
 ```
 
+## 3.2 QUALITY GATE ENFORCEMENT FLOW
+
+**CRITICAL**: Orchestrator MUST enforce quality gates through agent delegation and JSON parsing ONLY.
+
+### Sequential Quality Gate Workflow
+
+```
+Code Agent (feature-developer/bug-fixer/refactoring-specialist)
+  ↓ completes implementation
+  ↓ returns JSON with: implementation_complete=true, files_modified=[], orchestrator_workflow_reminder
+  ↓
+GATE 1: Test Validation (test-runner)
+  ↓ Deploy test-runner with files_modified context
+  ↓ Parse test-runner JSON for AUTHORITATIVE metrics
+  ↓ Enforce: test_exit_code === 0 AND coverage >= 80 AND lint_exit_code === 0
+  ↓ IF PASS → proceed | IF FAIL → return to code agent with blocking_issues
+  ↓
+GATE 2: Code Quality Review (code-reviewer)
+  ↓ Deploy code-reviewer with test results context
+  ↓ Parse code-reviewer JSON for quality verdict
+  ↓ Enforce: all_checks_passed === true AND blocking_issues.length === 0
+  ↓ IF PASS → proceed | IF FAIL → return to code agent with blocking_issues
+  ↓
+GATE 3: Security Audit (security-auditor)
+  ↓ Deploy security-auditor with security_focus_areas
+  ↓ Parse security-auditor JSON for vulnerability assessment
+  ↓ Enforce: all_checks_passed === true AND critical_issues.length === 0
+  ↓ IF PASS → proceed | IF FAIL → return to code agent with blocking_issues
+  ↓
+AUTHORIZATION CHECK: User Authorization
+  ↓ Check task prompt for explicit commit/merge instruction
+  ↓ OR check conversation for user authorization
+  ↓ IF AUTHORIZED → proceed | IF NOT → WAIT for user authorization
+  ↓
+GATE 4: Git Operations (branch-manager)
+  ↓ Deploy branch-manager with:
+  ↓   - quality_gates_passed confirmation
+  ↓   - user_authorization evidence
+  ↓ branch-manager verifies dual authorization
+  ↓ Executes git commit and merge operations
+  ↓ Returns JSON with git_operations_successful status
+```
+
+### Gate Enforcement Rules
+
+**Rule 1: Never Skip Gates**
+- ❌ NEVER proceed to code-reviewer if test-runner failed
+- ❌ NEVER proceed to security-auditor if code-reviewer failed
+- ❌ NEVER deploy branch-manager if any quality gate failed
+- ✅ ALWAYS enforce sequential gate validation
+
+**Rule 2: Parse Agent JSON for Gate Decisions**
+```bash
+# Test Gate Enforcement
+TEST_GATE_PASSED=false
+if [ "$TEST_EXIT_CODE" -eq 0 ] && [ "$COVERAGE" -ge 80 ] && [ "$LINT_EXIT_CODE" -eq 0 ]; then
+  TEST_GATE_PASSED=true
+  echo "✅ TEST GATE PASSED - proceeding to code-reviewer"
+else
+  echo "❌ TEST GATE FAILED - returning to code agent"
+  echo "Blocking issues: test_exit_code=$TEST_EXIT_CODE, coverage=$COVERAGE%, lint_exit_code=$LINT_EXIT_CODE"
+  # Deploy code agent again with blocking_issues from test-runner JSON
+fi
+
+# Code Review Gate Enforcement
+REVIEW_GATE_PASSED=false
+if [ "$ALL_CHECKS_PASSED" = "true" ] && [ "$BLOCKING_ISSUES_COUNT" -eq 0 ]; then
+  REVIEW_GATE_PASSED=true
+  echo "✅ REVIEW GATE PASSED - proceeding to security-auditor"
+else
+  echo "❌ REVIEW GATE FAILED - returning to code agent"
+  # Deploy code agent again with blocking_issues from code-reviewer JSON
+fi
+
+# Security Gate Enforcement
+SECURITY_GATE_PASSED=false
+if [ "$ALL_CHECKS_PASSED" = "true" ] && [ "$CRITICAL_ISSUES_COUNT" -eq 0 ]; then
+  SECURITY_GATE_PASSED=true
+  echo "✅ SECURITY GATE PASSED - checking user authorization"
+else
+  echo "❌ SECURITY GATE FAILED - returning to code agent"
+  # Deploy code agent again with blocking_issues from security-auditor JSON
+fi
+```
+
+**Rule 3: Return to Code Agent on Gate Failure**
+```bash
+# When any gate fails, redeploy code agent with specific issues
+Task --subagent_type [original-code-agent] \
+  --description "Fix issues from quality gate failure" \
+  --prompt "JIRA_KEY: $JIRA_KEY
+WORKTREE: $WORKTREE_PATH
+PLAN: Address blocking issues from [test-runner|code-reviewer|security-auditor]
+
+BLOCKING ISSUES FROM QUALITY GATE:
+[paste blocking_issues array from failed agent JSON]
+
+SPECIFIC FAILURES:
+- [list specific test failures, code quality issues, or security vulnerabilities]
+
+SCOPE: Fix ONLY the identified issues, do not refactor unrelated code
+RESTRICTION: Maintain existing functionality while addressing quality concerns
+QUALITY: All quality gates must pass (tests, coverage, lint, code quality, security)"
+```
+
+**Rule 4: Dual Authorization for Git Operations**
+```bash
+# ONLY deploy branch-manager when BOTH conditions met:
+# 1. All quality gates passed (verified above)
+# 2. User authorization received (check task prompt or conversation)
+
+QUALITY_GATES_PASSED=false
+if [ "$TEST_GATE_PASSED" = "true" ] && [ "$REVIEW_GATE_PASSED" = "true" ] && [ "$SECURITY_GATE_PASSED" = "true" ]; then
+  QUALITY_GATES_PASSED=true
+fi
+
+USER_AUTHORIZATION=false
+if echo "$TASK_PROMPT" | grep -qiE "(commit|merge|push).*(to develop|changes)"; then
+  USER_AUTHORIZATION=true
+  echo "✅ User authorization found in task prompt"
+elif echo "$CONVERSATION" | grep -qiE "commit|merge|push"; then
+  USER_AUTHORIZATION=true
+  echo "✅ User authorization found in conversation"
+fi
+
+# Deploy branch-manager ONLY if both authorizations met
+if [ "$QUALITY_GATES_PASSED" = "true" ] && [ "$USER_AUTHORIZATION" = "true" ]; then
+  echo "✅ DUAL AUTHORIZATION MET - deploying branch-manager"
+
+  Task --subagent_type branch-manager \
+    --description "Commit and merge to develop" \
+    --prompt "JIRA_KEY: $JIRA_KEY
+WORKTREE: $WORKTREE_PATH
+OPERATION: Commit changes and merge feature branch to develop
+
+QUALITY GATES CONFIRMATION:
+- test-runner: PASSED (test_exit_code=0, coverage=${COVERAGE}%, lint_exit_code=0)
+- code-reviewer: PASSED (all_checks_passed=true, blocking_issues=0)
+- security-auditor: PASSED (all_checks_passed=true, critical_issues=0)
+
+USER AUTHORIZATION:
+- Source: [task prompt | conversation]
+- Evidence: User explicitly requested commit/merge operation
+
+DUAL AUTHORIZATION: MET - proceed with git operations
+QUALITY: Create clean commit with proper message, merge to develop branch only"
+else
+  echo "❌ DUAL AUTHORIZATION NOT MET - cannot deploy branch-manager"
+  if [ "$QUALITY_GATES_PASSED" != "true" ]; then
+    echo "Missing: Quality gates passed"
+  fi
+  if [ "$USER_AUTHORIZATION" != "true" ]; then
+    echo "Missing: User authorization to commit/merge"
+    echo "ASK USER: May I commit and merge these changes to develop branch?"
+  fi
+fi
+```
+
+### Iteration Protocol
+
+**When Gate Fails, Create Iteration Loop:**
+1. Parse failed agent JSON for blocking_issues
+2. Extract specific failures (test names, code quality violations, security issues)
+3. Redeploy original code agent with:
+   - Same JIRA_KEY and WORKTREE_PATH
+   - Updated PLAN with "Fix blocking issues from [agent-name]"
+   - Detailed BLOCKING_ISSUES list from failed agent JSON
+   - Clear SCOPE limiting changes to fixing identified issues
+4. After code agent completes fixes, restart quality gate sequence
+5. Continue iteration until all gates pass OR user intervention required
+
+**Maximum Iterations:**
+- Allow up to 3 iteration loops before escalating to user
+- After 3 failures, report: "Quality gates failing after 3 attempts. User review recommended for: [blocking_issues]"
+
 #### 3b. Test Runner Quality Loop
 
 **BEFORE deploying test-runner, specify test scope clearly:**
@@ -436,21 +611,41 @@ QUALITY: Zero critical/high vulnerabilities, security best practices"
 7. **requires_iteration**: If true, repeat the quality loop
 8. **files_modified**: Must match specified scope
 
-#### Debug Mode Commands (Use ONLY When Agent JSON Is Suspicious):
-```bash
-# WARNING: Use ONLY to debug suspicious agent behavior - NOT for primary validation
-echo "⚠️ DEBUGGING AGENT OUTPUT - Suspicious data detected in JSON"
-echo "Expected: [AGENT_CLAIM], Verifying: [SPECIFIC_ISSUE]"
+#### CRITICAL: Validation Prohibitions (NEVER DO THESE):
 
-# Debug commands to verify agent claims
-(cd [WORKTREE_PATH] && npm test) || echo "DEBUG: Actual test result differs from agent report"
-(cd [WORKTREE_PATH] && npm run lint) || echo "DEBUG: Actual lint result differs from agent report"
-git status --porcelain && echo "DEBUG: Uncommitted changes found despite agent claims"
+**❌ FORBIDDEN ACTIONS - Orchestrator MUST NOT:**
 
-# Report discrepancy and continue with agent data
-echo "DISCREPANCY FOUND: Agent reported X but verification shows Y"
-echo "PROCEEDING WITH: Agent data (assume verification tool issue unless proven otherwise)"
-```
+1. **Run Tests Directly:**
+   - ❌ NEVER run: `npm test`, `pytest`, `phpunit`, or any test command
+   - ✅ ALWAYS delegate to test-runner agent
+   - **Why**: test-runner is sole authoritative source for test metrics
+
+2. **Run Linting Directly:**
+   - ❌ NEVER run: `npm run lint`, `flake8`, `eslint`, or any linter
+   - ✅ ALWAYS delegate to test-runner agent
+   - **Why**: test-runner provides authoritative lint validation
+
+3. **Execute Git Operations:**
+   - ❌ NEVER run: `git add`, `git commit`, `git push`, `git merge`
+   - ✅ ALWAYS delegate to branch-manager agent
+   - **Why**: branch-manager has exclusive git authority and safety protocols
+
+4. **Trust Code Agent Test Metrics:**
+   - ❌ NEVER use test_metrics from feature-developer/bug-fixer/refactoring-specialist JSON
+   - ✅ ALWAYS use test_metrics from test-runner JSON
+   - **Why**: Code agents run tests for TDD feedback, not quality gate validation
+
+5. **Deploy branch-manager Without Dual Authorization:**
+   - ❌ NEVER deploy branch-manager unless (quality gates PASSED) AND (user authorization received)
+   - ✅ ALWAYS verify both conditions before deployment
+   - **Why**: Prevents premature commits and unauthorized git operations
+
+**Trust Model:**
+- **test-runner**: Sole authority for test/lint/coverage metrics
+- **code-reviewer**: Sole authority for code quality verdict
+- **security-auditor**: Sole authority for security assessment
+- **branch-manager**: Sole authority for git operations
+- **Code agents**: Write code and test during development (TDD feedback only)
 
 ### 7. RED FLAGS FOR AGENT JSON RESPONSES
 
@@ -585,14 +780,177 @@ if (response.validation_status.requires_iteration) {
 ### 9. COMPLETION WORKFLOW
 - **Present**: ./trees/PROJ-XXX-review path with quality attestation
 - **Quality Certificate**: "All loops completed successfully, evidence verified"
-- **User Approval**: "approved"/"ship"/"merge" triggers:
-  ```
-  Task --subagent_type branch-manager
-  "SCOPE: Finalize approved work
-  RESTRICTION: Do NOT modify code post-approval
-  WORKTREE: Commit from ./trees/PROJ-XXX-review
-  QUALITY: Commit, merge develop, cleanup worktrees, transition Jira to Done"
-  ```
+- **User Approval**: "approved"/"ship"/"merge" triggers Section 9.1 authorization check
+
+### 9.1 USER AUTHORIZATION DETECTION
+
+**CRITICAL**: Before deploying branch-manager, orchestrator MUST detect and verify user authorization to commit/merge.
+
+#### Authorization Detection Patterns
+
+**Check Task Definition First:**
+```bash
+# User authorization in initial task prompt
+if echo "$ARGUMENTS" | grep -qiE "(commit|merge|push).*(to develop|changes|code)"; then
+  USER_AUTHORIZATION="task_definition"
+  AUTH_EVIDENCE="Task prompt contains explicit commit/merge instruction: $ARGUMENTS"
+  echo "✅ Authorization Source: Task Definition"
+fi
+```
+
+**Check Conversation History:**
+```bash
+# User authorization in conversation
+if echo "$CONVERSATION_HISTORY" | grep -qiE "\b(commit|merge|push|ship|approved?|deploy)\b"; then
+  USER_AUTHORIZATION="conversation"
+  AUTH_EVIDENCE="User provided authorization in conversation"
+  echo "✅ Authorization Source: Conversation"
+fi
+```
+
+**Explicit Authorization Phrases:**
+- "commit it"
+- "commit the changes"
+- "merge to develop"
+- "push the code"
+- "ship it"
+- "approved"
+- "deploy it"
+- "go ahead and commit"
+- "ready to merge"
+
+**Implicit Authorization (NOT sufficient):**
+- ❌ "looks good" (approval of work, not authorization to commit)
+- ❌ "nice job" (praise, not authorization)
+- ❌ "continue" (proceed with workflow, not commit authorization)
+- ❌ "finish the task" (ambiguous, not explicit commit instruction)
+
+#### Authorization Validation Flow
+
+```bash
+# Step 1: Check for authorization evidence
+USER_AUTHORIZATION=false
+AUTH_EVIDENCE=""
+
+if echo "$ARGUMENTS" | grep -qiE "(commit|merge|push).*(develop|changes)"; then
+  USER_AUTHORIZATION=true
+  AUTH_EVIDENCE="Task definition: User requested commit/merge operation"
+elif echo "$CONVERSATION" | grep -qiE "\b(commit it|merge|push|ship it|approved)\b"; then
+  USER_AUTHORIZATION=true
+  AUTH_EVIDENCE="Conversation: User explicitly authorized commit/merge"
+fi
+
+# Step 2: Verify quality gates passed
+QUALITY_GATES_PASSED=false
+if [ "$TEST_GATE" = "PASSED" ] && [ "$REVIEW_GATE" = "PASSED" ] && [ "$SECURITY_GATE" = "PASSED" ]; then
+  QUALITY_GATES_PASSED=true
+fi
+
+# Step 3: Deploy branch-manager ONLY if dual authorization met
+if [ "$QUALITY_GATES_PASSED" = "true" ] && [ "$USER_AUTHORIZATION" = "true" ]; then
+  echo "✅ DUAL AUTHORIZATION VERIFIED"
+  echo "  - Quality Gates: PASSED (test-runner, code-reviewer, security-auditor)"
+  echo "  - User Authorization: RECEIVED ($AUTH_EVIDENCE)"
+
+  Task --subagent_type branch-manager \
+    --description "Commit and merge to develop" \
+    --prompt "JIRA_KEY: $JIRA_KEY
+WORKTREE: $WORKTREE_PATH
+OPERATION: Commit changes and merge to develop branch
+
+QUALITY GATES CONFIRMATION:
+- test-runner: PASSED (exit_code=0, coverage=X%, lint=clean)
+- code-reviewer: PASSED (all_checks_passed=true, blocking_issues=0)
+- security-auditor: PASSED (all_checks_passed=true, critical_issues=0)
+
+USER AUTHORIZATION EVIDENCE:
+$AUTH_EVIDENCE
+
+DUAL AUTHORIZATION: MET
+RESTRICTION: Commit and merge to develop ONLY (not main)
+QUALITY: Clean commit with proper message, merge with --no-ff, push to origin/develop"
+
+elif [ "$QUALITY_GATES_PASSED" = "true" ] && [ "$USER_AUTHORIZATION" != "true" ]; then
+  echo "⚠️ QUALITY GATES PASSED but USER AUTHORIZATION MISSING"
+  echo "Quality: All gates passed successfully"
+  echo "Authorization: No explicit commit/merge instruction detected"
+  echo ""
+  echo "ASK USER: All quality gates have passed. May I commit and merge these changes to the develop branch?"
+  # WAIT for user response before proceeding
+
+elif [ "$QUALITY_GATES_PASSED" != "true" ]; then
+  echo "❌ QUALITY GATES NOT PASSED - cannot request authorization yet"
+  echo "Fix quality issues first, then check authorization"
+fi
+```
+
+#### Authorization Edge Cases
+
+**Case 1: Quality passed, no authorization**
+```
+Orchestrator: "All quality gates passed! Tests: ✅ Review: ✅ Security: ✅
+May I commit and merge these changes to develop branch?"
+User: "yes" → Proceed with branch-manager
+User: "not yet" → Wait for future authorization
+```
+
+**Case 2: Authorization early, quality not passed**
+```
+User: "commit it when ready"
+Orchestrator: Quality gates must pass first
+→ Run quality gate sequence
+→ If all pass, use early authorization
+→ If any fail, fix issues before using authorization
+```
+
+**Case 3: Unclear authorization**
+```
+User: "looks good"
+Orchestrator: Interpret as approval of work quality, NOT commit authorization
+→ ASK: "May I commit and merge to develop branch?"
+```
+
+#### branch-manager Deployment Template
+
+```bash
+Task --subagent_type branch-manager \
+  --description "Commit and merge to develop" \
+  --prompt "JIRA_KEY: $JIRA_KEY
+WORKTREE: $WORKTREE_PATH
+OPERATION: Commit changes and merge feature branch to develop
+
+QUALITY GATES CONFIRMATION (from orchestrator validation):
+- test-runner: PASSED
+  * test_exit_code: 0
+  * coverage_percentage: ${COVERAGE}% (>= 80%)
+  * lint_exit_code: 0
+- code-reviewer: PASSED
+  * all_checks_passed: true
+  * blocking_issues: 0
+- security-auditor: PASSED
+  * all_checks_passed: true
+  * critical_issues: 0
+
+USER AUTHORIZATION EVIDENCE:
+- Source: ${AUTH_SOURCE}
+- Evidence: ${AUTH_EVIDENCE}
+- Timestamp: ${AUTH_TIMESTAMP}
+
+DUAL AUTHORIZATION STATUS: MET
+Both conditions satisfied:
+1. Quality gates PASSED ✅
+2. User authorization RECEIVED ✅
+
+OPERATION INSTRUCTIONS:
+- Create clean commit with conventional commit format
+- Merge to develop branch only (NOT main)
+- Push to origin/develop
+- Update Jira status to 'Done' (if using Jira)
+- Clean up worktree after successful merge
+
+RESTRICTION: No code changes, git operations only
+QUALITY: Professional commit message, proper merge commit, audit trail"
+```
 
 ## Execution Summary
 1. Parse [ARGUMENTS] → Extract Jira key and description

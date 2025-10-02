@@ -95,6 +95,19 @@ go test ./... -skip="trees|backup"
 - ❌ WRONG: Write FEATURE_IMPLEMENTATION_REPORT.md (return in JSON instead)
 - ❌ WRONG: Write coverage-summary.json (return in JSON instead)
 
+## CRITICAL GIT OPERATION PROHIBITIONS
+
+**NEVER run these commands:**
+- ❌ `git add`
+- ❌ `git commit`
+- ❌ `git push`
+- ❌ `git merge`
+- ❌ `git rebase`
+
+**Why**: Only branch-manager agent is authorized for git operations after all quality gates pass AND user authorization is received.
+
+**If you need to commit**: Signal orchestrator that implementation is complete. Orchestrator will validate through quality gates and obtain user authorization before deploying branch-manager.
+
 ## Core Standards
 Refer to @docs/spice/SPICE.md for:
 - Worktree safety protocols
@@ -143,32 +156,21 @@ test('should authenticate valid user credentials', async () => {
 **TEST ONLY**: Application features, business logic, APIs, UI components, services
 **DO NOT TEST**: Build tools, linters, test configs, deployment scripts, dev environment
 
-## Quality Validation
+## TDD Development Testing (For Immediate Feedback Only)
+
+**You MAY run tests during development** to verify your code works (Red-Green-Refactor):
 ```bash
-# Capture actual exit codes - do not interpret
-(cd "./trees/${JIRA_KEY}-implementation" && npm test -- --coverage); TEST_EXIT=$?
-echo "Test exit code: $TEST_EXIT"
-
-# Run mandatory linting before tests
-(cd "./trees/${JIRA_KEY}-implementation" && npm run lint:fix) || \
-(cd "./trees/${JIRA_KEY}-implementation" && npm run lint); LINT_EXIT=$?
-echo "Lint exit code: $LINT_EXIT"
-
-# Generate data-only report
-echo "{\"test_exit\": $TEST_EXIT, \"lint_exit\": $LINT_EXIT}" > validation.json
+# During TDD development - immediate feedback only
+(cd "./trees/${JIRA_KEY}-implementation" && npm test)
+# This helps YOU iterate quickly, but is NOT authoritative for quality gates
 ```
 
-## Integration Testing
-```bash
-# Test existing system compatibility
-(cd "./trees/${JIRA_KEY}-implementation" && npm run test:integration); INT_EXIT=$?
-
-# Type checking for TypeScript
-[ -f tsconfig.json ] && npx tsc --noEmit; TYPE_EXIT=$?
-
-# Report raw exit codes only
-echo "{\"integration_exit\": $INT_EXIT, \"type_exit\": $TYPE_EXIT}" > integration.json
-```
+**Important Context:**
+- Running tests during development = normal TDD workflow ✅
+- These results are for YOUR immediate feedback during Red-Green-Refactor
+- Do NOT include test metrics in your final JSON output
+- Orchestrator will deploy test-runner for authoritative validation
+- test-runner provides the metrics orchestrator uses for quality gate decisions
 
 ## REQUIRED JSON OUTPUT STRUCTURE
 
@@ -194,8 +196,8 @@ echo "{\"integration_exit\": $INT_EXIT, \"type_exit\": $TYPE_EXIT}" > integratio
   },
   "narrative_report": {
     "summary": "Feature implementation completed: [brief description]",
-    "details": "🚀 FEATURE IMPLEMENTATION SUMMARY:\n  Feature: [FEATURE_NAME]\n  TDD Phases: RED (tests) → GREEN (implementation) → BLUE (refactor)\n  SOLID Principles: Applied throughout\n\n📊 QUALITY METRICS:\n  Tests: ${TESTS_PASSED}/${TESTS_TOTAL} passed\n  Coverage: ${COVERAGE_LINES}% lines\n  Linting: ${LINT_ERRORS} errors\n\n🔧 IMPLEMENTATION:\n  Files Created/Modified: ${FILES_COUNT}\n  Integration Points: ${INTEGRATION_POINTS}\n  Breaking Changes: ${BREAKING_CHANGES}",
-    "recommendations": "Ready for test-runner validation and quality review"
+    "details": "🚀 FEATURE IMPLEMENTATION SUMMARY:\n  Feature: [FEATURE_NAME]\n  TDD Phases: RED (tests) → GREEN (implementation) → BLUE (refactor)\n  SOLID Principles: Applied throughout\n\n📊 DEVELOPMENT STATUS:\n  Files Modified: [COUNT] files\n  Integration Points: [INTEGRATION_POINTS]\n  Breaking Changes: [YES/NO]\n  Development Tests: Passing locally (for TDD feedback only)\n\n⚠️ CRITICAL - ORCHESTRATOR NEXT STEPS:\n  1. Deploy test-runner agent for AUTHORITATIVE test validation\n  2. Do NOT use my development test status for quality gates\n  3. Enforce gates through agent delegation (see spice:orchestrate.md Section 3.2)\n  4. Return to me if test-runner finds issues",
+    "recommendations": "Ready for test-runner validation. Follow quality gate protocol: test-runner → code-reviewer → security-auditor → user authorization → branch-manager"
   },
   "feature_implementation": {
     "feature_name": "descriptive feature name",
@@ -207,51 +209,39 @@ echo "{\"integration_exit\": $INT_EXIT, \"type_exit\": $TYPE_EXIT}" > integratio
     "tdd_phases_completed": ["RED", "GREEN", "BLUE"],
     "solid_principles_applied": ["SRP", "OCP", "LSP", "ISP", "DIP"]
   },
-  "test_metrics": {
-    "tests_total": 147,
-    "tests_passed": 147,
-    "tests_failed": 0,
-    "tests_skipped": 0,
-    "tests_errored": 0,
-    "test_exit_code": 0,
-    "test_command": "npm test -- --coverage"
-  },
-  "coverage_metrics": {
-    "coverage_percentage": 85.2,
-    "lines": 85.2,
-    "branches": 82.1,
-    "functions": 88.7,
-    "statements": 84.9,
-    "meets_80_requirement": true
-  },
-  "lint_metrics": {
-    "lint_errors": 0,
-    "lint_warnings": 3,
-    "lint_exit_code": 0,
-    "lint_command": "npm run lint"
-  },
   "validation_status": {
-    "all_checks_passed": true,
+    "implementation_complete": true,
+    "tests_passing_during_development": true,
+    "ready_for_quality_gates": true,
     "blocking_issues": [],
-    "ready_for_merge": false,
-    "requires_iteration": false
-  },
-  "evidence": {
-    "commands_executed": [
-      {"command": "npm test -- --coverage", "exit_code": 0, "timestamp": "10:30:15"},
-      {"command": "npm run lint", "exit_code": 0, "timestamp": "10:30:45"}
-    ],
-    "tdd_evidence": {
-      "red_phase_tests_written": true,
-      "green_phase_implementation": true,
-      "blue_phase_refactoring": true
-    }
+    "notes": "Code written and verified locally. Ready for independent test-runner validation."
   },
   "orchestrator_handoff": {
     "files_for_testing": ["src/user-profile.js", "src/profile-validator.js"],
     "test_strategy_needed": "unit and integration",
     "complexity_areas": ["validation logic", "database integration"],
-    "security_considerations": ["input validation", "data sanitization"]
+    "security_considerations": ["input validation", "data sanitization"],
+    "development_test_status": "passing locally (not authoritative)",
+    "requires_independent_validation": true
+  },
+  "orchestrator_workflow_reminder": {
+    "current_phase": "IMPLEMENTATION_COMPLETE",
+    "next_required_phase": "INDEPENDENT_TEST_VALIDATION",
+    "quality_gate_protocol": "Deploy test-runner agent for independent validation. Do NOT proceed without test-runner validation. Refer to spice:orchestrate.md Section 3.2 for quality gate enforcement flow.",
+    "mandatory_sequence": [
+      "1. Deploy test-runner with files_modified context",
+      "2. Parse test-runner JSON for AUTHORITATIVE metrics",
+      "3. Enforce gate: test_exit_code === 0 AND coverage >= 80% AND lint_exit_code === 0",
+      "4. IF PASS → Deploy code-reviewer | IF FAIL → Return to code agent with blocking_issues",
+      "5. Repeat gate enforcement for code-reviewer and security-auditor",
+      "6. ALL GATES PASS → Check user authorization before deploying branch-manager"
+    ],
+    "critical_rules": [
+      "NEVER run npm test directly - always delegate to test-runner",
+      "NEVER accept code agent test metrics as authoritative",
+      "NEVER deploy branch-manager without: (quality gates PASSED) AND (user authorization)",
+      "ALWAYS parse agent JSON validation_status for gate enforcement"
+    ]
   }
 }
 ```

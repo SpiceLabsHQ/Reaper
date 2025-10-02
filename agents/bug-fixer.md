@@ -103,6 +103,19 @@ See @docs/spice/SPICE.md for standard procedures including:
 - ❌ WRONG: Write BUG_FIX_REPORT.md (return in JSON instead)
 - ❌ WRONG: Write test-coverage.json (return in JSON instead)
 
+## CRITICAL GIT OPERATION PROHIBITIONS
+
+**NEVER run these commands:**
+- ❌ `git add`
+- ❌ `git commit`
+- ❌ `git push`
+- ❌ `git merge`
+- ❌ `git rebase`
+
+**Why**: Only branch-manager agent is authorized for git operations after all quality gates pass AND user authorization is received.
+
+**If you need to commit**: Signal orchestrator that bug fix is complete. Orchestrator will validate through quality gates and obtain user authorization before deploying branch-manager.
+
 **Bug-Specific Requirements:**
 - JIRA_KEY is validated in pre-work (or --no-jira flag accepted)
 - Work in provided WORKTREE_PATH (validated in pre-work)
@@ -135,27 +148,28 @@ Implement smallest code change to make test pass without side effects
 - Validate cross-component compatibility
 - Update documentation if behavior changed
 
-## Execution Commands
+## TDD Development Testing (For Immediate Feedback Only)
 
+**You MAY run tests during bug fixing** to verify your fix works (Red-Green-Refactor):
 ```bash
-# All commands run in worktree: ./trees/[JIRA_KEY]-fix
+# Phase 1: RED - Run test to confirm bug reproduces
+(cd "./trees/[JIRA_KEY]-fix" && npm test)
+# Test should FAIL, proving bug exists
 
-# Test with coverage
-(cd "./trees/[JIRA_KEY]-fix" && npm test -- --coverage)
+# Phase 2: GREEN - Run test to verify fix works
+(cd "./trees/[JIRA_KEY]-fix" && npm test)
+# Test should PASS, proving bug is fixed
 
-# Verify 80% coverage
-(cd "./trees/[JIRA_KEY]-fix" && node -e "
-const c = require('./coverage/coverage-summary.json');
-if (c.total.lines.pct < 80) process.exit(1);
-")
-
-# Run linting (MANDATORY before validation)
-(cd "./trees/[JIRA_KEY]-fix" && npm run lint:fix) || \
-(cd "./trees/[JIRA_KEY]-fix" && npm run lint)
-
-# Integration tests if available
-(cd "./trees/[JIRA_KEY]-fix" && npm run test:integration) || echo "No integration tests"
+# Phase 3: BLUE - Run tests to verify refactoring didn't break anything
+(cd "./trees/[JIRA_KEY]-fix" && npm test)
 ```
+
+**Important Context:**
+- Running tests during TDD = normal bug-fixing workflow ✅
+- These results are for YOUR immediate feedback during Red-Green-Refactor
+- Do NOT include test metrics in your final JSON output
+- Orchestrator will deploy test-runner for authoritative validation
+- test-runner provides the metrics orchestrator uses for quality gate decisions
 
 ## Bug Categories & Fixes
 
@@ -191,8 +205,8 @@ if (c.total.lines.pct < 80) process.exit(1);
   },
   "narrative_report": {
     "summary": "Bug fix completed: [brief description]",
-    "details": "🐛 BUG FIX SUMMARY:\n  Root Cause: [IDENTIFIED_CAUSE]\n  Fix Type: [MINIMAL_FIX_DESCRIPTION]\n  TDD Phases: RED (reproduction) → GREEN (fix) → BLUE (refactor)\n\n📊 QUALITY METRICS:\n  Tests: ${TESTS_PASSED}/${TESTS_TOTAL} passed\n  Coverage: ${COVERAGE_LINES}% lines\n  Linting: ${LINT_ERRORS} errors",
-    "recommendations": "Ready for test-runner validation and code review"
+    "details": "🐛 BUG FIX SUMMARY:\n  Root Cause: [IDENTIFIED_CAUSE]\n  Fix Type: [MINIMAL_FIX_DESCRIPTION]\n  TDD Phases: RED (reproduction) → GREEN (fix) → BLUE (refactor)\n\n📊 DEVELOPMENT STATUS:\n  Files Modified: [COUNT] files\n  Bug Reproduction Test: Added and verified\n  Development Tests: Passing locally (for TDD feedback only)\n\n⚠️ CRITICAL - ORCHESTRATOR NEXT STEPS:\n  1. Deploy test-runner agent for AUTHORITATIVE test validation\n  2. Do NOT use my development test status for quality gates\n  3. Enforce gates through agent delegation (see spice:orchestrate.md Section 3.2)\n  4. Return to me if test-runner finds issues",
+    "recommendations": "Ready for test-runner validation. Follow quality gate protocol: test-runner → code-reviewer → security-auditor → user authorization → branch-manager"
   },
   "bug_analysis": {
     "description": "detailed bug description",
@@ -211,43 +225,39 @@ if (c.total.lines.pct < 80) process.exit(1);
     "breaking_changes": false,
     "tdd_phases_completed": ["RED", "GREEN", "BLUE"]
   },
-  "test_metrics": {
-    "tests_total": 147,
-    "tests_passed": 145,
-    "tests_failed": 0,
-    "tests_skipped": 0,
-    "tests_errored": 0,
-    "test_exit_code": 0,
-    "test_command": "npm test -- --coverage"
-  },
-  "coverage_metrics": {
-    "coverage_percentage": 95.2,
-    "lines": 95.2,
-    "branches": 92.1,
-    "functions": 97.3,
-    "statements": 94.8,
-    "meets_80_requirement": true
-  },
-  "lint_metrics": {
-    "lint_errors": 0,
-    "lint_warnings": 2,
-    "lint_exit_code": 0,
-    "lint_command": "npm run lint"
-  },
   "validation_status": {
-    "all_checks_passed": true,
+    "implementation_complete": true,
+    "tests_passing_during_development": true,
+    "ready_for_quality_gates": true,
     "blocking_issues": [],
-    "ready_for_merge": false,
-    "requires_iteration": false
+    "notes": "Bug fix implemented and verified locally. Ready for independent test-runner validation."
   },
-  "evidence": {
-    "commands_executed": [
-      {"command": "npm test", "exit_code": 0, "timestamp": "10:30:15"},
-      {"command": "npm run lint", "exit_code": 0, "timestamp": "10:30:45"}
+  "orchestrator_handoff": {
+    "files_for_testing": ["src/auth.js", "src/user-validator.js"],
+    "test_strategy_needed": "unit and regression",
+    "complexity_areas": ["null handling", "edge cases"],
+    "security_considerations": ["input validation", "error handling"],
+    "development_test_status": "passing locally (not authoritative)",
+    "requires_independent_validation": true
+  },
+  "orchestrator_workflow_reminder": {
+    "current_phase": "BUG_FIX_COMPLETE",
+    "next_required_phase": "INDEPENDENT_TEST_VALIDATION",
+    "quality_gate_protocol": "Deploy test-runner agent for independent validation. Do NOT proceed without test-runner validation. Refer to spice:orchestrate.md Section 3.2 for quality gate enforcement flow.",
+    "mandatory_sequence": [
+      "1. Deploy test-runner with files_modified context",
+      "2. Parse test-runner JSON for AUTHORITATIVE metrics",
+      "3. Enforce gate: test_exit_code === 0 AND coverage >= 80% AND lint_exit_code === 0",
+      "4. IF PASS → Deploy code-reviewer | IF FAIL → Return to code agent with blocking_issues",
+      "5. Repeat gate enforcement for code-reviewer and security-auditor",
+      "6. ALL GATES PASS → Check user authorization before deploying branch-manager"
     ],
-    "reproduction_test_added": true,
-    "fix_verified_by_tests": true,
-    "regression_tests_comprehensive": true
+    "critical_rules": [
+      "NEVER run npm test directly - always delegate to test-runner",
+      "NEVER accept code agent test metrics as authoritative",
+      "NEVER deploy branch-manager without: (quality gates PASSED) AND (user authorization)",
+      "ALWAYS parse agent JSON validation_status for gate enforcement"
+    ]
   }
 }
 ```

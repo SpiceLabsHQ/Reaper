@@ -215,6 +215,27 @@ If any requirement is missing, agent MUST exit immediately with specific error m
     "sensitive_files": ["src/auth.js", "src/api.js", "src/config.js"],
     "architecture_changes": ["new authentication middleware", "modified validation layer"],
     "compliance_requirements": ["input sanitization", "secure error handling"]
+  },
+  "orchestrator_workflow_reminder": {
+    "current_phase": "CODE_REVIEW_COMPLETE",
+    "review_gate_result": "PASS|FAIL",
+    "quality_gate_decision": "IF all_checks_passed === true AND blocking_issues.length === 0 THEN proceed to security-auditor ELSE return to code agent with blocking_issues",
+    "next_required_phase": "SECURITY_AUDIT (if review passed) | RETURN_TO_CODE_AGENT (if review failed)",
+    "mandatory_actions": [
+      "1. Parse THIS code-reviewer JSON for code quality verdict",
+      "2. Enforce review gate: (all_checks_passed === true) AND (blocking_issues.length === 0)",
+      "3. IF REVIEW PASSED → Deploy security-auditor agent with security_focus_areas and sensitive_files",
+      "4. IF REVIEW FAILED → Return to code agent with specific blocking_issues from this report",
+      "5. NEVER proceed to security-auditor if code review found blocking issues",
+      "6. Pass security_focus_areas and sensitive_files to security-auditor for targeted analysis"
+    ],
+    "critical_rules": [
+      "Code review gate requires: no blocking issues AND all_checks_passed === true",
+      "Failed review gate requires iteration - return to code agent with blocking_issues",
+      "After security-auditor passes → check user authorization → deploy branch-manager",
+      "NEVER deploy branch-manager without: (all quality gates PASSED) AND (user authorization)",
+      "Orchestrator must enforce sequential quality gates: test-runner → code-reviewer → security-auditor"
+    ]
   }
 }
 ```

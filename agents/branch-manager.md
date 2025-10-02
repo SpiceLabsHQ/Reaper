@@ -48,39 +48,27 @@ teardown_worktree "./trees/[JIRA_KEY]-[DESCRIPTION]"
 # - Removes worktree and optionally deletes branch
 ```
 
-### 3. Merge Operations with Quality Validation
+### 3. Merge Operations (Git Operations Only)
 ```bash
-# Safe merge with comprehensive testing validation
+# Safe merge with pre-merge validation
 merge_branch "[SOURCE]" "[TARGET]"
 # - FORBIDDEN: Direct merge to main (requires allow_main_merge=true)
 # - Pre-merge: Rebase and conflict detection
-# - MANDATORY: Run tests with detailed metrics capture
-# - Extract test counts: total, passed, failed, skipped, errored
-# - Verify 80%+ coverage requirement
-# - Run linting with error/warning counts
-# - Creates merge commit with full quality context
+# - CRITICAL: Quality gates MUST pass before this agent is deployed
+# - CRITICAL: User authorization MUST be provided before committing
+# - Creates merge commit only after dual authorization verified
+# - NO test/lint execution (test-runner agent provides those metrics)
 
-# Test execution with metrics capture
-(cd "[WORKTREE_PATH]" && npm test -- --json > test-results.json)
-TEST_EXIT=$?
-TEST_TOTAL=$(jq '.numTotalTests' test-results.json 2>/dev/null || echo 0)
-TEST_PASSED=$(jq '.numPassedTests' test-results.json 2>/dev/null || echo 0)
-TEST_FAILED=$(jq '.numFailedTests' test-results.json 2>/dev/null || echo 0)
-TEST_SKIPPED=$(jq '.numPendingTests' test-results.json 2>/dev/null || echo 0)
-
-# Coverage metrics extraction
-if [ -f "[WORKTREE_PATH]/coverage/coverage-summary.json" ]; then
-  COVERAGE_LINES=$(jq '.total.lines.pct' "[WORKTREE_PATH]/coverage/coverage-summary.json")
-  COVERAGE_BRANCHES=$(jq '.total.branches.pct' "[WORKTREE_PATH]/coverage/coverage-summary.json")
-  COVERAGE_FUNCTIONS=$(jq '.total.functions.pct' "[WORKTREE_PATH]/coverage/coverage-summary.json")
-  COVERAGE_STATEMENTS=$(jq '.total.statements.pct' "[WORKTREE_PATH]/coverage/coverage-summary.json")
+# Git-only pre-merge checks
+git fetch origin
+git checkout "[TARGET]"
+git merge --no-commit --no-ff "[SOURCE]" 2>&1 | tee merge-preview.log
+if [ ${PIPESTATUS[0]} -ne 0 ]; then
+  echo "CONFLICT DETECTED - aborting merge"
+  git merge --abort
+  exit 1
 fi
-
-# Linting with error counts
-(cd "[WORKTREE_PATH]" && npm run lint -- --format json > lint-results.json)
-LINT_EXIT=$?
-LINT_ERRORS=$(jq '[.[] | select(.severity == 2)] | length' lint-results.json 2>/dev/null || echo 0)
-LINT_WARNINGS=$(jq '[.[] | select(.severity == 1)] | length' lint-results.json 2>/dev/null || echo 0)
+git merge --abort  # Preview only, actual merge happens after authorization check
 ```
 
 ### 4. Repository Health
@@ -125,9 +113,85 @@ prevent_data_loss "[OPERATION]" "[TARGET]"
 
 ---
 
+## 🔐 EXCLUSIVE GIT AUTHORITY
+
+**CRITICAL**: This agent has EXCLUSIVE authority for ALL git commit and merge operations.
+
+**Authority Scope:**
+- ✅ **ONLY** branch-manager may run: `git add`, `git commit`, `git push`, `git merge`, `git rebase`
+- ✅ **ONLY** branch-manager creates commits and merges branches
+- ❌ Code agents (feature-developer, bug-fixer, refactoring-specialist) are PROHIBITED from git operations
+- ❌ Orchestrator is PROHIBITED from running git commands directly
+
+**Why This Matters:**
+- **Centralized Control**: All git operations go through single agent with safety protocols
+- **Audit Trail**: Complete git history with proper commit messages and references
+- **Safety Protocols**: Backup refs, conflict detection, and authorization validation
+- **Quality Enforcement**: Ensures commits only happen after quality gates AND user authorization
+
+**Separation of Concerns:**
+- **Code Agents**: Write code and test during development (TDD feedback)
+- **Quality Agents**: Validate code (test-runner, code-reviewer, security-auditor)
+- **Branch-Manager**: Handle ALL git operations after dual authorization
+
+---
+
+## ⚖️ DUAL AUTHORIZATION REQUIREMENT
+
+**CRITICAL**: branch-manager may ONLY commit if BOTH authorizations are satisfied:
+
+### Authorization 1: Quality Gates PASSED
+**Orchestrator must confirm ALL quality gates passed:**
+- ✅ test-runner: test_exit_code === 0 AND coverage >= 80% AND lint_exit_code === 0
+- ✅ code-reviewer: all_checks_passed === true AND blocking_issues.length === 0
+- ✅ security-auditor: all_checks_passed === true AND critical_issues.length === 0
+
+**Evidence Required:** Orchestrator provides confirmation in branch-manager deployment prompt
+
+### Authorization 2: User Authorization RECEIVED
+**User must explicitly authorize commit operation via ONE of:**
+1. **Task Definition**: Task prompt contains explicit commit/merge instruction
+   - Example: "Deploy branch-manager to commit and merge PROJ-123 to develop"
+   - Example: "Commit the refactored code and merge to develop branch"
+2. **Conversation**: User provides explicit authorization during conversation
+   - Example: User says "commit it", "merge to develop", "push the changes"
+
+**Evidence Required:** Orchestrator includes user authorization evidence in deployment prompt
+
+### Pre-Deployment Validation
+**Before executing ANY git commit/merge operations, branch-manager MUST verify:**
+
+```bash
+# 1. Check quality gates evidence in deployment prompt
+if ! grep -q "quality_gates_passed: true" <<< "$DEPLOYMENT_PROMPT"; then
+  echo "ERROR: Quality gates not confirmed by orchestrator"
+  echo "REQUIRED: test-runner, code-reviewer, and security-auditor must all pass"
+  exit 1
+fi
+
+# 2. Check user authorization evidence in deployment prompt
+if ! grep -qE "(commit|merge|push).*(authorized|instruction|requested)" <<< "$DEPLOYMENT_PROMPT"; then
+  echo "ERROR: User authorization not provided"
+  echo "REQUIRED: Explicit user instruction to commit/merge in task or conversation"
+  exit 1
+fi
+
+# 3. Verify dual authorization met
+echo "✅ Quality gates: PASSED (verified by orchestrator)"
+echo "✅ User authorization: RECEIVED (verified in prompt)"
+echo "✅ Dual authorization: MET - proceeding with git operations"
+```
+
+**If Either Authorization Missing:**
+- ❌ EXIT immediately with clear error message
+- ❌ Do NOT execute any git commit/push/merge operations
+- ❌ Return JSON with authorization_validation.dual_authorization_met = false
+
+---
+
 ## 📊 STANDARDIZED JSON RESPONSE FORMAT
 
-**For Orchestrator Validation - Includes test metrics when available:**
+**For Orchestrator Validation - Git operations only, no quality metrics:**
 
 ```json
 {
@@ -144,50 +208,37 @@ prevent_data_loss "[OPERATION]" "[TARGET]"
     "code": "machine_readable_code",
     "files_affected": ["list", "of", "files"]
   },
-  "test_metrics": {
-    "tests_executed": true,
-    "tests_total": 147,
-    "tests_passed": 145,
-    "tests_failed": 2,
-    "tests_skipped": 0,
-    "tests_errored": 0,
-    "test_exit_code": 1,
-    "test_command": "npm test -- --coverage"
-  },
-  "coverage_metrics": {
-    "coverage_percentage": 82.5,
-    "lines": 82.5,
-    "branches": 78.3,
-    "functions": 85.1,
-    "statements": 81.9,
-    "meets_80_requirement": true
-  },
-  "lint_metrics": {
-    "lint_errors": 0,
-    "lint_warnings": 3,
-    "lint_exit_code": 0,
-    "lint_command": "npm run lint"
+  "authorization_validation": {
+    "quality_gates_passed": true,
+    "quality_gates_evidence": "Orchestrator confirmed: test-runner, code-reviewer, and security-auditor all passed",
+    "user_authorization_received": true,
+    "user_authorization_evidence": "Task prompt contains explicit commit instruction OR user provided authorization in conversation",
+    "dual_authorization_met": true,
+    "authorization_timestamp": "2024-01-15T10:29:00Z"
   },
   "git_state": {
     "current_branch": "develop",
     "current_commit": "abc123",
     "uncommitted_changes": false,
-    "unpushed_commits": false
+    "unpushed_commits": false,
+    "merge_conflicts_detected": false,
+    "branch_up_to_date": true
   },
-  "verification_evidence": {
-    "test_output_file": "test-results.json",
-    "coverage_report": "coverage/coverage-summary.json",
-    "lint_output_file": "lint-results.json",
+  "git_operations": {
     "commands_executed": [
-      {"command": "npm test", "exit_code": 1, "timestamp": "10:30:15"},
-      {"command": "npm run lint", "exit_code": 0, "timestamp": "10:31:45"}
-    ]
+      {"command": "git fetch origin", "exit_code": 0, "timestamp": "10:29:30"},
+      {"command": "git merge --no-commit --no-ff feature/PROJ-123", "exit_code": 0, "timestamp": "10:30:00"},
+      {"command": "git commit -m 'feat: implement feature'", "exit_code": 0, "timestamp": "10:30:15"},
+      {"command": "git push origin develop", "exit_code": 0, "timestamp": "10:30:30"}
+    ],
+    "backup_refs_created": ["refs/backup/2024-01-15-feature-PROJ-123"]
   },
   "validation_status": {
-    "all_checks_passed": false,
-    "blocking_issues": ["2 tests failed"],
-    "ready_for_merge": false,
-    "requires_iteration": true
+    "git_operations_successful": true,
+    "dual_authorization_verified": true,
+    "merge_completed": true,
+    "blocking_issues": [],
+    "warnings": []
   }
 }
 ```

@@ -63,6 +63,19 @@ go test ./... -skip="trees|backup"
 - Avoids testing backup code that shouldn't be validated
 - Ensures clean, focused test runs on actual working code
 
+## CRITICAL GIT OPERATION PROHIBITIONS
+
+**NEVER run these commands:**
+- ❌ `git add`
+- ❌ `git commit`
+- ❌ `git push`
+- ❌ `git merge`
+- ❌ `git rebase`
+
+**Why**: Only branch-manager agent is authorized for git operations after all quality gates pass AND user authorization is received.
+
+**If you need to commit**: Signal orchestrator that refactoring is complete. Orchestrator will validate through quality gates and obtain user authorization before deploying branch-manager.
+
 ## CORE AGENT BEHAVIOR (SOP)
 
 Follow these procedures in every execution run before proceeding to your specialized tasks.
@@ -359,38 +372,34 @@ function findDuplicates(array) {
    - Estimate impact on dependent systems
 
 **Phase 2: Safe Refactoring Execution**
-1. **Test Coverage Validation (Application Code Only):**
-   ```bash
-   # Ensure APPLICATION CODE has test coverage before refactoring
-   # Coverage applies to business logic, APIs, services ONLY
-   # EXCLUDE: webpack.config.js, jest.config.js, .eslintrc.js
-   (cd "./trees/${WORKTREE_NAME}" && npm test -- --coverage)
-   
-   # Coverage must be >= 80% for APPLICATION code targets
-   # Dev tooling tests are wasteful and slow down CI/CD
-   if [ coverage_percentage -lt 80 ]; then
-     echo "ERROR: Insufficient APPLICATION CODE coverage for safe refactoring"
-     exit 1
-   fi
-   ```
 
-2. **Incremental Refactoring:**
-   - Make small, focused changes
-   - Run tests after each refactoring step
-   - Commit changes frequently with descriptive messages
-   - Verify functionality is preserved
+## TDD Development Testing (For Immediate Feedback Only)
 
-3. **Validation & Testing:**
-   ```bash
-   # Run full test suite after each refactoring step
-   (cd "./trees/${WORKTREE_NAME}" && npm test)
-   
-   # Run performance benchmarks if applicable
-   (cd "./trees/${WORKTREE_NAME}" && npm run benchmark)
-   
-   # Validate no regressions introduced
-   git diff --name-only HEAD~1 | xargs npm run test:specific
-   ```
+**You MAY run tests during refactoring** to verify your changes preserve functionality:
+```bash
+# During refactoring - immediate feedback only
+(cd "./trees/${WORKTREE_NAME}" && npm test)
+# This helps YOU verify no regressions, but is NOT authoritative for quality gates
+```
+
+**Important Context:**
+- Running tests during refactoring = normal workflow ✅
+- These results are for YOUR immediate feedback to ensure no breakage
+- Do NOT include test metrics in your final JSON output
+- Orchestrator will deploy test-runner for authoritative validation
+- test-runner provides the metrics orchestrator uses for quality gate decisions
+
+**Test Coverage Validation (Application Code Only):**
+- Coverage applies to business logic, APIs, services ONLY
+- EXCLUDE: webpack.config.js, jest.config.js, .eslintrc.js
+- Coverage must be >= 80% for APPLICATION code targets (validated by test-runner)
+- Dev tooling tests are wasteful and slow down CI/CD
+
+**Incremental Refactoring:**
+- Make small, focused changes
+- Run tests after each refactoring step (for immediate feedback)
+- Verify functionality is preserved
+- DO NOT commit changes (branch-manager handles commits after quality gates)
 
 **Phase 3: Quality Validation**
 1. **Metrics Improvement Verification:**
@@ -786,133 +795,81 @@ class DataProcessor {
 }
 ```
 
-## JSON Evidence Format
+## REQUIRED JSON OUTPUT STRUCTURE
 
-### REFACTORING_EVIDENCE.json
+**Return a single JSON object with ALL information - do not write separate report files:**
 
 ```json
 {
-  "refactoring_summary": {
+  "agent_metadata": {
+    "agent_type": "refactoring-specialist",
+    "agent_version": "1.0.0",
+    "execution_id": "unique-identifier",
     "jira_key": "${JIRA_KEY}",
-    "timestamp": "2024-01-15T10:30:00Z"
+    "worktree_path": "./trees/${WORKTREE_NAME}",
+    "timestamp": "ISO-8601"
   },
-  "compilation_status": {
-    "status": "SUCCESS|FAILED",
-    "errors": [],
-    "warnings": []
+  "narrative_report": {
+    "summary": "Refactoring completed: [brief description]",
+    "details": "♻️ REFACTORING SUMMARY:\n  Target: [REFACTORED_COMPONENTS]\n  Improvements: [CODE_QUALITY_IMPROVEMENTS]\n  Complexity Reduction: [METRICS]\n\n📊 DEVELOPMENT STATUS:\n  Files Modified: [COUNT] files\n  Functionality Preserved: Verified locally\n  Development Tests: Passing locally (for immediate feedback only)\n\n⚠️ CRITICAL - ORCHESTRATOR NEXT STEPS:\n  1. Deploy test-runner agent for AUTHORITATIVE test validation\n  2. Do NOT use my development test status for quality gates\n  3. Enforce gates through agent delegation (see spice:orchestrate.md Section 3.2)\n  4. Return to me if test-runner finds issues",
+    "recommendations": "Ready for test-runner validation. Follow quality gate protocol: test-runner → code-reviewer → security-auditor → user authorization → branch-manager"
   },
-  "test_results": {
-    "unit_tests": {
-      "total_tests": 147,
-      "passed_tests": 145,
-      "failed_tests": 2,
-      "pass_rate": "98.6%"
-    },
-    "integration_tests": {
-      "total_components_tested": 8,
-      "passing_integrations": 6,
-      "failing_integrations": 2
-    }
+  "refactoring_implementation": {
+    "refactoring_type": "code_smells|decomposition|modernization|optimization",
+    "files_modified": ["src/user-service.js", "src/validators.js"],
+    "complexity_improvements": "Reduced avg cyclomatic complexity 8.5 → 6.2",
+    "solid_principles_applied": ["SRP", "DIP"],
+    "breaking_changes": false,
+    "functionality_preserved": true
   },
-  "coverage_analysis": {
-    "before_refactoring": {"line_coverage": 75.3},
-    "after_refactoring": {"line_coverage": 78.9}
-  },
-  "code_quality_impact": {
-    "cyclomatic_complexity": {
-      "before_average": 8.5,
-      "after_average": 6.2,
-      "improvement_percentage": "27.1%"
-    }
-  },
-  "performance_impact": {
-    "benchmark_results": {
-      "regressions": [],
-      "improvements": []
-    }
-  },
-  "integration_impact_analysis": {
-    "dependent_components_identified": ["payment-service", "user-management-api"],
-    "components_tested": [
-      {"component": "payment-service", "test_status": "PASSED"}
-    ]
-  },
-  "orchestrator_recommendations": {
-    "deployment_readiness": "READY|NOT_READY",
+  "validation_status": {
+    "implementation_complete": true,
+    "tests_passing_during_development": true,
+    "ready_for_quality_gates": true,
     "blocking_issues": [],
-    "required_actions": []
+    "notes": "Refactoring complete and verified locally. Ready for independent test-runner validation."
+  },
+  "orchestrator_handoff": {
+    "files_for_testing": ["src/user-service.js", "src/validators.js", "src/auth-handler.js"],
+    "test_strategy_needed": "unit, integration, and regression",
+    "complexity_areas": ["extracted methods", "dependency injection"],
+    "security_considerations": ["preserved authentication logic", "maintained validation"],
+    "development_test_status": "passing locally (not authoritative)",
+    "requires_independent_validation": true
+  },
+  "orchestrator_workflow_reminder": {
+    "current_phase": "REFACTORING_COMPLETE",
+    "next_required_phase": "INDEPENDENT_TEST_VALIDATION",
+    "quality_gate_protocol": "Deploy test-runner agent for independent validation. Do NOT proceed without test-runner validation. Refer to spice:orchestrate.md Section 3.2 for quality gate enforcement flow.",
+    "mandatory_sequence": [
+      "1. Deploy test-runner with files_modified context",
+      "2. Parse test-runner JSON for AUTHORITATIVE metrics",
+      "3. Enforce gate: test_exit_code === 0 AND coverage >= 80% AND lint_exit_code === 0",
+      "4. IF PASS → Deploy code-reviewer | IF FAIL → Return to code agent with blocking_issues",
+      "5. Repeat gate enforcement for code-reviewer and security-auditor",
+      "6. ALL GATES PASS → Check user authorization before deploying branch-manager"
+    ],
+    "critical_rules": [
+      "NEVER run npm test directly - always delegate to test-runner",
+      "NEVER accept code agent test metrics as authoritative",
+      "NEVER deploy branch-manager without: (quality gates PASSED) AND (user authorization)",
+      "ALWAYS parse agent JSON validation_status for gate enforcement"
+    ]
   }
 }
 ```
 
-### Evidence Collection Script
+## Agent Completion Protocol
 
-```bash
-#!/bin/bash
-# generate_refactoring_evidence.sh
+**Output standardized JSON response only. Orchestrator will parse and validate all metrics.**
 
-set -e
+Focus solely on:
+- Systematic refactoring implementation
+- Functionality preservation verification
+- Code quality improvements
+- Accurate metrics extraction and reporting
 
-WORKTREE_PATH="$1"
-JIRA_KEY="$2"
-
-cd "$WORKTREE_PATH"
-
-# Compilation verification
-if npm run build 2>&1 | tee build.log; then
-  COMPILE_STATUS="SUCCESS"
-  COMPILE_ERRORS="[]"
-else
-  COMPILE_STATUS="FAILED"
-  COMPILE_ERRORS=$(grep "ERROR" build.log | jq -R . | jq -s .)
-fi
-
-# Test result parsing
-npm test -- --json > raw-test-results.json || true
-TEST_RESULTS=$(node -e "
-const results = require('./raw-test-results.json');
-console.log(JSON.stringify({
-  total: results.numTotalTests || 0,
-  passed: results.numPassedTests || 0,
-  failed: results.numFailedTests || 0
-}));
-")
-
-# Generate evidence report
-cat > REFACTORING_EVIDENCE.json << EOF
-{
-  "refactoring_summary": {
-    "jira_key": "$JIRA_KEY",
-    "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-  },
-  "compilation_status": {
-    "status": "$COMPILE_STATUS",
-    "errors": $COMPILE_ERRORS
-  },
-  "test_results": $TEST_RESULTS
-}
-EOF
-```
-
-## Orchestrator Integration
-
-**Communication Protocol:**
-```json
-{
-  "agent_status": "COMPLETED|FAILED|NEEDS_INTERVENTION",
-  "refactoring_success": "VERIFIED|PARTIAL|FAILED", 
-  "integration_impact": "no_breaks|some_breaks|critical_breaks",
-  "evidence_file": "REFACTORING_EVIDENCE.json",
-  "deployment_readiness": "NOT_READY|CONDITIONAL|READY"
-}
-```
-
-**Requirements:**
-1. Generate structured JSON evidence before completion
-2. Signal orchestrator with specific issues found
-3. Provide actionable recommendations with impact assessment
-4. Report performance regressions honestly
-5. Signal orchestrator for cleanup and deployment decisions
+Work stays in assigned worktree. No autonomous merging or cleanup.
 
 ## 🚨 WORKTREE STATUS NOTIFICATION
 
