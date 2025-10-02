@@ -213,15 +213,36 @@ QUALITY: 80% real coverage, zero linting errors, SOLID principles, TDD methodolo
 Extract from code agent JSON and pass forward:
 ```
 Task --subagent_type test-runner
-"SCOPE: Validate testing for [component] implementation
+"JIRA_KEY: [JIRA_KEY] (or --no-jira)
+WORKTREE: ./trees/PROJ-XXX-[component]
+PLAN: Validate [unit|integration|all] tests for [component] implementation
+
+SCOPE: Validate testing for [component] implementation
+
 CONTEXT FROM CODE AGENT:
 - Files Modified: [response.files_modified]
 - Feature Scope: [response.narrative_report.summary]
+- Components Changed: [module names or areas from code agent]
 - Test Strategy Needed: [unit|integration|both]
 - Known Complexity Areas: [response.implementation_notes]
+
+TEST_SCOPE: [unit only | integration only | all tests based on code changes]
+INCLUDE_PATTERNS: [derive from files_modified - e.g., if src/auth/* changed, include tests/unit/auth/**]
+EXCLUDE_PATTERNS: **/trees/**, **/*backup*/**, **/node_modules/** [+ standard exclusions]
+
+EXPECTED_SCOPE:
+- Test Type: [Unit | Integration | E2E | All]
+- Expected File Count: Approximately [estimate based on modified files]
+- Modified Components: [response.files_modified]
+
+VALIDATION REQUIREMENTS:
+- Detect nested directory test files (trees/, backup/)
+- Preview test discovery before execution
+- Verify scope matches modified components
+- Warn about test misplacements
+
 RESTRICTION: Do NOT modify business logic, ONLY test validation
-WORKTREE: Test in ./trees/PROJ-XXX-[component]
-QUALITY: Verify 80%+ real coverage, all tests pass, linting clean"
+QUALITY: Verify 80%+ real coverage (exclude dev tooling), all tests pass, linting clean"
 ```
 
 ### From Test Runner → Code Reviewer
@@ -257,12 +278,32 @@ QUALITY: Zero critical/high vulnerabilities, security best practices"
 ```
 
 #### 3b. Test Runner Quality Loop
+
+**BEFORE deploying test-runner, specify test scope clearly:**
+
 ```
 Task --subagent_type test-runner
-"SCOPE: Validate testing for [component] implementation
+"JIRA_KEY: $JIRA_KEY (or --no-jira)
+WORKTREE: ./trees/PROJ-XXX-[component]
+PLAN: Validate [unit|integration|all] tests for [component] implementation
+
+TEST_SCOPE: [unit only | integration only | all tests]
+INCLUDE_PATTERNS: [tests/unit/**, __tests__/unit/**, specific patterns if targeted]
+EXCLUDE_PATTERNS: tests/integration/**, **/trees/**, **/*backup*/**, **/node_modules/** [+ project-specific]
+
+EXPECTED_SCOPE:
+- Test Type: [Unit | Integration | E2E | All]
+- Expected File Count: Approximately [N] test files
+- Modified Components: [list from code agent]
+
+VALIDATION REQUIREMENTS:
+- Detect and warn about nested directory test files (trees/, backup/)
+- Preview test discovery before execution (show sample paths and count)
+- Verify scope matches modified components from code agent
+- Warn about potential test misplacements (e.g., integration tests in unit directories)
+
 RESTRICTION: Do NOT modify business logic, ONLY test validation
-WORKTREE: Test in ./trees/PROJ-XXX-[component]
-QUALITY: Verify 80%+ real coverage (exclude mocks), all tests pass, linting clean"
+QUALITY: Verify 80%+ real coverage (exclude dev tooling), all tests pass, linting clean"
 ```
 
 **If test runner fails → Return to step 3a with specific failure details**

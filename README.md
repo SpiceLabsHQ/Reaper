@@ -158,10 +158,13 @@ spice:orchestrate → Code Agent → Quality Gates → Integration
 **If work is deemed complete, sequential quality validation begins:**
 
 **a) `test-runner` Agent**
-- Executes comprehensive test suites
-- Validates 80%+ coverage requirements
-- Runs linting and type checking
-- Performs build validation
+- **Pre-execution validation**: Detects nested directories (trees/, backup/), previews test discovery
+- **Test organization validation**: Warns about misplaced tests (e.g., integration tests in unit/)
+- **Executes comprehensive test suites** with proper exclusion patterns
+- **Validates 80%+ coverage requirements** for application code
+- **Runs linting and type checking**
+- **Performs build validation**
+- **Provides structured JSON reports** with test counts, coverage metrics, and warnings
 - **Must pass before proceeding**
 
 **b) `code-reviewer` Agent**

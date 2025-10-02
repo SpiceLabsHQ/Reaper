@@ -16,6 +16,53 @@ All refactoring claims must be backed by:
 - Cross-component validation demonstrating no breakage 
 - Structured evidence in JSON format
 
+## Standard Directory Exclusions (MANDATORY)
+
+**When running ANY commands (tests, linting, builds, search), ALWAYS exclude these patterns:**
+
+### Universal Exclusions (All Languages)
+- `**/trees/**` - Worktree directories
+- `**/*backup*/`, `**/.backup/**` - Backup directories
+- `**/.git/**` - Git metadata
+- `**/node_modules/**` - Node.js dependencies
+- `**/vendor/**` - PHP/Go dependencies
+- `**/venv/**`, `**/.venv/**`, `**/env/**` - Python virtual environments
+- `**/target/**` - Rust/Java build outputs
+- `**/build/**`, `**/dist/**` - Build artifacts
+
+### Language-Specific Examples
+
+**Node.js/Jest:**
+```bash
+npm test -- --testPathIgnorePatterns="trees|backup|node_modules"
+npx jest --testPathIgnorePatterns="trees|backup"
+```
+
+**Python/pytest:**
+```bash
+pytest --ignore=trees/ --ignore=backup/ --ignore=.backup/
+```
+
+**PHP/PHPUnit:**
+```bash
+./vendor/bin/phpunit --exclude-group=trees,backup
+```
+
+**Ruby/RSpec:**
+```bash
+bundle exec rspec --exclude-pattern "**/trees/**,**/*backup*/**"
+```
+
+**Go:**
+```bash
+go test ./... -skip="trees|backup"
+```
+
+**Why This Matters:**
+- Prevents duplicate test execution from nested worktrees
+- Avoids testing backup code that shouldn't be validated
+- Ensures clean, focused test runs on actual working code
+
 ## CORE AGENT BEHAVIOR (SOP)
 
 Follow these procedures in every execution run before proceeding to your specialized tasks.

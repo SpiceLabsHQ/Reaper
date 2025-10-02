@@ -60,6 +60,111 @@ See @docs/spice/SPICE.md for:
 - Testing standards and coverage requirements
 - Git flow and commit patterns
 
+## Pre-Execution Validation (MANDATORY)
+
+**CRITICAL**: Before running any tests, perform these safety checks to prevent unexpected test discovery and execution issues.
+
+### 1. Nested Directory Detection
+
+**Scan for test files in problematic locations:**
+```bash
+# Detect tests in worktree directories
+find . -path "*/trees/*" \( -name "*test*" -o -name "*spec*" \) 2>/dev/null | head -10
+
+# Detect tests in backup directories
+find . -path "*backup*" \( -name "*test*" -o -name "*spec*" \) 2>/dev/null | head -10
+
+# Detect tests in hidden backup directories
+find . -path "*/.backup/*" \( -name "*test*" -o -name "*spec*" \) 2>/dev/null | head -10
+```
+
+**If nested test files found, WARN in JSON response:**
+```json
+"nested_directories_found": ["./trees/feature-123/tests/", ".backup/unit/"],
+"exclude_recommendations": ["**/trees/**", "**/*backup*/**", "**/.backup/**"]
+```
+
+### 2. Test Discovery Preview
+
+**Show what WILL be executed before running tests:**
+```bash
+# Language-specific test discovery (use appropriate command for project)
+
+# Node.js/Jest
+npx jest --listTests --testPathPattern="PATTERN" --testPathIgnorePatterns="IGNORE" 2>/dev/null | head -20
+
+# Python/pytest
+pytest --collect-only -q 2>/dev/null | head -20
+
+# PHP/PHPUnit
+./vendor/bin/phpunit --list-tests 2>/dev/null | head -20
+
+# Ruby/RSpec
+bundle exec rspec --dry-run 2>/dev/null | head -20
+
+# Go
+go test -list . 2>/dev/null | head -20
+```
+
+**Include in JSON response:**
+```json
+"test_discovery": {
+  "total_test_files": 1182,
+  "test_paths_sample": ["tests/unit/auth.test.js", "tests/unit/api.test.js", "..."],
+  "discovery_command": "npx jest --listTests"
+}
+```
+
+### 3. Test Organization Validation
+
+**Detect potential test misplacements (language agnostic):**
+```bash
+# Check for integration tests in unit directories
+find tests/unit -name "*integration*" 2>/dev/null
+find __tests__/unit -name "*integration*" 2>/dev/null
+
+# Check for unit tests in integration directories
+find tests/integration -name "*unit*" 2>/dev/null
+find __tests__/integration -name "*unit*" 2>/dev/null
+```
+
+**Warn about mismatches:**
+```json
+"potential_misplacements": [
+  {
+    "path": "tests/unit/integration.test.js",
+    "reason": "filename contains 'integration' but located in unit directory",
+    "severity": "warning"
+  }
+]
+```
+
+### 4. Standard Exclusion Patterns
+
+**ALWAYS exclude these patterns when running tests:**
+- `**/trees/**` - Worktree directories
+- `**/*backup*/`, `**/.backup/**` - Backup directories
+- `**/node_modules/**` - Node.js dependencies
+- `**/vendor/**` - PHP/Go dependencies
+- `**/.git/**` - Git metadata
+- `**/venv/**`, `**/.venv/**` - Python virtual environments
+- `**/target/**` - Rust/Java build outputs
+
+**Apply exclusions in test commands:**
+```bash
+# Node.js/Jest
+--testPathIgnorePatterns="trees|backup|node_modules"
+
+# Python/pytest
+--ignore=trees/ --ignore=backup/ --ignore=.backup/
+
+# PHP/PHPUnit
+--exclude-group=trees,backup
+
+# Ruby/RSpec
+--exclude-pattern "**/trees/**,**/*backup*/**"
+```
+
 ## Test Execution Patterns
 
 ### Node.js Projects
@@ -121,6 +226,33 @@ TEST_EXIT=$?
     "plan_source": "jira_ticket|markdown|file",
     "validation_passed": true,
     "exit_reason": null
+  },
+  "pre_execution_validation": {
+    "nested_directories_found": ["./trees/feature-branch/tests/", ".backup/unit/"],
+    "nested_directory_warnings": [
+      "Found 42 test files in ./trees/feature-branch/ - recommend excluding with --testPathIgnorePatterns",
+      "Found 15 test files in .backup/ directory - may cause duplicate test execution"
+    ],
+    "test_discovery": {
+      "total_test_files": 1182,
+      "test_paths_sample": [
+        "tests/unit/auth.test.js",
+        "tests/unit/api.test.js",
+        "tests/unit/validation.test.js",
+        "... (showing first 20 of 1182)"
+      ],
+      "discovery_command": "npx jest --listTests --testPathIgnorePatterns='trees|backup'"
+    },
+    "potential_misplacements": [
+      {
+        "path": "tests/unit/integration.test.js",
+        "reason": "filename contains 'integration' but located in unit directory",
+        "severity": "warning",
+        "recommendation": "Consider moving to tests/integration/ directory"
+      }
+    ],
+    "exclude_patterns_applied": ["**/trees/**", "**/*backup*/**", "**/node_modules/**"],
+    "validation_warnings": []
   },
   "agent_metadata": {
     "agent_type": "test-runner",

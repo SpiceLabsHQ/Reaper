@@ -72,11 +72,70 @@ Task --subagent_type test-runner \
 - **Performance**: Unit <1s, Integration <10s
 - **CRITICAL**: ALL tests must run in worktree directory, NEVER in root
 
+## 📁 Test Organization Standards (Language Agnostic)
+
+**MANDATORY**: Proper test organization prevents confusion and ensures accurate test execution.
+
+### Directory Structure (Recommended Patterns)
+
+**Option 1: tests/ directory**
+```
+tests/
+├── unit/              # Unit tests - fast, isolated, mocked
+├── integration/       # Integration tests - components working together
+└── e2e/              # End-to-end tests - full system validation
+```
+
+**Option 2: __tests__/ directory (JavaScript/React common)**
+```
+__tests__/
+├── unit/
+├── integration/
+└── e2e/
+```
+
+**Option 3: spec/ directory (Ruby/RSpec common)**
+```
+spec/
+├── unit/
+├── integration/
+└── features/
+```
+
+### Universal Principles
+
+1. **Location Matches Purpose**:
+   - Unit tests belong in `unit/` directories
+   - Integration tests belong in `integration/` directories
+   - E2E tests belong in `e2e/` or `features/` directories
+
+2. **Naming Conventions Align with Type**:
+   - ✅ `tests/unit/auth.test.js` or `tests/unit/auth_test.py`
+   - ✅ `tests/integration/api-integration.test.js`
+   - ❌ `tests/unit/integration.test.js` (integration test in unit directory)
+
+3. **No Test Files in Worktree/Backup Directories**:
+   - ❌ `./trees/feature-123/tests/` (will cause duplicate execution)
+   - ❌ `.backup/tests/` (will cause duplicate execution)
+   - ✅ `tests/unit/` in main project only
+
+4. **Standard Exclusion Patterns**:
+   - Always exclude: `**/trees/**`, `**/*backup*/**`, `**/.backup/**`
+   - Language-specific: `**/node_modules/**`, `**/vendor/**`, `**/venv/**`
+
+### Pre-Test Validation Checklist
+
+Before running tests, verify:
+- [ ] No test files in `trees/` directories
+- [ ] No test files in `backup/` or `.backup/` directories
+- [ ] File names match directory purpose (no integration tests in unit/)
+- [ ] Exclude patterns specified for test discovery
+
 ## 🚨 Testing Location Requirements
-**MANDATORY for ALL LLMs**: 
+**MANDATORY for ALL LLMs**:
 - ✅ CORRECT: `(cd ./trees/PROJ-123 && npm test)` - Tests run in worktree
 - ❌ WRONG: `npm test` - Tests run in root directory
-- ✅ CORRECT: `(cd ./trees/PROJ-123 && python -m pytest)` - Tests run in worktree  
+- ✅ CORRECT: `(cd ./trees/PROJ-123 && python -m pytest)` - Tests run in worktree
 - ❌ WRONG: `python -m pytest` - Tests run in root directory
 
 ## 🎯 What Requires Testing
