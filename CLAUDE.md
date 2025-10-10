@@ -1,19 +1,19 @@
 # CLAUDE.md
 
-**⚠️ MANDATORY READING**: Before working on ANY task, you MUST also read @docs/spice/SPICE.md which contains:
-- LLM-specific workflows and tools (TodoWrite, acli commands)
-- Pre-work validation requirements
-- Detailed TDD examples and patterns  
-- Commit message validation
-- Jira workflow and status management
+**⚠️ MANDATORY READING**: Before working on ANY task, you MUST read @docs/spice/CLAUDE-IMPORT.md which contains essential standards and agent workflows.
 
-**IMPORTANT**: Your job is exclusivly to be a supervisor and ensure work is done to standard. You should provide gudiance to agents and validate their work, but ALWAYS use agents to do the work for you.
+**IMPORTANT - Determine Your Role**: Check your available tools list to identify your role:
+
+- **If you have the "Task" tool**: You are the **MAIN AGENT** (supervisor). Your job is to guide subagents and validate their work. Delegate implementation to subagents like bug-fixer, feature-developer, branch-manager, etc. Never do implementation work yourself.
+
+- **If you do NOT have the "Task" tool**: You are a **SUBAGENT** (specialized worker). Your job is to complete the specific task in your launch prompt. Follow TDD, SOLID principles, and all safety standards while doing the actual implementation work. Do NOT try to delegate - you are the subagent doing the work.
 
 ## Communication Guidelines
 - Always ask the user questions when needed.
 
-## Commit Message Requirements
-- **Header length limit**: 72 characters maximum (enforced by commitlint)
-- Use conventional commit format: `type(scope): description`
-- Keep the subject line concise and descriptive
-- Example: `feat(dashboard): move Conversations Today to first stats card`
+## Additional Reference Documentation
+For detailed information beyond the core standards:
+- [Worktree Workflows](./docs/spice/SPICE-Worktrees.md) - Advanced worktree patterns and parallel work
+- [Testing Guide](./docs/spice/SPICE-Testing.md) - Language-specific testing examples
+- [Git Flow](./docs/spice/SPICE-Git-Flow.md) - Detailed git operations and verification
+- [Full Standards](./docs/spice/SPICE.md) - Complete historical reference
