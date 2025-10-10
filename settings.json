@@ -148,7 +148,6 @@
       "Bash(whoami:*)",
       "Bash(xargs:*)",
       "Bash(yarn:*)",
-      "Edit",
       "Glob",
       "Grep",
       "ListMcpResourcesTool",
