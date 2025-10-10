@@ -1,15 +1,17 @@
 # Directories
 .claude/
+debug/
+file-history/
+ide/
+plugins/
 projects/
 shell-snapshots/
 statsig/
 todos/
-ide/
-plugins/
 
 # Files
 .credentials.json
-SPICE.md.backup-*
 acli-credentials
-settings.local.json
 history.jsonl
+settings.local.json
+SPICE.md.backup-*
