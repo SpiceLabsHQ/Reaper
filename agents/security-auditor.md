@@ -486,6 +486,17 @@ set -e
       "Implement comprehensive input validation",
       "Add security logging and monitoring"
     ]
+  },
+  "next_steps": {
+    "current_gate": "SECURITY_AUDIT",
+    "gate_status": "PASS|FAIL",
+    "gate_criteria": "all_checks_passed === true AND blocking_issues.length === 0",
+    "on_pass": "Wait for code-reviewer to complete (running in parallel with me)",
+    "on_fail": "Return to code agent with blocking_issues - DO NOT ask user, automatically iterate",
+    "parallel_agent": "code-reviewer should be running simultaneously with me",
+    "after_both_pass": "When BOTH code-reviewer AND security-auditor PASS → present to user for final authorization",
+    "iteration_loop": "If security gate FAILS → code agent fixes issues → test-runner → code-reviewer + security-auditor again",
+    "do_not_ask_user": "Orchestrator should automatically return to code agent on security failures without user intervention"
   }
 }
 ```

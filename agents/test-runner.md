@@ -349,27 +349,16 @@ TEST_EXIT=$?
     "performance_notes": ["slow test: authentication.test.js (2.3s)"],
     "integration_test_status": "required"
   },
-  "orchestrator_workflow_reminder": {
-    "current_phase": "AUTHORITATIVE_TEST_VALIDATION_COMPLETE",
-    "test_gate_result": "PASS|FAIL",
-    "quality_gate_decision": "IF test_exit_code === 0 AND coverage >= 80 AND lint_exit_code === 0 THEN proceed to code-reviewer ELSE return to code agent with blocking_issues",
-    "next_required_phase": "CODE_REVIEW (if tests passed) | RETURN_TO_CODE_AGENT (if tests failed)",
-    "mandatory_actions": [
-      "1. Parse THIS test-runner JSON for AUTHORITATIVE metrics (do NOT trust code agent test status)",
-      "2. Enforce quality gate: (test_exit_code === 0) AND (coverage >= 80) AND (lint_exit_code === 0)",
-      "3. IF ALL CONDITIONS MET → Deploy code-reviewer agent",
-      "4. IF ANY CONDITION FAILED → Return to code agent (feature-developer/bug-fixer/refactoring-specialist) with blocking_issues from this report",
-      "5. NEVER proceed to code-reviewer if test gate failed",
-      "6. NEVER use code agent test metrics for quality decisions"
-    ],
-    "critical_rules": [
-      "ONLY test-runner provides authoritative test metrics",
-      "Code agent test status is for development feedback only",
-      "Quality gate pass requires ALL three conditions: tests pass, coverage >= 80%, lint clean",
-      "Failed quality gate requires iteration - return to code agent with specific blocking_issues",
-      "Orchestrator must NOT run tests directly - always delegate to test-runner",
-      "After code-reviewer passes → deploy security-auditor → check user authorization → deploy branch-manager"
-    ]
+  "next_steps": {
+    "current_gate": "TEST_VALIDATION",
+    "gate_status": "PASS|FAIL",
+    "gate_criteria": "test_exit_code === 0 AND coverage >= 80% AND lint_exit_code === 0",
+    "on_pass": "Deploy code-reviewer AND security-auditor IN PARALLEL (single message, two Task calls)",
+    "on_fail": "Return to code agent (feature-developer/bug-fixer/refactoring-specialist) with blocking_issues - DO NOT ask user, automatically iterate",
+    "parallel_execution": "CRITICAL: Run code-reviewer and security-auditor at the same time for efficiency",
+    "iteration_loop": "If test gate FAILS → code agent fixes issues → test-runner validates again → repeat until PASS",
+    "do_not_ask_user": "Orchestrator should automatically return to code agent on test failures without asking user what to do",
+    "important_note": "I am the ONLY authoritative source for test metrics - code agent test results are for TDD feedback only"
   }
 }
 ```

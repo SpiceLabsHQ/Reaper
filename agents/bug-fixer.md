@@ -240,24 +240,15 @@ Implement smallest code change to make test pass without side effects
     "development_test_status": "passing locally (not authoritative)",
     "requires_independent_validation": true
   },
-  "orchestrator_workflow_reminder": {
-    "current_phase": "BUG_FIX_COMPLETE",
-    "next_required_phase": "INDEPENDENT_TEST_VALIDATION",
-    "quality_gate_protocol": "Deploy test-runner agent for independent validation. Do NOT proceed without test-runner validation. Refer to spice:orchestrate.md Section 3.2 for quality gate enforcement flow.",
-    "mandatory_sequence": [
-      "1. Deploy test-runner with files_modified context",
-      "2. Parse test-runner JSON for AUTHORITATIVE metrics",
-      "3. Enforce gate: test_exit_code === 0 AND coverage >= 80% AND lint_exit_code === 0",
-      "4. IF PASS → Deploy code-reviewer | IF FAIL → Return to code agent with blocking_issues",
-      "5. Repeat gate enforcement for code-reviewer and security-auditor",
-      "6. ALL GATES PASS → Check user authorization before deploying branch-manager"
-    ],
-    "critical_rules": [
-      "NEVER run npm test directly - always delegate to test-runner",
-      "NEVER accept code agent test metrics as authoritative",
-      "NEVER deploy branch-manager without: (quality gates PASSED) AND (user authorization)",
-      "ALWAYS parse agent JSON validation_status for gate enforcement"
-    ]
+  "next_steps": {
+    "current_gate": "CODE_IMPLEMENTATION",
+    "gate_status": "COMPLETE",
+    "on_complete": "Deploy test-runner agent with files_modified context for independent validation",
+    "on_test_pass": "Deploy code-reviewer AND security-auditor IN PARALLEL",
+    "on_test_fail": "Return to bug-fixer (me) with blocking_issues from test-runner - DO NOT ask user, automatically iterate",
+    "iteration_loop": "test-runner FAIL → bug-fixer fixes issues → test-runner validates again → repeat until PASS",
+    "do_not_ask_user": "Orchestrator should automatically loop on test failures without user intervention",
+    "final_step": "After test + review + security all PASS → present to user for authorization → deploy branch-manager"
   }
 }
 ```

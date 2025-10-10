@@ -281,44 +281,51 @@ QUALITY: Zero critical/high vulnerabilities, security best practices"
 
 **CRITICAL**: Orchestrator MUST enforce quality gates through agent delegation and JSON parsing ONLY.
 
-### Sequential Quality Gate Workflow
+### Sequential Quality Gate Workflow with Auto-Iteration
 
+**Visual Flow:**
 ```
-Code Agent (feature-developer/bug-fixer/refactoring-specialist)
-  ↓ completes implementation
-  ↓ returns JSON with: implementation_complete=true, files_modified=[], orchestrator_workflow_reminder
-  ↓
-GATE 1: Test Validation (test-runner)
-  ↓ Deploy test-runner with files_modified context
-  ↓ Parse test-runner JSON for AUTHORITATIVE metrics
-  ↓ Enforce: test_exit_code === 0 AND coverage >= 80 AND lint_exit_code === 0
-  ↓ IF PASS → proceed | IF FAIL → return to code agent with blocking_issues
-  ↓
-GATE 2: Code Quality Review (code-reviewer)
-  ↓ Deploy code-reviewer with test results context
-  ↓ Parse code-reviewer JSON for quality verdict
-  ↓ Enforce: all_checks_passed === true AND blocking_issues.length === 0
-  ↓ IF PASS → proceed | IF FAIL → return to code agent with blocking_issues
-  ↓
-GATE 3: Security Audit (security-auditor)
-  ↓ Deploy security-auditor with security_focus_areas
-  ↓ Parse security-auditor JSON for vulnerability assessment
-  ↓ Enforce: all_checks_passed === true AND critical_issues.length === 0
-  ↓ IF PASS → proceed | IF FAIL → return to code agent with blocking_issues
-  ↓
-AUTHORIZATION CHECK: User Authorization
-  ↓ Check task prompt for explicit commit/merge instruction
-  ↓ OR check conversation for user authorization
-  ↓ IF AUTHORIZED → proceed | IF NOT → WAIT for user authorization
-  ↓
-GATE 4: Git Operations (branch-manager)
-  ↓ Deploy branch-manager with:
-  ↓   - quality_gates_passed confirmation
-  ↓   - user_authorization evidence
-  ↓ branch-manager verifies dual authorization
-  ↓ Executes git commit and merge operations
-  ↓ Returns JSON with git_operations_successful status
+Step 1: [Code Agent] implements feature/fix
+   ↓
+Step 2: [test-runner] validates
+   ↓ FAIL? → AUTO-LOOP back to Step 1 (DO NOT ask user)
+   ↓ PASS
+Step 3: [code-reviewer] + [security-auditor] IN PARALLEL
+   ↓ Either FAIL? → AUTO-LOOP back to Step 1 (DO NOT ask user)
+   ↓ BOTH PASS
+Step 4: Present to user for review and authorization
+   ↓ User approves
+Step 5: [branch-manager] commits and merges
 ```
+
+**CRITICAL ORCHESTRATOR RULES:**
+
+1. **Auto-iterate on failures - NEVER ask user "what should I do?"**
+   - Test gate fails → automatically return to code agent with blocking_issues
+   - Review gate fails → automatically return to code agent with blocking_issues
+   - Security gate fails → automatically return to code agent with blocking_issues
+   - User interaction ONLY at Step 4 (final authorization)
+
+2. **Parallel review gates - Deploy BOTH at same time**
+   - After test-runner PASSES → deploy code-reviewer AND security-auditor in single message with two Task calls
+   - Example:
+     ```bash
+     # CORRECT: Single message, two Task calls
+     Task --subagent_type code-reviewer --prompt "..."
+     Task --subagent_type security-auditor --prompt "..."
+     ```
+   - WRONG: Deploy code-reviewer, wait for response, then deploy security-auditor
+
+3. **Both review gates must pass**
+   - Check code-reviewer JSON: all_checks_passed === true AND blocking_issues.length === 0
+   - Check security-auditor JSON: all_checks_passed === true AND blocking_issues.length === 0
+   - If EITHER fails → return to code agent with combined blocking_issues
+
+4. **User authorization required for git operations**
+   - After all gates pass → present to user and WAIT for explicit approval
+   - Only deploy branch-manager after user says: "commit", "merge", "ship it", "approved", etc.
+
+**Loop Rule**: Parse agent JSON next_steps field and repeat until all gates pass. NO shortcuts, NO text-based validation, NO user prompts during iteration.
 
 ### Gate Enforcement Rules
 
