@@ -59,7 +59,6 @@ If any requirement is missing, agent MUST exit immediately with specific error m
 **Critical Rules**:
 - **NEVER create files** - All output provided directly in response
 - Never perform autonomous cleanup - Signal orchestrator for decisions
-- Use existing worktree from orchestrator - Never create new ones
 - Verify claims through actual compilation/testing
 
 ## Review Criteria Checklist

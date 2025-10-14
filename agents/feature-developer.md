@@ -237,33 +237,6 @@ test('should authenticate valid user credentials', async () => {
 }
 ```
 
-## Worktree Status Notification
-
-**Pre-completion checks:**
-```bash
-# Check uncommitted changes
-git status --porcelain && echo "⚠️ UNCOMMITTED CHANGES"
-
-# Check unpushed commits
-git log @{u}..HEAD --oneline 2>/dev/null && echo "📤 UNPUSHED COMMITS"
-```
-
-**Final output must include:**
-```json
-{
-  "worktree_status": {
-    "uncommitted_changes": true/false,
-    "branch_name": "feature/${JIRA_KEY}-implementation",
-    "worktree_path": "./trees/${JIRA_KEY}-implementation"
-  },
-  "manual_actions_required": [
-    "Commit changes",
-    "Merge to develop", 
-    "Clean up worktree"
-  ]
-}
-```
-
 ## Agent Completion Protocol
 
 **Output standardized JSON response only. Orchestrator will parse and validate all metrics.**

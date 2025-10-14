@@ -89,20 +89,7 @@ Follow these procedures in every execution run before proceeding to your special
 - Additional tools will be detected based on project type (npm, pip, composer, etc.)
 - If core tools are missing, STOP immediately with installation instructions
 
-**1. Worktree Safety & Setup Protocol:**
-- **Verify Location**: First, run `pwd`. Verify you are in the project's root directory (not inside `./trees/`).
-- **Validate Git Repository**: Run `git rev-parse --is-inside-work-tree`. If this fails, STOP with error.
-- **Main Branch Protection**: Verify not on main branch: `git branch --show-current | grep -q "main" && { echo "ERROR: Cannot work on main branch"; exit 1; }`
-- **JIRA_KEY Validation**: If provided, validate format: `echo "${JIRA_KEY}" | grep -E '^[A-Z]+-[0-9]+$' || { echo "Invalid JIRA_KEY format (use PROJ-123)"; exit 1; }`
-- **Create Worktree**: Create a new, dedicated git worktree for this refactoring work.
-  ```bash
-  git worktree add -b "refactor/code-quality-$(date +%s)" "./trees/refactor-$(date +%s)" develop
-  ```
-- **Isolate Environment**: Change directory into the worktree: `cd "./trees/refactor-$(date +%s)"`
-- **Setup Dependencies**: Install project dependencies in the worktree
-- **All subsequent operations must be relative to this worktree path**
-
-**2. Jira Integration Protocol:**
+**1. Jira Integration Protocol:**
 - If Jira ticket ID is provided, validate objectives exist
 - **Ticket Validation**: `acli jira workitem view ${JIRA_KEY} --fields summary,status,parent,blockedby`
 - **Parent Epic Check**: `acli jira workitem search --jql "parent = ${JIRA_KEY}" --fields key,summary,issuetype,status`
@@ -110,7 +97,7 @@ Follow these procedures in every execution run before proceeding to your special
 - **Progress Documentation**: `acli jira workitem comment --key ${JIRA_KEY} --body "Refactoring progress: [METRICS]"`
 - **Completion**: `acli jira workitem transition --key ${JIRA_KEY} --status "Ready for Review"`
 
-**3. Output Sanitization Protocol:**
+**2. Output Sanitization Protocol:**
 - When reporting refactoring metrics, sanitize sensitive information
 - **Remove**: Internal API endpoints, database schemas, proprietary algorithms, credentials
 - **Sanitize Metrics**: Remove sensitive file paths, replace with generic examples
@@ -123,7 +110,7 @@ Follow these procedures in every execution run before proceeding to your special
 - **Cross-Component Validation**: Test interfaces between refactored and dependent code
 - **JSON Evidence Generation**: Create structured proof for orchestrator
 
-**5. Orchestrator Communication Protocol:**
+**3. Orchestrator Communication Protocol:**
 - Do not perform autonomous cleanup - signal orchestrator instead
 - Do not manage branches autonomously - report status and let orchestrator decide
 - Generate structured JSON reports for orchestrator consumption
@@ -870,69 +857,3 @@ Focus solely on:
 - Accurate metrics extraction and reporting
 
 Work stays in assigned worktree. No autonomous merging or cleanup.
-
-## 🚨 WORKTREE STATUS NOTIFICATION
-
-**CRITICAL**: This agent works in isolated worktrees but does NOT commit or merge changes automatically.
-
-### Pre-Completion Checks
-**Before signaling completion, verify worktree status:**
-
-```bash
-# Check for uncommitted changes
-UNCOMMITTED=$(git status --porcelain)
-if [ -n "$UNCOMMITTED" ]; then
-    echo "⚠️  UNCOMMITTED CHANGES DETECTED"
-    git status --short
-fi
-
-# Check for unpushed commits  
-UNPUSHED=$(git log @{u}..HEAD --oneline 2>/dev/null || echo "No upstream")
-if [ -n "$UNPUSHED" ] && [ "$UNPUSHED" != "No upstream" ]; then
-    echo "📤 UNPUSHED COMMITS DETECTED"
-    echo "$UNPUSHED"
-fi
-```
-
-### Completion Notification Template
-**Final JSON output must include commit and merge status:**
-
-```json
-{
-  "status": "completed",
-  "worktree_status": {
-    "uncommitted_changes": true/false,
-    "uncommitted_files": ["refactored_file.js", "tests/unit_tests.js"],
-    "unpushed_commits": true/false, 
-    "commits_ready": ["commit_hash1", "commit_hash2"],
-    "branch_name": "[BRANCH_NAME]",
-    "worktree_path": "[WORKTREE_PATH]"
-  },
-  "manual_actions_required": [
-    "Commit refactored code: git add . && git commit -m 'refactor: improve code structure'",
-    "Merge to develop: Use branch-manager agent or manual merge",
-    "Clean up worktree: Use branch-manager teardown"
-  ],
-  "merge_required": true,
-  "next_action": "Review and merge refactored code from worktree to develop branch"
-}
-```
-
-### User Alert Messages
-**Always display clear warnings:**
-
-```
-🚨 REFACTORING COMPLETION NOTICE:
-✅ Code refactoring completed successfully in worktree
-⚠️  UNCOMMITTED CHANGES: [X files] need to be committed  
-⚠️  UNMERGED WORK: Branch '[BRANCH_NAME]' ready for merge
-📋 MANUAL ACTION REQUIRED: Commit refactored changes and merge to develop
-
-Next Steps:
-1. Review refactored code in: ./trees/[WORKTREE_PATH]
-2. Commit any remaining changes
-3. Use branch-manager agent to merge safely
-4. Clean up worktree when complete
-```
-
-**Remember**: This agent never performs autonomous merging. All refactored code remains in the worktree until manually integrated.

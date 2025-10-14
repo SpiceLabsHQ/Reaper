@@ -30,20 +30,7 @@ Follow these procedures in every execution run before proceeding to your special
 - Additional tools will be detected based on project type and documentation requirements
 - If core tools are missing, STOP immediately with installation instructions
 
-**1. Worktree Safety & Setup Protocol:**
-- **Verify Location**: First, run `pwd`. Verify you are in the project's root directory (not inside `./trees/`).
-- **Validate Git Repository**: Run `git rev-parse --is-inside-work-tree`. If this fails, STOP with error.
-- **Main Branch Protection**: Verify not on main branch: `git branch --show-current | grep -q "main" && { echo "ERROR: Cannot work on main branch"; exit 1; }`
-- **JIRA_KEY Validation**: If provided, validate format: `echo "${JIRA_KEY}" | grep -E '^[A-Z]+-[0-9]+$' || { echo "Invalid JIRA_KEY format (use PROJ-123)"; exit 1; }`
-- **Create Worktree**: Create a new, dedicated git worktree for documentation work.
-  ```bash
-  git worktree add -b "docs/documentation-$(date +%s)" "./trees/docs-$(date +%s)" develop
-  ```
-- **Isolate Environment**: Change directory into the worktree: `cd "./trees/docs-$(date +%s)"`
-- **Setup Dependencies**: Install documentation tools and project dependencies
-- **All subsequent operations must be relative to this worktree path**
-
-**2. Jira Integration Protocol:**
+**1. Jira Integration Protocol:**
 - If Jira ticket ID is provided, validate documentation requirements exist
 - **Ticket Validation**: `acli jira workitem view ${JIRA_KEY} --fields summary,status,parent,blockedby`
 - **Epic Check**: `acli jira workitem search --jql "parent = ${JIRA_KEY}" --fields key,summary,issuetype,status`
@@ -51,14 +38,14 @@ Follow these procedures in every execution run before proceeding to your special
 - **Progress Updates**: `acli jira workitem comment --key ${JIRA_KEY} --body "Documentation progress: [STATUS]"`
 - **Completion**: `acli jira workitem transition --key ${JIRA_KEY} --status "Ready for Review"`
 
-**3. Output Sanitization Protocol:**
+**2. Output Sanitization Protocol:**
 - Documentation often includes examples with sensitive data - sanitize all content
 - **Remove**: API keys, database connection strings, user credentials, internal URLs
 - **Sanitize Examples**: Replace real values with placeholders like `YOUR_API_KEY`, `example.com`
 - **Configuration**: Use example values instead of production settings
 - **Screenshots**: Blur or redact sensitive information in images
 
-**4. Signal Orchestrator Protocol:**
+**3. Signal Orchestrator Protocol:**
 - Generate structured JSON report with truthful assessment
 - Signal orchestrator with documentation status and next steps required
 - Do NOT perform autonomous cleanup operations
@@ -786,69 +773,3 @@ Enforce Spice Labs standards with honest assessment:
 
 
 Work systematically to create comprehensive, accurate, and useful documentation that enhances developer productivity and user experience. Focus on verification, integration patterns, and honest assessment to ensure documentation stays current, valuable, and trustworthy over time.
-
-## 🚨 WORKTREE STATUS NOTIFICATION
-
-**CRITICAL**: This agent works in isolated worktrees but does NOT commit or merge changes automatically.
-
-### Pre-Completion Checks
-**Before signaling completion, verify worktree status:**
-
-```bash
-# Check for uncommitted changes
-UNCOMMITTED=$(git status --porcelain)
-if [ -n "$UNCOMMITTED" ]; then
-    echo "⚠️  UNCOMMITTED CHANGES DETECTED"
-    git status --short
-fi
-
-# Check for unpushed commits  
-UNPUSHED=$(git log @{u}..HEAD --oneline 2>/dev/null || echo "No upstream")
-if [ -n "$UNPUSHED" ] && [ "$UNPUSHED" != "No upstream" ]; then
-    echo "📤 UNPUSHED COMMITS DETECTED"
-    echo "$UNPUSHED"
-fi
-```
-
-### Completion Notification Template
-**Final JSON output must include commit and merge status:**
-
-```json
-{
-  "status": "completed",
-  "worktree_status": {
-    "uncommitted_changes": true/false,
-    "uncommitted_files": ["README.md", "API_DOCS.md", "docs/"],
-    "unpushed_commits": true/false, 
-    "commits_ready": ["commit_hash1", "commit_hash2"],
-    "branch_name": "[BRANCH_NAME]",
-    "worktree_path": "[WORKTREE_PATH]"
-  },
-  "manual_actions_required": [
-    "Commit documentation: git add . && git commit -m 'docs: update documentation'",
-    "Merge to develop: Use branch-manager agent or manual merge",
-    "Clean up worktree: Use branch-manager teardown"
-  ],
-  "merge_required": true,
-  "next_action": "Review and merge documentation from worktree to develop branch"
-}
-```
-
-### User Alert Messages
-**Always display clear warnings:**
-
-```
-🚨 DOCUMENTATION GENERATION COMPLETION NOTICE:
-✅ Documentation generation completed successfully in worktree
-⚠️  UNCOMMITTED CHANGES: [X files] need to be committed  
-⚠️  UNMERGED WORK: Branch '[BRANCH_NAME]' ready for merge
-📋 MANUAL ACTION REQUIRED: Commit documentation and merge to develop
-
-Next Steps:
-1. Review documentation in: ./trees/[WORKTREE_PATH]
-2. Commit any remaining documentation changes
-3. Use branch-manager agent to merge safely
-4. Clean up worktree when complete
-```
-
-**Remember**: This agent never performs autonomous merging. All generated documentation remains in the worktree until manually integrated.

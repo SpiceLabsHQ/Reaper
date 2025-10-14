@@ -76,32 +76,21 @@ Follow these procedures in every execution run before proceeding to your special
   - **TruffleHog**: `curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh`
   - **Git**: Install via package manager or visit https://git-scm.com/downloads
 
-**1. Worktree Safety & Setup Protocol:**
-- **Verify Location**: First, run `pwd`. Verify you are in the project's root directory (not inside `./trees/`).
-- **Validate Git Repository**: Run `git rev-parse --is-inside-work-tree`. If this fails, STOP with error.
-- **Main Branch Protection**: Verify not on main branch: `git branch --show-current | grep -q "main" && { echo "ERROR: Cannot work on main branch"; exit 1; }`
-- **Create Worktree**: Create a new, dedicated git worktree for this security audit.
-  ```bash
-  git worktree add -b "security-audit-$(date +%s)" "./trees/security-audit-$(date +%s)" ${TARGET_BRANCH:-HEAD}
-  ```
-- **Isolate Environment**: Change directory into the worktree: `cd "./trees/security-audit-$(date +%s)"`
-- **All subsequent operations must be relative to this worktree path**
-
-**2. Jira Integration Protocol:**
+**1. Jira Integration Protocol:**
 - If Jira ticket ID is provided, validate format: `echo "${JIRA_KEY}" | grep -E '^[A-Z]+-[0-9]+$' || { echo "Invalid JIRA_KEY format"; exit 1; }`
 - **Ticket Validation**: `acli jira workitem view ${JIRA_KEY} --fields summary,status,parent,blockedby`
 - **Status Update**: `acli jira workitem transition --key ${JIRA_KEY} --status "Security Review"`
 - **Create Vulnerability Tickets**: For critical findings, use `acli jira workitem create --project KEY --type Bug --summary "Security: [VULNERABILITY]" --description "[DETAILS]"`
 - **Comment Updates**: `acli jira workitem comment --key ${JIRA_KEY} --body "Security audit completed with [X] findings"`
 
-**3. Output Sanitization Protocol:**
+**2. Output Sanitization Protocol:**
 - Security findings often contain sensitive data - sanitize all output
 - **Remove**: Live credentials, API keys, passwords, tokens, connection strings, PII
 - **Redact Secrets**: Replace with `[REDACTED-API-KEY]`, `[REDACTED-PASSWORD]`, `[REDACTED-TOKEN]`
 - **Sanitize Examples**: Remove actual values from code examples and vulnerability descriptions
 - **Verify Output**: Double-check all reports for exposed secrets before presenting
 
-**4. Orchestrator Communication Protocol:**
+**3. Orchestrator Communication Protocol:**
 - This agent does not perform cleanup or branch management
 - **Signal Completion**: Report findings to orchestrator with completion status
 - **Leave Evidence**: Preserve all scan outputs and worktree for verification
@@ -609,53 +598,6 @@ EOF
 ```
 
 Work systematically, prioritizing verified critical security issues while providing remediation guidance. Maintain detailed audit trails with exit code evidence and ensure all findings are backed by concrete tool execution results, not assumptions.
-
-## 🚨 WORKTREE STATUS NOTIFICATION
-
-**CRITICAL**: This agent works in isolated worktrees but does NOT commit or merge changes automatically.
-
-### Pre-Completion Checks
-**Before signaling completion, verify worktree status:**
-
-```bash
-# Check for uncommitted changes
-UNCOMMITTED=$(git status --porcelain)
-if [ -n "$UNCOMMITTED" ]; then
-    echo "⚠️  UNCOMMITTED CHANGES DETECTED"
-    git status --short
-fi
-
-# Check for unpushed commits  
-UNPUSHED=$(git log @{u}..HEAD --oneline 2>/dev/null || echo "No upstream")
-if [ -n "$UNPUSHED" ] && [ "$UNPUSHED" != "No upstream" ]; then
-    echo "📤 UNPUSHED COMMITS DETECTED"
-    echo "$UNPUSHED"
-fi
-```
-
-### Completion Notification Template
-**Final JSON output must include commit and merge status:**
-
-```json
-{
-  "status": "completed",
-  "worktree_status": {
-    "uncommitted_changes": true/false,
-    "uncommitted_files": ["scan-results.log", "security-report.md"],
-    "unpushed_commits": true/false, 
-    "commits_ready": ["commit_hash1", "commit_hash2"],
-    "branch_name": "[BRANCH_NAME]",
-    "worktree_path": "[WORKTREE_PATH]"
-  },
-  "manual_actions_required": [
-    "Commit security scan results: git add . && git commit -m 'security: audit findings'",
-    "Merge to develop: Use branch-manager agent or manual merge",
-    "Clean up worktree: Use branch-manager teardown"
-  ],
-  "merge_required": true,
-  "next_action": "Review and merge security findings from worktree to develop branch"
-}
-```
 
 ## Agent Completion Protocol
 

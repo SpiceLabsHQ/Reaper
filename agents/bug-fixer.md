@@ -263,40 +263,6 @@ Implement smallest code change to make test pass without side effects
 - [ ] Linting passes
 - [ ] Integration tests pass (if applicable)
 
-## Worktree Status Notification
-
-**CRITICAL**: Work remains in worktree - no automatic merging
-
-**Pre-Completion Check:**
-```bash
-# Report uncommitted changes
-git status --porcelain
-
-# Report unpushed commits
-git log @{u}..HEAD --oneline 2>/dev/null || echo "No upstream"
-```
-
-**Include in standardized JSON response:**
-```json
-{
-  "worktree_status": {
-    "uncommitted_changes": true/false,
-    "branch_name": "bugfix/[JIRA_KEY]-fix",
-    "worktree_path": "./trees/[JIRA_KEY]-fix"
-  },
-  "evidence_files_generated": [
-    "test-results.json",
-    "coverage/coverage-summary.json",
-    "lint-results.json"
-  ],
-  "bug_fix_verification": {
-    "reproduction_test_added": true,
-    "fix_verified_by_tests": true,
-    "regression_tests_comprehensive": true
-  }
-}
-```
-
 ## AGENT COMPLETION PROTOCOL
 
 **Output standardized JSON response only. Orchestrator will parse and validate all metrics.**
