@@ -84,6 +84,13 @@ AI agents that provide specialized development capabilities:
 - **refactoring-specialist.md**: Code improvement and technical debt elimination
 - **dev-comedian.md**: Humor and levity injection during development
 
+### Agent Configuration Template
+- **format-template.example**: Reference template showing the required structure for creating new agents
+  - Demonstrates the three required fields: `identifier`, `whenToUse`, `systemPrompt`
+  - Shows proper YAML frontmatter formatting
+  - Includes example patterns and documentation best practices
+  - Use this as a guide when creating custom agents
+
 ### Agent Model Selection Guidelines
 
 When designing or updating agents, select the appropriate Claude model based on task characteristics:
