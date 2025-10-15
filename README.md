@@ -119,89 +119,172 @@ Custom slash commands for enhanced workflow:
 
 ## 🚀 Development Workflow
 
-### Full Development Pipeline
+### Dynamic Strategy Selection
 
-The complete development workflow follows this orchestrated pattern:
+**The workflow adapts based on work complexity**, choosing from three strategies:
 
 ```
-spice:orchestrate → Code Agent → Quality Gates → Integration
+workflow-planner analyzes → selects strategy → executes optimally
 ```
 
-#### 1. Task Initiation: `spice:orchestrate`
-- Analyzes requirements and selects appropriate specialized agent
-- Assigns work to the most suitable code agent based on task type
-- Monitors progress and determines completion readiness
+### Strategy 1: Very Small Direct (Complexity Score ≤10)
 
-#### 2. Code Implementation Phase
-**Code agents execute the core development work:**
+**When:** Simple fixes, config changes, single-file updates, documentation
+**How:** Orchestrator or synthetic agents with quality gate validation
+**Environment:** Work directly on branch, no worktree needed
+**Benefits:** Fastest path for trivial changes
 
-- **`bug-fixer`**: Systematic bug reproduction and fixing using TDD methodology
-- **`feature-developer`**: New feature implementation with SOLID principles and comprehensive testing
-- **`refactoring-specialist`**: Code improvement and technical debt elimination
-- **`security-auditor`**: Security vulnerability assessment and remediation
+**Workflow:**
+```
+1. Orchestrator/synthetic agent makes changes
+2. Quality gates: test-runner → code-reviewer + security-auditor (parallel)
+3. User reviews and manually commits/merges when ready
+```
 
-**Key Characteristics:**
-- Agents work independently with full autonomy
-- Follow proven methodologies (TDD, SOLID principles)
-- Generate comprehensive reports on completion
-- Include test coverage, documentation, and validation results
+### Strategy 2: Medium Single Branch (Score ≤30, No File Overlap)
 
-#### 3. Completion Assessment
-**Orchestrator determines work completion based solely on agent reports:**
-- Reviews agent-generated completion reports
-- Validates that acceptance criteria are met
-- Confirms proper testing and documentation
-- **Does not directly read files, run tests, or modify code**
-- Makes go/no-go decisions for quality gate progression
+**When:** Medium complexity, parallel work possible, clear file boundaries, <5 work units
+**How:** Single feature branch with parallel agents on non-overlapping files
+**Environment:** Work on single branch in root directory
+**Benefits:** Efficient parallel work without worktree overhead
 
-#### 4. Quality Gate Sequence
-**If work is deemed complete, sequential quality validation begins:**
+**Workflow:**
+```
+1. branch-manager creates feature branch (no worktree)
+2. Multiple agents work in parallel on EXCLUSIVE files
+   - Agent A: src/auth.js, tests/auth.test.js (ONLY these)
+   - Agent B: src/config.js, tests/config.test.js (ONLY these)
+3. Agents detect file conflicts and exit if detected
+4. Quality gates on combined work: test-runner → code-reviewer + security-auditor
+5. User reviews and manually creates consolidated commit and merges when ready
+```
 
-**a) `test-runner` Agent**
-- **Pre-execution validation**: Detects nested directories (trees/, backup/), previews test discovery
-- **Test organization validation**: Warns about misplaced tests (e.g., integration tests in unit/)
-- **Executes comprehensive test suites** with proper exclusion patterns
-- **Validates 80%+ coverage requirements** for application code
-- **Runs linting and type checking**
-- **Performs build validation**
-- **Provides structured JSON reports** with test counts, coverage metrics, and warnings
-- **Must pass before proceeding**
+**Safety:** Agents exit immediately if file conflicts detected; orchestrator resolves
 
-**b) `code-reviewer` Agent**
-- Conducts thorough code quality review
-- Analyzes security vulnerabilities
-- Validates best practices compliance
-- Checks adherence to coding standards
-- **Must pass before proceeding**
+### Strategy 3: Large Multi-Worktree (Score >30 OR File Overlap OR >5 Units)
 
-**c) `security-auditor` Agent**
-- Performs comprehensive security analysis
-- Scans for vulnerabilities and compliance issues
-- Validates authentication and authorization patterns
-- Reviews data handling and encryption practices
-- **Must pass before integration**
+**When:** High complexity, file overlap between work units, or many work units
+**How:** Isolated worktrees for each work stream → consolidated review branch
+**Environment:** Separate worktrees under `./trees/` directory
+**Benefits:** Complete isolation prevents agent conflicts, manages complexity
 
-#### 5. Iteration Loop
-**If any quality gate fails:**
-- Work returns to appropriate code agent for remediation
-- Specific issues are addressed based on quality gate feedback
-- Process repeats until all quality gates pass
-- Full traceability maintained throughout iterations
+**Workflow:**
+```
+1. branch-manager creates review branch (feature/PROJ-123-review)
+2. branch-manager creates worktrees for each stream:
+   - ./trees/PROJ-123-auth (authentication)
+   - ./trees/PROJ-123-api (API endpoints)
+   - ./trees/PROJ-123-ui (user interface)
 
-#### 6. Integration and Completion
-**Only after all quality gates pass:**
-- Code integration to develop branch
-- Jira ticket status updates
-- Cleanup of temporary branches and worktrees
-- Final documentation and deployment preparation
+3. For EACH worktree (sequential):
+   a. Code agent implements work package (NO commits)
+   b. Quality gates validate: test-runner → code-reviewer + security-auditor
+   c. Iterate until ALL gates pass
+   d. Orchestrator deploys branch-manager AFTER quality gates pass
+   e. branch-manager commits in worktree (consolidation only)
+   f. branch-manager merges worktree → review branch
+   g. branch-manager cleans up worktree (verify no build artifacts)
+
+4. Review branch contains all consolidated work
+5. User reviews and manually merges review branch → develop when ready
+```
+
+**Safety:** Each worktree validated independently before consolidation
+
+### Strategy Selection Criteria
+
+**workflow-planner estimates complexity using measurable metrics:**
+
+**1. File Impact Score:** file count × complexity per file (1-3 points)
+**2. Dependency Complexity:** external APIs, DB changes, libraries (1-3 points each)
+**3. Testing Burden:** unit (1pt), integration (2pt), e2e (3pt)
+**4. Integration Risk:** file overlap (3pt), interface changes (2pt)
+**5. Knowledge Uncertainty:** unfamiliar tech (3pt), unclear requirements (2pt)
+
+**Total Score Determines Strategy:**
+- Score ≤10: `very_small_direct`
+- Score ≤30 (no overlap, ≤5 units): `medium_single_branch`
+- Score >30 OR file overlap OR >5 units: `large_multi_worktree`
+
+**Rationale Provided:** workflow-planner explains why each strategy was chosen
+
+### Coding Agent Testing Philosophy
+
+**Critical separation between development testing and quality validation:**
+
+**Coding Agents (bug-fixer, feature-developer, refactoring-specialist):**
+- Test ONLY their specific changes during TDD
+- Run targeted tests: `npm test -- path/to/their-file.test.js`
+- Do NOT run full test suite
+- Results are for immediate feedback during Red-Green-Refactor
+- Purpose: Verify THEIR changes work, enable fast iteration
+
+**Quality Gate Agent (test-runner):**
+- Runs FULL test suite with ALL tests
+- Validates entire codebase for regressions
+- Provides authoritative metrics for quality decisions
+- Enforces 80%+ coverage across application code
+- Purpose: Ensure NO regressions anywhere in codebase
+
+**Why This Matters:**
+- Prevents context exhaustion (coding agents don't run hundreds of tests)
+- Avoids agent conflicts during parallel development
+- Orchestrator uses only test-runner metrics for go/no-go decisions
+- Clear separation: coding agents develop, test-runner validates
+
+### Quality Gate Sequence (All Strategies)
+
+**Sequential validation after implementation:**
+
+**1. test-runner (MANDATORY first gate):**
+- Runs complete test suite (unit, integration, e2e)
+- Validates 80%+ coverage for application code
+- Executes linting and type checking
+- Performs build validation
+- Must pass before proceeding
+
+**2. code-reviewer + security-auditor (PARALLEL):**
+- Deploy both simultaneously for efficiency
+- Code-reviewer: quality, best practices, SOLID principles
+- Security-auditor: vulnerabilities, compliance, security patterns
+- Both must pass before user authorization
+
+**3. Iteration Loop (AUTO-LOOP - NO user prompts):**
+- If ANY gate fails → return to coding agent with blocking_issues
+- Orchestrator automatically iterates until all gates pass
+- No user intervention during iteration
+
+**4. User Authorization Required:**
+- After ALL gates pass → present to user
+- Wait for explicit approval: "commit", "merge", "ship it", "approved"
+- Only then deploy branch-manager for git operations
+
+### Strategy Escalation
+
+**If complexity exceeds original estimate:**
+
+**Symptoms:**
+- Agents routinely exceed context limits
+- File overlap discovered during Strategy 2
+- Work units larger than expected
+- Quality gates repeatedly fail due to scope
+
+**Action:**
+- Redeploy workflow-planner to re-analyze
+- Upgrade to higher complexity strategy
+- Reorganize remaining work for new strategy
+- May consolidate partial work before switching
 
 ### Workflow Benefits
 
-- **Separation of Concerns**: Orchestrator focuses on workflow, agents focus on execution
-- **Quality Assurance**: Multi-layered validation prevents defects from reaching production
-- **Iterative Improvement**: Failed quality gates provide specific feedback for remediation
-- **Audit Trail**: Complete traceability from task initiation to integration
-- **Consistency**: Standardized workflow regardless of task complexity
+- **Adaptive Complexity Handling**: Right tool for the job based on actual complexity
+- **Efficient Parallel Work**: Strategy 2 enables safe concurrent development
+- **Complete Isolation**: Strategy 3 prevents agent conflicts in complex scenarios
+- **Quality Assurance**: Multi-layered validation prevents defects
+- **Iterative Improvement**: Automatic iteration on quality gate failures
+- **Context Optimization**: Agents test only their changes, not entire codebase
+- **Audit Trail**: Complete traceability from planning to integration
+- **Flexible Workflows**: No mandatory worktrees when not needed
 
 ## 🚀 Usage Patterns
 

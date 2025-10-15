@@ -134,28 +134,41 @@ Consolidate → Test Runner Loop → Code Review Loop → Security Audit Loop �
 
 ## Orchestration Protocol
 
-### 1. PLAN (Mandatory)
-Deploy workflow-planner to analyze and design consolidation strategy:
+### 1. PLAN & STRATEGY SELECTION (Mandatory)
+Deploy workflow-planner to analyze work size and select optimal strategy:
 ```bash
 # Use parsed inputs from pre-flight validation
 Task --subagent_type workflow-planner \
-  --description "Plan implementation strategy" \
+  --description "Analyze work and select strategy" \
   --prompt "JIRA_KEY: $JIRA_KEY
-WORKTREE: Work from root directory for planning
 PLAN: $IMPLEMENTATION_PLAN
-SCOPE: Analyze task for parallel opportunities and consolidation sequence
-RESTRICTION: Do NOT implement anything, ONLY plan
-QUALITY: Map file overlaps, identify conflict risks, design merge sequence
-SIZE CONSTRAINTS: Each work package max 5 files, 500 LOC, 2 hours work
-CONTEXT SAFETY: Ensure no package risks agent context exhaustion"
+ANALYZE: Estimate work size using measurable criteria:
+  - File impact (count × complexity)
+  - Dependency complexity (APIs, DB, libraries)
+  - Testing burden (unit, integration, e2e)
+  - Integration risk (file overlap, interface changes)
+  - Knowledge uncertainty (unfamiliar tech, unclear requirements)
+OUTPUT: Strategy selection with detailed rationale:
+  - very_small_direct (score ≤10): Orchestrator handles with quality gates
+  - medium_single_branch (score ≤30, no overlap): Parallel agents on single branch
+  - large_multi_worktree (score >30 or overlap): Isolated worktrees
+VALIDATE: All work units ≤5 files, ≤500 LOC, ≤2 hours, context-safe
+FILE ASSIGNMENT: Provide specific file paths when possible, exclusive ownership for parallel work"
 ```
 
 #### Work Package Size Validation (YOU MUST ENFORCE):
 **After workflow-planner responds, validate each work package:**
 
 ```javascript
-// Parse workflow-planner JSON and validate package sizes
+// Parse workflow-planner JSON and validate package sizes AND strategy
 const plan = JSON.parse(workflowPlannerResponse);
+
+// Validate strategy selection exists
+if (!plan.strategy_selection || !plan.strategy_selection.selected_strategy) {
+  return "REJECT: workflow-planner must include strategy_selection with selected_strategy";
+}
+
+// Validate work packages
 for (const workUnit of plan.task_decomposition.work_units) {
   // Reject oversized packages
   if (workUnit.size_metrics.estimated_files > 5) {
@@ -171,6 +184,10 @@ for (const workUnit of plan.task_decomposition.work_units) {
     return `REJECT: Work unit ${workUnit.id} not context safe for single agent`;
   }
 }
+
+// Store selected strategy for implementation
+const SELECTED_STRATEGY = plan.strategy_selection.selected_strategy;
+const STRATEGY_RATIONALE = plan.strategy_selection.rationale;
 ```
 
 **If ANY work package fails validation:**
@@ -183,26 +200,291 @@ Task --subagent_type workflow-planner \
    ACTION: Break these into smaller, context-safe work units"
 ```
 
-### 2. SETUP WORKTREES
-Create worktree per work stream identified by planner:
-```
-Task --subagent_type branch-manager
-"SCOPE: Create worktree for [STREAM] based on [ARGUMENTS]
-RESTRICTION: Do NOT modify code, ONLY setup environment
-WORKTREE: Create ./trees/PROJ-XXX-[component]
-QUALITY: Install dependencies, validate environment ready"
+### 2. STRATEGY IMPLEMENTATION (Based on workflow-planner selection)
+
+**Execute the appropriate strategy based on $SELECTED_STRATEGY:**
+
+---
+
+#### STRATEGY 1: Very Small Direct (Score ≤10)
+
+**When:** Simple fixes, config changes, documentation updates
+**Characteristics:** Single file, minimal testing, low complexity
+
+```bash
+# 1. Direct Implementation (Orchestrator or Synthetic Agents)
+# Orchestrator makes minimal changes OR uses synthetic agents
+# Focus: Single file fix, config change, documentation update
+# Testing: Focused TDD on changes only
+
+# 2. Quality Gate Validation (MANDATORY)
+Task --subagent_type test-runner \
+  --description "Validate all tests and coverage" \
+  --prompt "JIRA_KEY: $JIRA_KEY
+WORKTREE: Run tests from root directory
+PLAN: Validate all tests pass, coverage maintained at 80%+
+SCOPE: Full test suite with coverage, linting, build validation
+RESTRICTION: Do NOT modify code, ONLY validate
+QUALITY: All tests pass, 80%+ coverage, zero linting errors"
+
+# 3. Parallel Quality Review (After test-runner PASSES)
+Task --subagent_type code-reviewer \
+  --description "Review code quality" \
+  --prompt "JIRA_KEY: $JIRA_KEY
+FILES_MODIFIED: [list modified files]
+SCOPE: Code quality, best practices, security patterns
+RESTRICTION: Do NOT implement, ONLY review"
+
+Task --subagent_type security-auditor \
+  --description "Security assessment" \
+  --prompt "JIRA_KEY: $JIRA_KEY
+FILES_MODIFIED: [list modified files]
+SCOPE: Security vulnerabilities, compliance
+RESTRICTION: Focus on security only"
+
+# 4. Iterate if Quality Gates Fail (AUTO-LOOP - NO user prompt)
+# If any gate fails → return to implementation with blocking_issues
+
+# 5. Present to User (After ALL gates pass)
+# Work complete and validated
+# Changes remain uncommitted for user to commit and merge manually
+# User can review changes and commit when ready
 ```
 
-### 3. IMPLEMENTATION LOOPS
-Deploy coding agents with iterative quality validation:
+---
 
-#### 3a. Initial Implementation
+#### STRATEGY 2: Medium Single Branch (Score ≤30, No File Overlap)
+
+**When:** Medium complexity, parallel work possible, no file overlap, <5 work units
+**Characteristics:** Multiple files, clear boundaries, parallelizable
+
+```bash
+# 1. Branch Setup (NO worktree needed)
+Task --subagent_type branch-manager \
+  --description "Create feature branch" \
+  --prompt "JIRA_KEY: $JIRA_KEY
+OPERATION: Create feature branch feature/$JIRA_KEY from develop
+NO_WORKTREE: Work happens directly on branch in root directory
+QUALITY: Validate branch created successfully"
+
+# 2. File Assignment Validation (CRITICAL: Prevent Overlap)
+# Parse workflow-planner JSON for file assignments
+# Ensure NO TWO AGENTS assigned same files (including tests)
+# Example assignments:
+#   Agent A: src/auth.js, tests/auth.test.js (EXCLUSIVE)
+#   Agent B: src/config.js, tests/config.test.js (EXCLUSIVE)
+
+# 3. Parallel Agent Deployment (SINGLE message, MULTIPLE Task calls)
+Task --subagent_type feature-developer \
+  --description "Implement component A" \
+  --prompt "JIRA_KEY: $JIRA_KEY
+BRANCH: feature/$JIRA_KEY (work directly on branch)
+FILES_ASSIGNED: [agent-A-exclusive-files from workflow-planner]
+FILE_OWNERSHIP: EXCLUSIVE - exit if these files modified by others
+TESTING: TDD on YOUR changes ONLY - do NOT run full test suite
+CONFLICT_DETECTION: Exit immediately if git status shows unexpected changes
+NO_COMMITS: Work will be committed after quality gates pass
+SCOPE: Implement only your assigned component
+QUALITY: SOLID principles, focused TDD on your changes"
+
+Task --subagent_type feature-developer \
+  --description "Implement component B" \
+  --prompt "JIRA_KEY: $JIRA_KEY
+BRANCH: feature/$JIRA_KEY (work directly on branch)
+FILES_ASSIGNED: [agent-B-exclusive-files from workflow-planner]
+FILE_OWNERSHIP: EXCLUSIVE - exit if these files modified by others
+TESTING: TDD on YOUR changes ONLY - do NOT run full test suite
+CONFLICT_DETECTION: Exit immediately if git status shows unexpected changes
+NO_COMMITS: Work will be committed after quality gates pass
+SCOPE: Implement only your assigned component
+QUALITY: SOLID principles, focused TDD on your changes"
+
+# (Deploy additional agents as needed for other work units)
+
+# 4. Handle Agent Conflict Detection
+# If any agent exits due to file conflicts:
+#   - Determine source of conflict (which agent modified files)
+#   - Reassign work OR sequence work units
+#   - Redeploy affected agents with updated instructions
+
+# 5. Quality Gate Validation (MANDATORY - After ALL agents complete)
+Task --subagent_type test-runner \
+  --description "Run full test suite" \
+  --prompt "JIRA_KEY: $JIRA_KEY
+BRANCH: feature/$JIRA_KEY
+PLAN: Run COMPLETE test suite with coverage analysis
+SCOPE: ALL tests (unit, integration, e2e), linting, build validation
+CONTEXT_FROM_AGENTS: [summarize what all agents implemented]
+RESTRICTION: Do NOT modify code, ONLY validate
+QUALITY: 80%+ coverage, all tests pass, zero linting errors"
+
+# 6. Parallel Quality Review (After test-runner PASSES)
+Task --subagent_type code-reviewer \
+  --description "Review consolidated code quality" \
+  --prompt "JIRA_KEY: $JIRA_KEY
+BRANCH: feature/$JIRA_KEY
+FILES_MODIFIED: [combined list from all agents]
+CONTEXT: Multiple agents worked on this branch in parallel
+SCOPE: Code quality, integration coherence, SOLID principles"
+
+Task --subagent_type security-auditor \
+  --description "Security assessment of all changes" \
+  --prompt "JIRA_KEY: $JIRA_KEY
+BRANCH: feature/$JIRA_KEY
+FILES_MODIFIED: [combined list from all agents]
+SCOPE: Security vulnerabilities across all changes"
+
+# 7. Iterate if Quality Gates Fail (AUTO-LOOP - NO user prompt)
+# Return to appropriate coding agent(s) with blocking_issues
+
+# 8. Present to User (After ALL Quality Gates Pass)
+# All parallel work complete on feature/$JIRA_KEY
+# Quality gates passed: test-runner, code-reviewer, security-auditor
+# Changes remain uncommitted for user to create consolidated commit and merge manually
+# User can review all changes and commit when ready
 ```
-Task --subagent_type [bug-fixer|feature-developer|refactoring-specialist]
-"SCOPE: Implement [specific component/fix] for [ARGUMENTS]
-RESTRICTION: Do NOT work outside [specified files/modules]
-WORKTREE: Work in ./trees/PROJ-XXX-[component] ONLY
-QUALITY: 80% real coverage, zero linting errors, SOLID principles, TDD methodology"
+
+---
+
+#### STRATEGY 3: Large Multi-Worktree (Score >30 OR File Overlap OR >5 Units)
+
+**When:** High complexity, file overlap detected, or >5 work units
+**Characteristics:** Isolated worktrees, sequential consolidation, comprehensive validation
+
+```bash
+# 1. Review Branch Setup (FIRST - Before any worktrees)
+Task --subagent_type branch-manager \
+  --description "Create review branch for consolidation" \
+  --prompt "JIRA_KEY: $JIRA_KEY
+OPERATION: Create review branch feature/$JIRA_KEY-review from develop
+PURPOSE: Consolidation target for all worktree work
+QUALITY: Validate branch created successfully"
+
+# 2. Worktree Creation (One per major work stream)
+Task --subagent_type branch-manager \
+  --description "Create worktrees for work streams" \
+  --prompt "JIRA_KEY: $JIRA_KEY
+OPERATION: Create worktrees for each work stream identified by workflow-planner
+WORKTREES:
+  - ./trees/$JIRA_KEY-auth (authentication work)
+  - ./trees/$JIRA_KEY-api (API endpoints)
+  - ./trees/$JIRA_KEY-ui (user interface)
+BASE_BRANCH: develop (each worktree branches from develop)
+QUALITY: Install dependencies, validate environments ready"
+
+# 3. Sequential Worktree Completion (For EACH worktree, repeat this flow)
+
+## 3a. Code Implementation on Worktree (Small packages, iterative)
+Task --subagent_type [bug-fixer|feature-developer|refactoring-specialist] \
+  --description "Implement work package on worktree" \
+  --prompt "JIRA_KEY: $JIRA_KEY
+WORKTREE: ./trees/$JIRA_KEY-auth
+FILES: [small work package - max 5 files, 500 LOC]
+TESTING: TDD on YOUR changes ONLY - focused testing, NOT full suite
+SCOPE: Implement specific work package from workflow-planner
+RESTRICTION: Stay within worktree, do NOT work in root
+QUALITY: SOLID principles, targeted TDD on your changes"
+
+## 3b. Quality Gates on Worktree (MANDATORY before consolidation)
+Task --subagent_type test-runner \
+  --description "Validate worktree tests" \
+  --prompt "JIRA_KEY: $JIRA_KEY
+WORKTREE: ./trees/$JIRA_KEY-auth
+PLAN: Run FULL test suite with coverage in this worktree
+SCOPE: All tests, coverage, linting, build validation
+RESTRICTION: Do NOT modify code
+QUALITY: 80%+ coverage, all tests pass, zero linting errors"
+
+# Parallel review after test-runner passes
+Task --subagent_type code-reviewer \
+  --description "Review worktree code quality" \
+  --prompt "JIRA_KEY: $JIRA_KEY
+WORKTREE: ./trees/$JIRA_KEY-auth
+FILES_MODIFIED: [from code agent]
+SCOPE: Code quality, SOLID principles, best practices"
+
+Task --subagent_type security-auditor \
+  --description "Security audit of worktree" \
+  --prompt "JIRA_KEY: $JIRA_KEY
+WORKTREE: ./trees/$JIRA_KEY-auth
+FILES_MODIFIED: [from code agent]
+SCOPE: Security vulnerabilities, compliance"
+
+## 3c. Iterate if Quality Gates Fail
+# Return to code agent with blocking_issues until all gates pass
+
+## 3d. Deploy branch-manager for Commit and Merge (AFTER quality gates PASS)
+# Orchestrator deploys branch-manager ONLY after ALL quality gates pass
+Task --subagent_type branch-manager \
+  --description "Commit worktree and merge to review branch" \
+  --prompt "JIRA_KEY: $JIRA_KEY
+WORKTREE: ./trees/$JIRA_KEY-auth
+OPERATION: Commit worktree changes and merge to review branch
+
+QUALITY GATES CONFIRMATION (from orchestrator):
+- test-runner: PASSED (test_exit_code=0, coverage>=80%, lint=clean)
+- code-reviewer: PASSED (all_checks_passed=true, blocking_issues=0)
+- security-auditor: PASSED (all_checks_passed=true, critical_issues=0)
+
+STRATEGY: Strategy 3 (Large Multi-Worktree) - commit required for consolidation
+
+COMMIT IN WORKTREE:
+git -C ./trees/$JIRA_KEY-auth add .
+git -C ./trees/$JIRA_KEY-auth commit -m \"feat(auth): implement OAuth integration
+
+Implements OAuth2 authentication with Google provider
+
+Ref: $JIRA_KEY\"
+
+MERGE TO REVIEW BRANCH:
+git checkout feature/$JIRA_KEY-review
+git merge feature/$JIRA_KEY-auth --no-ff
+
+CLEANUP WORKTREE:
+- Verify no build artifacts committed (node_modules/, dist/, etc.)
+- Remove worktree: git worktree remove ./trees/$JIRA_KEY-auth
+- Delete feature branch: git branch -d feature/$JIRA_KEY-auth
+
+RESTRICTION: Commits ONLY in worktree, merge ONLY to review branch
+QUALITY: Clean commit message, safe merge, artifact-free cleanup"
+
+# 4. REPEAT STEP 3 for each remaining worktree until all consolidated
+
+# 5. Present to User for Review (After all worktrees consolidated)
+# Review branch: feature/$JIRA_KEY-review contains all consolidated work
+# Quality attestation: All worktree quality gates passed during consolidation
+# Changes ready for user to merge review branch → develop manually when ready
+```
+
+---
+
+### STRATEGY ESCALATION PROTOCOL
+
+**If complexity exceeds original estimate during implementation:**
+
+**Symptoms:**
+- Agents routinely run out of context tokens
+- File overlap discovered during implementation (Strategy 2)
+- Work units exceed size constraints
+- Integration complexity higher than expected
+- Quality gates repeatedly fail due to scope issues
+
+**Action:**
+```bash
+Task --subagent_type workflow-planner \
+  --description "Escalate to higher complexity strategy" \
+  --prompt "JIRA_KEY: $JIRA_KEY
+ESCALATION: Original strategy ($SELECTED_STRATEGY) insufficient
+RE-ANALYZE: Complexity exceeded during implementation
+CURRENT_ISSUES:
+  - [specific problems: context exhaustion, file conflicts, size violations]
+  - [agent failures or repeated quality gate failures]
+RECOMMEND: Upgrade to higher complexity strategy with mitigation plan
+NEW_STRATEGY: Provide updated strategy selection with rationale
+WORK_REORGANIZATION: How to reorganize remaining work for new strategy"
+
+# Orchestrator accepts new strategy and re-plans accordingly
+# May need to consolidate partial work before switching strategies
 ```
 
 ## 3.1 INFORMATION HANDOFF PROTOCOL

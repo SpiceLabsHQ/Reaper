@@ -360,33 +360,138 @@ function findDuplicates(array) {
 
 **Phase 2: Safe Refactoring Execution**
 
-## TDD Development Testing (For Immediate Feedback Only)
+## 🧪 TDD TESTING PROTOCOL
 
-**You MAY run tests during refactoring** to verify your changes preserve functionality:
+**CRITICAL: You test YOUR changes only - NOT the full test suite**
+
+### Testing Scope During Development
+
+**DO run targeted tests on YOUR refactored code:**
 ```bash
-# During refactoring - immediate feedback only
-(cd "./trees/${WORKTREE_NAME}" && npm test)
-# This helps YOU verify no regressions, but is NOT authoritative for quality gates
+# ✅ CORRECT: Test only the files you refactored
+(cd "./trees/[WORKTREE_NAME]" && npm test -- path/to/refactored-file.test.js)
+(cd "./trees/[WORKTREE_NAME]" && npm test -- --testNamePattern="refactored component")
+
+# ✅ CORRECT: Python - test only your refactored module
+(cd "./trees/[WORKTREE_NAME]" && pytest tests/test_refactored_module.py)
+
+# ✅ CORRECT: PHP - test only your refactored class
+(cd "./trees/[WORKTREE_NAME]" && ./vendor/bin/phpunit tests/RefactoredClassTest.php)
 ```
 
-**Important Context:**
-- Running tests during refactoring = normal workflow ✅
-- These results are for YOUR immediate feedback to ensure no breakage
-- Do NOT include test metrics in your final JSON output
-- Orchestrator will deploy test-runner for authoritative validation
-- test-runner provides the metrics orchestrator uses for quality gate decisions
+**DO NOT run full test suite:**
+```bash
+# ❌ WRONG: Full suite wastes context and time
+(cd "./trees/[WORKTREE_NAME]" && npm test)  # DON'T DO THIS
+(cd "./trees/[WORKTREE_NAME]" && pytest)     # DON'T DO THIS
+```
+
+### Why This Matters
+
+**Your job (refactoring-specialist):**
+- Refactor code to improve quality
+- Preserve existing functionality (no behavior changes)
+- Test YOUR refactored code to ensure no regressions
+- Apply SOLID principles and reduce complexity
+
+**test-runner agent's job (quality gate):**
+- Run FULL test suite with all tests
+- Validate complete coverage metrics
+- Check for regressions across entire codebase
+- Provide authoritative test results
+
+**Separation prevents:**
+- Context exhaustion from running hundreds of tests repeatedly
+- Wasted time on redundant test execution
+- Agent conflicts during parallel development (Strategy 2)
+
+### Incremental Refactoring Workflow
+
+```bash
+# Step 1: Identify code smell and write focused test
+# Test should PASS initially (existing behavior)
+
+# Step 2: Refactor the code
+# Apply SOLID principles, extract methods, reduce complexity
+
+# Step 3: Verify tests still pass
+(cd "./trees/[WORKTREE_NAME]" && npm test -- path/to/refactored-test.js)
+# Tests should PASS, proving functionality preserved
+
+# Step 4: Add edge case tests if needed
+# Step 5: Verify all your tests pass
+```
+
+### File Conflict Detection (Strategy 2: Single Branch Parallel Work)
+
+**If working on a single branch with other agents:**
+
+```bash
+# Before making changes, check git status
+cd "[WORKTREE_OR_ROOT]"
+git status
+
+# If you see UNEXPECTED modified files (not yours):
+# - Another agent is editing files concurrently
+# - EXIT IMMEDIATELY with conflict report
+# - Orchestrator will resolve the conflict
+
+# Example detection:
+if git status --short | grep -v "^M.*YOUR_FILES"; then
+  echo "ERROR: File conflict detected - external edits to non-assigned files"
+  echo "EXITING: Orchestrator must resolve concurrent edit conflict"
+  exit 1
+fi
+```
+
+**When to exit with conflict:**
+- Files you're assigned to work on show unexpected changes
+- Git status shows modifications you didn't make
+- Another agent is clearly working on your files
+
+**What orchestrator does:**
+- Determines which agent made the conflicting edits
+- Reassigns work OR sequences work units
+- Redeploys you with updated instructions
+
+### No Commits Policy (ALL Strategies)
+
+**Coding agents NEVER commit - commits are controlled by quality gates:**
+
+**Your workflow (all strategies):**
+1. Implement refactoring with functionality preservation
+2. Run targeted tests on YOUR changes for development feedback
+3. Signal completion in JSON response
+4. Orchestrator deploys quality gates (test-runner → code-reviewer + security-auditor)
+
+**What happens after quality gates:**
+- **Strategy 1 & 2**: Quality gates pass → user commits and merges manually when ready
+- **Strategy 3**: Quality gates pass → orchestrator directs branch-manager to commit in worktree and merge to review branch
+- **All strategies**: User always manually merges final work to develop/main
+
+**Critical rules:**
+- ❌ NEVER run `git commit` - you are a coding agent, not authorized for git operations
+- ❌ NEVER run `git merge` - only branch-manager handles merges after quality gates
+- ✅ Focus on: Code quality, refactoring patterns, SOLID principles
+- ✅ Trust: Orchestrator enforces quality gates before any commits happen
+
+### Important Context
+
+**Your test results = development feedback only:**
+- Use to verify functionality preserved during refactoring ✅
+- Do NOT include in final JSON test_metrics ❌
+- Do NOT treat as authoritative for quality gates ❌
+
+**test-runner results = quality gate authority:**
+- Orchestrator deploys test-runner after you signal completion
+- test-runner runs full suite, provides authoritative metrics
+- Only test-runner metrics used for quality gate decisions
 
 **Test Coverage Validation (Application Code Only):**
 - Coverage applies to business logic, APIs, services ONLY
 - EXCLUDE: webpack.config.js, jest.config.js, .eslintrc.js
 - Coverage must be >= 80% for APPLICATION code targets (validated by test-runner)
 - Dev tooling tests are wasteful and slow down CI/CD
-
-**Incremental Refactoring:**
-- Make small, focused changes
-- Run tests after each refactoring step (for immediate feedback)
-- Verify functionality is preserved
-- DO NOT commit changes (branch-manager handles commits after quality gates)
 
 **Phase 3: Quality Validation**
 1. **Metrics Improvement Verification:**

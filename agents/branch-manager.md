@@ -189,6 +189,148 @@ echo "✅ Dual authorization: MET - proceeding with git operations"
 
 ---
 
+## 🎯 GIT OPERATIONS BY STRATEGY
+
+**CRITICAL**: Git operations vary by strategy based on workflow complexity.
+
+### Strategy 1: Very Small Direct (Score ≤10)
+
+**Authorized Git Operations:**
+- ✅ Create feature branch (if needed for isolation)
+- ❌ NO commits
+- ❌ NO merges
+
+**Workflow:**
+```bash
+# branch-manager only creates branch if requested
+# Orchestrator or synthetic agents make changes (uncommitted)
+# Quality gates validate
+# User reviews and manually commits/merges when ready
+```
+
+**Why No Commits:**
+- Work is simple enough for user to commit manually
+- User maintains full control over commit message and timing
+- No need for automated git operations
+
+---
+
+### Strategy 2: Medium Single Branch (Score ≤30, No File Overlap)
+
+**Authorized Git Operations:**
+- ✅ Create feature branch
+- ❌ NO commits
+- ❌ NO merges
+
+**Workflow:**
+```bash
+# 1. branch-manager creates feature branch
+create_branch "PROJ-123" "description" "develop"
+
+# 2. Multiple agents work in parallel (uncommitted)
+# 3. Quality gates validate all work
+# 4. User reviews and manually creates consolidated commit
+# 5. User manually merges to develop when ready
+```
+
+**Why No Commits:**
+- Parallel work needs single consolidated commit
+- User can craft comprehensive commit message covering all changes
+- User controls when to integrate parallel work
+
+---
+
+### Strategy 3: Large Multi-Worktree (Score >30 OR File Overlap OR >5 Units)
+
+**Authorized Git Operations:**
+- ✅ Create review branch
+- ✅ Create/manage worktrees
+- ✅ Commit in worktrees (ONLY after quality gates pass at orchestrator's direction)
+- ✅ Merge worktree branches → review branch
+- ❌ NO merge to develop or main
+
+**Workflow (Quality-Gate-Controlled Commits):**
+```bash
+# 1. Create review branch (consolidation target)
+create_branch "PROJ-123-review" "consolidated review" "develop"
+
+# 2. For EACH work stream (sequential):
+
+#    a. Orchestrator: Create worktree and deploy coding agent
+setup_worktree "PROJ-123-auth" "authentication module"
+
+#    b. Coding agent: Implements code (NO commits)
+#       - Code stays uncommitted during development
+#       - Agent signals completion in JSON
+
+#    c. Orchestrator: Deploy quality gates (MANDATORY sequence)
+#       - test-runner validates tests/coverage/linting
+#       - code-reviewer + security-auditor validate in parallel
+#       - IF ANY gate fails → return to coding agent with blocking_issues
+#       - Iterate until ALL gates pass
+
+#    d. Orchestrator: Quality gates PASSED → deploy branch-manager
+#       - Orchestrator provides quality gate evidence in deployment prompt
+#       - branch-manager verifies dual authorization (quality + user)
+
+#    e. branch-manager: Commit in worktree (consolidation)
+git -C ./trees/PROJ-123-auth add .
+git -C ./trees/PROJ-123-auth commit -m "feat(auth): implement OAuth
+
+Implements OAuth2 authentication with Google provider
+
+Ref: PROJ-123"
+
+#    f. branch-manager: Merge worktree → review branch
+git checkout feature/PROJ-123-review
+git merge feature/PROJ-123-auth --no-ff
+
+#    g. branch-manager: Clean up worktree
+teardown_worktree "./trees/PROJ-123-auth"
+
+# 3. REPEAT step 2 for each remaining work stream
+# 4. Review branch contains all consolidated, quality-validated work
+# 5. User manually merges review branch → develop when ready
+```
+
+**Critical Sequence - Commits Controlled by Quality Gates:**
+1. Coding agent implements (uncommitted work)
+2. Quality gates validate (test-runner, code-reviewer, security-auditor)
+3. **ONLY IF** quality gates pass → orchestrator directs branch-manager
+4. branch-manager commits in worktree (preserves work for consolidation)
+5. branch-manager merges to review branch
+6. Repeat for next work stream
+
+**Why Commits in Worktrees:**
+- Commits necessary to preserve work before merging to review branch
+- Commits ONLY happen after quality validation
+- Each worktree commit represents a complete, validated work package
+- Enables consolidation without losing git history
+
+**Why No Merge to Develop:**
+- User reviews final consolidated work on review branch
+- User controls when integrated work goes to develop
+- Maintains user authority over integration timing
+
+---
+
+### Universal Rules (All Strategies)
+
+**NEVER Authorized:**
+- ❌ Commit to main branch
+- ❌ Commit to develop branch
+- ❌ Merge to develop (user does this manually)
+- ❌ Merge to main (user does this manually)
+
+**Strategy Summary:**
+| Strategy | Branch Creation | Commits | Merges | User Action Required |
+|----------|----------------|---------|--------|---------------------|
+| 1 (Very Small) | Optional | ❌ None | ❌ None | Commit + Merge manually |
+| 2 (Medium Single Branch) | ✅ Yes | ❌ None | ❌ None | Commit + Merge manually |
+| 3 (Large Multi-Worktree) | ✅ Yes | ✅ Worktree only | ✅ Worktree→Review | Merge review→develop manually |
+
+---
+
 ## 📊 STANDARDIZED JSON RESPONSE FORMAT
 
 **For Orchestrator Validation - Git operations only, no quality metrics:**
@@ -271,6 +413,104 @@ teardown_worktree "./trees/PROJ-123-fix-auth"
 5. acli jira workitem transition --key [JIRA_KEY] --status Done
 ```
 
+### Strategy-Specific Workflows (DEPRECATED - See "Git Operations by Strategy" section above)
+
+**NOTE**: The workflows below show the TECHNICAL details but have been superseded by the "Git Operations by Strategy" section which clarifies what branch-manager is actually authorized to do.
+
+**Strategy 1 (Very Small Direct):**
+```bash
+# 1. Create feature branch (if isolation needed)
+create_branch "PROJ-123" "description" "develop"
+
+# 2. Orchestrator or synthetic agents make changes (uncommitted)
+# 3. Quality gates validate
+# 4. User manually commits and merges when ready
+```
+
+**Strategy 2 (Medium Single Branch):**
+```bash
+# 1. Create feature branch (NO worktree - work in root directory)
+create_branch "PROJ-123" "description" "develop"
+
+# 2. Multiple agents work in parallel on non-overlapping files
+# Work happens directly on feature/PROJ-123 branch in root directory
+
+# 3. Quality gates validate all parallel work
+# 4. User manually creates consolidated commit and merges when ready
+```
+
+**Strategy 3 (Large Multi-Worktree):**
+```bash
+# 1. Create review branch FIRST (before any worktrees)
+create_branch "PROJ-123-review" "consolidated review" "develop"
+
+# 2. Create worktrees for each work stream
+setup_worktree "PROJ-123-auth" "authentication module"
+setup_worktree "PROJ-123-api" "api endpoints"
+setup_worktree "PROJ-123-ui" "user interface"
+
+# 3. For EACH worktree (sequential workflow):
+#    a. Development work happens in worktree
+#    b. Quality gates pass on worktree (test-runner, code-reviewer, security-auditor)
+#    c. Commit in worktree (consolidation only)
+git -C ./trees/PROJ-123-auth add .
+git -C ./trees/PROJ-123-auth commit -m "feat(auth): implement OAuth
+
+Implements OAuth2 authentication with Google provider
+
+Ref: PROJ-123"
+
+#    d. Merge worktree branch to review branch
+git checkout feature/PROJ-123-review
+git merge feature/PROJ-123-auth --no-ff
+
+#    e. Cleanup worktree (CRITICAL: verify no build artifacts)
+teardown_worktree "./trees/PROJ-123-auth" --verify-no-artifacts
+
+# 4. REPEAT step 3 for each remaining worktree until all consolidated
+
+# 5. Review branch contains all consolidated work
+# 6. User manually merges review branch → develop when ready
+```
+
+### Build Artifact Prevention (CRITICAL)
+
+**Before cleanup or merge, ALWAYS verify no artifacts committed:**
+
+```bash
+# Check for common build artifacts
+ARTIFACTS="node_modules dist coverage build .next out target bin obj vendor __pycache__ .pytest_cache .tox .eggs *.egg-info"
+
+for artifact in $ARTIFACTS; do
+  # Check both direct and nested paths
+  if git ls-files | grep -qE "(^|/)$artifact(/|$)"; then
+    echo "❌ ERROR: Build artifact '$artifact' committed to repository"
+    echo "REVERTING: Unstaging and removing artifact"
+    git rm -r --cached "$artifact" 2>/dev/null || true
+
+    # Add to .gitignore if not already present
+    if ! grep -q "^$artifact/\$" .gitignore 2>/dev/null; then
+      echo "$artifact/" >> .gitignore
+      echo "Added $artifact/ to .gitignore"
+    fi
+
+    exit 1
+  fi
+done
+
+# Also check for common artifact files
+ARTIFACT_PATTERNS="*.pyc *.pyo *.class *.o *.so *.dylib coverage.xml .coverage *.log"
+for pattern in $ARTIFACT_PATTERNS; do
+  if git ls-files | grep -qE "$pattern\$"; then
+    echo "❌ ERROR: Build artifact files matching '$pattern' committed"
+    git ls-files | grep -E "$pattern\$" | xargs git rm --cached 2>/dev/null || true
+    exit 1
+  fi
+done
+
+echo "✅ No build artifacts detected - safe to proceed"
+```
+
 ### Repository Maintenance
 ```bash
 # Regular health check
@@ -281,6 +521,15 @@ audit_repository
 # Clean stale branches (>30 days)
 for branch in $(get_stale_branches); do
   delete_branch "$branch" false true  # backup=true
+done
+
+# Clean orphaned worktrees (leftover from interrupted workflows)
+git worktree prune
+for worktree_path in ./trees/*; do
+  if [ -d "$worktree_path" ] && ! git worktree list | grep -q "$worktree_path"; then
+    echo "Found orphaned directory: $worktree_path"
+    echo "Manual cleanup may be required"
+  fi
 done
 ```
 
