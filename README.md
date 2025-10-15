@@ -117,6 +117,139 @@ When designing or updating agents, select the appropriate Claude model based on 
 
 Both models are excellent at coding and significantly outperform previous generations. Choose based on the type of thinking required, not the difficulty of the code itself.
 
+### Agent Color Standard
+
+Agent colors provide visual feedback about **where you are in the development workflow**, similar to a traffic light system that guides you through the process from planning to production.
+
+**Zsh Color Names:**
+- `blue` - Strategic Planning
+- `cyan` - Infrastructure & Setup
+- `green` - Active Development
+- `yellow` - Quality Gates
+- `magenta` - Integration & Release
+- `red` - Operations & Monitoring
+- `white` - Documentation & Knowledge
+- `black` - Platform Specialists
+
+#### Stage 1: Strategic Planning (blue)
+
+**Purpose:** Pre-development analysis, scope understanding, and approach planning
+
+**When to use:** Assign this color to agents that analyze requirements, plan architectures, assess risks, or create implementation strategies before any coding begins.
+
+**Example activities:**
+- Breaking down complex features into work units
+- Creating technical specifications from requirements
+- Analyzing system architecture and design patterns
+- Estimating complexity and resource needs
+
+#### Stage 2: Infrastructure & Setup (cyan)
+
+**Purpose:** Preparing environments, scaffolding, and establishing foundations
+
+**When to use:** Assign this color to agents that set up infrastructure, manage environments, provision resources, or create project scaffolding.
+
+**Example activities:**
+- Creating git worktrees and branch structures
+- Installing dependencies and resolving versions
+- Provisioning cloud resources or databases
+- Generating configuration files and boilerplate
+
+#### Stage 3: Active Development (green)
+
+**Purpose:** Building, coding, implementing features, and creating functionality
+
+**When to use:** Assign this color to agents that write code, implement features, fix bugs, or actively develop functionality. This is the "GO" signal for making progress.
+
+**Example activities:**
+- Implementing new features and functionality
+- Fixing bugs and defects
+- Refactoring code for quality improvement
+- Creating database migrations or API endpoints
+
+#### Stage 4: Quality Gates (yellow)
+
+**Purpose:** Validation checkpoint - pause and verify before proceeding
+
+**When to use:** Assign this color to agents that test, review, audit, or validate code. This is the "CAUTION" signal where we stop and check our work, like a traffic light yellow light.
+
+**Example activities:**
+- Running comprehensive test suites
+- Reviewing code quality and patterns
+- Scanning for security vulnerabilities
+- Validating performance or accessibility
+- Checking compliance requirements
+
+#### Stage 5: Integration & Release (magenta)
+
+**Purpose:** Consolidating work and preparing for deployment
+
+**When to use:** Assign this color to agents that merge branches, coordinate releases, prepare deployments, or consolidate work packages.
+
+**Example activities:**
+- Merging feature branches to review branches
+- Bumping versions and generating changelogs
+- Optimizing production builds
+- Coordinating deployment pipelines
+
+#### Stage 6: Operations & Monitoring (red)
+
+**Purpose:** Production runtime, incident response, and system health monitoring
+
+**When to use:** Assign this color to agents that monitor production systems, respond to incidents, analyze runtime behavior, or maintain operational health. This is the "ALERT" signal for production concerns.
+
+**Example activities:**
+- Diagnosing production incidents
+- Analyzing performance metrics and logs
+- Executing rollbacks or emergency fixes
+- Monitoring service availability
+
+#### Stage 7: Documentation & Knowledge (white)
+
+**Purpose:** Explaining, teaching, and preserving institutional knowledge
+
+**When to use:** Assign this color to agents that generate documentation, create guides, explain systems, or maintain knowledge bases. White represents clarity and illumination.
+
+**Example activities:**
+- Generating API documentation
+- Creating user guides and tutorials
+- Writing technical specifications
+- Maintaining wikis and knowledge bases
+
+#### Stage 8: Platform Specialists (black)
+
+**Purpose:** Deep expertise in specific platforms, tools, or APIs
+
+**When to use:** Assign this color ONLY to agents with specialized knowledge of particular platforms or technologies that can be called from any workflow stage. These are orthogonal to the workflow progression.
+
+**Example activities:**
+- AWS/GCP/Azure service optimization
+- Docker/Kubernetes deployment strategies
+- Database-specific tuning (Postgres, Redis, etc.)
+- Framework-specific patterns (React, Next.js, etc.)
+
+**Selection Notes:**
+- Agents should have ONE primary color based on where they are MOST commonly used
+- If an agent operates in multiple stages, choose its PRIMARY or FIRST-USE stage
+- Only use black for true cross-cutting platform experts, not general-purpose helpers
+- Colors provide UX feedback on workflow progress - users should instantly know "where we are"
+
+#### Color Assignment Status
+
+**Currently Assigned (Active Agents):**
+- `blue` - workflow-planner
+- `cyan` - branch-manager
+- `green` - feature-developer, bug-fixer, refactoring-specialist
+- `yellow` - test-runner, code-reviewer, security-auditor
+- `white` - documentation-generator
+
+**Reserved for Future Use (No Current Agents):**
+- `magenta` - Reserved for Integration & Release stage agents (release-manager, deployment-orchestrator, rollout-coordinator)
+- `red` - Reserved for Operations & Monitoring stage agents (incident-responder, performance-monitor, log-analyzer, health-checker)
+- `black` - Reserved for Platform Specialist agents (aws-specialist, docker-specialist, kubernetes-specialist, postgres-specialist)
+
+All standard zsh colors (8 total) have been assigned to workflow stages, with 3 colors currently reserved for future agent development.
+
 ## ⚡ Commands (commands/)
 
 Custom slash commands for enhanced workflow:

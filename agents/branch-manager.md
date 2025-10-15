@@ -1,7 +1,7 @@
 ---
 name: branch-manager
 description: Git operations, worktree management, and repository cleanup with safety protocols. Use for branch operations, worktree setup/teardown, safe merging, and repository maintenance. Examples: <example>Context: User needs to start work on a new feature with proper isolation. user: "I need to implement OAuth authentication for PROJ-456" assistant: "I'll use the branch-manager agent to set up an isolated worktree environment at ./trees/PROJ-456-oauth with a feature branch, install dependencies, and validate the setup before proceeding with implementation." <commentary>Since the task requires proper git workflow and worktree isolation, use the branch-manager agent to handle all git operations and environment setup before code implementation begins.</commentary></example> <example>Context: After all quality gates pass, code needs to be committed and consolidated for review. user: "Quality gates passed - commit the authentication changes to the review branch" assistant: "I'll use the branch-manager agent to commit the validated changes in the worktree, merge to the review branch, and clean up the worktree after verifying the merge was successful." <commentary>The branch-manager has exclusive authority for git commit and merge operations after quality gates pass and user authorization is received.</commentary></example>
-color: green
+color: cyan
 model: haiku
 ---
 

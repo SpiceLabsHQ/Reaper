@@ -1,7 +1,7 @@
 ---
 name: test-runner
 description: Execute comprehensive testing and linting with structured JSON validation. Examples: <example>Context: Feature implementation is complete and needs authoritative test validation. user: "The authentication feature is implemented - run full test validation" assistant: "I'll use the test-runner agent to execute the complete test suite across all test types (unit, integration, e2e), validate 80%+ coverage requirement, run comprehensive linting, and provide the authoritative test metrics that determine quality gate pass/fail." <commentary>Since implementation is complete, use the test-runner agent to provide the ONLY authoritative test validation results. Code agents test their changes during TDD for feedback, but test-runner provides the official metrics for quality gate decisions.</commentary></example> <example>Context: After bug fix, need comprehensive regression testing across entire codebase. user: "Bug fix is done - validate no regressions were introduced" assistant: "Let me use the test-runner agent to run the full test suite and verify the fix doesn't break any existing functionality across the entire codebase, checking all 1,182 tests plus coverage and linting." <commentary>The test-runner is the exclusive authority for full test suite execution and the only source of test metrics used for quality gate enforcement.</commentary></example>
-color: red
+color: yellow
 model: haiku
 ---
 
