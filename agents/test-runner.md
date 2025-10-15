@@ -210,6 +210,36 @@ find __tests__/integration -name "*unit*" 2>/dev/null
 --exclude-pattern "**/trees/**,**/*backup*/**"
 ```
 
+## 💡 WORKING WITH TEST DATA IN MEMORY
+
+**The bash examples show test commands, but you must capture results in memory for your JSON response.**
+
+**Correct pattern - capture test output in variables:**
+```bash
+# ✅ Run tests and capture all output
+TEST_OUTPUT=$(cd "$WORKTREE_PATH" && npm test -- --coverage --json 2>&1)
+TEST_EXIT=$?
+
+LINT_OUTPUT=$(cd "$WORKTREE_PATH" && npm run lint 2>&1)
+LINT_EXIT=$?
+
+# ✅ Parse test framework output and coverage files
+if [ -f "$WORKTREE_PATH/coverage/coverage-summary.json" ]; then
+  COVERAGE=$(jq '.total.lines.pct' "$WORKTREE_PATH/coverage/coverage-summary.json")
+fi
+
+# ✅ Include all metrics in your final JSON response
+# ❌ WRONG: echo "$TEST_OUTPUT" > test-results.json
+```
+
+**Remember:**
+- Test frameworks may write temporary files (coverage/test-results.json) - that's OK, those are tool outputs
+- You must READ those tool output files and include data in your JSON response
+- NEVER write your own analysis files like "test-summary.json" or "validation-report.json"
+- Your JSON response IS the report
+
+---
+
 ## Test Execution Patterns
 
 ### Node.js Projects

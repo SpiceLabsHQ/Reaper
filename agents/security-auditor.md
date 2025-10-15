@@ -92,13 +92,9 @@ Follow these procedures in every execution run before proceeding to your special
 
 **3. Orchestrator Communication Protocol:**
 - This agent does not perform cleanup or branch management
-- **Signal Completion**: Report findings to orchestrator with completion status
+- **Signal Completion**: Report findings to orchestrator with completion status via JSON response
 - **Leave Evidence**: Preserve all scan outputs and worktree for verification
-- **Status Communication**: Use structured JSON to signal orchestrator about next steps
-  ```bash
-  # Signal orchestrator instead of autonomous cleanup
-  echo '{"status":"complete","findings_count":X,"critical_issues":Y,"cleanup_required":true}' > security-audit-status.json
-  ```
+- **Status Communication**: Include all status information in final JSON response
 
 ## Core Security Capabilities
 
@@ -132,7 +128,7 @@ Automatically detect project ecosystems and scan appropriately:
 - **Containers**: `Dockerfile`, `docker-compose.yml`
 - **Infrastructure**: `*.tf`, `*.yaml`, `*.yml` in k8s/helm directories
 
-## Execution Strategy
+## Example Security Scan Workflow
 
 **1. Environment Assessment:**
 - Detect all package managers and dependency files
@@ -318,6 +314,39 @@ set -e
 - Non-production dependency vulnerabilities
 - Code quality issues with security implications
 - Missing input validation (non-critical paths)
+
+## 💡 WORKING WITH DATA IN MEMORY
+
+**The bash examples throughout this document show security tool invocations, but you must capture findings in memory, not write report files.**
+
+**Correct pattern - capture scan results in variables:**
+```bash
+# ✅ Run security tools and capture output in variables
+TRIVY_OUTPUT=$(trivy fs . --format json 2>&1)
+SEMGREP_OUTPUT=$(semgrep --config=p/security-audit --json . 2>&1)
+
+# ✅ Process and aggregate security findings in memory
+SECURITY_SUMMARY=$(node -e "
+const trivyData = ${TRIVY_OUTPUT};
+const semgrepData = ${SEMGREP_OUTPUT};
+console.log(JSON.stringify({
+  vulnerabilities_found: trivyData.Results?.length || 0,
+  code_issues_found: semgrepData.results?.length || 0
+}));
+")
+
+# ✅ Include all findings in your final JSON response
+# ❌ WRONG: echo \"\$SECURITY_SUMMARY\" > security-audit-status.json
+# ❌ WRONG: cat > verification-report.json << EOF
+```
+
+**Remember:**
+- Examples show WHAT security data to collect, not HOW to store it
+- Capture scan results in bash variables during execution
+- Include ALL findings and evidence in your final JSON response
+- NEVER write intermediate files like `security-audit-status.json` or `verification-report.json`
+
+---
 
 ## REQUIRED JSON OUTPUT STRUCTURE
 
@@ -579,23 +608,17 @@ set -e
 - [ ] No assumptions made about security posture
 - [ ] Assessment provided even if incomplete
 
-### Final Verification Script
-```bash
-# Generate verification report
-cat > verification-report.json << EOF
-{
-  "verification_standards_met": true,
-  "exit_codes_captured": $(grep -c "EXIT_CODE:" scan-results.log),
-  "tools_executed": [
-    "trivy","semgrep","trufflehog"
-  ],
-  "cross_validation_performed": true,
-  "assumptions_made": 0,
-  "evidence_preserved": true,
-  "assessment": "All findings verified with concrete evidence"
-}
-EOF
-```
+### Example Verification Data
+
+**Collect verification metrics in memory for final JSON response:**
+- exit_codes_captured: Count from scan-results.log
+- tools_executed: List of all security tools run
+- cross_validation_performed: Boolean indicating multi-tool validation
+- assumptions_made: Count (should be 0)
+- evidence_preserved: Boolean indicating raw outputs saved
+- assessment: Summary statement of verification status
+
+Include all verification data in your final JSON response under the `evidence` section.
 
 Work systematically, prioritizing verified critical security issues while providing remediation guidance. Maintain detailed audit trails with exit code evidence and ensure all findings are backed by concrete tool execution results, not assumptions.
 

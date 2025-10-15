@@ -584,7 +584,7 @@ complexity-report src/ --output complexity.json
 git log --format=format: --name-only | grep -v '^$' | sort | uniq -c | sort -rn | head -20
 ```
 
-## Execution Strategy
+## Example Execution Workflow
 
 **1. Discovery & Planning:**
 ```bash
@@ -603,7 +603,7 @@ grep -r "function.*{" --include="*.js" . | wc -l
 - Simplify complex conditional logic
 - Optimize data access patterns
 
-**3. Validation & Testing:**
+**3. Example Validation Pattern:**
 ```bash
 # Comprehensive testing with evidence collection
 (cd "./trees/${WORKTREE_NAME}" && npm test -- --coverage --json > test-results.json)
@@ -627,7 +627,7 @@ const evidence = {
 console.log(JSON.stringify(evidence, null, 2));
 ")
 
-echo "$TEST_EVIDENCE" > refactoring-evidence.json
+# Store $TEST_EVIDENCE for inclusion in final JSON response
 
 # Integration testing
 for component in $(cat dependent-components.list); do
@@ -740,23 +740,11 @@ analyze_refactoring_impact() {
   TRANSITIVE_DEPS=$(echo "$TRANSITIVE_DEPS" | tr ' ' '\n' | sort -u | grep -v "^$")
   
   echo "Transitive dependencies found: $(echo "$TRANSITIVE_DEPS" | wc -l)"
-  
-  # 3. Create comprehensive test plan
-  cat > refactoring-test-plan.json << EOF
-{
-  "refactored_module": "$refactored_module",
-  "direct_dependencies": [$(echo "$DIRECT_DEPS" | sed 's/.*/"&"/' | tr '\n' ',' | sed 's/,$//')],
-  "transitive_dependencies": [$(echo "$TRANSITIVE_DEPS" | sed 's/.*/"&"/' | tr '\n' ',' | sed 's/,$//')],
-  "test_execution_plan": {
-    "unit_tests": "npm run test -- --testPathPattern='$refactored_module'",
-    "integration_tests": "npm run test:integration",
-    "dependency_tests": [
-$(echo "$DIRECT_DEPS" | sed 's/.*/"npm run test -- --testPathPattern='\''&'\''",/' | sed '$s/,$//')
-    ]
-  }
-}
-EOF
-  
+
+  # 3. Build test plan in memory for final JSON response
+  # Include: refactored_module, direct_dependencies, transitive_dependencies
+  # Include: test execution strategy for each dependency layer
+
   # 4. Execute comprehensive testing
   execute_comprehensive_testing "$refactored_module" "$DIRECT_DEPS" "$TRANSITIVE_DEPS"
 }
@@ -814,10 +802,9 @@ execute_comprehensive_testing() {
       \"status\": \"$TRANS_STATUS\"
     }]")
   done
-  
-  # Generate comprehensive impact report
-  echo "$test_results" > comprehensive-impact-analysis.json
-  
+
+  # Store test_results in memory for inclusion in final JSON response
+
   # Determine overall refactoring success
   FAILED_COMPONENTS=$(echo "$test_results" | jq -r '.[] | select(.status == "FAILED") | .component')
   if [ -n "$FAILED_COMPONENTS" ]; then
@@ -886,6 +873,39 @@ class DataProcessor {
   }
 }
 ```
+
+## 💡 WORKING WITH DATA IN MEMORY
+
+**The bash examples throughout this document show tool invocations and workflow patterns, but you must capture data in memory, not write report files.**
+
+**Correct pattern - capture data in variables:**
+```bash
+# ✅ Run tools and capture output in variables
+TEST_OUTPUT=$(npm test -- --json 2>&1)
+COVERAGE_DATA=$(cat coverage/coverage-summary.json 2>/dev/null || echo "{}")
+
+# ✅ Process and aggregate data in memory
+METRICS=$(node -e "
+const testData = ${TEST_OUTPUT};
+const coverageData = ${COVERAGE_DATA};
+console.log(JSON.stringify({
+  tests_passed: testData.numPassedTests,
+  coverage_pct: coverageData.total?.lines?.pct || 0
+}));
+")
+
+# ✅ Include all data in your final JSON response
+# ❌ WRONG: echo \"\$METRICS\" > report.json
+# ❌ WRONG: cat > evidence.json << EOF
+```
+
+**Remember:**
+- Examples show WHAT data to collect, not HOW to store it
+- Capture metrics in bash variables during execution
+- Include ALL collected data in your final JSON response
+- NEVER write intermediate report files like `refactoring-evidence.json`
+
+---
 
 ## REQUIRED JSON OUTPUT STRUCTURE
 
