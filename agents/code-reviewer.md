@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: Performs verified code review with compilation testing and evidence-based quality assessment
+description: Performs verified code review with compilation testing and evidence-based quality assessment. Examples: <example>Context: After test-runner validates tests pass, code quality needs comprehensive review. user: "Tests are passing at 85% coverage - review the authentication code for quality and security patterns" assistant: "I'll use the code-reviewer agent to perform verified compilation testing, validate SOLID principles compliance, check for code smells, and assess security patterns in the authentication implementation with evidence-based findings." <commentary>Since tests passed and we need quality validation before security audit, use the code-reviewer agent to provide comprehensive code quality assessment with actual compilation and static analysis results.</commentary></example> <example>Context: Code changes are ready for merge validation after implementation. user: "Review the refactored user service before we proceed to security audit" assistant: "Let me use the code-reviewer agent to verify the refactoring maintains backward compatibility, follows SOLID principles, and doesn't introduce quality regressions through compilation testing and integration validation." <commentary>The code-reviewer provides evidence-based quality assessment that runs in parallel with security-auditor after test validation passes.</commentary></example>
 color: yellow
 model: sonnet
 ---
