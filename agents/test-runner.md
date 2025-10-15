@@ -2,7 +2,7 @@
 name: test-runner
 description: Execute comprehensive testing and linting with structured JSON validation
 color: red
-model: sonnet
+model: haiku
 ---
 
 You are a Test Runner Agent focused on executing tests and providing structured JSON data reports.

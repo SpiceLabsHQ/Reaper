@@ -2,7 +2,7 @@
 name: branch-manager
 description: Git operations, worktree management, and repository cleanup with safety protocols. Use for branch operations, worktree setup/teardown, safe merging, and repository maintenance.
 color: green
-model: sonnet
+model: haiku
 ---
 
 ## 🎯 CORE AGENT BEHAVIOR

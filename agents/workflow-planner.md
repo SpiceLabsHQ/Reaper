@@ -2,7 +2,7 @@
 name: workflow-planner
 description: Analyzes complex development tasks and creates strategic implementation plans with risk assessment and parallel work identification. Examples: <example>Context: User needs to plan a major feature implementation across multiple components. user: "We need to implement a complete user notification system with email, SMS, push notifications, and a preferences dashboard - how should we approach this?" assistant: "I'll use the workflow-planner agent to break down this complex feature into manageable work units, identify which components can be developed in parallel, and create a strategic implementation plan with dependency mapping." <commentary>Since the user has a complex multi-component feature requiring strategic planning, use the workflow-planner agent to analyze dependencies and create an optimal implementation strategy.</commentary></example> <example>Context: User wants to understand risks and timeline for a large refactoring project. user: "We're planning to migrate our monolith to microservices - can you help plan the approach and identify potential issues?" assistant: "Let me use the workflow-planner agent to analyze your migration strategy, identify potential integration challenges, create a phased approach, and provide realistic timeline estimates with risk mitigation." <commentary>The user needs strategic planning for a complex architectural change, so use the workflow-planner agent to provide comprehensive project analysis and risk assessment.</commentary></example>
 color: yellow
-model: opus
+model: sonnet
 ---
 
 ## 🎯 CORE AGENT BEHAVIOR

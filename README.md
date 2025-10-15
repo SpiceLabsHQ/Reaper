@@ -84,6 +84,32 @@ AI agents that provide specialized development capabilities:
 - **refactoring-specialist.md**: Code improvement and technical debt elimination
 - **dev-comedian.md**: Humor and levity injection during development
 
+### Agent Model Selection Guidelines
+
+When designing or updating agents, select the appropriate Claude model based on task characteristics:
+
+**Use Sonnet (claude-sonnet-4.5) for:**
+- **Strategic Thinking**: Complex planning, risk assessment, architectural decisions
+- **Deep Analysis**: Security vulnerability assessment, OWASP compliance, threat modeling
+- **Complex Patterns**: SOLID principle enforcement, code smell detection, architectural refactoring
+- **Trade-off Analysis**: Multi-factor decision making, cost-benefit analysis
+- **Quality Assessment**: Comprehensive code review, security analysis, best practices evaluation
+
+**Use Haiku (claude-haiku-4.5) for:**
+- **Systematic Work**: Following established TDD patterns, implementing well-defined features
+- **Procedural Tasks**: Git operations, worktree management, repository maintenance
+- **Execution & Validation**: Running tests, parsing results, generating metrics
+- **Template-Based Work**: Documentation generation, report creation from code analysis
+- **Targeted Implementation**: Bug fixing with clear reproduction steps, focused feature development
+
+**Selection Criteria:**
+- **Complexity**: Does the task require weighing multiple factors and making strategic decisions? (Sonnet) Or following clear procedures? (Haiku)
+- **Analysis Depth**: Does it need cross-component impact analysis and architectural thinking? (Sonnet) Or focused, targeted analysis? (Haiku)
+- **Decision Making**: Does it involve complex trade-offs and risk assessment? (Sonnet) Or following established patterns? (Haiku)
+- **Speed vs. Depth**: Is rapid execution more important than deep strategic thinking? (Haiku) Or is thorough analysis critical? (Sonnet)
+
+Both models are excellent at coding and significantly outperform previous generations. Choose based on the type of thinking required, not the difficulty of the code itself.
+
 ## ⚡ Commands (commands/)
 
 Custom slash commands for enhanced workflow:
