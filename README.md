@@ -68,41 +68,62 @@ Contains:
 
 AI agents that provide specialized development capabilities:
 
-### Core Development Agents:
-- **workflow-planner.md**: Analyzes complex tasks, identifies parallel work opportunities
-- **bug-fixer.md**: Systematic bug reproduction and fixing using TDD methodology
-- **feature-developer.md**: New feature implementation with SOLID principles and TDD
-- **branch-manager.md**: Safe git operations, worktree management, conflict prevention
+### Strategic Planning Agents (blue):
+- **workflow-planner.md**: Analyzes complex tasks, creates implementation plans with risk assessment and parallel work identification
+- **api-designer.md**: Designs REST and GraphQL APIs with OpenAPI specifications, API contracts, and versioning strategies
+- **cloud-architect.md**: Designs cloud infrastructure, manages infrastructure as code, optimizes cloud costs across AWS/GCP/Azure
+- **database-architect.md**: Expert database architect specializing in schema design, migrations, query optimization, and scaling strategies
 
-### Quality Assurance Agents:
-- **test-runner.md**: Comprehensive testing, linting, and coverage validation
-- **code-reviewer.md**: Code quality review, security analysis, best practices
-- **security-auditor.md**: Security vulnerability assessment and compliance review
+### Infrastructure & Setup Agents (cyan):
+- **branch-manager.md**: Safe git operations, worktree management, repository maintenance, and conflict prevention
 
-### Specialized Agents:
-- **documentation-generator.md**: Comprehensive technical documentation creation
-- **refactoring-specialist.md**: Code improvement and technical debt elimination
-- **dev-comedian.md**: Humor and levity injection during development
+### Active Development Agents (green):
+- **feature-developer.md**: Implements new features using TDD methodology with SOLID principles and comprehensive test coverage
+- **bug-fixer.md**: Diagnoses and fixes bugs using systematic reproduction and minimal fixes with TDD methodology
+- **refactoring-specialist.md**: Identifies and implements code improvements through systematic refactoring while preserving functionality
 
-### Agent Configuration Template
-- **format-template.example**: Reference template showing the required structure for creating new agents
-  - Demonstrates the three required fields: `identifier`, `whenToUse`, `systemPrompt`
-  - Shows proper YAML frontmatter formatting
-  - Includes example patterns and documentation best practices
-  - Use this as a guide when creating custom agents
+### Quality Gates Agents (yellow):
+- **test-runner.md**: Executes comprehensive testing and linting with structured JSON validation - authoritative for quality decisions
+- **code-reviewer.md**: Performs verified code review with compilation testing and evidence-based quality assessment
+- **security-auditor.md**: Performs verified security vulnerability assessment using actual tool execution and evidence-based reporting
+- **performance-engineer.md**: Performs systematic performance analysis, load testing, query optimization, and scalability tuning
+
+### Integration & Release Agents (magenta):
+- **deployment-engineer.md**: Implements CI/CD pipelines, manages deployment strategies, handles release automation with versioning
+- **integration-engineer.md**: Integrates third-party services, APIs, webhooks, and event-driven systems with secure external connections
+
+### Operations & Monitoring Agents (red):
+- **incident-responder.md**: Diagnoses and resolves production incidents using systematic log analysis and coordinated remediation
+
+### Documentation & Knowledge Agents (white):
+- **documentation-generator.md**: Creates comprehensive technical documentation from codebases with verification and accuracy standards
+- **claude-agent-architect.md**: Designs, creates, and refactors specialized agents with clear purposes and adherence to design principles
+
+### Agent Configuration Reference
+- **format-template.example**: **Reference example** showing the standard agent structure
+  - **Format**: YAML frontmatter with four required fields:
+    - `name`: The unique agent identifier (e.g., `bug-fixer`, `workflow-planner`)
+    - `description`: Detailed description with `<example>` tags showing deployment scenarios
+    - `model`: Model selection using shorthand (`sonnet` or `haiku` - no version numbers)
+    - `color`: Workflow stage color (`blue`, `cyan`, `green`, `yellow`, `magenta`, `red`, `white`, `black`)
+  - **Optional field**: `tools` - Only specify to restrict tool access for narrow single-purpose agents (defaults to all tools)
+  - **Usage**: Reference this file to understand agent structure; it's a complete working example, not a blank template
+  - **Note**: When creating custom agents, follow this format but adapt the systemPrompt content to your specific agent's purpose
 
 ### Agent Model Selection Guidelines
 
-When designing or updating agents, select the appropriate Claude model based on task characteristics:
+When designing or updating agents, select the appropriate Claude model based on task characteristics.
 
-**Use Sonnet (claude-sonnet-4.5) for:**
+**Valid model values in YAML frontmatter:** `sonnet`, `haiku`, or `opus` (no version numbers)
+
+**Use Sonnet (`model: sonnet`) for:**
 - **Strategic Thinking**: Complex planning, risk assessment, architectural decisions
 - **Deep Analysis**: Security vulnerability assessment, OWASP compliance, threat modeling
 - **Complex Patterns**: SOLID principle enforcement, code smell detection, architectural refactoring
 - **Trade-off Analysis**: Multi-factor decision making, cost-benefit analysis
 - **Quality Assessment**: Comprehensive code review, security analysis, best practices evaluation
 
-**Use Haiku (claude-haiku-4.5) for:**
+**Use Haiku (`model: haiku`) for:**
 - **Systematic Work**: Following established TDD patterns, implementing well-defined features
 - **Procedural Tasks**: Git operations, worktree management, repository maintenance
 - **Execution & Validation**: Running tests, parsing results, generating metrics
