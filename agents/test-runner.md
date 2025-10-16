@@ -238,6 +238,106 @@ fi
 - NEVER write your own analysis files like "test-summary.json" or "validation-report.json"
 - Your JSON response IS the report
 
+## ARTIFACT CLEANUP PROTOCOL (MANDATORY)
+
+**CRITICAL**: Clean up ALL tool-generated artifacts before completion
+
+### Common Test Tool Artifacts to Clean
+
+**Coverage Artifacts:**
+- `coverage/` - Coverage reports directory
+- `.nyc_output/` - NYC coverage tool cache
+- `htmlcov/` - Python HTML coverage reports
+- `.coverage` - Python coverage data file
+- `coverage.xml` - Cobertura coverage report
+- `lcov.info` - LCOV coverage data
+
+**Test Result Artifacts:**
+- `test-results.json` - Jest/Mocha test results
+- `junit.xml` - JUnit test results
+- `.pytest_cache/` - Pytest cache directory
+- `test-output/` - General test output directories
+
+**Audit and Security Scan Artifacts:**
+- `npm-audit.json` - NPM audit results
+- `yarn-audit.json` - Yarn audit results
+- `pip-audit.json` - Python audit results
+
+**Linter Artifacts:**
+- `.eslintcache` - ESLint cache
+- `.ruff_cache/` - Ruff linter cache
+- `lint-output.txt` - Linter output files
+
+**Language-Specific Artifacts:**
+- `__pycache__/` - Python bytecode cache
+- `.tox/` - Tox test environment
+
+### Cleanup Workflow
+
+**1. Use Tools → 2. Extract Data → 3. Clean Up**
+
+```bash
+# Step 1: Execute tests (tools create artifacts)
+(cd "$WORKTREE_PATH" && npm test -- --coverage)
+
+# Step 2: Extract data to variables for JSON response
+COVERAGE_DATA=$(cat "$WORKTREE_PATH/coverage/coverage-summary.json")
+TEST_RESULTS=$(cat "$WORKTREE_PATH/test-results.json")
+
+# Step 3: Clean up ALL artifacts before returning
+
+# Coverage artifacts
+find "$WORKTREE_PATH/coverage" -type f -delete 2>/dev/null || true
+find "$WORKTREE_PATH/coverage" -depth -type d -delete 2>/dev/null || true
+find "$WORKTREE_PATH/.nyc_output" -type f -delete 2>/dev/null || true
+find "$WORKTREE_PATH/.nyc_output" -depth -type d -delete 2>/dev/null || true
+find "$WORKTREE_PATH/htmlcov" -type f -delete 2>/dev/null || true
+find "$WORKTREE_PATH/htmlcov" -depth -type d -delete 2>/dev/null || true
+rm -f "$WORKTREE_PATH/.coverage" 2>/dev/null || true
+rm -f "$WORKTREE_PATH/coverage.xml" 2>/dev/null || true
+rm -f "$WORKTREE_PATH/lcov.info" 2>/dev/null || true
+
+# Test result artifacts
+rm -f "$WORKTREE_PATH/test-results.json" 2>/dev/null || true
+rm -f "$WORKTREE_PATH/junit.xml" 2>/dev/null || true
+find "$WORKTREE_PATH/.pytest_cache" -type f -delete 2>/dev/null || true
+find "$WORKTREE_PATH/.pytest_cache" -depth -type d -delete 2>/dev/null || true
+find "$WORKTREE_PATH/test-output" -type f -delete 2>/dev/null || true
+find "$WORKTREE_PATH/test-output" -depth -type d -delete 2>/dev/null || true
+
+# Audit and security scan artifacts
+rm -f "$WORKTREE_PATH/npm-audit.json" 2>/dev/null || true
+rm -f "$WORKTREE_PATH/yarn-audit.json" 2>/dev/null || true
+rm -f "$WORKTREE_PATH/pip-audit.json" 2>/dev/null || true
+
+# Linter artifacts
+rm -f "$WORKTREE_PATH/.eslintcache" 2>/dev/null || true
+find "$WORKTREE_PATH/.ruff_cache" -type f -delete 2>/dev/null || true
+find "$WORKTREE_PATH/.ruff_cache" -depth -type d -delete 2>/dev/null || true
+rm -f "$WORKTREE_PATH/lint-output.txt" 2>/dev/null || true
+
+# Language-specific artifacts
+find "$WORKTREE_PATH/__pycache__" -type f -delete 2>/dev/null || true
+find "$WORKTREE_PATH/__pycache__" -depth -type d -delete 2>/dev/null || true
+find "$WORKTREE_PATH/.tox" -type f -delete 2>/dev/null || true
+find "$WORKTREE_PATH/.tox" -depth -type d -delete 2>/dev/null || true
+```
+
+### Why This Matters
+
+**Problem Without Cleanup:**
+- Test artifacts accumulate across worktrees (each feature creates new coverage/ directories)
+- Confuses future test runs (stale coverage data)
+- Wastes disk space (coverage reports can be large)
+- Creates noise in git status
+- May cause test discovery issues (artifacts contain test file references)
+
+**Your Responsibility:**
+- Extract ALL needed data before cleanup
+- Include cleanup evidence in JSON response
+- Report cleanup failures but don't block on them
+- Document what was cleaned in `artifacts_cleaned` field
+
 ---
 
 ## Test Execution Patterns

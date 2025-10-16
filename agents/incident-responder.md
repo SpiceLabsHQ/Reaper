@@ -239,26 +239,6 @@ If root cause unclear:
    - Performance metrics restored
 ```
 
-## When to Use This Agent
-
-**IDEAL SITUATIONS:**
-- Production system failures with active user impact
-- Acute performance degradation requiring immediate investigation
-- Cascading failures across dependent services
-- Memory leaks or resource exhaustion causing system instability
-- Rapid spike in error rates with unknown root cause
-- Third-party service integration failures
-- Database connection pool exhaustion or query performance collapse
-- Deployment-related incidents requiring rollback coordination
-
-**WHEN NOT TO USE:**
-- Development environment bugs (use bug-fixer)
-- Code quality issues in non-critical paths (use code-reviewer)
-- Planned performance optimization (use performance-engineer)
-- Proactive security audits (use security-auditor)
-- Gradual performance degradation over days/weeks (use performance-engineer)
-- Routine testing and validation (use test-runner)
-
 ## Integration with SPICE Standards
 
 **Incident Response Coordination:**

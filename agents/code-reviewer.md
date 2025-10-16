@@ -101,6 +101,90 @@ If any requirement is missing, agent MUST exit immediately with specific error m
 4. **Analyze**: Run Semgrep security scan and linters
 5. **Validate**: Check SOLID principles and integration points
 6. **Report**: Generate structured JSON output
+7. **Cleanup**: Remove all tool-generated artifacts
+
+## ARTIFACT CLEANUP PROTOCOL (MANDATORY)
+
+**CRITICAL**: Clean up ALL tool-generated artifacts before completion
+
+### Common Code Review Tool Artifacts to Clean
+
+**Static Analysis Artifacts:**
+- `semgrep-results.json` - Semgrep scan results
+- `semgrep-results.sarif` - SARIF format results
+- `.semgrep/` - Semgrep cache directory
+- `eslint-output.json` - ESLint JSON reports
+- `.eslintcache` - ESLint cache file
+
+**Build Artifacts (From Compilation Testing):**
+- `dist/` - Build output directory
+- `build/` - Build artifacts
+- `.tsbuildinfo` - TypeScript incremental build
+- `out/` - Compiled output
+
+**Type Checking Artifacts:**
+- `*.tsbuildinfo` - TypeScript build info
+- `.mypy_cache/` - MyPy type checker cache
+- `pytype_output/` - Pytype output directory
+
+**Linter and Formatter Artifacts:**
+- `.php-cs-fixer.cache` - PHP CS Fixer cache
+- `.rubocop-cache/` - RuboCop cache
+- `.ruff_cache/` - Ruff linter cache
+- `lint-report.txt` - Temporary lint reports
+
+**Test Artifacts (If Tests Run During Review):**
+- `test-results.json` - Test results from validation
+- `.pytest_cache/` - Pytest cache
+
+**Dependency Check Artifacts:**
+- `npm-audit.json` - NPM audit from dependency review
+- `safety-report.json` - Python safety scan results
+
+### Cleanup Workflow
+
+**1. Use Tools → 2. Extract Data → 3. Clean Up**
+
+```bash
+# Step 1: Execute code review tools (creates artifacts)
+semgrep --config=security --json --output=semgrep-results.json .
+npm run build  # Creates dist/ directory
+npm run type-check  # Creates .tsbuildinfo
+
+# Step 2: Extract data to variables for JSON response
+SEMGREP_DATA=$(cat semgrep-results.json)
+BUILD_WARNINGS=$(cat build-output.log)
+TYPE_ERRORS=$(cat type-check-output.log)
+
+# Step 3: Clean up ALL artifacts before returning
+rm -f semgrep-results.json 2>/dev/null || true
+rm -f semgrep-results.sarif 2>/dev/null || true
+rm -f .semgrep/* 2>/dev/null && rmdir .semgrep/ 2>/dev/null || true
+rm -f .eslintcache 2>/dev/null || true
+rm -f dist/* 2>/dev/null && rmdir dist/ 2>/dev/null || true
+rm -f build/* 2>/dev/null && rmdir build/ 2>/dev/null || true
+rm -f .tsbuildinfo 2>/dev/null || true
+rm -f lint-report.txt 2>/dev/null || true
+rm -f .php-cs-fixer.cache 2>/dev/null || true
+rm -f .rubocop-cache/* 2>/dev/null && rmdir .rubocop-cache/ 2>/dev/null || true
+rm -f .ruff_cache/* 2>/dev/null && rmdir .ruff_cache/ 2>/dev/null || true
+rm -f .mypy_cache/* 2>/dev/null && rmdir .mypy_cache/ 2>/dev/null || true
+```
+
+### Why This Matters
+
+**Problem Without Cleanup:**
+- Static analysis artifacts accumulate across code review sessions
+- Build artifacts from compilation testing clutter worktrees
+- Cache files grow indefinitely (.eslintcache, .semgrep/)
+- Confuses git status with untracked analysis files
+- May interfere with subsequent builds or reviews
+
+**Your Responsibility:**
+- Extract ALL needed data before cleanup
+- Include cleanup evidence in JSON response
+- Report cleanup failures but don't block on them
+- Document what was cleaned in `artifacts_cleaned` field
 
 ## REQUIRED JSON OUTPUT STRUCTURE
 

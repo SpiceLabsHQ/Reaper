@@ -346,6 +346,100 @@ console.log(JSON.stringify({
 - Include ALL findings and evidence in your final JSON response
 - NEVER write intermediate files like `security-audit-status.json` or `verification-report.json`
 
+## ARTIFACT CLEANUP PROTOCOL (MANDATORY)
+
+**CRITICAL**: Clean up ALL tool-generated artifacts before completion
+
+### Common Security Audit Tool Artifacts to Clean
+
+**Trivy Scan Artifacts:**
+- `trivy-dependencies.sarif` - SARIF format dependency scan results
+- `trivy-dependencies.json` - JSON dependency scan results
+- `trivy-dependencies.txt` - Table format dependency results
+- `trivy-container.sarif` - Container image scan results
+- `trivy-iac.sarif` - Infrastructure as Code scan results
+- `trivy-iac.json` - IaC scan JSON results
+
+**Semgrep Scan Artifacts:**
+- `semgrep-owasp.json` - OWASP Top 10 scan results
+- `semgrep-security.json` - Security audit scan results
+- `semgrep-secrets.json` - Secret detection results
+- `.semgrep/` - Semgrep cache directory
+- `semgrep-results.sarif` - SARIF format results
+
+**Secret Detection Artifacts:**
+- `trufflehog-secrets.json` - TruffleHog scan results
+- `trufflehog-verified.json` - Verified secrets only
+- `gitleaks-secrets.json` - GitLeaks scan results
+- `detect-secrets.json` - detect-secrets scan output
+
+**Static Analysis Artifacts:**
+- `eslint-security.json` - ESLint security plugin results
+- `bandit-security.json` - Python Bandit security scan
+- `scan-results.log` - Exit code logging file
+- `docker-build.log` - Docker build logs
+- `injection-test.log` - Integration security test logs
+- `security-headers-test.log` - HTTP header test results
+
+**Infrastructure Security Artifacts:**
+- `tfsec-results.json` - TFSec Terraform scan results
+- `checkov-terraform.json` - Checkov IaC scan results
+- `kubesec-results.json` - Kubesec Kubernetes scan results
+
+**Dependency Audit Artifacts:**
+- `npm-audit.json` - NPM security audit
+- `pip-audit.json` - Python pip-audit results
+- `safety-report.json` - Python Safety scan
+
+### Cleanup Workflow
+
+**1. Use Tools → 2. Extract Data → 3. Clean Up**
+
+```bash
+# Step 1: Execute security scans (tools create artifacts)
+trivy fs . --format json --output trivy-dependencies.json
+semgrep --config=p/owasp-top-ten --json --output semgrep-owasp.json .
+trufflehog git file://. --json --output trufflehog-secrets.json
+
+# Step 2: Extract data to variables for JSON response
+TRIVY_DATA=$(cat trivy-dependencies.json)
+SEMGREP_DATA=$(cat semgrep-owasp.json)
+TRUFFLEHOG_DATA=$(cat trufflehog-secrets.json)
+EXIT_CODES=$(cat scan-results.log)
+
+# Step 3: Clean up ALL artifacts before returning
+rm -f trivy-dependencies.sarif trivy-dependencies.json trivy-dependencies.txt
+rm -f trivy-container.sarif trivy-iac.sarif trivy-iac.json
+rm -f semgrep-owasp.json semgrep-security.json semgrep-secrets.json
+rm -f semgrep-results.sarif
+find .semgrep/ -type f -delete 2>/dev/null || true
+find .semgrep/ -depth -type d -delete 2>/dev/null || true
+rm -f trufflehog-secrets.json trufflehog-verified.json
+rm -f gitleaks-secrets.json detect-secrets.json
+rm -f eslint-security.json bandit-security.json
+rm -f scan-results.log docker-build.log
+rm -f injection-test.log security-headers-test.log
+rm -f tfsec-results.json checkov-terraform.json kubesec-results.json
+rm -f npm-audit.json pip-audit.json safety-report.json
+```
+
+### Why This Matters
+
+**Problem Without Cleanup:**
+- Security scan artifacts accumulate across audits (SARIF, JSON, log files)
+- Large scan result files waste disk space (Trivy/Semgrep results can be MB)
+- Secret detection artifacts may contain sensitive data (must be cleaned!)
+- Cache directories grow indefinitely (.semgrep/ can become very large)
+- May expose vulnerability details in untracked files
+
+**Your Responsibility:**
+- Extract ALL needed data before cleanup
+- **ESPECIALLY IMPORTANT**: Clean up secret detection artifacts (contain sensitive data)
+- Include cleanup evidence in JSON response
+- Report cleanup failures but don't block on them
+- Document what was cleaned in `artifacts_cleaned` field
+- Ensure no sensitive security findings remain in files
+
 ---
 
 ## REQUIRED JSON OUTPUT STRUCTURE

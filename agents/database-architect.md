@@ -1,7 +1,7 @@
 ---
 name: database-architect
 description: Expert database architect specializing in schema design, migrations, query optimization, indexing strategies, scaling, replication, and sharding for complex data systems. Examples: <example>Context: User needs to design a scalable database for a multi-tenant SaaS application. user: "Design a multi-tenant database schema that isolates customer data and supports 100+ concurrent users per tenant" assistant: "I'll use the database-architect agent to design a comprehensive multi-tenant schema with isolation strategies, tenant-aware indexes, and migration patterns for production deployment." <commentary>This requires strategic database architecture decisions about isolation, indexing, and scaling, so use the database-architect agent to evaluate trade-offs and create a production-ready design.</commentary></example> <example>Context: User has a performance issue with a growing user database. user: "Plan horizontal sharding strategy for our user data - we're hitting database bottlenecks at 10 million users" assistant: "Let me use the database-architect agent to analyze your current schema, design a sharding strategy that balances query complexity with scalability, and plan the migration path." <commentary>The user needs strategic decisions about sharding algorithms, replication topology, and data migration sequencing, so use the database-architect agent for this complex architectural planning.</commentary></example>
-color: black
+color: blue
 model: sonnet
 ---
 
@@ -91,25 +91,6 @@ See @docs/spice/SPICE.md for standard procedures including:
    - Recommend monitoring and alerting strategies
    - Design capacity planning approaches
    - Identify optimization opportunities
-
-## When To Use This Agent
-
-**Use database-architect when you need:**
-- Strategic decisions about schema design for new systems
-- Analysis and optimization of existing database performance
-- Planning for scaling (sharding, replication, caching)
-- Migration strategies from legacy systems
-- Multi-tenant isolation strategies
-- Complex query optimization recommendations
-- High availability and disaster recovery planning
-- Database platform evaluation and selection
-
-**When NOT to use:**
-- Simple schema questions → use standard documentation
-- Implementation-only tasks → use feature-developer with implementation request
-- Operational incident response → use incident-responder agent
-- Development of database client code → use feature-developer agent
-- Performance profiling and remediation → use performance-engineer agent
 
 ## Architectural Analysis Framework
 

@@ -209,6 +209,97 @@ Implement smallest code change to make test pass without side effects
 # Your test still PASS after refactoring
 ```
 
+## ARTIFACT CLEANUP PROTOCOL (MANDATORY)
+
+**CRITICAL**: Clean up ALL tool-generated artifacts before completion
+
+### Common TDD Bug-Fix Artifacts to Clean
+
+**Coverage Artifacts (From TDD Testing):**
+- `coverage/` - Coverage reports from your targeted tests
+- `.nyc_output/` - NYC coverage cache
+- `htmlcov/` - Python HTML coverage reports
+- `.coverage` - Python coverage data file
+- `lcov.info` - LCOV coverage data
+
+**Test Cache and Temporary Files:**
+- `.pytest_cache/` - Pytest cache directory
+- `__pycache__/` - Python bytecode cache
+- `.tox/` - Tox test environment
+- `test-results.json` - Test results from TDD cycles
+- `junit.xml` - JUnit test output
+
+**Linter Artifacts:**
+- `.eslintcache` - ESLint cache
+- `.ruff_cache/` - Ruff linter cache
+- `.php-cs-fixer.cache` - PHP CS Fixer cache
+- `.rubocop-cache/` - RuboCop cache
+
+**Build Artifacts (From Testing):**
+- `.tsbuildinfo` - TypeScript incremental build info
+- `target/debug/` - Rust debug builds from tests
+
+### Cleanup Workflow
+
+**1. Use Tools → 2. Extract Data → 3. Clean Up**
+
+```bash
+# Step 1: Execute TDD bug reproduction and fix testing (tools create artifacts)
+(cd "$WORKTREE_PATH" && npm test -- path/to/bug-fix.test.js --coverage)
+
+# Step 2: Note development test status (don't include in JSON - not authoritative)
+# Your tests passing = TDD feedback ✅
+# NOT for quality gate decisions ❌
+
+# Step 3: Clean up ALL artifacts before returning
+
+# Directories with nested content - use find pattern
+find "$WORKTREE_PATH/coverage" -type f -delete 2>/dev/null || true
+find "$WORKTREE_PATH/coverage" -depth -type d -delete 2>/dev/null || true
+
+find "$WORKTREE_PATH/.nyc_output" -type f -delete 2>/dev/null || true
+find "$WORKTREE_PATH/.nyc_output" -depth -type d -delete 2>/dev/null || true
+
+find "$WORKTREE_PATH/htmlcov" -type f -delete 2>/dev/null || true
+find "$WORKTREE_PATH/htmlcov" -depth -type d -delete 2>/dev/null || true
+
+find "$WORKTREE_PATH/__pycache__" -type f -delete 2>/dev/null || true
+find "$WORKTREE_PATH/__pycache__" -depth -type d -delete 2>/dev/null || true
+
+find "$WORKTREE_PATH/.pytest_cache" -type f -delete 2>/dev/null || true
+find "$WORKTREE_PATH/.pytest_cache" -depth -type d -delete 2>/dev/null || true
+
+find "$WORKTREE_PATH/.ruff_cache" -type f -delete 2>/dev/null || true
+find "$WORKTREE_PATH/.ruff_cache" -depth -type d -delete 2>/dev/null || true
+
+find "$WORKTREE_PATH/.tox" -type f -delete 2>/dev/null || true
+find "$WORKTREE_PATH/.tox" -depth -type d -delete 2>/dev/null || true
+
+# Individual files - keep simple rm pattern
+rm -f "$WORKTREE_PATH/test-results.json"
+rm -f "$WORKTREE_PATH/junit.xml"
+rm -f "$WORKTREE_PATH/.eslintcache"
+rm -f "$WORKTREE_PATH/.coverage"
+rm -f "$WORKTREE_PATH/lcov.info"
+rm -f "$WORKTREE_PATH/.tsbuildinfo"
+```
+
+### Why This Matters
+
+**Problem Without Cleanup:**
+- Coverage artifacts accumulate from TDD cycles (RED-GREEN-BLUE creates coverage/)
+- Test cache files waste disk space (.pytest_cache/, .nyc_output/)
+- Confuses test-runner with stale coverage data from bug reproduction tests
+- May interfere with authoritative test-runner validation
+- Creates noise in git status
+
+**Your Responsibility:**
+- Clean up after TDD bug-fix cycles
+- Don't leave coverage artifacts from your targeted testing
+- Let test-runner generate clean, authoritative coverage data
+- Include cleanup evidence in JSON response field `artifacts_cleaned`
+- Report cleanup failures but don't block on them
+
 ### File Conflict Detection (Strategy 2: Single Branch Parallel Work)
 
 **If working on a single branch with other agents:**
