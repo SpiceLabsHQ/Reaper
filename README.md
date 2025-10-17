@@ -275,7 +275,11 @@ All standard zsh colors (8 total) have been assigned to workflow stages, with 3 
 
 Custom slash commands for enhanced workflow:
 
-- **spice:orchestrate.md**: Intelligent work assignment and task management
+- **spice:orchestrate.md**: Validation and coordination supervisor - parses inputs, enforces quality gates, coordinates agents
+  - Delegates to workflow-planner for strategy selection and implementation guidance
+  - Validates agent JSON responses and enforces size constraints
+  - Manages quality gate sequence and auto-iteration loops
+  - ~376 lines (streamlined to prevent context exhaustion)
 - **spice:status-worktrees.md**: Worktree status monitoring and management
 
 ## 🔑 Key Features
@@ -308,11 +312,22 @@ Custom slash commands for enhanced workflow:
 
 ### Dynamic Strategy Selection
 
-**The workflow adapts based on work complexity**, choosing from three strategies:
+**The workflow adapts based on work complexity**, orchestrated through collaboration:
 
 ```
-workflow-planner analyzes → selects strategy → executes optimally
+orchestrate → workflow-planner (strategy + implementation plan) → orchestrate (executes + validates)
 ```
+
+**Key Principle:** workflow-planner is the **single source of truth** for:
+- Strategy selection rationale
+- Work package decomposition and sizing
+- Agent deployment sequences and instructions
+- Quality gate checkpoints and validation criteria
+- Implementation workflows for all three strategies
+
+**orchestrate's Role:** Validates inputs, enforces size constraints, coordinates agents per workflow-planner's guidance, and manages quality gates.
+
+**Note:** The strategy descriptions below are high-level overviews for user understanding. Detailed implementation workflows, agent deployment sequences, and quality gate configurations are maintained in workflow-planner agent specification (~1083 lines).
 
 ### Strategy 1: Very Small Direct (Complexity Score ≤10)
 

@@ -132,7 +132,7 @@ if (work_units.some(unit => unit.estimated_files > 5 || unit.estimated_loc > 500
       "uncertainty": 4
     },
     "rationale": "Medium complexity (score: 24). 3 parallelizable work units with no file overlap. Single branch with coordinated agents is efficient. No integration risk detected between components.",
-    "override_conditions": [],
+    "override_conditions": [],  // Example when populated: ["File overlap detected in src/auth.js between WORK-002 and WORK-004 - forcing large_multi_worktree", "Large work unit detected (8 files) - forcing worktree isolation"]
     "escalation_triggers": [
       "If file overlap discovered during implementation, escalate to large_multi_worktree",
       "If agents exceed context limits, re-plan with smaller work units",
@@ -141,6 +141,577 @@ if (work_units.some(unit => unit.estimated_files > 5 || unit.estimated_loc > 500
   }
 }
 ```
+
+## 🚀 STRATEGY IMPLEMENTATION WORKFLOWS
+
+**Once strategy selected, provide detailed implementation guidance to orchestrator.**
+
+### STRATEGY 1: Very Small Direct Implementation
+
+**When to Use:**
+- Complexity score ≤ 10
+- Single file or minimal file changes
+- Low testing burden
+- No external dependencies
+- Clear, well-understood requirements
+
+**Characteristics:**
+- 1-2 files maximum
+- Simple bug fix, config change, or documentation update
+- Minimal integration complexity
+- Quick turnaround (<30 minutes)
+
+**Implementation Workflow:**
+
+**Environment Setup:**
+- Work directly in root directory or feature branch
+- No worktree isolation needed
+- Minimal environment validation required
+
+**Agent Deployment Pattern:**
+- Orchestrator may handle directly with synthetic agents
+- OR deploy single bug-fixer/feature-developer for focused work
+- Agent receives complete context in single prompt
+- Implementation completes in single agent invocation
+
+**Quality Gate Placement:**
+- MANDATORY: test-runner validation after implementation
+- MANDATORY: code-reviewer + security-auditor in parallel after test-runner passes
+- All quality gates must pass before presenting to user
+
+**Auto-Iteration Protocol:**
+- If test-runner fails → return to implementation with blocking_issues
+- If code-reviewer or security-auditor fail → return to implementation with blocking_issues
+- Maximum 3 iterations before escalating to user for guidance
+- NO user prompts during iteration - automatic retry loop
+
+**Consolidation Approach:**
+- No consolidation needed - single implementation point
+- Changes remain uncommitted for user review
+- User commits and merges manually when satisfied
+
+**User Commit Workflow:**
+- Present completed work with quality attestation
+- User reviews changes in current branch
+- User executes: `git add . && git commit -m "..." && git merge`
+- Orchestrator does NOT deploy branch-manager for this strategy
+
+---
+
+### STRATEGY 2: Medium Single Branch Implementation
+
+**When to Use:**
+- Complexity score 11-30
+- Multiple parallelizable work units (2-5 units)
+- No file overlap between units
+- Clear component boundaries
+- Moderate testing and integration complexity
+
+**Characteristics:**
+- 3-15 files across multiple components
+- Work units can execute concurrently
+- Exclusive file ownership per agent
+- Coordinated but independent development
+
+**Implementation Workflow:**
+
+**Environment Setup:**
+- Create feature branch from develop: `feature/JIRA-KEY-description`
+- NO worktree isolation - all agents work on same branch
+- Each agent assigned exclusive files from workflow-planner
+- Install dependencies and validate environment once
+
+**Agent Deployment Pattern:**
+- Deploy multiple agents IN PARALLEL in single orchestrator message
+- Each agent receives:
+  - Exclusive file assignment (no overlap with other agents)
+  - Conflict detection instructions (exit if files unexpectedly modified)
+  - Focused testing scope (test ONLY their changes, not full suite)
+  - NO commit authority (work stays uncommitted)
+
+**Example Parallel Deployment:**
+```
+Task --subagent_type feature-developer "JIRA_KEY: PROJ-123, FILES: src/auth.js tests/auth.test.js, EXCLUSIVE ownership"
+Task --subagent_type feature-developer "JIRA_KEY: PROJ-123, FILES: src/config.js tests/config.test.js, EXCLUSIVE ownership"
+Task --subagent_type bug-fixer "JIRA_KEY: PROJ-123, FILES: src/utils.js tests/utils.test.js, EXCLUSIVE ownership"
+```
+
+**Quality Gate Placement:**
+- AFTER all agents complete: test-runner runs FULL suite (not individual tests)
+- AFTER test-runner passes: code-reviewer + security-auditor in parallel
+- All quality gates validate consolidated work from all agents
+
+**Auto-Iteration Protocol:**
+- If any agent detects file conflict → report to orchestrator, reassign work
+- If test-runner fails → identify which agent's changes caused failure, return to that agent
+- If code-reviewer or security-auditor fail → return to relevant agents with blocking_issues
+- Iterate until all quality gates pass
+
+**Consolidation Approach:**
+- No physical consolidation needed - all work already on same branch
+- Logical consolidation: test-runner validates all changes together
+- Review gates assess integration coherence across all agents
+
+**User Commit Workflow:**
+- Present feature branch with quality attestation
+- All parallel work complete and validated
+- Changes remain uncommitted for user to create single consolidated commit
+- User reviews all changes and commits when ready: `git add . && git commit -m "..."`
+- User merges manually: `git checkout develop && git merge feature/PROJ-123 --no-ff`
+
+---
+
+### STRATEGY 3: Large Multi-Worktree Implementation
+
+**When to Use:**
+- Complexity score > 30
+- File overlap detected between work units
+- More than 5 work units
+- High integration complexity
+- Large-scale refactoring or feature development
+
+**Characteristics:**
+- 15+ files across multiple subsystems
+- Sequential worktree processing required
+- Comprehensive isolation for safety
+- Extensive quality validation at each stage
+
+**Implementation Workflow:**
+
+**Environment Setup:**
+- Create review branch FIRST: `feature/JIRA-KEY-review` (consolidation target)
+- Create worktrees for major work streams:
+  - `./trees/JIRA-KEY-auth` (authentication work)
+  - `./trees/JIRA-KEY-api` (API endpoints)
+  - `./trees/JIRA-KEY-ui` (user interface)
+- Each worktree branches from develop independently
+- Install dependencies in each worktree separately
+
+**Agent Deployment Pattern (Sequential Per Worktree):**
+
+For EACH worktree, execute this complete cycle:
+
+1. **Implementation Phase:**
+   - Deploy code agent (bug-fixer, feature-developer, refactoring-specialist)
+   - Agent works ONLY in assigned worktree
+   - Small work packages (max 5 files, 500 LOC per package)
+   - Agent runs targeted tests on their changes (TDD feedback)
+   - NO commits at this stage
+
+2. **Quality Gate Phase:**
+   - Deploy test-runner: Run FULL test suite in worktree with coverage
+   - After test-runner passes: Deploy code-reviewer + security-auditor in parallel
+   - All quality gates must pass before proceeding
+
+3. **Iteration Phase:**
+   - If any quality gate fails → return to code agent with blocking_issues
+   - Repeat implementation → quality gates until all pass
+   - Maximum 3 iterations per worktree before escalation
+
+4. **Consolidation Phase (ONLY after all quality gates pass):**
+   - Orchestrator deploys branch-manager with quality gate confirmation
+   - branch-manager commits work in worktree
+   - branch-manager merges worktree branch to review branch
+   - branch-manager cleans up worktree after successful merge
+
+**Quality Gate Placement:**
+- Per-worktree gates: test-runner, code-reviewer, security-auditor
+- Post-consolidation gates: test-runner on review branch (final integration validation)
+- Each worktree must pass all gates before consolidation
+
+**Auto-Iteration Protocol:**
+- Within worktree: Automatic iteration on quality gate failures
+- Across worktrees: Sequential processing (complete worktree N before starting N+1)
+- If worktree repeatedly fails gates → escalate to user for guidance
+
+**Consolidation Approach:**
+- Sequential worktree consolidation to review branch
+- Each worktree completion triggers:
+  1. Commit in worktree (by branch-manager)
+  2. Merge to review branch (by branch-manager)
+  3. Cleanup worktree (by branch-manager)
+  4. Move to next worktree
+- Final review branch contains all consolidated work
+
+**User Commit Workflow:**
+- Present review branch path: `feature/JIRA-KEY-review`
+- All worktrees consolidated and validated
+- Review branch ready for user to merge to develop
+- User reviews consolidated work on review branch
+- User merges manually: `git checkout develop && git merge feature/JIRA-KEY-review --no-ff`
+
+---
+
+## 🤖 AGENT SELECTION RECOMMENDATIONS
+
+**Guide orchestrator in selecting optimal agents for each strategy and work unit.**
+
+### By Work Unit Type
+
+**Bug Fixes → `bug-fixer` agent**
+- TDD methodology with Red-Green-Refactor cycle
+- Systematic reproduction from user reports
+- Focused on minimal fix with comprehensive test coverage
+- Ideal for: regression bugs, reported issues, known defects
+
+**New Features → `feature-developer` agent**
+- TDD with SOLID principles from inception
+- Comprehensive test-first development
+- Architecture-aware implementation
+- Ideal for: new functionality, feature additions, capability expansion
+
+**Code Improvements → `refactoring-specialist` agent**
+- Preserve functionality while improving structure
+- SOLID principle enforcement
+- Technical debt reduction
+- Ideal for: code smell removal, architecture improvements, maintainability
+
+**Environment Setup → `branch-manager` agent**
+- Worktree/branch creation and management
+- Safe merge operations with conflict detection
+- Cleanup and consolidation
+- Ideal for: worktree setup, branch operations, consolidation phases
+
+**Testing Validation → `test-runner` agent**
+- Authoritative quality metrics (coverage, test results)
+- MANDATORY first quality gate after implementation
+- Full suite execution with detailed reporting
+- Ideal for: quality validation, coverage enforcement, test verification
+
+**Code Quality Review → `code-reviewer` agent**
+- SOLID principle assessment
+- Best practices validation
+- Architecture review
+- Ideal for: quality gates, pre-merge review, standards enforcement
+
+**Security Assessment → `security-auditor` agent**
+- Vulnerability detection
+- OWASP compliance checking
+- Security pattern validation
+- Ideal for: security gates, audit requirements, risk assessment
+
+### By Strategy
+
+**Strategy 1: Very Small Direct Implementation**
+- **Primary Option**: Orchestrator handles with synthetic agents (no subagent needed)
+- **Alternative**: Single `bug-fixer` or `feature-developer` for focused work
+- **Quality Gates**: `test-runner` → (`code-reviewer` + `security-auditor` parallel)
+- **Consolidation**: None (orchestrator presents to user directly)
+
+**Strategy 2: Medium Single Branch Implementation**
+- **Implementation**: Multiple `feature-developer` or `bug-fixer` agents IN PARALLEL
+- **Assignment**: Each agent receives exclusive file ownership from workflow-planner
+- **Quality Gates**: `test-runner` (full suite) → (`code-reviewer` + `security-auditor` parallel)
+- **Consolidation**: None (all on same branch, user commits manually)
+
+**Strategy 3: Large Multi-Worktree Implementation**
+- **Setup**: `branch-manager` creates worktrees and review branch
+- **Implementation**: Sequential `feature-developer`/`bug-fixer` per worktree
+- **Quality Gates**: Per-worktree: `test-runner` → (`code-reviewer` + `security-auditor` parallel)
+- **Consolidation**: `branch-manager` merges each worktree to review branch after gates pass
+- **Final Gate**: `test-runner` on review branch for integration validation
+
+### Agent Deployment Patterns
+
+**Sequential Pattern (Single Work Stream):**
+```
+1. code agent (bug-fixer/feature-developer)
+2. test-runner (BLOCKING - must pass before proceeding)
+3. code-reviewer + security-auditor (PARALLEL - both must pass)
+4. If failures: return to step 1 with blocking_issues
+5. Max 3 iterations before user escalation
+```
+
+**Parallel Pattern (Multiple Independent Work Units - Strategy 2):**
+```
+1. ALL code agents simultaneously (exclusive file assignments)
+2. AFTER all complete: test-runner (full suite validation)
+3. code-reviewer + security-auditor (parallel assessment)
+4. If failures: return to specific failing agents with blocking_issues
+```
+
+**Worktree Sequential Pattern (Strategy 3):**
+```
+For EACH worktree:
+  1. code agent → test-runner → (code-reviewer + security-auditor parallel)
+  2. Iterate on failures (max 3x)
+  3. ALL gates pass → branch-manager consolidates to review branch
+  4. Move to next worktree
+Final: test-runner on review branch (integration validation)
+```
+
+### Quality Gate Agents (Cross-Strategy)
+
+**MANDATORY Gate Sequence:**
+
+**Gate 1: test-runner (BLOCKING)**
+- ALWAYS first gate after implementation
+- Runs full test suite with coverage analysis
+- Must report: `all_tests_passed: true`, `coverage >= 80%`, `linting_passed: true`
+- On failure: return to code agent with specific test failures
+
+**Gate 2: code-reviewer + security-auditor (PARALLEL, BLOCKING)**
+- ONLY runs after test-runner passes
+- Both execute simultaneously for efficiency
+- code-reviewer: SOLID principles, best practices, architecture
+- security-auditor: vulnerabilities, OWASP compliance, security patterns
+- Both must report: `all_checks_passed: true`
+- On failure: return to code agent with specific issues
+
+**Iteration Protocol:**
+- Auto-loop on failures with blocking_issues passed to code agent
+- No user prompts during iteration (fully autonomous)
+- Maximum 3 iterations per work unit
+- After 3 failures: escalate to user with detailed failure analysis
+
+**Gate Deployment Example (Strategy 3):**
+```json
+{
+  "quality_gate_checkpoints": [
+    {
+      "checkpoint": "after_implementation",
+      "gate": "test-runner",
+      "execution": "sequential",
+      "blocking": true,
+      "validation_criteria": "80%+ coverage, all tests pass, linting clean",
+      "on_failure": "Return to code agent with test failures"
+    },
+    {
+      "checkpoint": "after_testing",
+      "gate": "code-reviewer",
+      "execution": "parallel_with_security_auditor",
+      "blocking": true,
+      "validation_criteria": "SOLID principles, best practices, no code smells",
+      "on_failure": "Return to code agent with quality issues"
+    },
+    {
+      "checkpoint": "after_testing",
+      "gate": "security-auditor",
+      "execution": "parallel_with_code_reviewer",
+      "blocking": true,
+      "validation_criteria": "No vulnerabilities, OWASP compliant, secure patterns",
+      "on_failure": "Return to code agent with security issues"
+    }
+  ]
+}
+```
+
+### Parallel Safety Guarantees
+
+**File Exclusivity Enforcement:**
+- workflow-planner assigns exclusive files to each parallel agent
+- Agents instructed to exit if assigned files already modified
+- Conflict detection protocol: check file timestamps before write
+- Override condition: any file overlap detected → escalate to Strategy 3
+
+**Conflict Detection Protocol:**
+```javascript
+// Each parallel agent receives:
+{
+  "assigned_files": ["src/auth/LoginForm.js", "tests/auth/LoginForm.test.js"],
+  "file_ownership": "exclusive",
+  "conflict_check": "Exit if files modified by others",
+  "parallel_coordination": "Report to orchestrator on any conflict"
+}
+```
+
+---
+
+## 🔄 STRATEGY ESCALATION PROTOCOL
+
+**Dynamic strategy adjustment based on discovered complexity during implementation.**
+
+### When to Escalate (Upgrade to Higher Complexity Strategy)
+
+**Escalation Triggers:**
+
+**From Strategy 1 → Strategy 2:**
+- Work expands beyond initial 1-2 files
+- Additional parallel work opportunities discovered
+- Testing burden higher than estimated
+- User requests additional related changes
+
+**From Strategy 2 → Strategy 3:**
+- File overlap discovered during parallel implementation
+- Agents report unexpected file conflicts
+- Work units exceed context limits (>5 files, >500 LOC)
+- Integration complexity higher than estimated
+- Quality gates repeatedly fail due to scope issues (>3 iterations)
+
+**From Any Strategy → Re-plan:**
+- Agents routinely exhaust context windows
+- Requirements fundamentally change
+- Technical approach proves infeasible
+- Multiple agents fail quality gates repeatedly
+
+### Escalation Actions
+
+**Orchestrator Detection:**
+- Monitor agent reports for escalation signals:
+  - "File conflict detected with other agent"
+  - "Context limit approaching"
+  - "Work scope larger than expected"
+  - "Quality gates failed 3 times"
+
+**Orchestrator Response:**
+```bash
+# Redeploy workflow-planner with discovered information
+Task --subagent_type workflow-planner \
+  --prompt "Re-analyze PROJ-123 with new context:
+    - Original strategy: medium_single_branch
+    - Issue discovered: File overlap in src/auth.js between WORK-002 and WORK-004
+    - Work completed: WORK-001, WORK-002 (partial)
+    - Remaining work: WORK-003, WORK-004, WORK-005
+    - Provide upgraded strategy with mitigation plan"
+```
+
+**workflow-planner Re-analysis:**
+1. Assess completed work in current strategy
+2. Identify remaining work packages
+3. Re-calculate complexity score with actual data discovered
+4. Select appropriate strategy for remaining work
+5. Provide consolidation approach for partial work
+6. Create new implementation guidance for orchestrator
+
+### Reorganization Workflow
+
+**Step 1: Consolidate Partial Work**
+- If Strategy 2 partially complete: commit partial work on feature branch
+- If Strategy 3 partially complete: merge completed worktrees to review branch
+- Document what's complete and what remains
+
+**Step 2: Re-score Remaining Work**
+```javascript
+// Use actual discovered metrics
+remaining_score =
+  actual_file_count +
+  discovered_file_overlap * 3 +
+  actual_testing_complexity +
+  discovered_integration_risk
+```
+
+**Step 3: Select New Strategy**
+- Apply decision matrix to remaining work
+- Force escalation if file overlap detected
+- Consider team velocity and time constraints
+
+**Step 4: Provide Updated Guidance**
+- New agent deployment sequence
+- Modified quality gate placement
+- Updated consolidation approach
+- Integration plan for partial + remaining work
+
+### Escalation Example Scenarios
+
+**Scenario 1: File Overlap Discovered in Strategy 2**
+
+**Initial State:**
+- Strategy: medium_single_branch
+- Work units: WORK-001 (auth form), WORK-002 (auth validation), WORK-003 (config)
+- Assigned parallel: 3 feature-developers on same branch
+
+**Issue Discovered:**
+- WORK-001 and WORK-002 both need to modify `src/auth/AuthService.js`
+- Parallel agents report file conflict
+
+**Escalation Action:**
+```json
+{
+  "escalation": {
+    "trigger": "file_overlap_detected",
+    "affected_work_units": ["WORK-001", "WORK-002"],
+    "file": "src/auth/AuthService.js",
+    "decision": "Escalate to Strategy 3 (large_multi_worktree)",
+    "reorganization": {
+      "completed_work": ["WORK-003"],
+      "remaining_work": ["WORK-001", "WORK-002"],
+      "new_approach": "Create worktrees for WORK-001 and WORK-002, sequential processing"
+    }
+  }
+}
+```
+
+**Scenario 2: Context Exhaustion in Strategy 3**
+
+**Initial State:**
+- Strategy: large_multi_worktree
+- Worktree: `./trees/PROJ-123-api`
+- Work package: WORK-002 (15 endpoints)
+
+**Issue Discovered:**
+- feature-developer reports context approaching limit
+- Work package larger than initially estimated
+
+**Escalation Action:**
+```json
+{
+  "escalation": {
+    "trigger": "context_exhaustion_risk",
+    "affected_work_unit": "WORK-002",
+    "decision": "Split WORK-002 into smaller packages",
+    "reorganization": {
+      "original_package": "WORK-002: Create 15 API endpoints",
+      "split_into": [
+        "WORK-002a: Create CRUD endpoints (5 endpoints)",
+        "WORK-002b: Create search endpoints (4 endpoints)",
+        "WORK-002c: Create reporting endpoints (6 endpoints)"
+      ],
+      "new_approach": "Sequential processing of split packages in same worktree"
+    }
+  }
+}
+```
+
+**Scenario 3: Quality Gate Repeated Failures**
+
+**Initial State:**
+- Strategy: medium_single_branch
+- Work unit: WORK-004 (complex validation logic)
+- Quality gates failed 3 times
+
+**Issue Discovered:**
+- Test coverage repeatedly below 80%
+- Integration tests failing across multiple runs
+- Scope larger than initial estimate
+
+**Escalation Action:**
+```json
+{
+  "escalation": {
+    "trigger": "quality_gate_repeated_failures",
+    "affected_work_unit": "WORK-004",
+    "failure_count": 3,
+    "decision": "Escalate to user for guidance OR split work unit",
+    "options": [
+      {
+        "option": "split_work_unit",
+        "approach": "Break WORK-004 into WORK-004a (core logic) and WORK-004b (edge cases)",
+        "rationale": "Reduce complexity per package"
+      },
+      {
+        "option": "user_guidance",
+        "approach": "Ask user to clarify requirements or provide additional context",
+        "rationale": "Fundamental understanding gap may exist"
+      }
+    ]
+  }
+}
+```
+
+### De-escalation Considerations
+
+**When simpler strategy becomes viable:**
+- Complexity estimates were overly conservative
+- Requirements simplified during implementation
+- File overlap concerns resolved (interfaces clarified)
+- Work units completed faster than expected
+
+**De-escalation is RARE:**
+- Generally safer to continue with current strategy
+- Switching mid-stream adds coordination complexity
+- Only de-escalate if significant efficiency gains clear
+
+---
 
 ### File Assignment Protocol
 
@@ -248,7 +819,7 @@ CRITICAL for strategy selection. Identify when multiple work units need to modif
 
 ## 📊 JSON PLANNING REPORT
 
-**MANDATORY: All planning responses MUST include strategy_selection**
+**MANDATORY: All planning responses MUST include strategy_selection and implementation_guidance**
 
 ```json
 {
@@ -320,6 +891,99 @@ CRITICAL for strategy selection. Identify when multiple work units need to modif
         "recommendation": "Sequence these work units OR use large_multi_worktree strategy"
       }
     ]
+  },
+  "implementation_guidance": {
+    "strategy_workflow": "Strategy 2: Medium Single Branch Implementation - Create feature branch, deploy parallel agents with exclusive file assignments, run full quality gates after all complete, user commits manually",
+    "environment_setup": "Create feature/JIRA-KEY-description from develop. Install dependencies once. No worktree isolation needed. Each agent assigned exclusive files.",
+    "agent_deployment_sequence": [
+      {
+        "step": 1,
+        "phase": "environment_setup",
+        "agent": "none",
+        "purpose": "Create feature branch and install dependencies",
+        "critical_instructions": "git checkout -b feature/PROJ-123-auth develop && npm install",
+        "blocking": true
+      },
+      {
+        "step": 2,
+        "phase": "implementation",
+        "agent": "feature-developer",
+        "purpose": "Implement WORK-001 with exclusive file ownership",
+        "critical_instructions": "JIRA: PROJ-123, FILES: src/auth/LoginForm.js tests/auth/LoginForm.test.js, EXCLUSIVE ownership, exit if files modified by others, TDD methodology",
+        "blocking": false
+      },
+      {
+        "step": 3,
+        "phase": "implementation",
+        "agent": "feature-developer",
+        "purpose": "Implement WORK-002 with exclusive file ownership",
+        "critical_instructions": "JIRA: PROJ-123, FILES: src/config/OAuthConfig.js tests/config/OAuthConfig.test.js, EXCLUSIVE ownership, parallel with step 2",
+        "blocking": false
+      },
+      {
+        "step": 4,
+        "phase": "quality_validation",
+        "agent": "test-runner",
+        "purpose": "Run full test suite with coverage validation",
+        "critical_instructions": "Execute full test suite after ALL implementation agents complete. Validate 80%+ coverage, all tests pass, linting clean. Report detailed failures if any.",
+        "blocking": true
+      },
+      {
+        "step": 5,
+        "phase": "quality_validation",
+        "agent": "code-reviewer",
+        "purpose": "Assess code quality and SOLID principles",
+        "critical_instructions": "Review all changes from parallel agents. Check SOLID principles, best practices, architecture. Execute in parallel with security-auditor.",
+        "blocking": true
+      },
+      {
+        "step": 6,
+        "phase": "quality_validation",
+        "agent": "security-auditor",
+        "purpose": "Security vulnerability assessment",
+        "critical_instructions": "Scan for vulnerabilities, OWASP compliance, secure patterns. Execute in parallel with code-reviewer.",
+        "blocking": true
+      }
+    ],
+    "quality_gate_checkpoints": [
+      {
+        "checkpoint": "after_implementation",
+        "gate": "test-runner",
+        "execution": "sequential",
+        "validation_criteria": "80%+ coverage, all tests pass, linting clean",
+        "on_failure": "Identify failing agent by file analysis, return to that agent with blocking_issues, iterate max 3x"
+      },
+      {
+        "checkpoint": "after_testing",
+        "gate": "code-reviewer",
+        "execution": "parallel",
+        "validation_criteria": "SOLID principles, best practices, no code smells",
+        "on_failure": "Return to relevant agents with quality issues, iterate max 3x"
+      },
+      {
+        "checkpoint": "after_testing",
+        "gate": "security-auditor",
+        "execution": "parallel",
+        "validation_criteria": "No vulnerabilities, OWASP compliant, secure patterns",
+        "on_failure": "Return to relevant agents with security issues, iterate max 3x"
+      }
+    ],
+    "consolidation_workflow": {
+      "approach": "none",
+      "timing": "No consolidation needed - all work on same branch",
+      "steps": [
+        "All parallel agents complete implementation on feature branch",
+        "Quality gates validate consolidated work",
+        "Present feature branch to user with quality attestation",
+        "User reviews and commits manually when satisfied"
+      ]
+    },
+    "iteration_protocol": {
+      "auto_iteration": true,
+      "max_iterations": 3,
+      "failure_handling": "On quality gate failure, identify responsible agent by file/test analysis, return to agent with blocking_issues field containing specific failures, no user prompts during iteration",
+      "escalation_trigger": "After 3 failed iterations OR if file conflicts detected OR if context exhaustion reported"
+    }
   },
   "consolidation_strategy": {
     "strategy_specific": {
