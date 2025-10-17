@@ -80,28 +80,73 @@ uncertainty_score =
   (requires_research ? 2 : 0)
 ```
 
+#### 6. Content Generation Score
+```javascript
+content_generation_score =
+  (documentation_files * 3) +           // Markdown, README, guides
+  (repetitive_similar_items * 2) +      // Creating N similar things
+  (comprehensive_examples_required * 2) + // Code samples, tutorials
+  (multi_language_support * 2) +        // Examples in multiple languages
+  (visual_content_needed * 1)           // Diagrams, screenshots
+
+// Red flags for high content generation:
+// - Creating ≥3 documentation files
+// - Each file requires >5KB of content
+// - Multiple detailed code examples per file
+// - Tutorials or step-by-step guides
+// - Multi-language/multi-framework examples
+
+// Documentation tasks are highly parallelizable when files are independent
+// Example: Creating 10 skill documentation files → score: 30+ (recommend parallel)
+```
+
 ### Strategy Decision Matrix
 
 ```javascript
 total_score = file_impact_score + dependency_score + testing_score +
-              integration_score + uncertainty_score
+              integration_score + uncertainty_score + content_generation_score
 
-// Strategy thresholds
-if (total_score <= 10) {
-  strategy = "very_small_direct"
-  rationale = `Low complexity (score: ${total_score}). Simple fix/change with minimal testing.
-               Orchestrator can handle with synthetic agents and quality gate validation.`
+// Detect repetitive structure that multiplies token cost
+let content_generation_heavy = false
+if (work_units.some(unit => unit.requires_similar_pattern)) {
+  repetitive_items = work_units.filter(u => u.requires_similar_pattern).length
+  if (repetitive_items >= 5) {
+    // Creating 5+ similar things suggests parallelization opportunity
+    content_generation_heavy = true
+
+    // Even if code complexity low, high repetition = recommend parallelization
+    if (total_score <= 10 && repetitive_items >= 5) {
+      strategy = "medium_single_branch"
+      rationale = `Low code complexity (score: ${total_score}) BUT ${repetitive_items} similar items detected. ` +
+                  `Parallel content generation recommended for efficiency. Token budget optimization.`
+      // Skip normal strategy selection
+      goto strategy_selected
+    }
+  }
 }
-else if (total_score <= 30 && file_overlap_risk === "none" && work_units.length <= 5) {
+
+// REVISED Strategy thresholds with content generation awareness
+if (total_score <= 10 && content_generation_score <= 3) {
+  strategy = "very_small_direct"
+  rationale = `Very low complexity (score: ${total_score}, content: ${content_generation_score}). ` +
+              `Minimal content generation. Orchestrator can handle efficiently.`
+}
+else if (total_score <= 35 && file_overlap_risk === "none" &&
+         (work_units.length <= 5 || content_generation_heavy)) {
   strategy = "medium_single_branch"
-  rationale = `Medium complexity (score: ${total_score}). ${work_units.length} parallelizable
-               work units with no file overlap. Single branch with coordinated agents is efficient.`
+  rationale = `Medium complexity (score: ${total_score}, content: ${content_generation_score}). ` +
+              `${work_units.length} parallelizable work units. ` +
+              `${content_generation_heavy ?
+                'High content generation burden - parallel agents recommended for token efficiency.' :
+                'Single branch with coordinated agents is efficient.'}`
 }
 else {
   strategy = "large_multi_worktree"
-  rationale = `High complexity (score: ${total_score}) OR file overlap detected OR >5 work units.
-               Isolated worktrees required to prevent agent conflicts and manage complexity.`
+  rationale = `High complexity (score: ${total_score}, content: ${content_generation_score}) ` +
+              `OR file overlap detected. Isolated worktrees required for safety.`
 }
+
+strategy_selected:
 
 // Override conditions (force large_multi_worktree)
 if (file_overlap_warnings.length > 0) {
@@ -129,7 +174,8 @@ if (work_units.some(unit => unit.estimated_files > 5 || unit.estimated_loc > 500
       "dependency": 4,
       "testing": 6,
       "integration": 2,
-      "uncertainty": 4
+      "uncertainty": 4,
+      "content_generation": 0
     },
     "rationale": "Medium complexity (score: 24). 3 parallelizable work units with no file overlap. Single branch with coordinated agents is efficient. No integration risk detected between components.",
     "override_conditions": [],  // Example when populated: ["File overlap detected in src/auth.js between WORK-002 and WORK-004 - forcing large_multi_worktree", "Large work unit detected (8 files) - forcing worktree isolation"]
@@ -142,6 +188,97 @@ if (work_units.some(unit => unit.estimated_files > 5 || unit.estimated_loc > 500
 }
 ```
 
+### Content Generation Detection
+
+**Recognize high token-burden tasks that appear "simple" in code complexity:**
+
+**Documentation/Content Creation Indicators:**
+- Creating multiple markdown/documentation files (≥3 files)
+- Each file requires comprehensive content (>5KB target size)
+- Detailed code examples in multiple languages
+- Tutorial or step-by-step guide format
+- Troubleshooting sections with multiple scenarios
+- Repetitive structure across multiple items (N similar things)
+
+**Scoring Adjustment for Documentation Tasks:**
+```javascript
+// For documentation/content generation tasks
+if (task_type === "documentation" || markdown_files >= 3) {
+  content_generation_score = markdown_files * 3
+
+  if (requires_code_examples) content_generation_score += 5
+  if (multi_language_examples) content_generation_score += 5
+  if (comprehensive_troubleshooting) content_generation_score += 3
+
+  // Documentation is highly parallelizable when files are independent
+  if (markdown_files >= 5 && files_are_independent) {
+    recommend_strategy = "medium_single_branch"
+    recommend_parallel_agents = markdown_files  // One agent per doc file OR orchestrator parallel
+    rationale = "High content generation burden. Parallel creation optimizes token usage."
+  }
+}
+```
+
+**Example: SPICE Skills Creation Task**
+```javascript
+// Task: Create 10 skill documentation files
+analysis = {
+  file_impact: 10,              // 10 new markdown files
+  dependency: 0,                 // No code dependencies
+  testing: 0,                    // No unit tests (markdown)
+  integration: 0,                // Independent files
+  uncertainty: 0,                // Clear requirements
+  content_generation: 38,        // 10 files * 3 + multi-lang * 2 + troubleshooting * 3
+
+  total_score: 48,
+  selected_strategy: "medium_single_branch",
+
+  rationale: "Medium complexity (score: 48, content: 38). 10 parallelizable documentation files. " +
+             "High content generation burden - parallel creation recommended for token efficiency. " +
+             "Each file independent with exclusive content ownership."
+}
+
+// Recommended approach:
+// - Deploy orchestrator to create files in parallel OR
+// - Deploy 10 parallel documentation-generator agents, one per skill
+// - Total ~2,500 tokens per agent vs ~29,000 serially
+// - Dramatic token efficiency improvement
+```
+
+## 📊 OUTPUT TOKEN ESTIMATION
+
+**Rough heuristics for content generation tasks:**
+
+| Task Type | Token Estimate | Strategy Recommendation |
+|-----------|----------------|-------------------------|
+| Single config change | ~500 tokens | very_small_direct |
+| Single markdown file (<5KB) | ~2,000 tokens | very_small_direct |
+| 3-5 markdown files (5-10KB each) | ~15,000 tokens | medium_single_branch (consider parallel) |
+| 10+ documentation files | ~50,000+ tokens | medium_single_branch with parallel creation |
+| Comprehensive tutorial series | ~100,000+ tokens | medium_single_branch or large_multi_worktree |
+
+**Content multipliers:**
+- Code examples in file: +30% tokens
+- Multi-language examples: +50% tokens per language
+- Troubleshooting sections: +20% tokens
+- Detailed step-by-step guides: +40% tokens
+- Repetitive similar items: Linear growth (N items × avg_tokens)
+
+**Parallelization efficiency for content generation:**
+
+When creating ≥5 independent content items:
+- **Serial (1 agent/orchestrator):** N items × avg_tokens = total_tokens (may exceed budget)
+- **Parallel (N agents or concurrent creation):** avg_tokens per agent (highly efficient)
+- **Recommendation:** Use medium_single_branch with parallel content generation
+
+**Token Budget Awareness:**
+- Orchestrator has ~200,000 token budget
+- Complex documentation task with 10 files × 15KB each ≈ 150KB output
+- At ~4 chars/token ≈ 37,500 tokens for content alone
+- Add context, examples, formatting: ~50,000-75,000 tokens
+- Serial creation may approach or exceed budget
+- **Parallel creation distributes load efficiently**
+
 ## 🚀 STRATEGY IMPLEMENTATION WORKFLOWS
 
 **Once strategy selected, provide detailed implementation guidance to orchestrator.**
@@ -150,15 +287,26 @@ if (work_units.some(unit => unit.estimated_files > 5 || unit.estimated_loc > 500
 
 **When to Use:**
 - Complexity score ≤ 10
+- **Content generation score ≤ 3**
 - Single file or minimal file changes
 - Low testing burden
 - No external dependencies
+- **Not creating multiple similar items (repetition <5)**
 - Clear, well-understood requirements
+
+**Explicitly EXCLUDE from this strategy:**
+- ❌ Creating ≥3 documentation files
+- ❌ Repetitive content generation (≥5 similar items)
+- ❌ Comprehensive tutorials or guides
+- ❌ Multi-language code examples
+- ❌ Tasks where parallelization offers significant efficiency gains
+- ❌ High token-burden tasks (>10,000 tokens estimated)
 
 **Characteristics:**
 - 1-2 files maximum
-- Simple bug fix, config change, or documentation update
+- Simple bug fix, config change, or single documentation update
 - Minimal integration complexity
+- Minimal content generation burden
 - Quick turnaround (<30 minutes)
 
 **Implementation Workflow:**
