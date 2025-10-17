@@ -11,6 +11,8 @@ This directory contains the local configuration, documentation, and customizatio
 ├── settings.json                # Claude Code configuration settings
 ├── agents/                     # AI agent definitions
 ├── commands/                   # Custom slash commands
+├── skills/                     # Model-invoked capabilities
+│   └── spice/                  # SPICE workflow utilities
 └── docs/                       # Documentation
     └── spice/                  # SPICE development standards
 ```
@@ -281,6 +283,159 @@ Custom slash commands for enhanced workflow:
   - Manages quality gate sequence and auto-iteration loops
   - ~376 lines (streamlined to prevent context exhaustion)
 - **spice:status-worktrees.md**: Worktree status monitoring and management
+
+## 🎯 Skills (skills/)
+
+Model-invoked capabilities that automatically activate when relevant to the current workflow.
+
+### What Are Skills?
+
+Skills are **model-invoked** capabilities that Claude autonomously activates based on context and task requirements. Unlike slash commands (which users invoke explicitly), skills are discovered and used by Claude when relevant.
+
+**Key Differences from Slash Commands:**
+- **Slash Commands**: User-invoked with `/command-name`, explicit activation
+- **Skills**: Model-invoked automatically when relevant to the current task
+
+### Skill Structure
+
+Skills are organized in directories containing a `SKILL.md` file plus optional supporting materials.
+
+**Single-Skill Package:**
+```
+skills/
+└── skill-name/
+    ├── SKILL.md              # Required: Skill definition with YAML frontmatter
+    ├── examples/             # Optional: Example files and templates
+    ├── scripts/              # Optional: Executable scripts and utilities
+    ├── templates/            # Optional: Code templates and boilerplate
+    └── docs/                 # Optional: Reference documentation
+```
+
+**Multi-Skill Package:**
+
+For related capabilities, organize multiple skills in a single package:
+
+```
+skills/
+└── package-name/
+    ├── SKILL.md              # Package-level skill (optional)
+    ├── SKILL_NAME_1.md       # Individual skill 1
+    ├── SKILL_NAME_2.md       # Individual skill 2
+    ├── SKILL_NAME_3.md       # Individual skill 3
+    ├── scripts/              # Shared scripts for all skills
+    ├── templates/            # Shared templates
+    └── docs/                 # Shared reference documentation
+```
+
+**Multi-Skill Package Benefits:**
+- **Organization**: Group related skills together (e.g., all git workflows, all testing utilities)
+- **Shared Resources**: Scripts, templates, and documentation shared across skills
+- **Namespace Management**: Package name provides context (e.g., `spice/GIT_COMMIT`)
+- **Easier Maintenance**: Update shared resources once, benefit all skills
+
+**Example - SPICE Package:**
+```
+skills/spice/
+├── SKILL.md           # Package overview and shared documentation references
+├── GIT_COMMIT.md      # Skill for SPICE-compliant commit messages
+├── TEST_RUNNER.md     # (Future) Skill for test execution patterns
+└── LINT_FIX.md        # (Future) Skill for linting automation
+```
+
+### SKILL.md Format
+
+Every skill requires a `SKILL.md` file with YAML frontmatter followed by Markdown content:
+
+```markdown
+---
+name: skill-name
+description: What it does and when to use it (be specific about triggers)
+allowed-tools: [optional, tool, restrictions]
+---
+
+# Skill Name
+
+Detailed instructions, examples, and documentation that Claude reads when the skill activates.
+```
+
+**Critical Fields:**
+- `name`: Unique identifier for the skill
+- `description`: **Most important field** - should specify both functionality AND usage triggers so Claude knows when to activate
+- `allowed-tools`: Optional - restricts which tools Claude can use when this skill is active
+
+### Supporting Files
+
+Skills can include any supporting materials in their directory:
+
+**Scripts & Executables:**
+- Bash scripts for automation
+- Python/Node.js utilities
+- Helper programs that the skill can invoke
+
+**Templates & Boilerplate:**
+- Code templates for common patterns
+- Configuration file templates
+- Documentation templates
+
+**Reference Materials:**
+- Examples of correct/incorrect usage
+- Standards and style guides
+- Lookup tables and reference data
+- External documentation excerpts
+
+**Organization Best Practices:**
+- Use subdirectories to organize supporting files (`scripts/`, `templates/`, `examples/`)
+- Reference supporting files by relative path in SKILL.md
+- Keep files focused - one concern per file
+- Include README files in subdirectories for complex organizations
+
+### Creating Skills
+
+Skills are located in `~/.claude/skills/` and available across all projects. Use them for universal utilities, workflow automation, and standards enforcement.
+
+**Creating a New Skill:**
+
+1. **Create the skill directory**: `mkdir -p ~/.claude/skills/skill-name`
+2. **Create SKILL.md** with YAML frontmatter and instructions
+3. **Add supporting files** (scripts, templates, examples) as needed
+4. **Test activation** by using tasks that should trigger the skill
+
+**Creating a Multi-Skill Package:**
+
+1. **Create the package directory**: `mkdir -p ~/.claude/skills/package-name`
+2. **Create package-level SKILL.md** (optional, for shared context)
+3. **Create individual skill files**: `SKILL_NAME.md` for each capability
+4. **Add shared resources** in subdirectories (scripts, templates, docs)
+5. **Test each skill** independently to ensure proper activation
+
+### Best Practices
+
+1. **Write Specific Descriptions**: Include concrete triggers and use cases
+   - ✅ Good: "Writes SPICE-compliant commit messages when creating commits or when commit message assistance is needed"
+   - ❌ Bad: "Helps with commits"
+
+2. **Keep Skills Focused**: Each skill should address one capability
+   - One skill per workflow or task type
+   - Use skill packages (directories with multiple skills) for related capabilities
+
+3. **Progressive File Access**: Claude reads supporting files only when needed
+   - Don't duplicate content between SKILL.md and supporting files
+   - Reference supporting files, don't inline everything
+
+4. **Test Activation**: Verify the skill activates appropriately
+   - Test with relevant user requests
+   - Adjust description if activation is too broad or too narrow
+
+5. **Document Examples**: Include both correct and incorrect usage examples
+   - Show common mistakes and how to avoid them
+   - Provide templates for complex formats
+
+### Installed Skills
+
+- **spice/**: SPICE development workflow utilities for commit standards, testing patterns, and quality automation
+  - Automatically enforces SPICE standards during development
+  - Includes GIT_COMMIT skill for conventional commit format
+  - Supporting documentation references SPICE standards in `docs/spice/`
 
 ## 🔑 Key Features
 
