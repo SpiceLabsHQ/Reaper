@@ -75,9 +75,9 @@
    - Verify: `pwd | grep -q "/trees/" && { echo "ERROR: Must start from root"; exit 1; }`
 
 2. **WORKTREE ISOLATION**
-   - Every feature/bug gets its own worktree in `./trees/JIRA-KEY-description`
+   - Every feature/bug gets its own worktree in `./trees/[TASK-ID]-description`
    - Use git -C for git commands: `git -C ./trees/PROJ-123 status`
-   - Use subshells for non-git commands: `(cd ./trees/PROJ-123 && npm test)`
+   - Use subshells for non-git commands: `(cd ./trees/repo-a3f && npm test)`
 
 3. **MAIN BRANCH PROTECTION**
    - LLMs are STRICTLY FORBIDDEN from merging to `main` without explicit user permission
@@ -87,9 +87,9 @@
    - User must explicitly say: "merge to main", "deploy to production", "release to main"
 
 4. **NO FABRICATION**
-   - NEVER invent Jira IDs, test results, or any data
-   - If missing Jira KEY → STOP and ask user
-   - Format: `PROJ-123` (project prefix + number)
+   - NEVER invent task IDs, test results, or any data
+   - If task ID and detailed description both missing → STOP and ask user
+   - Accepted formats: `PROJ-123` (Jira), `repo-a3f` (Beads), `#456` (GitHub), `custom-id`, or description-only
 
 5. **NO ENVIRONMENT VARIABLE COMMANDS**
    - ❌ Wrong: `NODE_ENV=test npm test`
@@ -120,50 +120,60 @@
 
 ### Agent Usage Patterns
 
+**Examples support flexible task identifiers: Jira (PROJ-123), Beads (repo-a3f), GitHub (#456), custom (sprint-5-auth)**
+
 **1. Planning Phase (MANDATORY for complex tasks)**
 ```bash
+# Jira task
 Task --subagent_type workflow-planner \
-  --description "Plan implementation strategy" \
-  --prompt "Analyze PROJ-123 requirements for parallel work opportunities and dependency mapping"
+  --prompt "TASK: PROJ-123, DESCRIPTION: Analyze OAuth authentication requirements for parallel work opportunities"
+
+# Beads task
+Task --subagent_type workflow-planner \
+  --prompt "TASK: repo-a3f, DESCRIPTION: Plan rate limiting implementation across API and middleware layers"
 ```
 
 **2. Bug Fixing (REQUIRED for all bugs)**
 ```bash
+# GitHub issue
 Task --subagent_type bug-fixer \
-  --description "Fix reported bug with TDD" \
-  --prompt "Reproduce and fix PROJ-123: [BUG_DESCRIPTION] using Red-Green-Refactor methodology"
+  --prompt "TASK: #456, DESCRIPTION: Fix null pointer in payment processing when user has no payment method"
+
+# Description-only
+Task --subagent_type bug-fixer \
+  --prompt "TASK: hotfix-oauth, DESCRIPTION: Fix OAuth token refresh race condition causing 401 errors"
 ```
 
 **3. Feature Development (REQUIRED for all features)**
 ```bash
+# Custom task ID
 Task --subagent_type feature-developer \
-  --description "Implement new feature" \
-  --prompt "Implement PROJ-123: [FEATURE_NAME] with TDD methodology and SOLID principles"
+  --prompt "TASK: sprint-5-notifications, DESCRIPTION: Implement real-time push notifications with WebSocket support"
+
+# Jira task (backward compatible)
+Task --subagent_type feature-developer \
+  --prompt "TASK: PROJ-123, DESCRIPTION: Add user profile API with validation and avatar upload"
 ```
 
 **4. Environment Setup (RECOMMENDED)**
 ```bash
 Task --subagent_type branch-manager \
-  --description "Setup worktree environment" \
-  --prompt "Create worktree for PROJ-123, install dependencies, validate setup"
+  --prompt "TASK: PROJ-123, WORKTREE: ./trees/PROJ-123-auth, DESCRIPTION: Create worktree, install dependencies, validate"
 ```
 
 **5. Quality Validation (MANDATORY before merge)**
 ```bash
 Task --subagent_type test-runner \
-  --description "Run comprehensive testing" \
-  --prompt "Execute all tests, linting, coverage for PROJ-123"
+  --prompt "TASK: repo-a3f, WORKTREE: ./trees/repo-a3f-oauth, DESCRIPTION: Run full test suite for OAuth implementation"
 
 Task --subagent_type code-reviewer \
-  --description "Review code quality" \
-  --prompt "Review PROJ-123 for security, best practices, quality"
+  --prompt "TASK: #456, WORKTREE: ./trees/issue-456-fix, DESCRIPTION: Review payment processing fix for quality"
 ```
 
 **6. Safe Merge (RECOMMENDED)**
 ```bash
 Task --subagent_type branch-manager \
-  --description "Safe merge to develop" \
-  --prompt "Merge PROJ-123 to develop with conflict detection and validation"
+  --prompt "TASK: PROJ-123, WORKTREE: ./trees/PROJ-123-auth, DESCRIPTION: Merge to develop with conflict detection"
 ```
 
 [Full Agent Documentation](./SPICE.md#llm-coding-agents-mandatory)
@@ -232,6 +242,132 @@ acli jira workitem transition --key PROJ-123 --status "In Review" || {
 - ✅ Feature branch deleted
 
 [Detailed Jira Workflows](./SPICE.md#jira-integration)
+
+---
+
+## 🔮 Beads Integration
+**📌 Applies to: BOTH main agents and subagents**
+
+**Note:** Some projects use Beads for lightweight issue tracking. Beads issues use hash-based identifiers like `repo-a3f` or `prefix-custom-name`.
+
+### Beads Overview
+
+Beads is a lightweight, git-based issue tracker. Issues are identified by hash-based names (e.g., `repo-a3f`, `docs-b2e`) instead of sequential numbers.
+
+**Access Methods:**
+- CLI: `bd` command
+- MCP Server: `beads` (when available)
+
+### Essential BD Commands
+
+```bash
+# List all issues
+bd list
+
+# View issue details
+bd show repo-a3f
+
+# Create new issue
+bd new "Issue title and description"
+
+# Update issue status
+bd issue update repo-a3f --status "In Progress"
+
+# Add comment to issue
+bd comment repo-a3f "Comment text"
+
+# Close/resolve issue
+bd issue update repo-a3f --status "Done"
+```
+
+### Pre-Work Validation (When Using Beads)
+
+**Given ANY Beads issue:**
+1. View issue details: `bd show repo-a3f`
+2. Check if issue has sub-issues or dependencies
+3. Update status to "In Progress" before starting work
+4. Use issue description for implementation guidance
+
+### Completion Workflow
+
+**RECOMMENDED**: After successful merge to develop, update Beads issue:
+```bash
+# Update status
+bd issue update repo-a3f --status "In Review" 2>/dev/null || {
+    echo "INFO: Beads update skipped (bd command not available or issue not found)"
+}
+
+# Add completion comment
+bd comment repo-a3f "Implemented and merged to develop. Ready for review." 2>/dev/null
+```
+
+**When to mark In Review:**
+- ✅ Code merged to develop
+- ✅ All tests passing
+- ✅ Worktree cleaned up
+- ✅ Feature branch deleted
+
+### MCP Integration (When Available)
+
+If the Beads MCP server is configured, you can use MCP tools for issue management:
+- Read issue details via MCP resource
+- Update issue status programmatically
+- Query related issues
+
+**Note:** Beads integration is optional. If `bd` command is not available, work proceeds with description-only mode.
+
+---
+
+## 🎯 Orchestrator Exception: Task ID-Only Mode
+
+**📌 Applies to: Main agents using spice:orchestrate command**
+
+**IMPORTANT:** The `spice:orchestrate` command is an exception to the "detailed description always required" rule.
+
+### Why the Exception?
+
+The orchestrator can query task systems (Jira, Beads) to fetch complete task details automatically, making redundant descriptions unnecessary.
+
+### Valid Orchestrator Usage
+
+**Task ID only** (orchestrator fetches details):
+```bash
+/spice:orchestrate PROJ-123           # Fetches from Jira
+/spice:orchestrate repo-a3f           # Fetches from Beads
+```
+
+**Task ID + enriched description** (combines both):
+```bash
+/spice:orchestrate PROJ-123: Fix email validation with plus signs
+/spice:orchestrate repo-a3f: Use bcrypt for password hashing
+```
+
+**Description only** (no task system):
+```bash
+/spice:orchestrate Fix critical payment timeout - add retry logic and error handling
+```
+
+### Orchestrator Fetch Behavior
+
+1. **Jira format** (`PROJ-123`) → Queries `acli jira workitem view` for summary, description, acceptance criteria
+2. **Beads format** (`repo-a3f`) → Queries `bd show` for issue details
+3. **Unknown format** (`sprint-5`) → Requires description (no task system to query)
+4. **Query fails** → Falls back to user-provided description OR aborts if missing
+
+### Important: Individual Agents Still Require Descriptions
+
+When orchestrator deploys individual agents, it ALWAYS provides the fetched/combined description in the agent prompt:
+
+```bash
+# Orchestrator internally does this:
+Task --subagent_type bug-fixer \
+  --prompt "TASK: PROJ-123
+DESCRIPTION: [fetched from Jira] Fix email validation bug...
+WORKTREE: ./trees/PROJ-123-fix
+..."
+```
+
+**Agents never see just a task ID** - they always receive complete context from the orchestrator.
 
 ---
 
@@ -530,35 +666,38 @@ Task --subagent_type branch-manager \
 # SAFETY: Verify you're in root directory first
 pwd | grep -q "/trees/" && { echo "ERROR: Must start from root"; exit 1; }
 
-# PLANNING: Analyze for parallel opportunities (complex tasks)
+# PLANNING: Analyze for parallel opportunities (works with any task ID format)
 Task --subagent_type workflow-planner \
-  --prompt "Analyze PROJ-123 for parallel work opportunities"
+  --prompt "TASK: PROJ-123, DESCRIPTION: Analyze OAuth implementation for parallel work opportunities"
+# OR: "TASK: repo-a3f, DESCRIPTION: ..." (Beads)
+# OR: "TASK: #456, DESCRIPTION: ..." (GitHub)
+# OR: "TASK: sprint-5-auth, DESCRIPTION: ..." (custom)
 
-# IMPLEMENTATION: Bug fix
+# IMPLEMENTATION: Bug fix (any task ID format)
 Task --subagent_type bug-fixer \
-  --prompt "Reproduce and fix PROJ-123: [BUG_DESCRIPTION] using TDD"
+  --prompt "TASK: #456, DESCRIPTION: Fix null pointer in payment processing, add defensive checks"
 
-# IMPLEMENTATION: Feature
+# IMPLEMENTATION: Feature (backward compatible with Jira)
 Task --subagent_type feature-developer \
-  --prompt "Implement PROJ-123: [FEATURE_NAME] with TDD and SOLID principles"
+  --prompt "TASK: PROJ-123, DESCRIPTION: Implement user profile API with avatar upload and validation"
 
 # ENVIRONMENT: Setup worktree
 Task --subagent_type branch-manager \
-  --prompt "Create worktree for PROJ-123, install dependencies, validate"
+  --prompt "TASK: repo-a3f, WORKTREE: ./trees/repo-a3f-oauth, DESCRIPTION: Create worktree, install deps"
 
 # QUALITY: Validation (MANDATORY)
 Task --subagent_type test-runner \
-  --prompt "Execute all tests, linting, coverage for PROJ-123"
+  --prompt "TASK: sprint-5-auth, WORKTREE: ./trees/sprint-5-auth, DESCRIPTION: Run full test suite"
 
 Task --subagent_type code-reviewer \
-  --prompt "Review PROJ-123 for security, best practices, quality"
+  --prompt "TASK: PROJ-123, WORKTREE: ./trees/PROJ-123-fix, DESCRIPTION: Review for security and quality"
 
 # INTEGRATION: Safe merge
 Task --subagent_type branch-manager \
-  --prompt "Merge PROJ-123 to develop with conflict detection"
+  --prompt "TASK: PROJ-123, WORKTREE: ./trees/PROJ-123-fix, DESCRIPTION: Merge to develop safely"
 
-# JIRA: Update status (if using Jira)
-acli jira workitem transition --key PROJ-123 --status "In Review"
+# TICKET UPDATE: Only if using Jira (conditional on task ID format)
+acli jira workitem transition --key PROJ-123 --status "In Review"  # Only for Jira tasks
 ```
 
 ---

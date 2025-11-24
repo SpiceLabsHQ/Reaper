@@ -4,58 +4,116 @@
 
 ## Pre-Flight Validation & Input Processing
 
-### 1. Parse User Input for Required Elements
-Extract and validate from [ARGUMENTS]:
+### 1. Parse User Input Naturally (LLM-Based)
+
+The user MUST provide at least ONE of:
+1. **Task identifier only** (will fetch details from task system)
+2. **Task identifier + additional description** (enriches task system details)
+3. **Detailed description only** (when no external ticket exists)
+
+Extract from [ARGUMENTS] using natural language understanding:
 
 ```bash
-# Parse user input
-JIRA_KEY=""
+# Parse user input naturally - LLM can identify these patterns
+TASK_ID=""
 TASK_DESCRIPTION=""
 WORKTREE_SPECIFIED=""
 
-# Extract Jira key pattern (PROJ-123) or --no-jira flag
-if echo "$ARGUMENTS" | grep -qE '\b[A-Z]+-[0-9]+\b'; then
-    JIRA_KEY=$(echo "$ARGUMENTS" | grep -oE '\b[A-Z]+-[0-9]+\b' | head -1)
-elif echo "$ARGUMENTS" | grep -q -- "--no-jira"; then
-    JIRA_KEY="--no-jira"
-fi
+# Extract task identifier (any format: PROJ-123, repo-a3f, #456, sprint-5-auth, etc.)
+# LLM: Look for task-like patterns at start of input
+TASK_ID="[extracted from input or empty]"
 
-# Extract worktree if specified
+# Extract worktree if user specified custom path
 if echo "$ARGUMENTS" | grep -q "./trees/"; then
     WORKTREE_SPECIFIED=$(echo "$ARGUMENTS" | grep -o './trees/[^ ]*' | head -1)
 fi
 
-# Rest is task description
-TASK_DESCRIPTION=$(echo "$ARGUMENTS" | sed -E 's/\b[A-Z]+-[0-9]+\b//g' | sed 's/--no-jira//g' | sed 's|./trees/[^ ]*||g' | xargs)
+# Extract additional description (everything else after task ID)
+TASK_DESCRIPTION="[remaining text after task ID removal]"
 ```
 
-### 2. Validation Rules
-- **Missing Jira Key AND no --no-jira flag** → ASK: "Provide Jira ticket ID (PROJ-123 format) or use --no-jira flag"
-- **Empty task description** → ASK: "Provide detailed task description"
-- **Jira key only, no description** → Lookup ticket details for implementation plan
+### 2. Validation Rules (LLM Enforced)
 
-### 3. Generate Required Inputs for Agents
+**Orchestrator Exception:** Unlike individual agents, the orchestrator CAN start with just a task ID because it can fetch details from the task system.
+
+**Validation Logic:**
+1. **If TASK_ID provided** → Query task system for details
+   - Jira: `acli jira workitem view $TASK_ID --fields summary,description,acceptance_criteria`
+   - Beads: `bd show $TASK_ID`
+   - If query succeeds → Use fetched details as IMPLEMENTATION_PLAN
+   - If query fails OR no task system → Require user-provided description
+
+2. **If no TASK_ID** → Require detailed description (minimum 10 characters)
+
+3. **If both TASK_ID + description** → Combine both for richer context
+
+**Valid Examples:**
+- ✅ "PROJ-123" (orchestrator fetches details from Jira)
+- ✅ "repo-a3f" (orchestrator fetches details from Beads)
+- ✅ "PROJ-123: Fix login bug where email validation fails for addresses with plus signs" (enriched)
+- ✅ "#456: Add rate limiting middleware - 100 requests/minute per IP, Redis-backed" (GitHub + description)
+- ✅ "Fix the payment processing timeout issue - transactions over 30s fail, need retry logic" (description-only)
+
+**Invalid Examples (MUST REJECT):**
+- ❌ "fix bug" (too vague, no task ID)
+- ❌ "sprint-5" (custom ID with no description and no task system to query)
+- ❌ "" (empty input)
+
+### 3. Generate Context for Agents
+
 ```bash
-# Set defaults if not specified
-if [ -z "$WORKTREE_SPECIFIED" ] && [ "$JIRA_KEY" != "--no-jira" ]; then
-    WORKTREE_PATH="./trees/${JIRA_KEY}-work"
-elif [ -z "$WORKTREE_SPECIFIED" ] && [ "$JIRA_KEY" = "--no-jira" ]; then
-    WORKTREE_PATH="./trees/task-$(date +%s)"
+# Query task system for details if TASK_ID provided
+if [ -n "$TASK_ID" ]; then
+    # Detect task system format and query
+    if echo "$TASK_ID" | grep -qE '^[A-Z]+-[0-9]+$'; then
+        # Jira format (PROJ-123)
+        TASK_DETAILS=$(acli jira workitem view $TASK_ID --fields summary,description,acceptance_criteria 2>/dev/null || echo "")
+    elif echo "$TASK_ID" | grep -qE '^[a-z0-9]+-[a-f0-9]{3,}$'; then
+        # Beads format (repo-a3f)
+        TASK_DETAILS=$(bd show $TASK_ID 2>/dev/null || echo "")
+    else
+        # Unknown format - no task system query
+        TASK_DETAILS=""
+    fi
+
+    # Build implementation plan
+    if [ -n "$TASK_DETAILS" ]; then
+        # Task system query succeeded
+        if [ -n "$TASK_DESCRIPTION" ]; then
+            # Combine fetched details with user-provided description
+            IMPLEMENTATION_PLAN="$TASK_DESCRIPTION\n\nTask System Details:\n$TASK_DETAILS"
+        else
+            # Use only fetched details
+            IMPLEMENTATION_PLAN="$TASK_DETAILS"
+        fi
+    else
+        # Task system query failed - require user description
+        if [ -z "$TASK_DESCRIPTION" ] || [ ${#TASK_DESCRIPTION} -lt 10 ]; then
+            echo "ERROR: Could not fetch details for task '$TASK_ID' and no description provided"
+            echo "Please provide: detailed task description OR verify task ID exists in task system"
+            exit 1
+        fi
+        IMPLEMENTATION_PLAN="$TASK_DESCRIPTION"
+    fi
 else
-    WORKTREE_PATH="$WORKTREE_SPECIFIED"
+    # No TASK_ID - must have description
+    if [ -z "$TASK_DESCRIPTION" ] || [ ${#TASK_DESCRIPTION} -lt 10 ]; then
+        echo "ERROR: No task ID provided and description is missing or too vague"
+        echo "Please provide: task identifier OR detailed description (>10 chars)"
+        exit 1
+    fi
+
+    # Generate task ID from description
+    SLUG=$(echo "$TASK_DESCRIPTION" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | cut -c1-30)
+    TASK_ID="${SLUG}-$(date +%s)"
+    IMPLEMENTATION_PLAN="$TASK_DESCRIPTION"
 fi
 
-# Implementation plan sources (in priority order):
-# 1. Jira ticket description (if using Jira)
-# 2. Task description from user
-# 3. Ask user for more details
-if [ "$JIRA_KEY" != "--no-jira" ] && [ -n "$JIRA_KEY" ]; then
-    IMPLEMENTATION_PLAN="See Jira ticket $JIRA_KEY for requirements and acceptance criteria"
-elif [ -n "$TASK_DESCRIPTION" ]; then
-    IMPLEMENTATION_PLAN="$TASK_DESCRIPTION"
+# Set worktree path
+if [ -z "$WORKTREE_SPECIFIED" ]; then
+    WORKTREE_PATH="./trees/${TASK_ID}-work"
 else
-    echo "ERROR: Need either Jira ticket with requirements or detailed task description"
-    exit 1
+    WORKTREE_PATH="$WORKTREE_SPECIFIED"
 fi
 ```
 
@@ -69,9 +127,9 @@ Coordinate specialized agents with rigorous quality loops. NO substandard work p
 # Standard agent deployment template using pre-flight parsed inputs
 Task --subagent_type [AGENT_TYPE] \
   --description "[BRIEF_DESCRIPTION]" \
-  --prompt "JIRA_KEY: $JIRA_KEY
+  --prompt "TASK: $TASK_ID
 WORKTREE: $WORKTREE_PATH
-PLAN: $IMPLEMENTATION_PLAN
+DESCRIPTION: $IMPLEMENTATION_PLAN
 SCOPE: [SPECIFIC_SCOPE]
 RESTRICTION: [SPECIFIC_RESTRICTIONS]
 QUALITY: [QUALITY_REQUIREMENTS]
@@ -79,20 +137,63 @@ QUALITY: [QUALITY_REQUIREMENTS]
 ```
 
 **Example Usage:**
-```bash
-# After parsing: JIRA_KEY="PROJ-123", WORKTREE_PATH="./trees/PROJ-123-auth", IMPLEMENTATION_PLAN="Fix login bug with special characters"
 
+```bash
+# Jira-based task (backward compatible)
+# Parsed: TASK_ID="PROJ-123", WORKTREE_PATH="./trees/PROJ-123-auth"
 Task --subagent_type bug-fixer \
   --description "Fix authentication bug" \
-  --prompt "JIRA_KEY: PROJ-123
+  --prompt "TASK: PROJ-123
 WORKTREE: ./trees/PROJ-123-auth
-PLAN: Fix login bug with special characters in email addresses - write failing test, implement minimal fix
+DESCRIPTION: Fix login bug with special characters in email addresses - write failing test, implement minimal fix
 SCOPE: Work only on authentication module (src/auth.js, tests/auth.test.js)
 RESTRICTION: Do NOT modify user management or database modules
+QUALITY: 80% test coverage, zero linting errors, TDD methodology"
+
+# Beads issue
+# Parsed: TASK_ID="repo-a3f", WORKTREE_PATH="./trees/repo-a3f-oauth"
+Task --subagent_type feature-developer \
+  --description "Implement OAuth2 feature" \
+  --prompt "TASK: repo-a3f
+WORKTREE: ./trees/repo-a3f-oauth
+DESCRIPTION: Implement OAuth2 authentication flow with Google and GitHub providers
+SCOPE: Authentication module only (src/auth/oauth/, tests/auth/oauth/)
+QUALITY: 80% test coverage, zero linting errors, SOLID principles"
+
+# GitHub issue
+# Parsed: TASK_ID="#456", WORKTREE_PATH="./trees/issue-456-ratelimit"
+Task --subagent_type feature-developer \
+  --description "Add rate limiting" \
+  --prompt "TASK: #456
+WORKTREE: ./trees/issue-456-ratelimit
+DESCRIPTION: Add rate limiting middleware - 100 requests/minute per IP, Redis-backed
+SCOPE: API middleware layer only (src/middleware/ratelimit.js, tests/middleware/)
+QUALITY: 80% test coverage, zero linting errors"
+
+# Custom task ID
+# Parsed: TASK_ID="sprint-5-auth", WORKTREE_PATH="./trees/sprint-5-auth-refactor"
+Task --subagent_type refactoring-specialist \
+  --description "Refactor auth module" \
+  --prompt "TASK: sprint-5-auth
+WORKTREE: ./trees/sprint-5-auth-refactor
+DESCRIPTION: Refactor authentication module to use dependency injection pattern for better testability
+SCOPE: src/auth/ directory only
+QUALITY: Maintain 80% coverage, zero linting errors, SOLID principles"
+
+# Description-only (no external ticket)
+# Generated: TASK_ID="fix-payment-timeout-1732387200", WORKTREE_PATH="./trees/fix-payment-timeout-1732387200-work"
+Task --subagent_type bug-fixer \
+  --description "Fix payment timeout" \
+  --prompt "TASK: fix-payment-timeout-1732387200
+WORKTREE: ./trees/fix-payment-timeout-1732387200-work
+DESCRIPTION: Fix critical payment timeout - transactions over 30s fail, need retry logic and timeout handling
+SCOPE: src/payments/ module only (payment-processor.js, retry-handler.js, tests/)
 QUALITY: 80% test coverage, zero linting errors, TDD methodology"
 ```
 
 **Critical Requirements for ALL Agent Deployments:**
+- TASK: Task identifier (any format) OR auto-generated ID
+- DESCRIPTION: Always detailed and substantial (from user or ticket)
 - SCOPE: Exact file/module boundaries
 - RESTRICTION: No work outside scope
 - WORKTREE: Work in ./trees/ only
@@ -107,8 +208,8 @@ Deploy workflow-planner to analyze work size and select optimal strategy:
 # Use parsed inputs from pre-flight validation
 Task --subagent_type workflow-planner \
   --description "Analyze work and select strategy" \
-  --prompt "JIRA_KEY: $JIRA_KEY
-PLAN: $IMPLEMENTATION_PLAN
+  --prompt "TASK: $TASK_ID
+DESCRIPTION: $IMPLEMENTATION_PLAN
 ANALYZE: Estimate work size using measurable criteria:
   - File impact (count × complexity)
   - Dependency complexity (APIs, DB, libraries)
@@ -157,6 +258,28 @@ const SELECTED_STRATEGY = plan.strategy_selection.selected_strategy;
 const STRATEGY_RATIONALE = plan.strategy_selection.rationale;
 ```
 
+**CRITICAL: Write Plan to TodoWrite (Session Persistence)**
+
+After validating the workflow-planner response, IMMEDIATELY write all work units to TodoWrite:
+
+```javascript
+// Convert workflow-planner work units to TodoWrite format
+const todos = plan.task_decomposition.work_units.map(workUnit => ({
+  content: `${workUnit.id}: ${workUnit.description}`,
+  activeForm: `Working on ${workUnit.id}`,
+  status: "pending"
+}));
+
+// Use TodoWrite tool to persist the plan
+TodoWrite({ todos });
+```
+
+**Why This Matters:**
+- **Session Continuity**: If session disconnects, plan is recoverable
+- **Progress Tracking**: User sees real-time progress through the plan
+- **Orchestrator Memory**: Orchestrator can resume from any point in the plan
+- **Transparency**: Makes complex multi-step workflows visible
+
 **If ANY work package fails validation:**
 ```bash
 # Send workflow-planner back to split oversized packages
@@ -187,10 +310,18 @@ const QUALITY_GATE_CHECKPOINTS = IMPLEMENTATION_GUIDANCE.quality_gate_checkpoint
 **Follow workflow-planner's `agent_deployment_sequence` field:**
 
 For each step in the sequence:
-1. **Deploy agent** specified in step (branch-manager, feature-developer, bug-fixer, test-runner, code-reviewer, security-auditor)
-2. **Use critical_instructions** from workflow-planner for agent prompt
-3. **Respect blocking flag** - wait for blocking agents before proceeding
-4. **Execute parallel agents** in single message when multiple agents at same step
+1. **Mark todo as in_progress** before starting work unit (TodoWrite)
+2. **Deploy agent** specified in step (branch-manager, feature-developer, bug-fixer, test-runner, code-reviewer, security-auditor)
+3. **Use critical_instructions** from workflow-planner for agent prompt
+4. **Respect blocking flag** - wait for blocking agents before proceeding
+5. **Execute parallel agents** in single message when multiple agents at same step
+6. **Mark todo as completed** immediately after work unit finishes (TodoWrite)
+
+**CRITICAL - TodoWrite Updates:**
+- Update TodoWrite BEFORE and AFTER each work unit
+- Mark in_progress when starting, completed when done
+- NEVER batch updates - update immediately for real-time visibility
+- User must see progress through the plan as it happens
 
 **Quality Gate Enforcement (ALL Strategies):**
 
@@ -366,12 +497,26 @@ Step 5: [branch-manager] commits and merges
 **If neither** → Fix quality issues first
 
 ## Orchestration Summary
-1. Parse inputs → Extract Jira key/description
-2. Deploy workflow-planner → Get strategy and implementation plan
-3. **VALIDATE SIZES**: Reject packages >5 files, >500 LOC, >2 hours
-4. Execute strategy per workflow-planner guidance
-5. **AUTO-ITERATION**: Code → test-runner → (code-reviewer + security-auditor parallel) → Repeat until pass
-6. Check dual authorization (quality + user)
-7. Deploy branch-manager if authorized
+
+### Workflow Steps
+1. **Parse inputs** → Extract task ID, query task system for details if available
+2. **Deploy workflow-planner** → Get strategy and implementation plan with work units
+3. **VALIDATE SIZES** → Reject packages >5 files, >500 LOC, >2 hours
+4. **TODOWRITE PLAN** → Write all work units to TodoWrite for session persistence ⭐
+5. **Execute strategy** → Follow workflow-planner guidance, update TodoWrite as you go ⭐
+   - Mark todo as `in_progress` before starting each work unit
+   - Deploy agents as specified
+   - Mark todo as `completed` immediately after finishing
+6. **AUTO-ITERATION** → Code → test-runner → (code-reviewer + security-auditor parallel) → Repeat until pass
+7. **Check dual authorization** → Quality gates PASSED + User authorization phrase
+8. **Deploy branch-manager** → If authorized
+
+### TodoWrite Integration (CRITICAL)
+**Session Persistence Strategy:**
+- **After planning**: Write entire plan to TodoWrite immediately
+- **During execution**: Update status in real-time (in_progress → completed)
+- **Never batch**: Update after EACH work unit completes
+- **User visibility**: User sees live progress through complex workflows
+- **Resume capability**: If session disconnects, plan survives for recovery
 
 **Critical Validation**: Parse agent JSON for `all_checks_passed`, `test_exit_code`, `coverage_percentage`, `lint_exit_code`. Iterate on failures (max 3x), never skip gates.
