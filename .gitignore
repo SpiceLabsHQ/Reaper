@@ -1,6 +1,7 @@
 # Directories
 .claude/
 debug/
+plans/
 file-history/
 ide/
 plugins/
