@@ -1,4 +1,5 @@
 # Directories
+.beads/
 .claude/
 debug/
 plans/
