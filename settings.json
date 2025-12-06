@@ -393,6 +393,18 @@
           }
         ]
       }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "If this subagent was assigned a coding task (implementing features, fixing bugs, refactoring code), you MUST now execute quality gates per Spice standards:\n\n1. Run test-runner FIRST (blocking - must pass before step 2)\n2. Run code-reviewer + security-auditor IN PARALLEL (single message, two Task calls)\n3. Auto-iterate on failures (max 3x) before proceeding to merge\n\nFor non-coding subagents (test-runner, code-reviewer, security-auditor, workflow-planner, branch-manager, Explore), no action needed.",
+            "timeout": 30
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
