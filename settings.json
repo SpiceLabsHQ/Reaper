@@ -301,6 +301,22 @@
       "mcp__context7__resolve-library-id",
       "mcp__context7__get-library-docs"
     ],
+    "deny": [
+      "Bash(chmod 777:*)",
+      "Bash(git clean -f:*)",
+      "Bash(git commit:--no-verify:*)",
+      "Bash(git commit:-n:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git rebase -i:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(php artisan db:wipe:*)",
+      "Bash(php artisan migrate:reset:*)",
+      "Bash(rm -rf:*)",
+      "Bash(su:*)",
+      "Bash(sudo rm:*)",
+      "Bash(sudo:*)"
+    ],
     "ask": [
       "Bash(bd cleanup:*)",
       "Bash(bd compact:*)",
@@ -320,22 +336,6 @@
       "Bash(git push:*)",
       "Bash(git rm:*)",
       "Bash(php artisan migrate:rollback:*)"
-    ],
-    "deny": [
-      "Bash(chmod 777:*)",
-      "Bash(git clean -f:*)",
-      "Bash(git commit:--no-verify:*)",
-      "Bash(git commit:-n:*)",
-      "Bash(git push --force:*)",
-      "Bash(git push -f:*)",
-      "Bash(git rebase -i:*)",
-      "Bash(git reset --hard:*)",
-      "Bash(php artisan db:wipe:*)",
-      "Bash(php artisan migrate:reset:*)",
-      "Bash(rm -rf:*)",
-      "Bash(su:*)",
-      "Bash(sudo rm:*)",
-      "Bash(sudo:*)"
     ]
   },
   "hooks": {

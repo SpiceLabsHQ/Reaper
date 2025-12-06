@@ -22,7 +22,7 @@ get_project_context() {
 
     # Try 1: Git branch + remote origin
     if command -v git &>/dev/null && git rev-parse --is-inside-work-tree &>/dev/null 2>&1; then
-        local branch remote_url project_name
+        local branch remote_url project_name=""
         branch=$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null || echo "")
         remote_url=$(git remote get-url origin 2>/dev/null || echo "")
 
