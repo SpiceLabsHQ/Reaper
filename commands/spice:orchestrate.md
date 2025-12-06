@@ -117,6 +117,46 @@ else
 fi
 ```
 
+## Worktree Management (MANDATORY)
+
+**Use the `worktree-manager` skill for ALL worktree operations to prevent Bash tool breakage.**
+
+### The Problem
+
+When you remove a worktree while the Bash tool's CWD is inside that worktree:
+1. `git worktree remove` fails with "directory in use"
+2. If forced, the directory is deleted but the Bash tool's CWD becomes invalid
+3. All subsequent Bash tool calls fail for the remainder of the session
+
+### The Solution
+
+**Invoke the `worktree-manager` skill** for worktree creation, status checks, and cleanup.
+
+### Usage
+
+**Create Worktree:**
+```
+Invoke skill: worktree-manager
+Purpose: Create worktree for $TASK_ID
+```
+
+**Check Status Before Cleanup:**
+```
+Invoke skill: worktree-manager
+Purpose: Check status of $WORKTREE_PATH
+```
+
+**Safe Cleanup (CRITICAL):**
+```
+Invoke skill: worktree-manager
+Purpose: Safe cleanup of $WORKTREE_PATH
+```
+
+### Forbidden Commands
+- ❌ `git worktree remove` directly - Can break Bash tool
+- ❌ `rm -rf ./trees/...` - Leaves stale worktree entries
+- ✅ Always invoke `worktree-manager` skill
+
 ## Your Role: Quality-Enforcing Orchestration Supervisor
 Coordinate specialized agents with rigorous quality loops. NO substandard work progresses.
 
@@ -496,6 +536,20 @@ Step 5: [branch-manager] commits and merges
 **If quality passed, no auth** → ASK: "All quality gates passed. May I commit and merge to develop?"
 **If neither** → Fix quality issues first
 
+### 9.2 WORKTREE CLEANUP
+
+After successful merge to develop:
+```
+# Verify merge was successful
+git log develop --oneline -1
+
+# Safe worktree cleanup - invoke skill
+Invoke skill: worktree-manager
+Purpose: Safe cleanup of $WORKTREE_PATH
+```
+
+**CRITICAL**: Never use `git worktree remove` directly - invoke the `worktree-manager` skill instead.
+
 ## Orchestration Summary
 
 ### Workflow Steps
@@ -510,6 +564,7 @@ Step 5: [branch-manager] commits and merges
 6. **AUTO-ITERATION** → Code → test-runner → (code-reviewer + security-auditor parallel) → Repeat until pass
 7. **Check dual authorization** → Quality gates PASSED + User authorization phrase
 8. **Deploy branch-manager** → If authorized
+9. **Worktree cleanup** → Invoke `worktree-manager` skill for safe removal
 
 ### TodoWrite Integration (CRITICAL)
 **Session Persistence Strategy:**

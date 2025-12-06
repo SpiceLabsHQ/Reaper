@@ -602,7 +602,7 @@ For EACH worktree, execute this complete cycle:
    - Orchestrator deploys branch-manager with quality gate confirmation
    - branch-manager commits work in worktree
    - branch-manager merges worktree branch to review branch
-   - branch-manager cleans up worktree after successful merge
+   - Invoke `worktree-manager` skill for safe worktree cleanup after successful merge
 
 **Quality Gate Placement:**
 - Per-worktree gates: test-runner, code-reviewer, security-auditor
@@ -619,7 +619,7 @@ For EACH worktree, execute this complete cycle:
 - Each worktree completion triggers:
   1. Commit in worktree (by branch-manager)
   2. Merge to review branch (by branch-manager)
-  3. Cleanup worktree (by branch-manager)
+  3. Cleanup worktree (invoke `worktree-manager` skill for safe removal)
   4. Move to next worktree
 - Final review branch contains all consolidated work
 
@@ -661,6 +661,7 @@ For EACH worktree, execute this complete cycle:
 - Safe merge operations with conflict detection
 - Cleanup and consolidation
 - Ideal for: worktree setup, branch operations, consolidation phases
+- **NOTE**: For worktree cleanup, invoke `worktree-manager` skill to prevent Bash tool CWD errors
 
 **Testing Validation → `test-runner` agent**
 - Authoritative quality metrics (coverage, test results)
@@ -1513,3 +1514,45 @@ bd show <id>                   # Issue details with dependencies
 - Use with `bug-fixer` and `feature-developer` for implementation
 - Chain with `branch-manager` for safe parallel worktree setup
 - Follow with `test-runner` and `code-reviewer` for validation
+
+## 🧹 WORKTREE-MANAGER SKILL INTEGRATION
+
+**CRITICAL: Always use the `worktree-manager` skill for worktree cleanup operations**
+
+### The Problem
+
+When Claude removes a worktree while the Bash tool's CWD is inside that worktree:
+1. `git worktree remove` fails with "directory in use"
+2. If forced, the directory is deleted but the Bash tool's CWD becomes invalid
+3. All subsequent Bash tool calls fail for the remainder of the session
+
+### The Solution
+
+**Invoke the `worktree-manager` skill** for all worktree operations, especially cleanup.
+
+The skill provides safe scripts that change to project root BEFORE removal, preventing Bash tool breakage.
+
+### Include in Planning Output
+
+When generating `implementation_guidance` for Strategy 3 (Large Multi-Worktree), instruct orchestrator to:
+
+**Environment Setup Phase:**
+```
+Invoke skill: worktree-manager
+Purpose: Create worktree for PROJ-123-auth-feature
+```
+
+**Consolidation Phase (after quality gates pass):**
+```
+Invoke skill: worktree-manager
+Purpose: Safe cleanup of ./trees/PROJ-123-auth-feature
+```
+
+### Forbidden Commands
+
+**NEVER include these in plans for direct execution:**
+- ❌ `git worktree remove` - Can break Bash tool if CWD inside worktree
+- ❌ `rm -rf ./trees/...` - Leaves stale worktree entries
+
+**ALWAYS use:**
+- ✅ `worktree-manager` skill - Handles CWD issues and cleans up properly
