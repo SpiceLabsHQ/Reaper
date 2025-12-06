@@ -9,7 +9,7 @@ set -euo pipefail
 play_notification_sound() {
     if [[ "$OSTYPE" == "darwin"* ]] && [[ -x /usr/bin/afplay ]]; then
         # macOS: Use system sound (run in background so it doesn't block)
-        /usr/bin/afplay /System/Library/Sounds/Ping.aiff 2>/dev/null &
+        /usr/bin/afplay /System/Library/Sounds/Tink.aiff 2>/dev/null &
     else
         # Fallback: Terminal bell (works in most terminals including devcontainers)
         printf '\a'
@@ -64,11 +64,17 @@ get_project_context() {
 
 # --- Main ---
 main() {
-    local context message
+    local context message custom_message="${1:-}"
 
     # Build context first (useful for error messages too)
     context=$(get_project_context)
-    message="Ready for your input in $context"
+
+    # Use custom message with context if provided, otherwise default
+    if [[ -n "$custom_message" ]]; then
+        message="$custom_message in $context"
+    else
+        message="Ready for your input in $context"
+    fi
 
     # Check for required Pushover credentials
     if [[ -z "${PUSHOVER_APP_TOKEN:-}" ]]; then

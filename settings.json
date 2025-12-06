@@ -280,13 +280,35 @@
         ]
       }
     ],
+    "PostToolUse": [
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/scripts/notify-attention.sh 'Claude has a question for you' 2>/dev/null || true"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/spice/.claude/scripts/notify-attention.sh"
+            "command": "~/.claude/scripts/notify-attention.sh 'Claude has finished working' 2>/dev/null || true"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/scripts/notify-attention.sh 'Claude needs your approval to continue' 2>/dev/null || true"
           }
         ]
       }
