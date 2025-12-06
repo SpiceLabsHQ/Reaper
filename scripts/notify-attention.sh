@@ -69,11 +69,23 @@ main() {
     # Build context first (useful for error messages too)
     context=$(get_project_context)
 
-    # Use custom message with context if provided, otherwise default
-    if [[ -n "$custom_message" ]]; then
-        message="$custom_message in $context"
+    # Build message with context on its own line (when available)
+    if [[ "$context" == "Claude Code" ]]; then
+        # No useful context available - just use message
+        if [[ -n "$custom_message" ]]; then
+            message="$custom_message"
+        else
+            message="Claude requires your attention"
+        fi
     else
-        message="Ready for your input in $context"
+        # Context available - put on first line
+        if [[ -n "$custom_message" ]]; then
+            message="$context
+$custom_message"
+        else
+            message="$context
+Ready for your input"
+        fi
     fi
 
     # Check for required Pushover credentials
