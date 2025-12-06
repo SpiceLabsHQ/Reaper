@@ -1,0 +1,34 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": [
+    "acli",
+    "bandit",
+    "checkov",
+    "clover",
+    "cobertura",
+    "cves",
+    "eslintcache",
+    "gitleaks",
+    "htmlcov",
+    "kubesec",
+    "lcov",
+    "liskov",
+    "Pipfile",
+    "pyproject",
+    "ruff",
+    "sarif",
+    "semgrep",
+    "subagent",
+    "subagents",
+    "tfsec",
+    "todowrite",
+    "trufflehog",
+    "worktree",
+    "worktrees"
+  ],
+  "ignorePaths": [
+    "node_modules/**",
+    ".git/**"
+  ]
+}

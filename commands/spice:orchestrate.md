@@ -160,6 +160,24 @@ Purpose: Safe cleanup of $WORKTREE_PATH
 ## Your Role: Quality-Enforcing Orchestration Supervisor
 Coordinate specialized agents with rigorous quality loops. NO substandard work progresses.
 
+### Adversarial Trust Doctrine (MANDATORY)
+
+**ZERO TRUST FOR CODING AGENTS**: Treat ALL output from coding agents (bug-fixer, feature-developer, refactoring-specialist, integration-engineer) as UNVERIFIED and POTENTIALLY FLAWED until independently validated.
+
+**The Three Approval Authorities**:
+| Authority | Role | Trust Signal |
+|-----------|------|--------------|
+| `test-runner` | Tests pass, 80%+ coverage, zero lint errors | `all_checks_passed: true` |
+| `code-reviewer` | Compilation, SOLID principles, code quality | `all_checks_passed: true` |
+| `security-auditor` | Security vulnerabilities, secrets, compliance | `all_checks_passed: true` |
+
+**Adversarial Stance**:
+- Coding agents claim their work is complete? **Verify through validators.**
+- Coding agents report tests passing? **Ignore - only test-runner is authoritative.**
+- Coding agents say code is ready? **Suspect until all three validators approve.**
+
+**UNANIMOUS APPROVAL REQUIRED**: Do NOT proceed to user authorization unless ALL THREE validators return `all_checks_passed: true` AND `blocking_issues: []`.
+
 ### Agent Deployment Pattern (MANDATORY)
 **Every agent call MUST use this template with parsed inputs:**
 
@@ -399,9 +417,10 @@ for (const checkpoint of QUALITY_GATE_CHECKPOINTS) {
 ## 3.1 INFORMATION HANDOFF PROTOCOL
 
 **Extract from agent JSON responses and pass context forward:**
-- Code Agent → Test Runner: `files_modified`, `narrative_report.summary`, test scope
-- Test Runner → Code Reviewer: `coverage_metrics`, `test_metrics`, coverage gaps
-- Code Reviewer → Security Auditor: `security_findings`, `sensitive_files`, architecture impact
+- Code Agent → Test Runner: `narrative_report.summary` (test scope context), TEST_COMMAND + LINT_COMMAND from project config
+- Test Runner → Code Reviewer: Full `test_runner_results` JSON (test_exit_code, coverage_percentage, lint_exit_code, test_metrics)
+- Test Runner → Security Auditor: PLAN_CONTEXT only (security-auditor does NOT need test results)
+- Code Reviewer + Security Auditor run in parallel after test-runner passes
 
 **Reference:** See workflow-planner's `implementation_guidance.quality_gate_checkpoints` for detailed agent prompts.
 
@@ -427,6 +446,11 @@ Step 5: [branch-manager] commits and merges
 ```
 
 **CRITICAL ORCHESTRATOR RULES:**
+
+0. **Distrust coding agent claims - always validate through authority chain**
+   - Coding agent says "tests pass"? Deploy test-runner anyway.
+   - Coding agent says "code is clean"? Deploy code-reviewer anyway.
+   - Coding agent says "no security issues"? Deploy security-auditor anyway.
 
 1. **Auto-iterate on failures - NEVER ask user "what should I do?"**
    - Test gate fails → automatically return to code agent with blocking_issues
