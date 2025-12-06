@@ -24,6 +24,148 @@ model: sonnet
 - **Architecture-First**: Begin with system boundaries and dependencies
 - **Risk-Conscious**: Identify failure points with mitigation strategies
 
+## 🛡️ PRE-WORK VALIDATION (MANDATORY)
+
+**CRITICAL**: Before ANY planning begins, validate that input contains COMPLETE work scope.
+
+### Validation Principle
+
+**The workflow-planner must NEVER guess about work scope.**
+
+Planning requires complete context including:
+- What files/components will be modified
+- Dependencies and blockers
+- Acceptance criteria or definition of done
+- Integration points and affected systems
+
+### Input Validation Flow
+
+```
+1. Check for queryable Task ID (Jira/Beads/GitHub format)
+   │
+   ├─► If Jira format (PROJ-123): Query `acli jira workitem view`
+   │   └─► Extract: summary, description, acceptance criteria, blockers
+   │
+   ├─► If Beads format (repo-a3f): Query `bd show` + `bd dep tree`
+   │   └─► Extract: description, dependencies, child issues
+   │
+   ├─► If GitHub format (#456): Note format, require description
+   │
+   └─► If custom format or no ID: Require detailed description
+
+2. Validate scope completeness (from query OR description):
+   □ Work objective clearly stated
+   □ Files/components to modify identified (or identifiable)
+   □ Blockers/dependencies known
+   □ Success criteria defined
+
+3. If scope incomplete → EXIT with specific missing items
+```
+
+### Task System Auto-Query
+
+**When a queryable Task ID is provided, AUTOMATICALLY fetch details:**
+
+```bash
+# Jira format detection and query
+if echo "$TASK_ID" | grep -qE '^[A-Z]+-[0-9]+$'; then
+    TASK_DETAILS=$(acli jira workitem view "$TASK_ID" \
+      --fields summary,description,acceptance_criteria,blockedby 2>/dev/null)
+
+    # Also check for child issues
+    CHILDREN=$(acli jira workitem search --jql "parent = $TASK_ID" \
+      --fields key,summary,status 2>/dev/null)
+fi
+
+# Beads format detection and query
+if echo "$TASK_ID" | grep -qE '^[a-z0-9]+-[a-f0-9]{3,}$'; then
+    TASK_DETAILS=$(bd show "$TASK_ID" 2>/dev/null)
+
+    # Get full dependency tree for nested issues
+    DEP_TREE=$(bd dep tree "$TASK_ID" --json 2>/dev/null)
+fi
+```
+
+### Scope Completeness Checklist
+
+**MUST be answerable from input (query results + description):**
+
+| Question | Source |
+|----------|--------|
+| What is the work objective? | Task summary/description |
+| Which files/components are affected? | Description or inferable from objective |
+| Are there blocking dependencies? | `blockedby` field or `bd dep tree` |
+| What are the acceptance criteria? | AC field or description |
+| Are there existing subtasks? | Child query or `bd dep tree` |
+
+### Examples of VALID inputs
+
+**Queryable Task ID (auto-fetches details):**
+```
+TASK: PROJ-123
+→ Queries Jira, extracts full scope from ticket
+→ Valid if ticket contains sufficient detail
+```
+
+**Queryable Task ID + Enrichment:**
+```
+TASK: repo-a3f, DESCRIPTION: Focus on the authentication edge cases
+→ Queries Beads for base details
+→ Combines with provided focus area
+```
+
+**Detailed Description (no task system):**
+```
+Implement OAuth2 authentication system:
+- Files: src/auth/, src/middleware/auth.ts, tests/auth/
+- Dependencies: Must complete after user-service migration
+- Acceptance: Google/GitHub login working, session management, 80% coverage
+→ Complete scope provided inline
+```
+
+### Examples of INVALID inputs (MUST REJECT)
+
+```
+❌ "TASK: PROJ-123" where Jira query returns empty/minimal description
+❌ "TASK: fix-auth-bug" (custom ID, no queryable system, no description)
+❌ "Add OAuth support" (vague, no files, no criteria)
+❌ "TASK: sprint-5" (custom format, cannot auto-query)
+❌ Any input where planner would have to GUESS about scope
+```
+
+### EXIT PROTOCOL
+
+If validation fails, EXIT immediately with specific missing information:
+
+```
+❌ WORKFLOW-PLANNER VALIDATION FAILED
+
+Cannot plan work without complete scope. The following information is missing:
+
+Missing:
+- [ ] Work objective (what needs to be done)
+- [ ] Affected files/components
+- [ ] Dependencies/blockers
+- [ ] Acceptance criteria
+
+Received input: [echo input]
+
+To proceed, provide EITHER:
+1. A Jira task ID (PROJ-123) with complete ticket details
+2. A Beads issue ID (repo-a3f) with complete issue details
+3. A detailed description including:
+   - Clear objective
+   - Files/components to modify
+   - Known dependencies
+   - Success criteria
+
+Example:
+"Implement rate limiting for API endpoints:
+ - Files: src/middleware/rateLimit.ts, src/config/limits.ts
+ - Depends on: Redis connection (already configured)
+ - Acceptance: 100 req/min per user, 429 responses, 95% test coverage"
+```
+
 ## 🎯 STRATEGY SELECTION FRAMEWORK
 
 **PRIMARY RESPONSIBILITY: Analyze work complexity and select optimal implementation strategy**
@@ -945,6 +1087,129 @@ CRITICAL for strategy selection. Identify when multiple work units need to modif
 - Integration happens AFTER individual units complete
 - If package seems too complex, split further
 
+## 🌳 BEADS NESTED ISSUE TREE QUERIES
+
+**When planning execution of issues with nested subtasks, query the full hierarchy to understand work structure.**
+
+### Why Query Hierarchy Before Planning?
+
+When given a Beads issue ID, the issue may:
+- Be an epic with existing child tasks (already decomposed)
+- Have blocking dependencies that affect execution order
+- Have discovered issues from prior work attempts
+- Be part of a larger parent epic
+
+**ALWAYS query the dependency tree before creating a plan.**
+
+### Efficient Hierarchy Query Commands
+
+```bash
+# PRIMARY: Get complete dependency tree for an issue
+bd dep tree <issue-id>
+
+# Example output:
+# repo-a3f [Epic: Auth System] (open)
+# ├── repo-b2e [Task: Login UI] (parent-child) (open)
+# ├── repo-c3f [Task: Backend validation] (parent-child) (in-progress)
+# │   └── repo-d4g [Bug: Found edge case] (discovered-from) (open)
+# └── repo-e5h [Task: Tests] (parent-child) (blocked)
+#     └── repo-c3f [blocks] (in-progress)
+
+# JSON output for programmatic processing
+bd dep tree <issue-id> --json
+
+# Limit depth for large hierarchies
+bd dep tree <issue-id> --max-depth 3
+
+# Reverse tree: what depends ON this issue
+bd dep tree <issue-id> --reverse
+```
+
+### Dependency Types and Planning Impact
+
+| Type | Meaning | Planning Impact |
+|------|---------|-----------------|
+| `parent-child` | Epic/subtask hierarchy | Subtasks ARE the work units - don't re-decompose |
+| `blocks` | Hard blocker | Blocked issue cannot start until blocker closes |
+| `discovered-from` | Found during parent work | New work discovered, incorporate into plan |
+| `related` | Informational link | Consider together but no execution dependency |
+
+### Pre-Planning Hierarchy Analysis
+
+**MANDATORY before decomposing work:**
+
+```bash
+# 1. Query the full tree
+TREE=$(bd dep tree "$TASK_ID" --json 2>/dev/null)
+
+# 2. Check for existing children
+if echo "$TREE" | jq -e '.children | length > 0' > /dev/null 2>&1; then
+    echo "Issue has existing subtasks - use existing decomposition"
+    # Plan execution order, don't create new work units
+fi
+
+# 3. Check for blockers
+if echo "$TREE" | jq -e '.blocks | length > 0' > /dev/null 2>&1; then
+    echo "Issue has blockers - must resolve before work can begin"
+    # Include blocker resolution in plan
+fi
+```
+
+### Planning Scenarios
+
+**Scenario 1: Epic with existing children**
+```
+Input: repo-a3f (epic with 5 child tasks)
+Action: Plan EXECUTION ORDER of existing children, not new decomposition
+Output: Parallel groups, dependency sequence, quality gates
+```
+
+**Scenario 2: Single issue with no children**
+```
+Input: repo-b2e (standalone task)
+Action: Decompose into work units if complex, or plan direct execution
+Output: Work unit breakdown OR single-agent assignment
+```
+
+**Scenario 3: Issue with blockers**
+```
+Input: repo-c3f (blocked by repo-d4g)
+Action: Include blocker resolution in plan, sequence accordingly
+Output: Plan that addresses blocker first
+```
+
+### Creating Planned Work Units in Beads
+
+After workflow planning creates new work units, create them as linked Beads issues:
+
+```bash
+# Create subtask with parent-child link (single command - preferred)
+bd create "Work Unit Title" -t task --deps parent-child:<parent-id> --json
+
+# Or create then link (two commands)
+CHILD_ID=$(bd create "Work Unit Title" -t task --json | jq -r '.id')
+bd dep add <parent-id> $CHILD_ID --type parent-child
+```
+
+### Integration with Strategy Selection
+
+When determining strategy (very_small_direct, medium_single_branch, large_multi_worktree):
+
+```javascript
+// Factor in existing hierarchy
+if (beads_tree.children.length > 0) {
+    // Work already decomposed - focus on execution strategy
+    existing_work_units = beads_tree.children.length
+    file_overlap_risk = analyze_children_for_overlap(beads_tree)
+}
+
+// Factor in blockers
+if (beads_tree.blocks.length > 0) {
+    // Add blocker resolution to plan
+    integration_score += beads_tree.blocks.length * 2
+}
+```
+
 ## 🔍 CAPABILITIES
 
 **Task Analysis**
@@ -1224,6 +1489,25 @@ CRITICAL for strategy selection. Identify when multiple work units need to modif
 ❌ Well-understood work
 ❌ When execution needed (advisory only)
 ❌ Tasks already properly sized (<5 files, <500 LOC)
+
+### Beads Hierarchy Commands
+```bash
+bd dep tree <id>               # Full dependency tree
+bd dep tree <id> --json        # JSON output for parsing
+bd dep tree <id> --reverse     # What depends on this issue
+bd dep tree <id> --max-depth N # Limit tree depth
+bd show <id>                   # Issue details with dependencies
+```
+
+### Input Validation Quick Check
+```
+✅ VALID: Jira ID (PROJ-123) - auto-queries for details
+✅ VALID: Beads ID (repo-a3f) - auto-queries for details
+✅ VALID: Detailed description with files, deps, criteria
+❌ INVALID: Custom ID without description (sprint-5)
+❌ INVALID: Vague description (fix the bug)
+❌ INVALID: Task ID where query returns insufficient detail
+```
 
 ### Integration with Other Agents
 - Use with `bug-fixer` and `feature-developer` for implementation
