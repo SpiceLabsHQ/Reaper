@@ -297,7 +297,9 @@
       "mcp__beads__detect_pollution",
       "mcp__beads__debug_env",
       "mcp__beads__inspect_migration",
-      "mcp__beads__get_schema_info"
+      "mcp__beads__get_schema_info",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs"
     ],
     "ask": [
       "Bash(bd cleanup:*)",
