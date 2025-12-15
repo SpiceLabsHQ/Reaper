@@ -2,8 +2,8 @@
 
 # ACLI JIRA Authentication Script
 # Reusable script for authenticating ACLI with Jira across all projects
-# Usage: source ~/.claude/acli-jira-auth.sh
-# Or: bash ~/.claude/acli-jira-auth.sh
+# Usage: source ~/.claude/scripts/acli-jira-auth.sh
+# Or: bash ~/.claude/scripts/acli-jira-auth.sh
 
 # Function to print status messages (define locally if not available)
 print_status() {
