@@ -1,19 +1,32 @@
-# Directories
-.beads/
-.claude/
-debug/
-plans/
-file-history/
-ide/
-plugins/
-projects/
-shell-snapshots/
-statsig/
-todos/
+# ===========================================
+# WHITELIST-BASED .gitignore
+# Ignore everything, then allow specific items
+# ===========================================
 
-# Files
-.credentials.json
-acli-credentials
-history.jsonl
-settings.local.json
-SPICE.md.backup-*
+# Ignore everything by default
+*
+
+# ------------------------------------
+# ALLOWED DIRECTORIES (with contents)
+# ------------------------------------
+!agents/
+!agents/**
+!commands/
+!commands/**
+!docs/
+!docs/**
+!scripts/
+!scripts/**
+!skills/
+!skills/**
+
+# ------------------------------------
+# ALLOWED FILES
+# ------------------------------------
+!.gitignore
+!.gitattributes
+!CLAUDE.md
+!README.md
+!cspell.json
+!settings.json
+!acli-jira-auth.sh
