@@ -415,7 +415,7 @@
     "beads@beads-marketplace": true,
     "frontend-design@claude-code-plugins": true
   },
-  "alwaysThinkingEnabled": false,
+  "alwaysThinkingEnabled": true,
   "feedbackSurveyState": {
     "lastShownTime": 1754262371208
   }

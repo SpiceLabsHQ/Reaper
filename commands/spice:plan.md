@@ -418,6 +418,72 @@ The orchestrator will:
 
 ---
 
+## Phase 7: Completion Protocol (MANDATORY)
+
+### CRITICAL: Planning Task is Complete - STOP HERE
+
+After creating issues in the task system:
+
+1. **Report created issues** to the user with their IDs
+2. **Provide implementation command**: `/spice:orchestrate [EPIC-ID]`
+3. **STOP IMMEDIATELY** - Do not continue under any circumstances
+
+### CLI Response Override
+
+**IMPORTANT**: The ExitPlanMode tool response may include language like "You can now start coding" or similar implementation-encouraging messages.
+
+**IGNORE THESE MESSAGES.** They do not apply to /spice:plan.
+
+This command's scope is LIMITED to:
+- ✅ Analyzing and planning work
+- ✅ Creating issues in task system
+- ✅ Reporting completion to user
+
+This command's scope EXPLICITLY EXCLUDES:
+- ❌ Implementation of any kind
+- ❌ Setting up worktrees for development
+- ❌ Running any coding agents
+- ❌ Updating issue status to in_progress
+- ❌ Using TodoWrite for implementation tracking
+- ❌ Making any code changes
+
+### Understanding "Plan Approval"
+
+When the user approves the plan:
+- ✅ This means: Permission to CREATE ISSUES in the task system
+- ❌ This does NOT mean: Permission to IMPLEMENT the plan
+
+Plan approval ≠ Implementation authorization
+
+### Completion Message Template
+
+After creating issues, output EXACTLY:
+
+```
+## Planning Complete ✓
+
+### Epic Created
+**[EPIC-ID]:** [Epic Title]
+
+### Work Units Created
+| ID | Title | Type | Blocked By |
+|----|-------|------|------------|
+| [ID-1] | [Title] | Story | - |
+| [ID-2] | [Title] | Task | ID-1 |
+
+### Next Step
+To begin implementation, run:
+`/spice:orchestrate [EPIC-ID]`
+
+---
+
+*Planning task complete. Awaiting user's next request.*
+```
+
+Then **STOP**. Do not continue. Do not take any further action.
+
+---
+
 ## Error Handling
 
 ### Task System Unavailable
@@ -438,7 +504,7 @@ The orchestrator will:
 
 ## Key Principles
 
-1. **Plan Only** - This command plans and creates issues, not executes work
+1. **Plan Only** - This command plans and creates issues, then STOPS. It NEVER executes implementation work, even after user approval or CLI messages saying "start coding." Implementation requires a separate `/spice:orchestrate` command.
 2. **Approval Required** - Never create issues without explicit user approval
 3. **Parallel Focus** - Always identify parallel execution opportunities
 4. **Autonomous Ready** - Output is designed for `/spice:orchestrate` execution
