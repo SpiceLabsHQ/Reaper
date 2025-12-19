@@ -103,6 +103,44 @@ class OrderService {
 - main: 2 approvals, passing builds
 - develop: 1 approval, passing builds
 
+### 🔐 OIDC Authentication (Bitbucket → AWS)
+
+**MANDATORY**: Use OIDC for Bitbucket Pipelines AWS access whenever possible. Never use static access keys.
+
+**Why OIDC:**
+- No static credentials to rotate or leak
+- Auditable via CloudTrail
+- AWS-recommended for CI/CD
+
+**Spice Labs Setup:**
+All Spice-managed AWS accounts are pre-configured to trust `https://bitbucket.org/spice-labs/`. No additional AWS setup needed for repos in this workspace.
+
+**Pipeline Configuration:**
+```yaml
+definitions:
+  steps:
+    - step: &deploy-to-aws
+        name: Deploy to AWS
+        oidc: true  # Required: enables OIDC token
+        script:
+          - export AWS_ROLE_ARN="arn:aws:iam::ACCOUNT_ID:role/ROLE_NAME"
+          - export AWS_DEFAULT_REGION="us-east-1"
+          - aws sts get-caller-identity  # Verify auth
+          - # Your deployment commands
+```
+
+**Required Variables:**
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `AWS_ROLE_ARN` | Yes | IAM role ARN to assume |
+| `AWS_DEFAULT_REGION` | Yes | AWS region for API calls |
+| `AWS_WEB_IDENTITY_TOKEN_FILE` | Auto | Set by Bitbucket when `oidc: true` |
+
+**Reference:**
+- [AWS OIDC Web Identity](https://docs.aws.amazon.com/sdkref/latest/guide/access-assume-role-web.html)
+- [Bitbucket OIDC Docs](https://support.atlassian.com/bitbucket-cloud/docs/deploy-on-aws-using-bitbucket-pipelines-openid-connect/)
+
 ---
 
 ## 📋 Jira Integration
