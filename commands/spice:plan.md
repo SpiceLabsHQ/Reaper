@@ -141,6 +141,17 @@ Analyze the planning request to identify:
    - Integration risk (touches shared code?)
    - Uncertainty (unclear requirements?)
 
+6. **User Intervention Identification**
+   Identify work units that CANNOT be automated:
+   - Manual testing requiring physical devices
+   - Vendor/third-party coordination
+   - Approval workflows requiring human decision
+   - Production console configuration
+   - License key generation or purchases
+   - Design reviews requiring stakeholder input
+
+   **Mark these units with:** `Assignee: user`
+
 ---
 
 ## Phase 3: Generate Plan Document
@@ -181,12 +192,12 @@ Present the following to the user:
 
 ### Work Units
 
-| # | Title | Type | Est. Hours | Parallel? | Blocked By |
-|---|-------|------|------------|-----------|------------|
-| 1 | [Title] | Story | 2h | Group A | - |
-| 2 | [Title] | Story | 1.5h | Group A | - |
-| 3 | [Title] | Task | 2h | Sequential | 1, 2 |
-| 4 | [Title] | Task | 1h | Group B | 3 |
+| # | Title | Type | Est. Hours | Parallel? | Assignee | Blocked By |
+|---|-------|------|------------|-----------|----------|------------|
+| 1 | [Title] | Story | 2h | Group A | agent | - |
+| 2 | [Title] | Story | 1.5h | Group A | agent | - |
+| 3 | [Title] | Task | 2h | Sequential | agent | 1, 2 |
+| 4 | [Manual QA] | Task | 1h | Sequential | user | 3 |
 
 ### Work Unit Details
 
@@ -249,6 +260,18 @@ flowchart TD
     U2 --> U3
     U3 --> U4
 ```
+
+### User Intervention Required
+
+Some work units require user action and cannot be automated:
+
+| # | Title | Why User Needed |
+|---|-------|-----------------|
+| 4 | [Manual QA] | Physical device testing required |
+
+**Note:** These will be assigned to `user` in the task system. The orchestrator
+will skip these tasks and notify you when they become unblocked and ready for
+your action.
 
 ---
 
@@ -360,12 +383,24 @@ fi
 
 # Create child issues
 for each work_unit:
-    ISSUE_ID=$(bd create "[Work Unit Title]" -t task -p 2)
+    # Determine assignee based on intervention requirement
+    if work_unit.requires_user_intervention:
+        ASSIGNEE="user"
+    else
+        ASSIGNEE=""  # Leave unassigned for agent pickup
+    fi
+
+    # Create issue with optional assignee
+    if [ -n "$ASSIGNEE" ]; then
+        ISSUE_ID=$(bd create "[Work Unit Title]" -t task -p 2 --assignee "$ASSIGNEE")
+    else
+        ISSUE_ID=$(bd create "[Work Unit Title]" -t task -p 2)
+    fi
 
     # Link to epic (parent-child)
     bd dep add "$EPIC_ID" "$ISSUE_ID" --type parent-child
 
-    echo "Created: $ISSUE_ID - [Title]"
+    echo "Created: $ISSUE_ID - [Title] (Assignee: ${ASSIGNEE:-agent})"
 done
 
 # Create blocking dependencies
@@ -380,6 +415,86 @@ If no task system available, output the full plan as markdown that can be:
 - Copied to a project management tool
 - Saved as a planning document
 - Used as a reference for manual task creation
+
+### 5.4 User Assignment Syntax Reference
+
+When a work unit requires user intervention (manual testing, vendor coordination,
+approvals, etc.), assign it to `user` instead of leaving it for agent execution.
+
+#### Beads CLI
+
+**Create with assignee:**
+```bash
+# Create issue assigned to user
+bd create "Manual QA: Test on physical iOS devices" -t task --assignee user
+
+# Create issue assigned to specific person
+bd create "Vendor coordination: Obtain API keys" -t task --assignee alice
+```
+
+**Update existing issue:**
+```bash
+# Assign existing issue to user
+bd update bd-a3f --assignee user
+
+# Reassign from agent to user (blocked by requirement)
+bd update bd-a3f --assignee user --status blocked
+```
+
+#### Beads MCP
+
+**Create with assignee:**
+```
+mcp__beads__create(
+    title="Manual QA: Test on physical iOS devices",
+    type="task",
+    assignee="user"
+)
+```
+
+**Update existing issue:**
+```
+mcp__beads__update(
+    id="bd-a3f",
+    assignee="user"
+)
+```
+
+#### Jira CLI (acli)
+
+**Create with assignee:**
+```bash
+# Create issue assigned to user
+acli jira workitem create \
+    --project PROJ \
+    --type Task \
+    --summary "Manual QA: Test on physical iOS devices" \
+    --assignee user@example.com
+
+# Create with parent epic
+acli jira workitem create \
+    --project PROJ \
+    --type Story \
+    --parent PROJ-123 \
+    --summary "Vendor Setup: Obtain API credentials" \
+    --assignee alice@company.com
+```
+
+**Update existing issue:**
+```bash
+# Assign existing issue to user
+acli jira workitem update PROJ-456 --assignee user@example.com
+```
+
+#### When to Use
+
+Assign to `user` when the task requires:
+- Physical device testing
+- Vendor portal access
+- Production console configuration
+- Purchase or license acquisition
+- Stakeholder approval or sign-off
+- Manual verification that cannot be scripted
 
 ---
 
