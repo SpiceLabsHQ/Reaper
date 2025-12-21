@@ -498,6 +498,111 @@ Assign to `user` when the task requires:
 
 ---
 
+## Phase 5.5: Issue Verification
+
+After creating all issues, launch a verification subagent to validate the plan structure is complete and consistent.
+
+### Purpose
+
+This verification step catches planning errors before execution:
+- Missing requirements that weren't converted to issues
+- Conflicting work units that would cause merge conflicts
+- Incorrect dependency relationships that would block execution
+
+### Verification Process
+
+```bash
+# Collect created issue context
+EPIC_ID="[created epic ID]"
+PLANNING_REQUEST="[original planning input]"
+
+# Launch verification subagent
+Task --subagent_type workflow-planner \
+  --prompt "VERIFICATION MODE: Validate created issues
+
+ORIGINAL REQUEST:
+$PLANNING_REQUEST
+
+EPIC CREATED: $EPIC_ID
+
+ISSUES CREATED:
+[List each issue with ID, title, description, blocked_by, assignee]
+
+VERIFY THE FOLLOWING:
+
+1. SCOPE COVERAGE
+   - Does every requirement in the original request have a corresponding issue?
+   - Are there any orphaned requirements not tracked by an issue?
+   - Do the success criteria map to specific work units?
+
+2. CONFLICT DETECTION
+   - Do any parallel work units touch the same files?
+   - Are there contradictory acceptance criteria between issues?
+   - Is any work duplicated across multiple issues?
+
+3. DEPENDENCY CORRECTNESS
+   - Are parent-child relationships properly established?
+   - Do blocking dependencies match the logical execution order?
+   - Are there any circular dependencies?
+   - Is the critical path valid and achievable?
+
+OUTPUT FORMAT:
+## Verification Results
+
+### Status: [PASS | FAIL | WARNINGS]
+
+### Scope Coverage
+- [x] All requirements addressed
+- [ ] Issue missing: [description if any]
+
+### Conflict Detection
+- [x] No file overlaps in parallel groups
+- [ ] Conflict found: [description if any]
+
+### Dependency Correctness
+- [x] Parent-child links valid
+- [x] Blocking dependencies correct
+- [x] No circular dependencies
+
+### Issues Found (if any)
+1. [Issue description and recommended fix]
+
+### Recommendation
+[PROCEED | FIX REQUIRED: specific fixes needed]"
+```
+
+### Handling Verification Results
+
+**If PASS:**
+- Continue to Phase 6 (Confirmation)
+- Include verification summary in confirmation output
+
+**If WARNINGS:**
+- Display warnings to user
+- Ask if they want to proceed or fix issues first
+- If proceed: Continue to Phase 6
+- If fix: Apply recommended fixes, re-run verification
+
+**If FAIL:**
+- Display failures to user
+- Apply fixes automatically if possible (update/create missing issues)
+- Re-run verification after fixes
+- If still failing after 2 attempts, ask user for guidance
+
+### Verification Integration
+
+After verification passes, include summary in Phase 6 output:
+
+```markdown
+### Verification Summary
+- **Status:** PASS
+- **Scope:** All requirements covered
+- **Conflicts:** None detected
+- **Dependencies:** Valid structure
+```
+
+---
+
 ## Phase 6: Confirmation
 
 ### Display Created Issues
