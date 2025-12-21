@@ -27,6 +27,7 @@
 1. **@SPICE-Worktrees.md** - Git worktree workflows, safety warnings, remote management
 2. **@SPICE-Testing.md** - TDD workflows, testing requirements, coverage standards
 3. **@SPICE-Git-Flow.md** - Branching strategy, commit standards, main branch protection
+4. **@SPICE-Cloud-Infrastructure.md** - Default regions, resource naming conventions
 
 ## 🎯 Instruction Precedence Rules
 
