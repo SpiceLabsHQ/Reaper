@@ -381,32 +381,60 @@ else
     echo "Created Epic: $EPIC_ID"
 fi
 
-# Create child issues
+# Create child issues under epic
 for each work_unit:
     # Determine assignee based on intervention requirement
     if work_unit.requires_user_intervention:
-        ASSIGNEE="user"
+        ASSIGNEE_FLAG="--assignee user"
     else
-        ASSIGNEE=""  # Leave unassigned for agent pickup
+        ASSIGNEE_FLAG=""  # Leave unassigned for agent pickup
     fi
 
-    # Create issue with optional assignee
-    if [ -n "$ASSIGNEE" ]; then
-        ISSUE_ID=$(bd create "[Work Unit Title]" -t task -p 2 --assignee "$ASSIGNEE")
-    else
-        ISSUE_ID=$(bd create "[Work Unit Title]" -t task -p 2)
-    fi
+    # Create issue with parent relationship (preferred method)
+    # Using --parent flag establishes hierarchical parent-child relationship
+    ISSUE_ID=$(bd create "[Work Unit Title]" -t task -p 2 --parent "$EPIC_ID" $ASSIGNEE_FLAG)
 
-    # Link to epic (parent-child)
-    bd dep add "$EPIC_ID" "$ISSUE_ID" --type parent-child
-
-    echo "Created: $ISSUE_ID - [Title] (Assignee: ${ASSIGNEE:-agent})"
+    echo "Created: $ISSUE_ID - [Title] (Assignee: ${ASSIGNEE_FLAG:+user}${ASSIGNEE_FLAG:-agent})"
 done
 
-# Create blocking dependencies
-for each dependency:
-    bd dep add "$BLOCKER_ID" "$BLOCKED_ID" --type blocks
+# Create blocker dependencies (only for work that genuinely blocks other work)
+# NOTE: Blockers are for execution order, NOT hierarchy. Use sparingly.
+# Example: "Database schema" blocks "API implementation"
+for each blocking_dependency:
+    # Syntax: bd dep add <blocked-issue> <blocker-issue> --type blocks
+    # Mnemonic: "X depends on Y" → bd dep add X Y
+    bd dep add "$BLOCKED_ID" "$BLOCKER_ID" --type blocks
 done
+```
+
+### Understanding Beads Relationships
+
+**Parent-Child (`--parent` or `--type parent-child`):**
+- Use for **hierarchical organization** (epic → stories → tasks)
+- Children inherit blocking status from parent
+- Shows structural relationship ("is part of")
+- **Preferred:** Use `--parent` flag during `bd create`
+
+**Blockers (`--type blocks`):**
+- Use for **execution order dependencies** only
+- Issue A blocks Issue B = B cannot start until A is done
+- Affects `bd ready` queue (blocked issues don't appear)
+- **Reserve for:** Work that genuinely cannot proceed until another completes
+  - Example: "Create database tables" blocks "Implement data access layer"
+  - Example: "Define API contract" blocks "Implement client SDK"
+- **Do NOT use for:** Hierarchical grouping (use parent-child instead)
+
+**Dependency Syntax Reference:**
+```bash
+# Parent-child (during creation - PREFERRED)
+bd create "Child task" -t task --parent bd-epic-id
+
+# Parent-child (after creation)
+bd dep add <child-id> <parent-id> --type parent-child
+
+# Blocker (A blocks B means B cannot start until A completes)
+bd dep add <blocked-id> <blocker-id> --type blocks
+# Mnemonic: "X depends on Y" → bd dep add X Y --type blocks
 ```
 
 ### 5.3 Markdown Output (No Task System)
