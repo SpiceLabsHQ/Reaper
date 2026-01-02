@@ -1,6 +1,9 @@
 # Beads issue tracking (lives on orphan beads-sync branch, not main)
 .beads/
 
+# Node
+node_modules/
+
 # OS files
 .DS_Store
 Thumbs.db

@@ -1,0 +1,27 @@
+{
+  "name": "reaper",
+  "version": "1.0.0",
+  "description": "Claude Code configuration, documentation, and customizations for Spice Labs.",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SpiceLabsHQ/Reaper.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/SpiceLabsHQ/Reaper/issues"
+  },
+  "homepage": "https://github.com/SpiceLabsHQ/Reaper#readme",
+  "devDependencies": {
+    "@commitlint/cli": "^20.3.0",
+    "@commitlint/config-conventional": "^20.3.0",
+    "husky": "^9.1.7"
+  }
+}

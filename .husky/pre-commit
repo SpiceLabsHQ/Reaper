@@ -1,0 +1,8 @@
+# Beads pre-commit: flush pending changes to JSONL
+if command -v bd >/dev/null 2>&1 && [ -d .beads ]; then
+    bd sync --flush-only >/dev/null 2>&1 || {
+        echo "Error: Failed to flush bd changes" >&2
+        exit 1
+    }
+    [ -f .beads/issues.jsonl ] && git add .beads/issues.jsonl 2>/dev/null || true
+fi
