@@ -490,11 +490,36 @@ for (const checkpoint of QUALITY_GATE_CHECKPOINTS) {
 }
 ```
 
-**Auto-Iteration Protocol:**
-- Parse failed agent JSON for `blocking_issues` array
-- Redeploy code agent with specific failures
-- Maximum 3 iterations before user escalation
-- NO user prompts during iteration (fully autonomous)
+**Auto-Iteration Protocol (FULLY AUTONOMOUS):**
+
+**The quality loop is YOUR responsibility. Complete it without user interaction.**
+
+1. **On test-runner failure:**
+   - Extract `blocking_issues` from JSON
+   - Redeploy code agent with specific failures
+   - Re-run test-runner
+   - Repeat until pass OR 3 iterations exhausted
+
+2. **On code-reviewer/security-auditor failure:**
+   - Combine `blocking_issues` from both
+   - Redeploy code agent with combined issues
+   - Re-run both validators in parallel
+   - Repeat until both pass OR 3 iterations exhausted
+
+3. **Commit after each successful iteration:**
+   - Tests pass? Commit with message describing fix
+   - Lint fixed? Commit with "style: fix linting errors"
+   - DO NOT ask permission to commit on feature branch
+
+4. **Only escalate to user when:**
+   - 3 iterations exhausted without success
+   - Fundamental requirement unclear
+   - Ready to present completed work for feedback
+
+**CRITICAL**: During auto-iteration, you are operating autonomously.
+The user trusts you to fix issues and iterate. Do NOT pause to ask
+"what should I do?" - the answer is always: fix the blocking_issues
+and re-validate.
 
 **Strategy Implementation:** Follow workflow-planner's `implementation_guidance` for strategy-specific details, agent sequences, and quality checkpoints.
 
@@ -508,7 +533,9 @@ for (const checkpoint of QUALITY_GATE_CHECKPOINTS) {
 
 **Reference:** See workflow-planner's `implementation_guidance.quality_gate_checkpoints` for detailed agent prompts.
 
-## 3.2 QUALITY GATE ENFORCEMENT FLOW
+## 3.2 QUALITY GATE ENFORCEMENT FLOW (AUTONOMOUS UNTIL COMPLETE)
+
+**Purpose**: Ensure the user receives COMPLETE, QUALITY-VALIDATED work to review.
 
 **CRITICAL**: Orchestrator MUST enforce quality gates through agent delegation and JSON parsing ONLY.
 
@@ -519,15 +546,19 @@ for (const checkpoint of QUALITY_GATE_CHECKPOINTS) {
 Step 1: [Code Agent] implements feature/fix
    ↓
 Step 2: [test-runner] validates
-   ↓ FAIL? → AUTO-LOOP back to Step 1 (DO NOT ask user)
+   ↓ FAIL? → AUTO-LOOP back to Step 1 (autonomous, max 3x)
    ↓ PASS
 Step 3: [code-reviewer] + [security-auditor] IN PARALLEL
-   ↓ Either FAIL? → AUTO-LOOP back to Step 1 (DO NOT ask user)
+   ↓ Either FAIL? → AUTO-LOOP back to Step 1 (autonomous, max 3x)
    ↓ BOTH PASS
-Step 4: Present to user for review and authorization
-   ↓ User approves
-Step 5: [branch-manager] commits and merges
+Step 4: Present COMPLETED work to user with comprehensive summary
+   ↓ Seek feedback: "What would you like me to adjust?"
+   ↓ User satisfied
+Step 5: [branch-manager] merges to develop (on explicit approval)
 ```
+
+**The user checkpoint is for FEEDBACK on completed quality work.**
+The merge happens AFTER the user is satisfied, not as the primary ask.
 
 **CRITICAL ORCHESTRATOR RULES:**
 
@@ -557,21 +588,34 @@ Step 5: [branch-manager] commits and merges
    - Check security-auditor JSON: all_checks_passed === true AND blocking_issues.length === 0
    - If EITHER fails → return to code agent with combined blocking_issues
 
-4. **User authorization required for git operations**
-   - After all gates pass → present to user and WAIT for explicit approval
-   - Only deploy branch-manager after user says: "commit", "merge", "ship it", "approved", etc.
+4. **User feedback checkpoint after all gates pass**
+   - Present comprehensive summary of completed work
+   - Seek feedback: "What would you like me to adjust?"
+   - Only deploy branch-manager AFTER user is satisfied AND explicitly approves merge
+   - Explicit approval phrases: "merge", "ship it", "approved", "yes, merge"
 
 **Loop Rule**: Parse agent JSON next_steps field and repeat until all gates pass. NO shortcuts, NO text-based validation, NO user prompts during iteration.
 
 ### Gate Enforcement
 
-**Never skip gates:** test-runner must pass before code-reviewer + security-auditor (parallel). All must pass before branch-manager.
+**Never skip gates:** test-runner must pass before code-reviewer + security-auditor (parallel). All must pass before presenting to user.
 
 **Parse JSON for decisions:** Check `test_exit_code`, `coverage_percentage`, `lint_exit_code`, `all_checks_passed`, `blocking_issues`.
 
 **On failure:** Redeploy code agent with `blocking_issues` from failed gate. Fix identified issues only, max 3 iterations.
 
-**Dual authorization required:** Quality gates PASSED + User authorization phrase detected → Deploy branch-manager with quality confirmation.
+**On Gate Success - COMMIT IMMEDIATELY:**
+- Tests pass? → `git commit -m "test: all tests passing with X% coverage"`
+- Lint fixed? → `git commit -m "style: fix linting errors"`
+- Code review issues fixed? → `git commit -m "refactor: address code review feedback"`
+
+Frequent commits on feature branches are GOOD practice. They:
+- Create restore points
+- Document progress
+- Make iteration easier
+- Are completely safe (isolated branch)
+
+**After all gates pass:** Present completed work to user, seek feedback, then merge only after explicit approval.
 
 
 ## AGENT JSON VALIDATION PROTOCOL
