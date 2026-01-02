@@ -1,0 +1,11 @@
+{
+  "terminal.integrated.env.osx": {
+    "BEADS_SYNC_BRANCH": "beads-sync"
+  },
+  "terminal.integrated.env.linux": {
+    "BEADS_SYNC_BRANCH": "beads-sync"
+  },
+  "terminal.integrated.env.windows": {
+    "BEADS_SYNC_BRANCH": "beads-sync"
+  }
+}

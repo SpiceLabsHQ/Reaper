@@ -463,6 +463,38 @@ Skills are located in `~/.claude/skills/` and available across all projects. Use
 - Support for Epic → Story → Sub-task hierarchies
 - Pre-work ticket validation and blocker checking
 
+### Beads Issue Tracking
+This project uses [Beads](https://github.com/steveyegge/beads) for lightweight, git-native issue tracking with a dedicated `beads-sync` orphan branch.
+
+**Setup Auto-Sync (Required for Contributors):**
+
+Add this SessionStart hook to your Claude Code settings (`~/.claude/settings.json` or project settings):
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bd daemon --start --auto-commit --auto-push 2>/dev/null; bd prime --stealth"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+This starts the Beads daemon with auto-commit and auto-push on every Claude session, ensuring your issue changes sync to the shared `beads-sync` branch.
+
+**For New Clones:**
+```bash
+bd migrate-sync beads-sync  # Configure sync to existing beads-sync branch
+```
+
 ## 🚀 Development Workflow
 
 ### Dynamic Strategy Selection

@@ -1,31 +1,29 @@
-# ===========================================
-# WHITELIST-BASED .gitignore
-# Ignore everything, then allow specific items
-# ===========================================
+# Beads issue tracking (lives on orphan beads-sync branch, not main)
+.beads/
 
-# Ignore everything by default
-*
+# OS files
+.DS_Store
+Thumbs.db
 
-# ------------------------------------
-# ALLOWED DIRECTORIES (with contents)
-# ------------------------------------
-!agents/
-!agents/**
-!commands/
-!commands/**
-!docs/
-!docs/**
-!scripts/
-!scripts/**
-!skills/
-!skills/**
+# Editor/IDE
+.idea/
+*.swp
+*.swo
+*~
 
-# ------------------------------------
-# ALLOWED FILES
-# ------------------------------------
-!.gitignore
-!.gitattributes
-!CLAUDE.md
-!README.md
-!cspell.json
-!settings.json
+# VS Code - track shared settings, ignore user-specific
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Local-only files (user-specific overrides)
+*.local.*
+*.local
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Worktrees directory (ephemeral development branches)
+trees/
