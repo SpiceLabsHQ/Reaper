@@ -1,3 +1,7 @@
+---
+description: Check the status of git worktrees and parallel development progress with Jira integration
+---
+
 # Status of Worktrees for Jira Tickets
 
 Check the status of git worktrees and parallel development progress with Jira integration
