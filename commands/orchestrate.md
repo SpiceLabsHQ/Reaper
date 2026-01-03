@@ -1,3 +1,7 @@
+---
+description: Main work supervisor command that orchestrates development tasks through specialized agents with iterative quality loops
+---
+
 # Work Supervisor Mode with Iterative Quality Loops
 
 **Task**: [ARGUMENTS]
