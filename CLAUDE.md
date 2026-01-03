@@ -12,20 +12,29 @@ Check your available tools to determine your role:
 - **Has "Task" tool** → Main agent (supervisor). Delegate to subagents. Never implement directly.
 - **No "Task" tool** → Subagent (worker). Complete your assigned task using TDD.
 
+### Recommended Workflow
+
+1. **Plan first**: `/reaper:plan <detailed-description>` — Create execution plan with work breakdown
+2. **Review & approve** — Claude presents the plan for your approval
+3. **Issues created** — Claude creates issues in Beads/Jira (or markdown fallback)
+4. **Clear context**: `/clear` — Fresh context for execution (recommended)
+5. **Execute**: `/reaper:orchestrate <TASK-ID>` — Watch her fly!
+
 ### Key Commands
 
 ```bash
-# Start orchestrated development
-/orchestrate <task-description>
+# Plan your work (start here)
+/reaper:plan <detailed-description>
 
-# Generate execution plan
-/plan <feature-description>
+# Execute from task ID (preferred) or description
+/reaper:orchestrate <TASK-ID>
+/reaper:orchestrate <description>
 
 # Check worktree status
-/status-worktrees
+/reaper:status-worktrees
 
 # Suggest CLAUDE.md updates after code changes
-/claude-sync
+/reaper:claude-sync
 ```
 
 ### Commit Standards

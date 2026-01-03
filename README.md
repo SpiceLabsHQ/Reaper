@@ -15,7 +15,7 @@ This is how we work: TDD-first, SOLID principles, worktree isolation, mandatory 
 | Component | What it does |
 |-----------|--------------|
 | **Agents** | Specialized workers for planning, development, quality, integration, ops |
-| **Commands** | `/orchestrate`, `/plan`, `/status-worktrees`, `/claude-sync` |
+| **Commands** | `/reaper:plan`, `/reaper:orchestrate`, `/reaper:status-worktrees`, `/reaper:claude-sync` |
 | **Skills** | Auto-activating utilities for commits, linting, worktrees |
 | **Strategies** | Complexity-aware workflows from quick fixes to multi-worktree epics |
 
@@ -33,32 +33,51 @@ claude plugin add SpiceLabsHQ/reaper
 
 ## Quick Start
 
-```bash
-# Start Claude Code in your project
-claude
+1. **Plan your work in detail**
+   `/reaper:plan Implement user notifications with email, SMS, and push support`
 
-# Orchestrate a task
-/orchestrate Fix the authentication bug where users can't log in with email addresses containing plus signs
-```
+2. **Review and approve the plan** — Claude presents work units with dependencies mapped
 
-**What happens next**:
+3. **Issues created automatically** — Beads, Jira, or markdown fallback
+
+4. **Clear context** — Run `/clear` for fresh execution (recommended)
+
+5. **Execute the work** — `/reaper:orchestrate TASK-123` and watch her fly!
+
+**The orchestration workflow**:
 
 1. **Analyze** — Claude deploys `workflow-planner` to assess complexity and select a strategy
-2. **Implement** — Claude dispatches `bug-fixer` to write a failing test, then fix the code (TDD)
+2. **Implement** — Claude dispatches the right agent (`bug-fixer`, `feature-developer`, etc.) using TDD
 3. **Validate** — Claude runs `test-runner` for full test suite, 80%+ coverage
 4. **Review** — Claude deploys `code-reviewer` + `security-auditor` in parallel
 5. **Present** — Only after all gates pass, Claude presents finished work for your approval
 
-You describe the work. Claude coordinates the airspace. You only see finished work.
+Plan in detail upfront. Claude coordinates the airspace. You only see finished work.
 
 ---
 
 ## How It Works
 
-### The Orchestration Model
+### The Recommended Workflow
 
 ```
-/orchestrate "task description"
+/reaper:plan "detailed description"
+         │
+         ▼
+┌─────────────────────┐
+│   Plan & Approve    │ ← You review work breakdown and dependencies
+└─────────────────────┘
+         │
+         ▼
+┌─────────────────────┐
+│   Issues Created    │ ← Beads/Jira/Markdown with mapped dependencies
+└─────────────────────┘
+         │
+         ▼
+       /clear          ← Fresh context for execution
+         │
+         ▼
+/reaper:orchestrate TASK-123
          │
          ▼
 ┌─────────────────────┐
@@ -141,50 +160,53 @@ The `workflow-planner` calculates a complexity score based on file impact, depen
 
 ## Commands
 
-### `/orchestrate`
+### `/reaper:plan`
 
-Main entry point for all development work.
+**Start here.** Generate execution plans with epic/issue structure.
 
 ```bash
-# Task description only
-/orchestrate Implement rate limiting - 100 req/min per IP, Redis-backed
+# Detailed planning (recommended)
+/reaper:plan Implement user notifications with email, SMS, and push support.
+             Include preferences dashboard for users to manage notification settings.
+```
 
-# With external task ID (fetches details from Jira/Beads)
-/orchestrate PROJ-123
+Claude creates structured work breakdown with parallel opportunities and dependency mapping. After your approval, issues are created in your task system (Beads/Jira) or as markdown.
 
-# Combined
-/orchestrate PROJ-123: Add input validation for email field
+### `/reaper:orchestrate`
+
+Execute development work from a task ID or plan.
+
+```bash
+# Preferred: Task ID from your task system
+/reaper:orchestrate PROJ-123
+/reaper:orchestrate reaper-a3f
+
+# Alternative: Path to plan file
+/reaper:orchestrate ./plans/notifications.md
+
+# Fallback: Description only (less context for Claude)
+/reaper:orchestrate Implement rate limiting - 100 req/min per IP, Redis-backed
 ```
 
 Claude handles the full workflow: planning → implementation → quality gates → your review.
 
-### `/plan`
-
-Generate execution plans with epic/issue structure.
-
-```bash
-/plan Implement user notifications with email, SMS, and push support
-```
-
-Claude creates structured work breakdown with parallel opportunities and dependency mapping. Outputs issues to your task system (Jira/Beads) or markdown.
-
-### `/status-worktrees`
+### `/reaper:status-worktrees`
 
 Check parallel development status.
 
 ```bash
-/status-worktrees              # All worktrees
-/status-worktrees PROJ-123     # Specific task
+/reaper:status-worktrees              # All worktrees
+/reaper:status-worktrees PROJ-123     # Specific task
 ```
 
 Shows implementation progress, uncommitted changes, test coverage, and completion percentage.
 
-### `/claude-sync`
+### `/reaper:claude-sync`
 
 Analyze commits and suggest CLAUDE.md updates.
 
 ```bash
-/claude-sync
+/reaper:claude-sync
 ```
 
 Claude deploys parallel analyzers (architecture, environment, workflow, integration) to identify undocumented changes since CLAUDE.md was last modified.
