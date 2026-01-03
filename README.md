@@ -24,7 +24,11 @@ This is how we work: TDD-first, SOLID principles, worktree isolation, mandatory 
 ## Installation
 
 ```bash
-claude plugin add SpiceLabsHQ/reaper
+# Add the Spice Labs marketplace
+claude plugin marketplace add SpiceLabsHQ/claude-marketplace
+
+# Install Reaper from the marketplace
+claude plugin install reaper@spice-labs
 ```
 
 **Prerequisites**: [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)
