@@ -224,7 +224,7 @@ VERIFICATION CRITERIA:
    - No circular dependencies in the graph
 
 4. **Orchestratability**
-   - spice:orchestrate can determine execution order from relationships
+   - reaper:takeoff can determine execution order from relationships
    - Parallel work opportunities are clear and documented
    - Critical path is identifiable
    - Agents know scope boundaries (when to stop working)
@@ -268,10 +268,10 @@ Parse workflow-planner JSON response:
 - Detail Sufficiency: ✓ All issues have acceptance criteria
 - Cross-Issue Awareness: ✓ Related issues reference each other
 - Relationship Appropriateness: ✓ No unnecessary blockers
-- Orchestratability: ✓ Ready for spice:orchestrate
+- Orchestratability: ✓ Ready for reaper:takeoff
 
 ### Next Step
-`/spice:orchestrate [EPIC-ID]`
+`/reaper:takeoff [EPIC-ID]`
 ```
 
 Mark todo #3 complete.

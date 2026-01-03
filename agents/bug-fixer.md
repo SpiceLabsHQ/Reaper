@@ -413,7 +413,7 @@ fi
   },
   "narrative_report": {
     "summary": "Bug fix completed: [brief description]",
-    "details": "🐛 BUG FIX SUMMARY:\n  Root Cause: [IDENTIFIED_CAUSE]\n  Fix Type: [MINIMAL_FIX_DESCRIPTION]\n  TDD Phases: RED (reproduction) → GREEN (fix) → BLUE (refactor)\n\n📊 DEVELOPMENT STATUS:\n  Files Modified: [COUNT] files\n  Bug Reproduction Test: Added and verified\n  Development Tests: Passing locally (for TDD feedback only)\n\n⚠️ CRITICAL - ORCHESTRATOR NEXT STEPS:\n  1. Deploy test-runner agent for AUTHORITATIVE test validation\n  2. Do NOT use my development test status for quality gates\n  3. Enforce gates through agent delegation (see spice:orchestrate.md Section 3.2)\n  4. Return to me if test-runner finds issues",
+    "details": "🐛 BUG FIX SUMMARY:\n  Root Cause: [IDENTIFIED_CAUSE]\n  Fix Type: [MINIMAL_FIX_DESCRIPTION]\n  TDD Phases: RED (reproduction) → GREEN (fix) → BLUE (refactor)\n\n📊 DEVELOPMENT STATUS:\n  Files Modified: [COUNT] files\n  Bug Reproduction Test: Added and verified\n  Development Tests: Passing locally (for TDD feedback only)\n\n⚠️ CRITICAL - ORCHESTRATOR NEXT STEPS:\n  1. Deploy test-runner agent for AUTHORITATIVE test validation\n  2. Do NOT use my development test status for quality gates\n  3. Enforce gates through agent delegation (see reaper:takeoff Section 3.2)\n  4. Return to me if test-runner finds issues",
     "recommendations": "Ready for test-runner validation. Follow quality gate protocol: test-runner → code-reviewer → security-auditor → user authorization → branch-manager"
   },
   "bug_analysis": {

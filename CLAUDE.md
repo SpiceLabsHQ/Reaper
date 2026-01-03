@@ -14,21 +14,21 @@ Check your available tools to determine your role:
 
 ### Recommended Workflow
 
-1. **Plan first**: `/reaper:plan <detailed-description>` — Create execution plan with work breakdown
+1. **Plan first**: `/reaper:flight-plan <detailed-description>` — Create execution plan with work breakdown
 2. **Review & approve** — Claude presents the plan for your approval
 3. **Issues created** — Claude creates issues in Beads/Jira (or markdown fallback)
 4. **Clear context**: `/clear` — Fresh context for execution (recommended)
-5. **Execute**: `/reaper:orchestrate <TASK-ID>` — Watch her fly!
+5. **Execute**: `/reaper:takeoff <TASK-ID>` — Watch her fly!
 
 ### Key Commands
 
 ```bash
 # Plan your work (start here)
-/reaper:plan <detailed-description>
+/reaper:flight-plan <detailed-description>
 
 # Execute from task ID (preferred) or description
-/reaper:orchestrate <TASK-ID>
-/reaper:orchestrate <description>
+/reaper:takeoff <TASK-ID>
+/reaper:takeoff <description>
 
 # Check worktree status
 /reaper:status-worktrees
@@ -80,7 +80,7 @@ git worktree remove ./trees/TASK-ID
 
 ```
 agents/          # Specialized AI agent definitions (18 agents)
-commands/        # Slash commands (/orchestrate, /plan, /claude-sync, /status-worktrees)
+commands/        # Slash commands (/takeoff, /flight-plan, /claude-sync, /status-worktrees)
 skills/          # Auto-activating utilities
   spice/         # Code formatting, linting, git hooks, worktree management
   worktree-manager/  # Worktree lifecycle with safe cleanup

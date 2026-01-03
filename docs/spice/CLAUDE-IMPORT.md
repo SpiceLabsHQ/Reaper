@@ -320,9 +320,9 @@ If the Beads MCP server is configured, you can use MCP tools for issue managemen
 
 ## 🎯 Orchestrator Exception: Task ID-Only Mode
 
-**📌 Applies to: Main agents using spice:orchestrate command**
+**📌 Applies to: Main agents using reaper:takeoff command**
 
-**IMPORTANT:** The `spice:orchestrate` command is an exception to the "detailed description always required" rule.
+**IMPORTANT:** The `reaper:takeoff` command is an exception to the "detailed description always required" rule.
 
 ### Why the Exception?
 
@@ -332,19 +332,19 @@ The orchestrator can query task systems (Jira, Beads) to fetch complete task det
 
 **Task ID only** (orchestrator fetches details):
 ```bash
-/spice:orchestrate PROJ-123           # Fetches from Jira
-/spice:orchestrate repo-a3f           # Fetches from Beads
+/reaper:takeoff PROJ-123           # Fetches from Jira
+/reaper:takeoff repo-a3f           # Fetches from Beads
 ```
 
 **Task ID + enriched description** (combines both):
 ```bash
-/spice:orchestrate PROJ-123: Fix email validation with plus signs
-/spice:orchestrate repo-a3f: Use bcrypt for password hashing
+/reaper:takeoff PROJ-123: Fix email validation with plus signs
+/reaper:takeoff repo-a3f: Use bcrypt for password hashing
 ```
 
 **Description only** (no task system):
 ```bash
-/spice:orchestrate Fix critical payment timeout - add retry logic and error handling
+/reaper:takeoff Fix critical payment timeout - add retry logic and error handling
 ```
 
 ### Orchestrator Fetch Behavior

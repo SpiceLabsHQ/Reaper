@@ -15,7 +15,7 @@ This is how we work: TDD-first, SOLID principles, worktree isolation, mandatory 
 | Component | What it does |
 |-----------|--------------|
 | **Agents** | Specialized workers for planning, development, quality, integration, ops |
-| **Commands** | `/reaper:plan`, `/reaper:orchestrate`, `/reaper:status-worktrees`, `/reaper:claude-sync` |
+| **Commands** | `/reaper:flight-plan`, `/reaper:takeoff`, `/reaper:status-worktrees`, `/reaper:claude-sync` |
 | **Skills** | Auto-activating utilities for commits, linting, worktrees |
 | **Strategies** | Complexity-aware workflows from quick fixes to multi-worktree epics |
 
@@ -34,7 +34,7 @@ claude plugin add SpiceLabsHQ/reaper
 ## Quick Start
 
 1. **Plan your work in detail**
-   `/reaper:plan Implement user notifications with email, SMS, and push support`
+   `/reaper:flight-plan Implement user notifications with email, SMS, and push support`
 
 2. **Review and approve the plan** — Claude presents work units with dependencies mapped
 
@@ -42,7 +42,7 @@ claude plugin add SpiceLabsHQ/reaper
 
 4. **Clear context** — Run `/clear` for fresh execution (recommended)
 
-5. **Execute the work** — `/reaper:orchestrate TASK-123` and watch her fly!
+5. **Execute the work** — `/reaper:takeoff TASK-123` and watch her fly!
 
 **The orchestration workflow**:
 
@@ -61,7 +61,7 @@ Plan in detail upfront. Claude coordinates the airspace. You only see finished w
 ### The Recommended Workflow
 
 ```
-/reaper:plan "detailed description"
+/reaper:flight-plan "detailed description"
          │
          ▼
 ┌─────────────────────┐
@@ -77,7 +77,7 @@ Plan in detail upfront. Claude coordinates the airspace. You only see finished w
        /clear          ← Fresh context for execution
          │
          ▼
-/reaper:orchestrate TASK-123
+/reaper:takeoff TASK-123
          │
          ▼
 ┌─────────────────────┐
@@ -160,32 +160,32 @@ The `workflow-planner` calculates a complexity score based on file impact, depen
 
 ## Commands
 
-### `/reaper:plan`
+### `/reaper:flight-plan`
 
 **Start here.** Generate execution plans with epic/issue structure.
 
 ```bash
 # Detailed planning (recommended)
-/reaper:plan Implement user notifications with email, SMS, and push support.
+/reaper:flight-plan Implement user notifications with email, SMS, and push support.
              Include preferences dashboard for users to manage notification settings.
 ```
 
 Claude creates structured work breakdown with parallel opportunities and dependency mapping. After your approval, issues are created in your task system (Beads/Jira) or as markdown.
 
-### `/reaper:orchestrate`
+### `/reaper:takeoff`
 
 Execute development work from a task ID or plan.
 
 ```bash
 # Preferred: Task ID from your task system
-/reaper:orchestrate PROJ-123
-/reaper:orchestrate reaper-a3f
+/reaper:takeoff PROJ-123
+/reaper:takeoff reaper-a3f
 
 # Alternative: Path to plan file
-/reaper:orchestrate ./plans/notifications.md
+/reaper:takeoff ./plans/notifications.md
 
 # Fallback: Description only (less context for Claude)
-/reaper:orchestrate Implement rate limiting - 100 req/min per IP, Redis-backed
+/reaper:takeoff Implement rate limiting - 100 req/min per IP, Redis-backed
 ```
 
 Claude handles the full workflow: planning → implementation → quality gates → your review.

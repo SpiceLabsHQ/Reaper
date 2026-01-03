@@ -1562,7 +1562,7 @@ Purpose: Safe cleanup of ./trees/PROJ-123-auth-feature
 
 ## 🔍 VERIFICATION MODE
 
-When invoked with `MODE: VERIFICATION`, you review EXISTING issues rather than creating new plans. This mode is used by `spice:plan` after issue creation to ensure issues are ready for `spice:orchestrate`.
+When invoked with `MODE: VERIFICATION`, you review EXISTING issues rather than creating new plans. This mode is used by `reaper:flight-plan` after issue creation to ensure issues are ready for `reaper:takeoff`.
 
 ### Mode Detection
 
@@ -1637,7 +1637,7 @@ For EACH child issue, evaluate against these criteria:
 
 #### Criterion 4: Orchestratability
 
-**Question**: Can `spice:orchestrate` execute this plan without human guidance?
+**Question**: Can `reaper:takeoff` execute this plan without human guidance?
 
 | Check | Pass | Fail |
 |-------|------|------|

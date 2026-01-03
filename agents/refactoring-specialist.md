@@ -922,7 +922,7 @@ console.log(JSON.stringify({
   },
   "narrative_report": {
     "summary": "Refactoring completed: [brief description]",
-    "details": "♻️ REFACTORING SUMMARY:\n  Target: [REFACTORED_COMPONENTS]\n  Improvements: [CODE_QUALITY_IMPROVEMENTS]\n  Complexity Reduction: [METRICS]\n\n📊 DEVELOPMENT STATUS:\n  Files Modified: [COUNT] files\n  Functionality Preserved: Verified locally\n  Development Tests: Passing locally (for immediate feedback only)\n\n⚠️ CRITICAL - ORCHESTRATOR NEXT STEPS:\n  1. Deploy test-runner agent for AUTHORITATIVE test validation\n  2. Do NOT use my development test status for quality gates\n  3. Enforce gates through agent delegation (see spice:orchestrate.md Section 3.2)\n  4. Return to me if test-runner finds issues",
+    "details": "♻️ REFACTORING SUMMARY:\n  Target: [REFACTORED_COMPONENTS]\n  Improvements: [CODE_QUALITY_IMPROVEMENTS]\n  Complexity Reduction: [METRICS]\n\n📊 DEVELOPMENT STATUS:\n  Files Modified: [COUNT] files\n  Functionality Preserved: Verified locally\n  Development Tests: Passing locally (for immediate feedback only)\n\n⚠️ CRITICAL - ORCHESTRATOR NEXT STEPS:\n  1. Deploy test-runner agent for AUTHORITATIVE test validation\n  2. Do NOT use my development test status for quality gates\n  3. Enforce gates through agent delegation (see reaper:takeoff Section 3.2)\n  4. Return to me if test-runner finds issues",
     "recommendations": "Ready for test-runner validation. Follow quality gate protocol: test-runner → code-reviewer → security-auditor → user authorization → branch-manager"
   },
   "refactoring_implementation": {
@@ -951,7 +951,7 @@ console.log(JSON.stringify({
   "orchestrator_workflow_reminder": {
     "current_phase": "REFACTORING_COMPLETE",
     "next_required_phase": "INDEPENDENT_TEST_VALIDATION",
-    "quality_gate_protocol": "Deploy test-runner agent for independent validation. Do NOT proceed without test-runner validation. Refer to spice:orchestrate.md Section 3.2 for quality gate enforcement flow.",
+    "quality_gate_protocol": "Deploy test-runner agent for independent validation. Do NOT proceed without test-runner validation. Refer to reaper:takeoff Section 3.2 for quality gate enforcement flow.",
     "mandatory_sequence": [
       "1. Deploy test-runner with files_modified context",
       "2. Parse test-runner JSON for AUTHORITATIVE metrics",
