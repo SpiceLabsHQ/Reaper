@@ -51,7 +51,7 @@ After detecting task system, write these core todos:
 TodoWrite([
   { content: "Show plan for user approval", status: "in_progress" },
   { content: "Create issues in [Beads|Jira|Markdown]", status: "pending" },
-  { content: "Launch workflow-planner subagent to verify issues", status: "pending" }
+  { content: "Launch reaper:workflow-planner subagent to verify issues", status: "pending" }
 ])
 ```
 
@@ -181,12 +181,12 @@ If no task system available, output full plan as markdown for manual use.
 
 Update todo #3 to `in_progress`.
 
-### Deploy workflow-planner for Verification
+### Deploy reaper:workflow-planner for Verification
 
-After creating issues, launch workflow-planner in VERIFICATION_MODE to review them:
+After creating issues, launch reaper:workflow-planner in VERIFICATION_MODE to review them:
 
 ```bash
-Task --subagent_type workflow-planner \
+Task --subagent_type reaper:workflow-planner \
   --model opus \
   --prompt "MODE: VERIFICATION (not planning)
 EPIC: $EPIC_ID
@@ -247,7 +247,7 @@ OUTPUT: JSON with verification_mode, issues_verified, verification_results, vali
 
 ### Handling Verification Results
 
-Parse workflow-planner JSON response:
+Parse reaper:workflow-planner JSON response:
 - **all_checks_passed: true** → Proceed to Phase 7 confirmation
 - **auto_fixed: true** → Fixes applied, verification passed
 - **requires_user_input: true** → Present blocking_issues to user after 2 failed iterations

@@ -1,6 +1,6 @@
 ---
 name: workflow-planner
-description: Analyzes complex development tasks and creates strategic implementation plans with risk assessment and parallel work identification. Examples: <example>Context: User needs to plan a major feature implementation across multiple components. user: "We need to implement a complete user notification system with email, SMS, push notifications, and a preferences dashboard - how should we approach this?" assistant: "I'll use the workflow-planner agent to break down this complex feature into manageable work units, identify which components can be developed in parallel, and create a strategic implementation plan with dependency mapping." <commentary>Since the user has a complex multi-component feature requiring strategic planning, use the workflow-planner agent to analyze dependencies and create an optimal implementation strategy.</commentary></example> <example>Context: User wants to understand risks and timeline for a large refactoring project. user: "We're planning to migrate our monolith to microservices - can you help plan the approach and identify potential issues?" assistant: "Let me use the workflow-planner agent to analyze your migration strategy, identify potential integration challenges, create a phased approach, and provide realistic timeline estimates with risk mitigation." <commentary>The user needs strategic planning for a complex architectural change, so use the workflow-planner agent to provide comprehensive project analysis and risk assessment.</commentary></example>
+description: Analyzes complex development tasks and creates strategic implementation plans with risk assessment and parallel work identification. Examples: <example>Context: User needs to plan a major feature implementation across multiple components. user: "We need to implement a complete user notification system with email, SMS, push notifications, and a preferences dashboard - how should we approach this?" assistant: "I'll use the reaper:workflow-planner agent to break down this complex feature into manageable work units, identify which components can be developed in parallel, and create a strategic implementation plan with dependency mapping." <commentary>Since the user has a complex multi-component feature requiring strategic planning, use the reaper:workflow-planner agent to analyze dependencies and create an optimal implementation strategy.</commentary></example> <example>Context: User wants to understand risks and timeline for a large refactoring project. user: "We're planning to migrate our monolith to microservices - can you help plan the approach and identify potential issues?" assistant: "Let me use the reaper:workflow-planner agent to analyze your migration strategy, identify potential integration challenges, create a phased approach, and provide realistic timeline estimates with risk mitigation." <commentary>The user needs strategic planning for a complex architectural change, so use the reaper:workflow-planner agent to provide comprehensive project analysis and risk assessment.</commentary></example>
 model: opus
 color: blue
 tools: Read, Glob, Grep, WebFetch, WebSearch, Bash(bd show:*), Bash(bd dep tree:*), Bash(bd dep:*), Bash(bd list:*), Bash(bd update:*), Bash(acli jira workitem view:*), Bash(acli jira workitem search:*), Bash(acli jira workitem update:*)
@@ -31,7 +31,7 @@ tools: Read, Glob, Grep, WebFetch, WebSearch, Bash(bd show:*), Bash(bd dep tree:
 
 ### Validation Principle
 
-**The workflow-planner must NEVER guess about work scope.**
+**The reaper:workflow-planner must NEVER guess about work scope.**
 
 Planning requires complete context including:
 - What files/components will be modified
@@ -383,7 +383,7 @@ analysis = {
 
 // Recommended approach:
 // - Deploy orchestrator to create files in parallel OR
-// - Deploy 10 parallel documentation-generator agents, one per skill
+// - Deploy 10 parallel reaper:documentation-generator agents, one per skill
 // - Total ~2,500 tokens per agent vs ~29,000 serially
 // - Dramatic token efficiency improvement
 ```
@@ -461,18 +461,18 @@ When creating ≥5 independent content items:
 
 **Agent Deployment Pattern:**
 - Orchestrator may handle directly with synthetic agents
-- OR deploy single bug-fixer/feature-developer for focused work
+- OR deploy single reaper:bug-fixer/reaper:feature-developer for focused work
 - Agent receives complete context in single prompt
 - Implementation completes in single agent invocation
 
 **Quality Gate Placement:**
-- MANDATORY: test-runner validation after implementation
-- MANDATORY: code-reviewer + security-auditor in parallel after test-runner passes
+- MANDATORY: reaper:test-runner validation after implementation
+- MANDATORY: reaper:code-reviewer + reaper:security-auditor in parallel after reaper:test-runner passes
 - All quality gates must pass before presenting to user
 
 **Auto-Iteration Protocol:**
-- If test-runner fails → return to implementation with blocking_issues
-- If code-reviewer or security-auditor fail → return to implementation with blocking_issues
+- If reaper:test-runner fails → return to implementation with blocking_issues
+- If reaper:code-reviewer or reaper:security-auditor fail → return to implementation with blocking_issues
 - Maximum 3 iterations before escalating to user for guidance
 - NO user prompts during iteration - automatic retry loop
 
@@ -485,7 +485,7 @@ When creating ≥5 independent content items:
 - Present completed work with quality attestation
 - User reviews changes in current branch
 - User executes: `git add . && git commit -m "..." && git merge`
-- Orchestrator does NOT deploy branch-manager for this strategy
+- Orchestrator does NOT deploy reaper:branch-manager for this strategy
 
 ---
 
@@ -509,7 +509,7 @@ When creating ≥5 independent content items:
 **Environment Setup:**
 - Create feature branch from develop: `feature/JIRA-KEY-description`
 - NO worktree isolation - all agents work on same branch
-- Each agent assigned exclusive files from workflow-planner
+- Each agent assigned exclusive files from reaper:workflow-planner
 - Install dependencies and validate environment once
 
 **Agent Deployment Pattern:**
@@ -522,25 +522,25 @@ When creating ≥5 independent content items:
 
 **Example Parallel Deployment:**
 ```
-Task --subagent_type feature-developer "JIRA_KEY: PROJ-123, FILES: src/auth.js tests/auth.test.js, EXCLUSIVE ownership"
-Task --subagent_type feature-developer "JIRA_KEY: PROJ-123, FILES: src/config.js tests/config.test.js, EXCLUSIVE ownership"
-Task --subagent_type bug-fixer "JIRA_KEY: PROJ-123, FILES: src/utils.js tests/utils.test.js, EXCLUSIVE ownership"
+Task --subagent_type reaper:feature-developer "JIRA_KEY: PROJ-123, FILES: src/auth.js tests/auth.test.js, EXCLUSIVE ownership"
+Task --subagent_type reaper:feature-developer "JIRA_KEY: PROJ-123, FILES: src/config.js tests/config.test.js, EXCLUSIVE ownership"
+Task --subagent_type reaper:bug-fixer "JIRA_KEY: PROJ-123, FILES: src/utils.js tests/utils.test.js, EXCLUSIVE ownership"
 ```
 
 **Quality Gate Placement:**
-- AFTER all agents complete: test-runner runs FULL suite (not individual tests)
-- AFTER test-runner passes: code-reviewer + security-auditor in parallel
+- AFTER all agents complete: reaper:test-runner runs FULL suite (not individual tests)
+- AFTER reaper:test-runner passes: reaper:code-reviewer + reaper:security-auditor in parallel
 - All quality gates validate consolidated work from all agents
 
 **Auto-Iteration Protocol:**
 - If any agent detects file conflict → report to orchestrator, reassign work
-- If test-runner fails → identify which agent's changes caused failure, return to that agent
-- If code-reviewer or security-auditor fail → return to relevant agents with blocking_issues
+- If reaper:test-runner fails → identify which agent's changes caused failure, return to that agent
+- If reaper:code-reviewer or reaper:security-auditor fail → return to relevant agents with blocking_issues
 - Iterate until all quality gates pass
 
 **Consolidation Approach:**
 - No physical consolidation needed - all work already on same branch
-- Logical consolidation: test-runner validates all changes together
+- Logical consolidation: reaper:test-runner validates all changes together
 - Review gates assess integration coherence across all agents
 
 **User Commit Workflow:**
@@ -583,15 +583,15 @@ Task --subagent_type bug-fixer "JIRA_KEY: PROJ-123, FILES: src/utils.js tests/ut
 For EACH worktree, execute this complete cycle:
 
 1. **Implementation Phase:**
-   - Deploy code agent (bug-fixer, feature-developer, refactoring-specialist)
+   - Deploy code agent (reaper:bug-fixer, reaper:feature-developer, reaper:refactoring-specialist)
    - Agent works ONLY in assigned worktree
    - Small work packages (max 5 files, 500 LOC per package)
    - Agent runs targeted tests on their changes (TDD feedback)
    - NO commits at this stage
 
 2. **Quality Gate Phase:**
-   - Deploy test-runner: Run FULL test suite in worktree with coverage
-   - After test-runner passes: Deploy code-reviewer + security-auditor in parallel
+   - Deploy reaper:test-runner: Run FULL test suite in worktree with coverage
+   - After reaper:test-runner passes: Deploy reaper:code-reviewer + reaper:security-auditor in parallel
    - All quality gates must pass before proceeding
 
 3. **Iteration Phase:**
@@ -600,14 +600,14 @@ For EACH worktree, execute this complete cycle:
    - Maximum 3 iterations per worktree before escalation
 
 4. **Consolidation Phase (ONLY after all quality gates pass):**
-   - Orchestrator deploys branch-manager with quality gate confirmation
-   - branch-manager commits work in worktree
-   - branch-manager merges worktree branch to review branch
+   - Orchestrator deploys reaper:branch-manager with quality gate confirmation
+   - reaper:branch-manager commits work in worktree
+   - reaper:branch-manager merges worktree branch to review branch
    - Invoke `worktree-manager` skill for safe worktree cleanup after successful merge
 
 **Quality Gate Placement:**
-- Per-worktree gates: test-runner, code-reviewer, security-auditor
-- Post-consolidation gates: test-runner on review branch (final integration validation)
+- Per-worktree gates: reaper:test-runner, reaper:code-reviewer, reaper:security-auditor
+- Post-consolidation gates: reaper:test-runner on review branch (final integration validation)
 - Each worktree must pass all gates before consolidation
 
 **Auto-Iteration Protocol:**
@@ -618,8 +618,8 @@ For EACH worktree, execute this complete cycle:
 **Consolidation Approach:**
 - Sequential worktree consolidation to review branch
 - Each worktree completion triggers:
-  1. Commit in worktree (by branch-manager)
-  2. Merge to review branch (by branch-manager)
+  1. Commit in worktree (by reaper:branch-manager)
+  2. Merge to review branch (by reaper:branch-manager)
   3. Cleanup worktree (invoke `worktree-manager` skill for safe removal)
   4. Move to next worktree
 - Final review branch contains all consolidated work
@@ -639,44 +639,44 @@ For EACH worktree, execute this complete cycle:
 
 ### By Work Unit Type
 
-**Bug Fixes → `bug-fixer` agent**
+**Bug Fixes → `reaper:bug-fixer` agent**
 - TDD methodology with Red-Green-Refactor cycle
 - Systematic reproduction from user reports
 - Focused on minimal fix with comprehensive test coverage
 - Ideal for: regression bugs, reported issues, known defects
 
-**New Features → `feature-developer` agent**
+**New Features → `reaper:feature-developer` agent**
 - TDD with SOLID principles from inception
 - Comprehensive test-first development
 - Architecture-aware implementation
 - Ideal for: new functionality, feature additions, capability expansion
 
-**Code Improvements → `refactoring-specialist` agent**
+**Code Improvements → `reaper:refactoring-specialist` agent**
 - Preserve functionality while improving structure
 - SOLID principle enforcement
 - Technical debt reduction
 - Ideal for: code smell removal, architecture improvements, maintainability
 
-**Environment Setup → `branch-manager` agent**
+**Environment Setup → `reaper:branch-manager` agent**
 - Worktree/branch creation and management
 - Safe merge operations with conflict detection
 - Cleanup and consolidation
 - Ideal for: worktree setup, branch operations, consolidation phases
 - **NOTE**: For worktree cleanup, invoke `worktree-manager` skill to prevent Bash tool CWD errors
 
-**Testing Validation → `test-runner` agent**
+**Testing Validation → `reaper:test-runner` agent**
 - Authoritative quality metrics (coverage, test results)
 - MANDATORY first quality gate after implementation
 - Full suite execution with detailed reporting
 - Ideal for: quality validation, coverage enforcement, test verification
 
-**Code Quality Review → `code-reviewer` agent**
+**Code Quality Review → `reaper:code-reviewer` agent**
 - SOLID principle assessment
 - Best practices validation
 - Architecture review
 - Ideal for: quality gates, pre-merge review, standards enforcement
 
-**Security Assessment → `security-auditor` agent**
+**Security Assessment → `reaper:security-auditor` agent**
 - Vulnerability detection
 - OWASP compliance checking
 - Security pattern validation
@@ -686,30 +686,30 @@ For EACH worktree, execute this complete cycle:
 
 **Strategy 1: Very Small Direct Implementation**
 - **Primary Option**: Orchestrator handles with synthetic agents (no subagent needed)
-- **Alternative**: Single `bug-fixer` or `feature-developer` for focused work
-- **Quality Gates**: `test-runner` → (`code-reviewer` + `security-auditor` parallel)
+- **Alternative**: Single `reaper:bug-fixer` or `reaper:feature-developer` for focused work
+- **Quality Gates**: `reaper:test-runner` → (`reaper:code-reviewer` + `reaper:security-auditor` parallel)
 - **Consolidation**: None (orchestrator presents to user directly)
 
 **Strategy 2: Medium Single Branch Implementation**
-- **Implementation**: Multiple `feature-developer` or `bug-fixer` agents IN PARALLEL
-- **Assignment**: Each agent receives exclusive file ownership from workflow-planner
-- **Quality Gates**: `test-runner` (full suite) → (`code-reviewer` + `security-auditor` parallel)
+- **Implementation**: Multiple `reaper:feature-developer` or `reaper:bug-fixer` agents IN PARALLEL
+- **Assignment**: Each agent receives exclusive file ownership from reaper:workflow-planner
+- **Quality Gates**: `reaper:test-runner` (full suite) → (`reaper:code-reviewer` + `reaper:security-auditor` parallel)
 - **Consolidation**: None (all on same branch, user commits manually)
 
 **Strategy 3: Large Multi-Worktree Implementation**
-- **Setup**: `branch-manager` creates worktrees and review branch
-- **Implementation**: Sequential `feature-developer`/`bug-fixer` per worktree
-- **Quality Gates**: Per-worktree: `test-runner` → (`code-reviewer` + `security-auditor` parallel)
-- **Consolidation**: `branch-manager` merges each worktree to review branch after gates pass
-- **Final Gate**: `test-runner` on review branch for integration validation
+- **Setup**: `reaper:branch-manager` creates worktrees and review branch
+- **Implementation**: Sequential `reaper:feature-developer`/`reaper:bug-fixer` per worktree
+- **Quality Gates**: Per-worktree: `reaper:test-runner` → (`reaper:code-reviewer` + `reaper:security-auditor` parallel)
+- **Consolidation**: `reaper:branch-manager` merges each worktree to review branch after gates pass
+- **Final Gate**: `reaper:test-runner` on review branch for integration validation
 
 ### Agent Deployment Patterns
 
 **Sequential Pattern (Single Work Stream):**
 ```
-1. code agent (bug-fixer/feature-developer)
-2. test-runner (BLOCKING - must pass before proceeding)
-3. code-reviewer + security-auditor (PARALLEL - both must pass)
+1. code agent (reaper:bug-fixer/reaper:feature-developer)
+2. reaper:test-runner (BLOCKING - must pass before proceeding)
+3. reaper:code-reviewer + reaper:security-auditor (PARALLEL - both must pass)
 4. If failures: return to step 1 with blocking_issues
 5. Max 3 iterations before user escalation
 ```
@@ -717,36 +717,36 @@ For EACH worktree, execute this complete cycle:
 **Parallel Pattern (Multiple Independent Work Units - Strategy 2):**
 ```
 1. ALL code agents simultaneously (exclusive file assignments)
-2. AFTER all complete: test-runner (full suite validation)
-3. code-reviewer + security-auditor (parallel assessment)
+2. AFTER all complete: reaper:test-runner (full suite validation)
+3. reaper:code-reviewer + reaper:security-auditor (parallel assessment)
 4. If failures: return to specific failing agents with blocking_issues
 ```
 
 **Worktree Sequential Pattern (Strategy 3):**
 ```
 For EACH worktree:
-  1. code agent → test-runner → (code-reviewer + security-auditor parallel)
+  1. code agent → reaper:test-runner → (reaper:code-reviewer + reaper:security-auditor parallel)
   2. Iterate on failures (max 3x)
-  3. ALL gates pass → branch-manager consolidates to review branch
+  3. ALL gates pass → reaper:branch-manager consolidates to review branch
   4. Move to next worktree
-Final: test-runner on review branch (integration validation)
+Final: reaper:test-runner on review branch (integration validation)
 ```
 
 ### Quality Gate Agents (Cross-Strategy)
 
 **MANDATORY Gate Sequence:**
 
-**Gate 1: test-runner (BLOCKING)**
+**Gate 1: reaper:test-runner (BLOCKING)**
 - ALWAYS first gate after implementation
 - Runs full test suite with coverage analysis
 - Must report: `all_tests_passed: true`, `coverage >= 80%`, `linting_passed: true`
 - On failure: return to code agent with specific test failures
 
-**Gate 2: code-reviewer + security-auditor (PARALLEL, BLOCKING)**
-- ONLY runs after test-runner passes
+**Gate 2: reaper:code-reviewer + reaper:security-auditor (PARALLEL, BLOCKING)**
+- ONLY runs after reaper:test-runner passes
 - Both execute simultaneously for efficiency
-- code-reviewer: SOLID principles, best practices, architecture
-- security-auditor: vulnerabilities, OWASP compliance, security patterns
+- reaper:code-reviewer: SOLID principles, best practices, architecture
+- reaper:security-auditor: vulnerabilities, OWASP compliance, security patterns
 - Both must report: `all_checks_passed: true`
 - On failure: return to code agent with specific issues
 
@@ -762,7 +762,7 @@ Final: test-runner on review branch (integration validation)
   "quality_gate_checkpoints": [
     {
       "checkpoint": "after_implementation",
-      "gate": "test-runner",
+      "gate": "reaper:test-runner",
       "execution": "sequential",
       "blocking": true,
       "validation_criteria": "80%+ coverage, all tests pass, linting clean",
@@ -770,7 +770,7 @@ Final: test-runner on review branch (integration validation)
     },
     {
       "checkpoint": "after_testing",
-      "gate": "code-reviewer",
+      "gate": "reaper:code-reviewer",
       "execution": "parallel_with_security_auditor",
       "blocking": true,
       "validation_criteria": "SOLID principles, best practices, no code smells",
@@ -778,7 +778,7 @@ Final: test-runner on review branch (integration validation)
     },
     {
       "checkpoint": "after_testing",
-      "gate": "security-auditor",
+      "gate": "reaper:security-auditor",
       "execution": "parallel_with_code_reviewer",
       "blocking": true,
       "validation_criteria": "No vulnerabilities, OWASP compliant, secure patterns",
@@ -791,7 +791,7 @@ Final: test-runner on review branch (integration validation)
 ### Parallel Safety Guarantees
 
 **File Exclusivity Enforcement:**
-- workflow-planner assigns exclusive files to each parallel agent
+- reaper:workflow-planner assigns exclusive files to each parallel agent
 - Agents instructed to exit if assigned files already modified
 - Conflict detection protocol: check file timestamps before write
 - Override condition: any file overlap detected → escalate to Strategy 3
@@ -847,8 +847,8 @@ Final: test-runner on review branch (integration validation)
 
 **Orchestrator Response:**
 ```bash
-# Redeploy workflow-planner with discovered information
-Task --subagent_type workflow-planner \
+# Redeploy reaper:workflow-planner with discovered information
+Task --subagent_type reaper:workflow-planner \
   --prompt "Re-analyze PROJ-123 with new context:
     - Original strategy: medium_single_branch
     - Issue discovered: File overlap in src/auth.js between WORK-002 and WORK-004
@@ -857,7 +857,7 @@ Task --subagent_type workflow-planner \
     - Provide upgraded strategy with mitigation plan"
 ```
 
-**workflow-planner Re-analysis:**
+**reaper:workflow-planner Re-analysis:**
 1. Assess completed work in current strategy
 2. Identify remaining work packages
 3. Re-calculate complexity score with actual data discovered
@@ -900,7 +900,7 @@ remaining_score =
 **Initial State:**
 - Strategy: medium_single_branch
 - Work units: WORK-001 (auth form), WORK-002 (auth validation), WORK-003 (config)
-- Assigned parallel: 3 feature-developers on same branch
+- Assigned parallel: 3 reaper:feature-developer agents on same branch
 
 **Issue Discovered:**
 - WORK-001 and WORK-002 both need to modify `src/auth/AuthService.js`
@@ -931,7 +931,7 @@ remaining_score =
 - Work package: WORK-002 (15 endpoints)
 
 **Issue Discovered:**
-- feature-developer reports context approaching limit
+- reaper:feature-developer reports context approaching limit
 - Work package larger than initially estimated
 
 **Escalation Action:**
@@ -1324,7 +1324,7 @@ if (beads_tree.blocks.length > 0) {
       {
         "step": 2,
         "phase": "implementation",
-        "agent": "feature-developer",
+        "agent": "reaper:feature-developer",
         "purpose": "Implement WORK-001 with exclusive file ownership",
         "critical_instructions": "JIRA: PROJ-123, FILES: src/auth/LoginForm.js tests/auth/LoginForm.test.js, EXCLUSIVE ownership, exit if files modified by others, TDD methodology",
         "blocking": false
@@ -1332,7 +1332,7 @@ if (beads_tree.blocks.length > 0) {
       {
         "step": 3,
         "phase": "implementation",
-        "agent": "feature-developer",
+        "agent": "reaper:feature-developer",
         "purpose": "Implement WORK-002 with exclusive file ownership",
         "critical_instructions": "JIRA: PROJ-123, FILES: src/config/OAuthConfig.js tests/config/OAuthConfig.test.js, EXCLUSIVE ownership, parallel with step 2",
         "blocking": false
@@ -1340,7 +1340,7 @@ if (beads_tree.blocks.length > 0) {
       {
         "step": 4,
         "phase": "quality_validation",
-        "agent": "test-runner",
+        "agent": "reaper:test-runner",
         "purpose": "Run full test suite with coverage validation",
         "critical_instructions": "Execute full test suite after ALL implementation agents complete. Validate 80%+ coverage, all tests pass, linting clean. Report detailed failures if any.",
         "blocking": true
@@ -1348,38 +1348,38 @@ if (beads_tree.blocks.length > 0) {
       {
         "step": 5,
         "phase": "quality_validation",
-        "agent": "code-reviewer",
+        "agent": "reaper:code-reviewer",
         "purpose": "Assess code quality and SOLID principles",
-        "critical_instructions": "Review all changes from parallel agents. Check SOLID principles, best practices, architecture. Execute in parallel with security-auditor.",
+        "critical_instructions": "Review all changes from parallel agents. Check SOLID principles, best practices, architecture. Execute in parallel with reaper:security-auditor.",
         "blocking": true
       },
       {
         "step": 6,
         "phase": "quality_validation",
-        "agent": "security-auditor",
+        "agent": "reaper:security-auditor",
         "purpose": "Security vulnerability assessment",
-        "critical_instructions": "Scan for vulnerabilities, OWASP compliance, secure patterns. Execute in parallel with code-reviewer.",
+        "critical_instructions": "Scan for vulnerabilities, OWASP compliance, secure patterns. Execute in parallel with reaper:code-reviewer.",
         "blocking": true
       }
     ],
     "quality_gate_checkpoints": [
       {
         "checkpoint": "after_implementation",
-        "gate": "test-runner",
+        "gate": "reaper:test-runner",
         "execution": "sequential",
         "validation_criteria": "80%+ coverage, all tests pass, linting clean",
         "on_failure": "Identify failing agent by file analysis, return to that agent with blocking_issues, iterate max 3x"
       },
       {
         "checkpoint": "after_testing",
-        "gate": "code-reviewer",
+        "gate": "reaper:code-reviewer",
         "execution": "parallel",
         "validation_criteria": "SOLID principles, best practices, no code smells",
         "on_failure": "Return to relevant agents with quality issues, iterate max 3x"
       },
       {
         "checkpoint": "after_testing",
-        "gate": "security-auditor",
+        "gate": "reaper:security-auditor",
         "execution": "parallel",
         "validation_criteria": "No vulnerabilities, OWASP compliant, secure patterns",
         "on_failure": "Return to relevant agents with security issues, iterate max 3x"
@@ -1514,9 +1514,9 @@ bd show <id>                   # Issue details with dependencies
 ```
 
 ### Integration with Other Agents
-- Use with `bug-fixer` and `feature-developer` for implementation
-- Chain with `branch-manager` for safe parallel worktree setup
-- Follow with `test-runner` and `code-reviewer` for validation
+- Use with `reaper:bug-fixer` and `reaper:feature-developer` for implementation
+- Chain with `reaper:branch-manager` for safe parallel worktree setup
+- Follow with `reaper:test-runner` and `reaper:code-reviewer` for validation
 
 ## 🧹 WORKTREE-MANAGER SKILL INTEGRATION
 
