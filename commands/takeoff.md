@@ -1,5 +1,5 @@
 ---
-description: Main work supervisor command that orchestrates development tasks through specialized agents with iterative quality loops
+description: Dispatch agents through quality gates until work lands on your desk.
 ---
 
 # Work Supervisor Mode with Iterative Quality Loops

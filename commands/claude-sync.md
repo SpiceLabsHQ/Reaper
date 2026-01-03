@@ -1,5 +1,5 @@
 ---
-description: Synchronize CLAUDE.md with critical code changes
+description: Surface changes since CLAUDE.md last touched down.
 ---
 
 # Synchronize CLAUDE.md with Recent Code Changes

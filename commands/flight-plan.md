@@ -1,5 +1,5 @@
 ---
-description: Generate an execution plan with epic/issue structure for autonomous development task execution
+description: Chart work into flight-ready issues with dependencies mapped.
 ---
 
 # Autonomous Execution Planner

@@ -1,5 +1,5 @@
 ---
-description: Check the status of git worktrees and parallel development progress with Jira integration
+description: Radar sweep your parallel worktrees for progress and drift.
 ---
 
 # Status of Worktrees for Jira Tickets
