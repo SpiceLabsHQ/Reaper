@@ -15,11 +15,11 @@ We have a multi-skill package at `~/.claude/skills/spice/` that provides automat
 - ✅ WORKTREE_CLEANUP.md (safe worktree removal)
 
 **Existing Agents (DON'T create skills for these):**
-- test-runner, code-reviewer, security-auditor
-- documentation-generator, deployment-engineer
-- refactoring-specialist, incident-responder
-- branch-manager, bug-fixer, feature-developer
-- workflow-planner, performance-engineer
+- reaper:test-runner, reaper:code-reviewer, reaper:security-auditor
+- reaper:documentation-generator, reaper:deployment-engineer
+- reaper:refactoring-specialist, reaper:incident-responder
+- reaper:branch-manager, reaper:bug-fixer, reaper:feature-developer
+- reaper:workflow-planner, reaper:performance-engineer
 
 ---
 

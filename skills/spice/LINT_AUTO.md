@@ -529,7 +529,7 @@ This skill integrates at multiple points in the SPICE workflow:
 
 1. **Before Commit**: Run auto-lint to fix style issues
 2. **Pre-Commit Hook**: Automatically triggered by git hooks
-3. **Quality Gates**: test-runner agent validates linting passed
+3. **Quality Gates**: reaper:test-runner agent validates linting passed
 4. **Continuous Integration**: CI pipelines verify linting
 
 Auto-linting ensures code quality standards are met before any code enters the develop branch.

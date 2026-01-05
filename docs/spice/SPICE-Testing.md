@@ -6,13 +6,13 @@
 
 **MANDATORY**: Use specialized agents for systematic TDD implementation with built-in quality controls.
 
-### 🐛 Bug Fixing with TDD (bug-fixer agent)
+### 🐛 Bug Fixing with TDD (reaper:bug-fixer agent)
 
 **REQUIRED** for all bug reports and issues:
 
 ```bash
 # MANDATORY: Systematic bug reproduction and fixing
-Task --subagent_type bug-fixer \
+Task --subagent_type reaper:bug-fixer \
   --description "Fix reported bug with TDD" \
   --prompt "Reproduce bug PROJ-123: [BUG_DESCRIPTION]. Write failing test that demonstrates the issue, implement minimal fix, ensure comprehensive test coverage following Red-Green-Refactor methodology."
 ```
@@ -23,13 +23,13 @@ Task --subagent_type bug-fixer \
 3. **🔵 BLUE**: Agent refactors for quality, SOLID principles, comprehensive coverage
 4. **🔍 VALIDATION**: Agent runs full test suite, ensures no regressions
 
-### 🚀 Feature Development with TDD (feature-developer agent)
+### 🚀 Feature Development with TDD (reaper:feature-developer agent)
 
 **REQUIRED** for all new functionality:
 
 ```bash
 # MANDATORY: Feature implementation with TDD and SOLID principles
-Task --subagent_type feature-developer \
+Task --subagent_type reaper:feature-developer \
   --description "Implement new feature with TDD" \
   --prompt "Implement PROJ-123: [FEATURE_NAME]. Use TDD methodology starting with test cases for acceptance criteria, apply SOLID principles, ensure 80%+ test coverage including integration tests."
 ```
@@ -40,13 +40,13 @@ Task --subagent_type feature-developer \
 3. **🔵 BLUE**: Agent refactors for maintainability, performance, and code quality
 4. **🔗 INTEGRATION**: Agent creates integration tests for end-to-end workflows
 
-### 📊 Quality Validation (test-runner agent)
+### 📊 Quality Validation (reaper:test-runner agent)
 
 **MANDATORY** before merging any code:
 
 ```bash
 # REQUIRED: Comprehensive testing validation
-Task --subagent_type test-runner \
+Task --subagent_type reaper:test-runner \
   --description "Run comprehensive testing" \
   --prompt "Execute all tests, linting, coverage analysis, and quality checks for PROJ-123. Validate 80%+ coverage requirement and ensure all quality gates pass."
 ```

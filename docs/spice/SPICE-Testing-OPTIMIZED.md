@@ -6,17 +6,17 @@
 
 ### Bug Fixing
 ```bash
-Task --subagent_type bug-fixer --prompt "Fix [JIRA_KEY]: [BUG_DESCRIPTION] with TDD Red-Green-Refactor"
+Task --subagent_type reaper:bug-fixer --prompt "Fix [JIRA_KEY]: [BUG_DESCRIPTION] with TDD Red-Green-Refactor"
 ```
 
 ### Feature Development  
 ```bash
-Task --subagent_type feature-developer --prompt "Implement [JIRA_KEY]: [FEATURE_NAME] with TDD, SOLID, 80%+ coverage"
+Task --subagent_type reaper:feature-developer --prompt "Implement [JIRA_KEY]: [FEATURE_NAME] with TDD, SOLID, 80%+ coverage"
 ```
 
 ### Quality Validation
 ```bash
-Task --subagent_type test-runner --prompt "Execute tests, linting, coverage for [JIRA_KEY]"
+Task --subagent_type reaper:test-runner --prompt "Execute tests, linting, coverage for [JIRA_KEY]"
 ```
 
 ## TDD Process

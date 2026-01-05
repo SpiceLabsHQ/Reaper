@@ -13,7 +13,7 @@
 ### ✅ If you see "Task" tool → You are the MAIN AGENT (supervisor)
 
 **Your responsibilities:**
-- **Delegate all implementation work** to subagents (bug-fixer, feature-developer, etc.)
+- **Delegate all implementation work** to subagents (reaper:bug-fixer, reaper:feature-developer, etc.)
 - **Use the Agent Selection Matrix** below to choose the right subagent for each task
 - **Validate subagent work** and provide guidance on standards compliance
 - **Orchestrate workflow** from planning through integration
@@ -111,12 +111,12 @@
 
 | Task Type | Required Agent | When to Use | Key Benefits |
 |-----------|---------------|-------------|--------------|
-| **Planning** | `workflow-planner` | ≥3 steps, multi-component features | Parallel work analysis, conflict prevention |
-| **Bug Fixing** | `bug-fixer` | ALL bug reports and issues | TDD methodology, systematic reproduction |
-| **New Features** | `feature-developer` | ALL new functionality | SOLID principles, comprehensive testing |
-| **Git Operations** | `branch-manager` | Worktree setup, merges, cleanup | Safe operations, automated backups |
-| **Testing** | `test-runner` | Quality validation (MANDATORY before merge) | Coverage validation, lint checking |
-| **Code Review** | `code-reviewer` | Pre-merge review, quality gates | Security analysis, best practices |
+| **Planning** | `reaper:workflow-planner` | ≥3 steps, multi-component features | Parallel work analysis, conflict prevention |
+| **Bug Fixing** | `reaper:bug-fixer` | ALL bug reports and issues | TDD methodology, systematic reproduction |
+| **New Features** | `reaper:feature-developer` | ALL new functionality | SOLID principles, comprehensive testing |
+| **Git Operations** | `reaper:branch-manager` | Worktree setup, merges, cleanup | Safe operations, automated backups |
+| **Testing** | `reaper:test-runner` | Quality validation (MANDATORY before merge) | Coverage validation, lint checking |
+| **Code Review** | `reaper:code-reviewer` | Pre-merge review, quality gates | Security analysis, best practices |
 
 ### Agent Usage Patterns
 
@@ -125,54 +125,54 @@
 **1. Planning Phase (MANDATORY for complex tasks)**
 ```bash
 # Jira task
-Task --subagent_type workflow-planner \
+Task --subagent_type reaper:workflow-planner \
   --prompt "TASK: PROJ-123, DESCRIPTION: Analyze OAuth authentication requirements for parallel work opportunities"
 
 # Beads task
-Task --subagent_type workflow-planner \
+Task --subagent_type reaper:workflow-planner \
   --prompt "TASK: repo-a3f, DESCRIPTION: Plan rate limiting implementation across API and middleware layers"
 ```
 
 **2. Bug Fixing (REQUIRED for all bugs)**
 ```bash
 # GitHub issue
-Task --subagent_type bug-fixer \
+Task --subagent_type reaper:bug-fixer \
   --prompt "TASK: #456, DESCRIPTION: Fix null pointer in payment processing when user has no payment method"
 
 # Description-only
-Task --subagent_type bug-fixer \
+Task --subagent_type reaper:bug-fixer \
   --prompt "TASK: hotfix-oauth, DESCRIPTION: Fix OAuth token refresh race condition causing 401 errors"
 ```
 
 **3. Feature Development (REQUIRED for all features)**
 ```bash
 # Custom task ID
-Task --subagent_type feature-developer \
+Task --subagent_type reaper:feature-developer \
   --prompt "TASK: sprint-5-notifications, DESCRIPTION: Implement real-time push notifications with WebSocket support"
 
 # Jira task (backward compatible)
-Task --subagent_type feature-developer \
+Task --subagent_type reaper:feature-developer \
   --prompt "TASK: PROJ-123, DESCRIPTION: Add user profile API with validation and avatar upload"
 ```
 
 **4. Environment Setup (RECOMMENDED)**
 ```bash
-Task --subagent_type branch-manager \
+Task --subagent_type reaper:branch-manager \
   --prompt "TASK: PROJ-123, WORKTREE: ./trees/PROJ-123-auth, DESCRIPTION: Create worktree, install dependencies, validate"
 ```
 
 **5. Quality Validation (MANDATORY before merge)**
 ```bash
-Task --subagent_type test-runner \
+Task --subagent_type reaper:test-runner \
   --prompt "TASK: repo-a3f, WORKTREE: ./trees/repo-a3f-oauth, DESCRIPTION: Run full test suite for OAuth implementation"
 
-Task --subagent_type code-reviewer \
+Task --subagent_type reaper:code-reviewer \
   --prompt "TASK: #456, WORKTREE: ./trees/issue-456-fix, DESCRIPTION: Review payment processing fix for quality"
 ```
 
 **6. Safe Merge (RECOMMENDED)**
 ```bash
-Task --subagent_type branch-manager \
+Task --subagent_type reaper:branch-manager \
   --prompt "TASK: PROJ-123, WORKTREE: ./trees/PROJ-123-auth, DESCRIPTION: Merge to develop with conflict detection"
 ```
 
@@ -360,7 +360,7 @@ When orchestrator deploys individual agents, it ALWAYS provides the fetched/comb
 
 ```bash
 # Orchestrator internally does this:
-Task --subagent_type bug-fixer \
+Task --subagent_type reaper:bug-fixer \
   --prompt "TASK: PROJ-123
 DESCRIPTION: [fetched from Jira] Fix email validation bug...
 WORKTREE: ./trees/PROJ-123-fix
@@ -424,20 +424,20 @@ class OrderService {
 
 4. **🎯 PLANNING PHASE** (MANDATORY for ≥3 steps)
    ```bash
-   Task --subagent_type workflow-planner --prompt "Analyze [TASK] for parallel opportunities"
+   Task --subagent_type reaper:workflow-planner --prompt "Analyze [TASK] for parallel opportunities"
    ```
 
 5. **🚀 IMPLEMENTATION PHASE** (Choose based on task type)
-   - **Bugs:** `Task --subagent_type bug-fixer --prompt "Systematic TDD bug fix"`
-   - **Features:** `Task --subagent_type feature-developer --prompt "TDD feature implementation"`
+   - **Bugs:** `Task --subagent_type reaper:bug-fixer --prompt "Systematic TDD bug fix"`
+   - **Features:** `Task --subagent_type reaper:feature-developer --prompt "TDD feature implementation"`
 
 6. **🌳 ENVIRONMENT SETUP** (Recommended)
    ```bash
-   Task --subagent_type branch-manager --prompt "Setup worktree environment"
+   Task --subagent_type reaper:branch-manager --prompt "Setup worktree environment"
    # OR manual: mkdir -p trees && git worktree add ./trees/PROJ-123-desc -b feature/PROJ-123-desc develop
    ```
 
-7. **Setup Environment** (if not using branch-manager)
+7. **Setup Environment** (if not using reaper:branch-manager)
    - Install dependencies in worktree
    - Validate environment
 
@@ -448,13 +448,13 @@ class OrderService {
 
 9. **📊 QUALITY PHASE** (MANDATORY)
    ```bash
-   Task --subagent_type test-runner --prompt "Comprehensive testing validation"
-   Task --subagent_type code-reviewer --prompt "Quality and security review"
+   Task --subagent_type reaper:test-runner --prompt "Comprehensive testing validation"
+   Task --subagent_type reaper:code-reviewer --prompt "Quality and security review"
    ```
 
 10. **🔄 INTEGRATION PHASE** (Recommended)
     ```bash
-    Task --subagent_type branch-manager --prompt "Safe merge to develop"
+    Task --subagent_type reaper:branch-manager --prompt "Safe merge to develop"
     # OR manual: git checkout develop && git merge feature/PROJ-123 --no-ff
     ```
 
@@ -524,19 +524,19 @@ feat(auth): add OAuth2 PROJ-123
 
 ### Agent Workflows
 
-**1. Bug Fixing (bug-fixer agent)**
+**1. Bug Fixing (reaper:bug-fixer agent)**
 - 🔴 RED: Write failing test reproducing the bug
 - 🟢 GREEN: Implement minimal fix to pass test
 - 🔵 BLUE: Refactor for quality and comprehensive coverage
 - 🔍 VALIDATION: Run full suite, ensure no regressions
 
-**2. Feature Development (feature-developer agent)**
+**2. Feature Development (reaper:feature-developer agent)**
 - 🔴 RED: Write comprehensive test suite for acceptance criteria
 - 🟢 GREEN: Implement feature with SOLID principles
 - 🔵 BLUE: Refactor for maintainability
 - 🔗 INTEGRATION: Create end-to-end workflow tests
 
-**3. Quality Validation (test-runner agent - MANDATORY)**
+**3. Quality Validation (reaper:test-runner agent - MANDATORY)**
 - Execute all tests with coverage analysis
 - Run linting and type checking
 - Validate 80%+ coverage requirement
@@ -620,9 +620,9 @@ git worktree remove ./trees/PROJ-123-description
 git branch -d feature/PROJ-123-description
 ```
 
-### Recommended: Use branch-manager agent
+### Recommended: Use reaper:branch-manager agent
 ```bash
-Task --subagent_type branch-manager \
+Task --subagent_type reaper:branch-manager \
   --description "Setup worktree environment" \
   --prompt "Create worktree for PROJ-123, install dependencies, validate"
 ```
@@ -642,7 +642,7 @@ Task --subagent_type branch-manager \
 - [ ] Build succeeds
 - [ ] No console errors (web apps)
 - [ ] All tests run in worktree (NOT root)
-- [ ] Code review completed (code-reviewer agent)
+- [ ] Code review completed (reaper:code-reviewer agent)
 - [ ] Security validation passed
 
 ### Versioning
@@ -667,33 +667,33 @@ Task --subagent_type branch-manager \
 pwd | grep -q "/trees/" && { echo "ERROR: Must start from root"; exit 1; }
 
 # PLANNING: Analyze for parallel opportunities (works with any task ID format)
-Task --subagent_type workflow-planner \
+Task --subagent_type reaper:workflow-planner \
   --prompt "TASK: PROJ-123, DESCRIPTION: Analyze OAuth implementation for parallel work opportunities"
 # OR: "TASK: repo-a3f, DESCRIPTION: ..." (Beads)
 # OR: "TASK: #456, DESCRIPTION: ..." (GitHub)
 # OR: "TASK: sprint-5-auth, DESCRIPTION: ..." (custom)
 
 # IMPLEMENTATION: Bug fix (any task ID format)
-Task --subagent_type bug-fixer \
+Task --subagent_type reaper:bug-fixer \
   --prompt "TASK: #456, DESCRIPTION: Fix null pointer in payment processing, add defensive checks"
 
 # IMPLEMENTATION: Feature (backward compatible with Jira)
-Task --subagent_type feature-developer \
+Task --subagent_type reaper:feature-developer \
   --prompt "TASK: PROJ-123, DESCRIPTION: Implement user profile API with avatar upload and validation"
 
 # ENVIRONMENT: Setup worktree
-Task --subagent_type branch-manager \
+Task --subagent_type reaper:branch-manager \
   --prompt "TASK: repo-a3f, WORKTREE: ./trees/repo-a3f-oauth, DESCRIPTION: Create worktree, install deps"
 
 # QUALITY: Validation (MANDATORY)
-Task --subagent_type test-runner \
+Task --subagent_type reaper:test-runner \
   --prompt "TASK: sprint-5-auth, WORKTREE: ./trees/sprint-5-auth, DESCRIPTION: Run full test suite"
 
-Task --subagent_type code-reviewer \
+Task --subagent_type reaper:code-reviewer \
   --prompt "TASK: PROJ-123, WORKTREE: ./trees/PROJ-123-fix, DESCRIPTION: Review for security and quality"
 
 # INTEGRATION: Safe merge
-Task --subagent_type branch-manager \
+Task --subagent_type reaper:branch-manager \
   --prompt "TASK: PROJ-123, WORKTREE: ./trees/PROJ-123-fix, DESCRIPTION: Merge to develop safely"
 
 # TICKET UPDATE: Only if using Jira (conditional on task ID format)

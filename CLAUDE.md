@@ -58,7 +58,7 @@ Use `bd list` to find issue IDs, or `bd create` to create one.
 - 80%+ coverage required for application code
 - All tests run in worktrees (`./trees/`), never in root
 - Run linting before every commit (enforced by husky)
-- Quality gates: test-runner → code-reviewer + security-auditor
+- Quality gates: reaper:test-runner → reaper:code-reviewer + reaper:security-auditor
 
 ### Worktree Isolation
 
@@ -92,11 +92,25 @@ docs/spice/      # Development standards documentation
 
 | Category | Agents |
 |----------|--------|
-| Planning | workflow-planner, api-designer, cloud-architect, database-architect |
-| Development | feature-developer, bug-fixer, refactoring-specialist, branch-manager |
-| Quality | test-runner, code-reviewer, security-auditor, performance-engineer |
-| Ops | deployment-engineer, integration-engineer, incident-responder |
-| Meta | documentation-generator, claude-agent-architect |
+| Planning | reaper:workflow-planner, reaper:api-designer, reaper:cloud-architect, reaper:database-architect |
+| Development | reaper:feature-developer, reaper:bug-fixer, reaper:refactoring-specialist, reaper:branch-manager |
+| Quality | reaper:test-runner, reaper:code-reviewer, reaper:security-auditor, reaper:performance-engineer |
+| Ops | reaper:deployment-engineer, reaper:integration-engineer, reaper:incident-responder |
+| Meta | reaper:documentation-generator, reaper:claude-agent-architect |
+
+### Agent Naming Convention
+
+When referencing Reaper agents in Task tool calls, use the fully qualified name with the `reaper:` prefix:
+
+```bash
+# Correct
+Task --subagent_type reaper:workflow-planner
+
+# Incorrect
+Task --subagent_type workflow-planner
+```
+
+This prefix is required because Reaper is a Claude Code plugin, and plugin agents must be namespaced.
 
 ## Beads Issue Tracking
 

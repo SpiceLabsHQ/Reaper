@@ -323,12 +323,12 @@ LINT_EXIT_CODE=0
 
 | Task Type | Required Agent | When to Use | Key Benefits |
 |-----------|---------------|-------------|--------------|
-| **Complex Planning** | `workflow-planner` | ≥3 steps, multi-component features | Parallel work analysis, conflict prevention |
-| **Bug Reports** | `bug-fixer` | All bug fixes and issues | TDD methodology, systematic reproduction |
-| **New Features** | `feature-developer` | All new functionality | SOLID principles, comprehensive testing |
-| **Git Operations** | `branch-manager` | Worktree management, merges | Safe operations, automated backups |
-| **Code Quality** | `code-reviewer` | Before merges, quality gates | Security analysis, best practices |
-| **Testing** | `test-runner` | Quality validation, CI/CD | Comprehensive coverage, lint validation |
+| **Complex Planning** | `reaper:workflow-planner` | ≥3 steps, multi-component features | Parallel work analysis, conflict prevention |
+| **Bug Reports** | `reaper:bug-fixer` | All bug fixes and issues | TDD methodology, systematic reproduction |
+| **New Features** | `reaper:feature-developer` | All new functionality | SOLID principles, comprehensive testing |
+| **Git Operations** | `reaper:branch-manager` | Worktree management, merges | Safe operations, automated backups |
+| **Code Quality** | `reaper:code-reviewer` | Before merges, quality gates | Security analysis, best practices |
+| **Testing** | `reaper:test-runner` | Quality validation, CI/CD | Comprehensive coverage, lint validation |
 
 ### 🎯 Workflow Planning (ALWAYS FIRST)
 
@@ -336,7 +336,7 @@ LINT_EXIT_CODE=0
 
 ```bash
 # REQUIRED: Analyze task complexity and parallel opportunities
-Task --subagent_type workflow-planner \
+Task --subagent_type reaper:workflow-planner \
   --description "Plan implementation strategy" \
   --prompt "Analyze [FEATURE/BUG] requirements, identify components that can be developed in parallel worktrees without merge conflicts. Map dependencies and create phased implementation plan."
 ```
@@ -361,11 +361,11 @@ git worktree add ./trees/PROJ-123-tests -b feature/PROJ-123-tests develop
 
 ### 🐛 Bug Fixing (SYSTEMATIC TDD)
 
-**MANDATORY**: Use `bug-fixer` agent for all bug reports and issues.
+**MANDATORY**: Use `reaper:bug-fixer` agent for all bug reports and issues.
 
 ```bash
 # REQUIRED: Systematic bug reproduction and fixing
-Task --subagent_type bug-fixer \
+Task --subagent_type reaper:bug-fixer \
   --description "Fix reported bug with TDD" \
   --prompt "Reproduce bug [JIRA_KEY]: [BUG_DESCRIPTION]. Write failing test, implement minimal fix, ensure comprehensive test coverage. Follow Red-Green-Refactor methodology."
 ```
@@ -384,11 +384,11 @@ Task --subagent_type bug-fixer \
 
 ### 🚀 Feature Development (TDD + SOLID)
 
-**MANDATORY**: Use `feature-developer` agent for all new functionality.
+**MANDATORY**: Use `reaper:feature-developer` agent for all new functionality.
 
 ```bash
 # REQUIRED: Feature implementation with TDD and SOLID principles
-Task --subagent_type feature-developer \
+Task --subagent_type reaper:feature-developer \
   --description "Implement new feature" \
   --prompt "Implement [FEATURE_NAME] for [JIRA_KEY]. Use TDD methodology, apply SOLID principles, ensure 80%+ test coverage. Create integration tests for feature workflows."
 ```
@@ -407,11 +407,11 @@ Task --subagent_type feature-developer \
 
 ### 🌳 Branch Management (SAFE GIT OPS)
 
-**RECOMMENDED**: Use `branch-manager` agent for git operations and worktree management.
+**RECOMMENDED**: Use `reaper:branch-manager` agent for git operations and worktree management.
 
 ```bash
 # RECOMMENDED: Safe worktree setup and management
-Task --subagent_type branch-manager \
+Task --subagent_type reaper:branch-manager \
   --description "Setup worktree environment" \
   --prompt "Create clean worktree for [JIRA_KEY], setup dependencies, validate environment. Provide safe merge operations when work complete."
 ```
@@ -428,21 +428,21 @@ Task --subagent_type branch-manager \
 
 ```bash
 # 1. Plan the work
-Task --subagent_type workflow-planner --prompt "Analyze requirements..."
+Task --subagent_type reaper:workflow-planner --prompt "Analyze requirements..."
 
 # 2. Implement with appropriate agent
-Task --subagent_type feature-developer --prompt "Implement feature..."
+Task --subagent_type reaper:feature-developer --prompt "Implement feature..."
 # OR
-Task --subagent_type bug-fixer --prompt "Fix reported issue..."
+Task --subagent_type reaper:bug-fixer --prompt "Fix reported issue..."
 
 # 3. Quality validation
-Task --subagent_type test-runner --prompt "Run comprehensive testing..."
+Task --subagent_type reaper:test-runner --prompt "Run comprehensive testing..."
 
 # 4. Code review before merge
-Task --subagent_type code-reviewer --prompt "Review implementation..."
+Task --subagent_type reaper:code-reviewer --prompt "Review implementation..."
 
 # 5. Safe merge operations
-Task --subagent_type branch-manager --prompt "Merge to develop..."
+Task --subagent_type reaper:branch-manager --prompt "Merge to develop..."
 ```
 
 ### ⚡ Parallel Work Optimization
@@ -482,27 +482,27 @@ done
 
 1. **Planning Phase** (MANDATORY)
    ```bash
-   Task --subagent_type workflow-planner --prompt "Analyze [TASK] for parallel opportunities"
+   Task --subagent_type reaper:workflow-planner --prompt "Analyze [TASK] for parallel opportunities"
    ```
 
 2. **Implementation Phase** (Choose Appropriate Agent)
    ```bash
    # For bugs:
-   Task --subagent_type bug-fixer --prompt "Systematic bug reproduction and fix"
+   Task --subagent_type reaper:bug-fixer --prompt "Systematic bug reproduction and fix"
    
    # For features:  
-   Task --subagent_type feature-developer --prompt "TDD feature implementation"
+   Task --subagent_type reaper:feature-developer --prompt "TDD feature implementation"
    ```
 
 3. **Quality Phase** (MANDATORY)
    ```bash
-   Task --subagent_type test-runner --prompt "Comprehensive testing validation"
-   Task --subagent_type code-reviewer --prompt "Quality and security review"
+   Task --subagent_type reaper:test-runner --prompt "Comprehensive testing validation"
+   Task --subagent_type reaper:code-reviewer --prompt "Quality and security review"
    ```
 
 4. **Integration Phase** (RECOMMENDED)
    ```bash
-   Task --subagent_type branch-manager --prompt "Safe merge operations"
+   Task --subagent_type reaper:branch-manager --prompt "Safe merge operations"
    ```
 
 ---
@@ -556,32 +556,32 @@ mcp__sequential-thinking__sequentialthinking
 3. TodoWrite all tasks
 4. **🎯 PLANNING PHASE** (MANDATORY for ≥3 steps):
    ```bash
-   Task --subagent_type workflow-planner --prompt "Analyze [TASK] for parallel work opportunities"
+   Task --subagent_type reaper:workflow-planner --prompt "Analyze [TASK] for parallel work opportunities"
    ```
 5. **🚀 IMPLEMENTATION PHASE** (Choose agent based on task type):
-   - **Bugs**: `Task --subagent_type bug-fixer --prompt "Systematic TDD bug fix"`
-   - **Features**: `Task --subagent_type feature-developer --prompt "TDD feature implementation"`
+   - **Bugs**: `Task --subagent_type reaper:bug-fixer --prompt "Systematic TDD bug fix"`
+   - **Features**: `Task --subagent_type reaper:feature-developer --prompt "TDD feature implementation"`
    - **Complex Analysis**: Use sequential thinking tool
 6. **🌳 ENVIRONMENT SETUP** (Recommended):
    ```bash
-   Task --subagent_type branch-manager --prompt "Setup worktree environment"
+   Task --subagent_type reaper:branch-manager --prompt "Setup worktree environment"
    # OR manual: Create worktree (see @SPICE-Worktrees.md for detailed workflow)
    ```
-7. **Setup environment** in worktree (if not using branch-manager)
+7. **Setup environment** in worktree (if not using reaper:branch-manager)
 8. TDD implementation following agent guidance (see @SPICE-Testing.md)
 9. **📊 QUALITY PHASE** (MANDATORY):
    ```bash
-   Task --subagent_type test-runner --prompt "Comprehensive testing validation"
-   Task --subagent_type code-reviewer --prompt "Quality and security review"
+   Task --subagent_type reaper:test-runner --prompt "Comprehensive testing validation"
+   Task --subagent_type reaper:code-reviewer --prompt "Quality and security review"
    ```
 10. **MANDATORY: Run linting and fix issues** (in worktree) - see Linting & Code Quality section
 11. Update from develop
 12. **🔄 INTEGRATION PHASE** (Recommended):
     ```bash
-    Task --subagent_type branch-manager --prompt "Safe merge to develop"
+    Task --subagent_type reaper:branch-manager --prompt "Safe merge to develop"
     # OR manual: Merge to develop branch (see @SPICE-Git-Flow.md for merge protection)
     ```
-13. **Clean up worktree** (handled by branch-manager or manual)
+13. **Clean up worktree** (handled by reaper:branch-manager or manual)
 14. **Note**: Main branch merges require explicit human permission
 15. Review→Approval→Done (user approval required)
 
@@ -591,36 +591,36 @@ mcp__sequential-thinking__sequentialthinking
 pwd | grep -q "/trees/" && { echo "ERROR: Must start from root"; exit 1; }
 
 # 🎯 PLANNING: Analyze work for parallel opportunities (MANDATORY for complex tasks)
-Task --subagent_type workflow-planner \
+Task --subagent_type reaper:workflow-planner \
   --description "Plan implementation strategy" \
   --prompt "Analyze PROJ-123 requirements for parallel work opportunities and dependency mapping"
 
 # 🚀 IMPLEMENTATION: Choose appropriate agent
 # For bug fixes:
-Task --subagent_type bug-fixer \
+Task --subagent_type reaper:bug-fixer \
   --description "Fix reported bug with TDD" \
   --prompt "Reproduce and fix PROJ-123: [BUG_DESCRIPTION] using systematic TDD approach"
 
 # For new features:
-Task --subagent_type feature-developer \
+Task --subagent_type reaper:feature-developer \
   --description "Implement new feature" \
   --prompt "Implement PROJ-123: [FEATURE_NAME] with TDD methodology and SOLID principles"
 
 # 🌳 ENVIRONMENT: Setup worktree (recommended via agent)
-Task --subagent_type branch-manager \
+Task --subagent_type reaper:branch-manager \
   --description "Setup clean worktree" \
   --prompt "Create worktree environment for PROJ-123, install dependencies, validate setup"
 
-# Manual worktree creation (if not using branch-manager)
+# Manual worktree creation (if not using reaper:branch-manager)
 mkdir -p trees
 git worktree add ./trees/PROJ-123-description -b feature/PROJ-123-description develop
 
 # 📊 QUALITY: Comprehensive validation (MANDATORY)
-Task --subagent_type test-runner \
+Task --subagent_type reaper:test-runner \
   --description "Run comprehensive testing" \
   --prompt "Execute all tests, linting, and quality checks for PROJ-123"
 
-Task --subagent_type code-reviewer \
+Task --subagent_type reaper:code-reviewer \
   --description "Review code quality" \
   --prompt "Review PROJ-123 implementation for security, best practices, and quality"
 
@@ -628,7 +628,7 @@ Task --subagent_type code-reviewer \
 (cd ./trees/PROJ-123-description && npm run lint:fix) || (cd ./trees/PROJ-123-description && npm run lint) || { echo "ERROR: Linting failed"; exit 1; }
 
 # 🔄 INTEGRATION: Safe merge operations (recommended via agent)
-Task --subagent_type branch-manager \
+Task --subagent_type reaper:branch-manager \
   --description "Safe merge to develop" \
   --prompt "Merge PROJ-123 feature branch to develop with conflict detection and validation"
 

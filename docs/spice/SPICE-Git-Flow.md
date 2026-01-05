@@ -66,13 +66,13 @@ git diff --cached | head  # Review the actual changes
 
 ## 🤖 Agent-Driven Git Operations (RECOMMENDED)
 
-**RECOMMENDED**: Use `branch-manager` agent for safe, automated git operations with built-in conflict detection and validation protocols.
+**RECOMMENDED**: Use `reaper:branch-manager` agent for safe, automated git operations with built-in conflict detection and validation protocols.
 
 ### 🌳 Branch Management with Agent
 
 ```bash
 # RECOMMENDED: Agent-managed branch operations
-Task --subagent_type branch-manager \
+Task --subagent_type reaper:branch-manager \
   --description "Setup development environment" \
   --prompt "Create feature branch for PROJ-123-description, setup worktree, install dependencies, validate environment"
 
@@ -88,7 +88,7 @@ Task --subagent_type branch-manager \
 
 ```bash
 # RECOMMENDED: Agent-managed merge with conflict detection
-Task --subagent_type branch-manager \
+Task --subagent_type reaper:branch-manager \
   --description "Safe merge to develop" \
   --prompt "Merge feature/PROJ-123-description to develop branch with conflict detection, testing validation, and safety checks"
 
@@ -104,7 +104,7 @@ Task --subagent_type branch-manager \
 
 ```bash
 # RECOMMENDED: Comprehensive repository audit
-Task --subagent_type branch-manager \
+Task --subagent_type reaper:branch-manager \
   --description "Repository health audit" \
   --prompt "Audit repository for stale branches, unmerged commits, orphaned worktrees, and provide cleanup recommendations"
 
@@ -122,19 +122,19 @@ Task --subagent_type branch-manager \
 
 ```bash
 # 1. Planning Phase
-Task --subagent_type workflow-planner --prompt "Analyze PROJ-123 for parallel work opportunities"
+Task --subagent_type reaper:workflow-planner --prompt "Analyze PROJ-123 for parallel work opportunities"
 
 # 2. Implementation Phase (choose appropriate agent)
-Task --subagent_type bug-fixer --prompt "Fix reported issue with systematic TDD"
+Task --subagent_type reaper:bug-fixer --prompt "Fix reported issue with systematic TDD"
 # OR
-Task --subagent_type feature-developer --prompt "Implement new feature with TDD"
+Task --subagent_type reaper:feature-developer --prompt "Implement new feature with TDD"
 
 # 3. Quality Validation Phase
-Task --subagent_type test-runner --prompt "Run comprehensive testing and coverage"
-Task --subagent_type code-reviewer --prompt "Review code quality and security"
+Task --subagent_type reaper:test-runner --prompt "Run comprehensive testing and coverage"
+Task --subagent_type reaper:code-reviewer --prompt "Review code quality and security"
 
 # 4. Integration Phase (RECOMMENDED)
-Task --subagent_type branch-manager --prompt "Safe merge with conflict detection"
+Task --subagent_type reaper:branch-manager --prompt "Safe merge with conflict detection"
 ```
 
 ### ⚡ Parallel Work with Agent Coordination
@@ -143,18 +143,18 @@ Task --subagent_type branch-manager --prompt "Safe merge with conflict detection
 
 ```bash
 # STEP 1: Analyze for parallel opportunities
-Task --subagent_type workflow-planner \
+Task --subagent_type reaper:workflow-planner \
   --description "Analyze parallel work potential" \
   --prompt "Analyze PROJ-123 components for safe parallel development without merge conflicts"
 
 # STEP 2: Create parallel branches based on agent recommendations
 # Agent identifies safe parallel streams (e.g., frontend, backend, tests)
-Task --subagent_type branch-manager \
+Task --subagent_type reaper:branch-manager \
   --description "Setup parallel development environment" \
   --prompt "Create 3 parallel worktrees for PROJ-123 based on workflow analysis: frontend-ui, backend-api, test-suite"
 
 # STEP 3: Merge in dependency order (agent provides sequence)
-Task --subagent_type branch-manager \
+Task --subagent_type reaper:branch-manager \
   --description "Sequential merge of parallel work" \
   --prompt "Merge parallel branches in dependency order: backend-api first, then frontend-ui, finally test-suite"
 ```

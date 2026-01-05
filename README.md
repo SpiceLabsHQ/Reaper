@@ -50,10 +50,10 @@ claude plugin install reaper@spice-labs
 
 **The orchestration workflow**:
 
-1. **Analyze** — Claude deploys `workflow-planner` to assess complexity and select a strategy
-2. **Implement** — Claude dispatches the right agent (`bug-fixer`, `feature-developer`, etc.) using TDD
-3. **Validate** — Claude runs `test-runner` for full test suite, 80%+ coverage
-4. **Review** — Claude deploys `code-reviewer` + `security-auditor` in parallel
+1. **Analyze** — Claude deploys `reaper:workflow-planner` to assess complexity and select a strategy
+2. **Implement** — Claude dispatches the right agent (`reaper:bug-fixer`, `reaper:feature-developer`, etc.) using TDD
+3. **Validate** — Claude runs `reaper:test-runner` for full test suite, 80%+ coverage
+4. **Review** — Claude deploys `reaper:code-reviewer` + `reaper:security-auditor` in parallel
 5. **Present** — Only after all gates pass, Claude presents finished work for your approval
 
 Plan in detail upfront. Claude coordinates the airspace. You only see finished work.
@@ -84,19 +84,19 @@ Plan in detail upfront. Claude coordinates the airspace. You only see finished w
 /reaper:takeoff TASK-123
          │
          ▼
-┌─────────────────────┐
-│  workflow-planner   │ ← Analyzes complexity, selects strategy
-└─────────────────────┘
-         │
-         ▼
-┌─────────────────────┐
-│    Code Agent       │ ← bug-fixer / feature-developer / refactoring-specialist
-└─────────────────────┘
-         │
-         ▼
-┌─────────────────────┐
-│   Quality Gates     │ ← test-runner → code-reviewer + security-auditor
-└─────────────────────┘
+┌─────────────────────────────┐
+│  reaper:workflow-planner   │ ← Analyzes complexity, selects strategy
+└─────────────────────────────┘
+              │
+              ▼
+┌─────────────────────────────┐
+│        Code Agent           │ ← reaper:bug-fixer / reaper:feature-developer / reaper:refactoring-specialist
+└─────────────────────────────┘
+              │
+              ▼
+┌─────────────────────────────┐
+│       Quality Gates         │ ← reaper:test-runner → reaper:code-reviewer + reaper:security-auditor
+└─────────────────────────────┘
          │
          ▼
 ┌─────────────────────┐
@@ -122,43 +122,43 @@ The `workflow-planner` calculates a complexity score based on file impact, depen
 
 | Agent | Purpose |
 |-------|---------|
-| `workflow-planner` | Analyzes task complexity, selects strategy, decomposes into work units |
-| `api-designer` | Designs REST/GraphQL APIs with OpenAPI specs and versioning |
-| `cloud-architect` | Designs cloud infrastructure, IaC, cost optimization (AWS/GCP/Azure) |
-| `database-architect` | Schema design, migrations, query optimization, scaling strategies |
+| `reaper:workflow-planner` | Analyzes task complexity, selects strategy, decomposes into work units |
+| `reaper:api-designer` | Designs REST/GraphQL APIs with OpenAPI specs and versioning |
+| `reaper:cloud-architect` | Designs cloud infrastructure, IaC, cost optimization (AWS/GCP/Azure) |
+| `reaper:database-architect` | Schema design, migrations, query optimization, scaling strategies |
 
 ### Development
 
 | Agent | Purpose |
 |-------|---------|
-| `feature-developer` | Implements new features with TDD and SOLID principles |
-| `bug-fixer` | Systematic bug reproduction and minimal fixes with TDD |
-| `refactoring-specialist` | Code improvements while preserving functionality |
-| `branch-manager` | Git operations, worktree management, safe merges |
+| `reaper:feature-developer` | Implements new features with TDD and SOLID principles |
+| `reaper:bug-fixer` | Systematic bug reproduction and minimal fixes with TDD |
+| `reaper:refactoring-specialist` | Code improvements while preserving functionality |
+| `reaper:branch-manager` | Git operations, worktree management, safe merges |
 
 ### Quality
 
 | Agent | Purpose |
 |-------|---------|
-| `test-runner` | Full test suite, 80%+ coverage validation, linting (authoritative) |
-| `code-reviewer` | SOLID principles, best practices, code quality |
-| `security-auditor` | Vulnerability detection, OWASP compliance, secrets scanning |
-| `performance-engineer` | Performance analysis, load testing, optimization |
+| `reaper:test-runner` | Full test suite, 80%+ coverage validation, linting (authoritative) |
+| `reaper:code-reviewer` | SOLID principles, best practices, code quality |
+| `reaper:security-auditor` | Vulnerability detection, OWASP compliance, secrets scanning |
+| `reaper:performance-engineer` | Performance analysis, load testing, optimization |
 
 ### Delivery & Ops
 
 | Agent | Purpose |
 |-------|---------|
-| `deployment-engineer` | CI/CD pipelines, release automation, versioning |
-| `integration-engineer` | Third-party services, APIs, webhooks, event-driven systems |
-| `incident-responder` | Production diagnosis, log analysis, coordinated remediation |
+| `reaper:deployment-engineer` | CI/CD pipelines, release automation, versioning |
+| `reaper:integration-engineer` | Third-party services, APIs, webhooks, event-driven systems |
+| `reaper:incident-responder` | Production diagnosis, log analysis, coordinated remediation |
 
 ### Documentation
 
 | Agent | Purpose |
 |-------|---------|
-| `documentation-generator` | Technical documentation from codebases |
-| `claude-agent-architect` | Agent design, creation, and quality control |
+| `reaper:documentation-generator` | Technical documentation from codebases |
+| `reaper:claude-agent-architect` | Agent design, creation, and quality control |
 
 ---
 
@@ -221,13 +221,13 @@ Claude deploys parallel analyzers (architecture, environment, workflow, integrat
 
 Claude gets picky so you don't have to be. Every task goes through mandatory validation:
 
-**1. test-runner** (BLOCKING)
+**1. reaper:test-runner** (BLOCKING)
 - Full test suite execution
 - 80%+ coverage for application code
 - Linting and type checking
 - Build validation
 
-**2. code-reviewer + security-auditor** (PARALLEL)
+**2. reaper:code-reviewer + reaper:security-auditor** (PARALLEL)
 - SOLID principles and best practices
 - Vulnerability scanning
 - Secrets detection
@@ -240,7 +240,7 @@ Claude gets picky so you don't have to be. Every task goes through mandatory val
 **4. User approval**
 - Only after ALL gates pass
 - You review and explicitly approve: "commit", "merge", "ship it"
-- `branch-manager` handles git operations
+- `reaper:branch-manager` handles git operations
 
 You never see half-finished work.
 

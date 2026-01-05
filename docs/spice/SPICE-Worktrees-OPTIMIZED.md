@@ -12,17 +12,17 @@
 
 ```bash
 # Setup worktree via agent
-Task --subagent_type branch-manager \
+Task --subagent_type reaper:branch-manager \
   --description "Setup worktree environment" \
   --prompt "Create clean worktree for [JIRA_KEY]-[DESCRIPTION], setup dependencies, validate environment"
 
 # Teardown via agent  
-Task --subagent_type branch-manager \
+Task --subagent_type reaper:branch-manager \
   --description "Teardown worktree safely" \
   --prompt "Clean up [JIRA_KEY]-[DESCRIPTION] worktree, merge to develop if ready, remove with validation"
 
 # Parallel work analysis
-Task --subagent_type workflow-planner \
+Task --subagent_type reaper:workflow-planner \
   --description "Analyze parallel work opportunities" \
   --prompt "Analyze [JIRA_KEY] for parallel worktree opportunities without merge conflicts"
 ```

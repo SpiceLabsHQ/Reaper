@@ -619,7 +619,7 @@ Dependency updates integrate with:
 
 1. **Security Monitoring**: Regular updates fix vulnerabilities
 2. **Maintenance Windows**: Scheduled update cycles
-3. **Quality Gates**: test-runner validates updates
+3. **Quality Gates**: reaper:test-runner validates updates
 4. **Change Management**: Proper documentation and rollback plans
 
 Safe dependency updates keep the project secure and up-to-date while minimizing risk through incremental testing and rollback capabilities.

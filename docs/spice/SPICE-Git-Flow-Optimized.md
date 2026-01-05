@@ -54,14 +54,14 @@ git diff --cached | head
 
 ### Branch Management
 ```bash
-Task --subagent_type branch-manager \
+Task --subagent_type reaper:branch-manager \
   --description "Setup environment" \
   --prompt "Create feature branch for [JIRA_KEY]-[DESCRIPTION], setup worktree, validate"
 ```
 
 ### Safe Merge
 ```bash
-Task --subagent_type branch-manager \
+Task --subagent_type reaper:branch-manager \
   --description "Safe merge" \
   --prompt "Merge feature/[JIRA_KEY]-[DESCRIPTION] to develop with conflict detection"
 ```
@@ -69,19 +69,19 @@ Task --subagent_type branch-manager \
 ### Quality Chain
 ```bash
 # 1. Planning
-Task --subagent_type workflow-planner --prompt "Analyze [JIRA_KEY] for parallel work"
+Task --subagent_type reaper:workflow-planner --prompt "Analyze [JIRA_KEY] for parallel work"
 
 # 2. Implementation  
-Task --subagent_type bug-fixer --prompt "Fix [JIRA_KEY] with TDD"
+Task --subagent_type reaper:bug-fixer --prompt "Fix [JIRA_KEY] with TDD"
 # OR
-Task --subagent_type feature-developer --prompt "Implement [JIRA_KEY] with TDD"
+Task --subagent_type reaper:feature-developer --prompt "Implement [JIRA_KEY] with TDD"
 
 # 3. Quality
-Task --subagent_type test-runner --prompt "Run tests for [JIRA_KEY]"
-Task --subagent_type code-reviewer --prompt "Review [JIRA_KEY]"
+Task --subagent_type reaper:test-runner --prompt "Run tests for [JIRA_KEY]"
+Task --subagent_type reaper:code-reviewer --prompt "Review [JIRA_KEY]"
 
 # 4. Integration
-Task --subagent_type branch-manager --prompt "Merge [JIRA_KEY] to develop"
+Task --subagent_type reaper:branch-manager --prompt "Merge [JIRA_KEY] to develop"
 ```
 
 ## 🎨 Linting (MANDATORY)

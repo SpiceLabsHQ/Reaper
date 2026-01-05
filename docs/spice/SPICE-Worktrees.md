@@ -25,11 +25,11 @@
 
 ## 🤖 Agent-Enhanced Worktree Workflow (RECOMMENDED)
 
-**RECOMMENDED**: Use `branch-manager` agent for safe, automated worktree management with built-in validation and backup protocols.
+**RECOMMENDED**: Use `reaper:branch-manager` agent for safe, automated worktree management with built-in validation and backup protocols.
 
 ```bash
 # RECOMMENDED: Agent-managed worktree setup
-Task --subagent_type branch-manager \
+Task --subagent_type reaper:branch-manager \
   --description "Setup worktree environment" \
   --prompt "Create clean worktree for PROJ-123-description, setup dependencies, validate environment for development work"
 
@@ -51,7 +51,7 @@ Task --subagent_type branch-manager \
 **Agent-Managed Teardown:**
 ```bash
 # RECOMMENDED: Safe agent-managed cleanup
-Task --subagent_type branch-manager \
+Task --subagent_type reaper:branch-manager \
   --description "Teardown worktree safely" \
   --prompt "Clean up PROJ-123-description worktree, merge to develop if ready, remove branch and worktree with safety validation"
 
@@ -65,17 +65,17 @@ Task --subagent_type branch-manager \
 
 ### 🔄 Parallel Work with Agent Planning
 
-**MAXIMIZE EFFICIENCY**: Use `workflow-planner` agent to identify safe parallel work opportunities:
+**MAXIMIZE EFFICIENCY**: Use `reaper:workflow-planner` agent to identify safe parallel work opportunities:
 
 ```bash
 # STEP 1: Analyze for parallel opportunities (MANDATORY for complex tasks)
-Task --subagent_type workflow-planner \
+Task --subagent_type reaper:workflow-planner \
   --description "Analyze parallel work opportunities" \
   --prompt "Analyze PROJ-123 requirements, identify components that can be developed in parallel worktrees without merge conflicts. Map file dependencies and recommend work partitioning."
 
 # STEP 2: Create parallel worktrees based on agent recommendations
 # Example: Agent identifies 3 safe parallel streams
-Task --subagent_type branch-manager \
+Task --subagent_type reaper:branch-manager \
   --description "Setup parallel worktrees" \
   --prompt "Create 3 parallel worktrees for PROJ-123: frontend components, backend services, and test suite based on workflow analysis"
 ```
