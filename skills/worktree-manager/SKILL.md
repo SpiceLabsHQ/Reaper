@@ -14,7 +14,7 @@ Safe git worktree operations that prevent the CWD deletion error that breaks Cla
 
 ### Available Scripts
 
-All scripts are located in `~/.claude/skills/worktree-manager/scripts/`:
+All scripts are located in `${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/`:
 
 | Script | Usage |
 |--------|-------|
@@ -28,7 +28,7 @@ All scripts are located in `~/.claude/skills/worktree-manager/scripts/`:
 The cleanup script changes to project root BEFORE attempting removal, preventing shell breakage:
 
 ```bash
-~/.claude/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-description
+${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-description
 ```
 
 ### Why This Matters
@@ -44,28 +44,28 @@ The cleanup script solves this by changing to project root first.
 
 ### Create a new worktree
 ```bash
-~/.claude/skills/worktree-manager/scripts/worktree-create.sh PROJ-123 auth-feature
+${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-create.sh PROJ-123 auth-feature
 # Creates: ./trees/PROJ-123-auth-feature with branch feature/PROJ-123-auth-feature
 ```
 
 ### List all worktrees with status
 ```bash
-~/.claude/skills/worktree-manager/scripts/worktree-list.sh --verbose
+${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-list.sh --verbose
 ```
 
 ### Check worktree health
 ```bash
-~/.claude/skills/worktree-manager/scripts/worktree-status.sh ./trees/PROJ-123-auth-feature
+${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-status.sh ./trees/PROJ-123-auth-feature
 ```
 
 ### Safely remove a worktree
 ```bash
-~/.claude/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-auth-feature
+${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-auth-feature
 ```
 
 ### Force remove (emergency)
 ```bash
-~/.claude/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-auth-feature --force
+${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-auth-feature --force
 ```
 
 ## Error Recovery
