@@ -67,14 +67,19 @@ TASK_DESCRIPTION="[remaining text after task ID removal]"
 
 ```bash
 # Query task system for details if TASK_ID provided
+# TASK_SOURCE tracks where the task came from: "jira", "beads", or "description"
+TASK_SOURCE="description"
+
 if [ -n "$TASK_ID" ]; then
     # Detect task system format and query
     if echo "$TASK_ID" | grep -qE '^[A-Z]+-[0-9]+$'; then
         # Jira format (PROJ-123)
         TASK_DETAILS=$(acli jira workitem view $TASK_ID --fields summary,description,acceptance_criteria 2>/dev/null || echo "")
+        [ -n "$TASK_DETAILS" ] && TASK_SOURCE="jira"
     elif echo "$TASK_ID" | grep -qE '^[a-z0-9]+-[a-f0-9]{3,}$'; then
         # Beads format (repo-a3f)
         TASK_DETAILS=$(bd show $TASK_ID 2>/dev/null || echo "")
+        [ -n "$TASK_DETAILS" ] && TASK_SOURCE="beads"
     else
         # Unknown format - no task system query
         TASK_DETAILS=""
@@ -406,11 +411,23 @@ todos.push({
   status: "pending"
 });
 
-todos.push({
-  content: "Close completed tasks",
-  activeForm: "Closing completed tasks",
-  status: "pending"
-});
+// CONDITIONAL: Add close tasks only when working with Jira or Beads issues
+if (TASK_SOURCE === "jira" || TASK_SOURCE === "beads") {
+  todos.push({
+    content: "Close completed tasks",
+    activeForm: "Closing completed tasks",
+    status: "pending"
+  });
+}
+
+// CONDITIONAL: Add worktree cleanup task only for large_multi_worktree strategy
+if (strategy_selection.selected_strategy === "large_multi_worktree") {
+  todos.push({
+    content: "Clean up session worktrees",
+    activeForm: "Cleaning up session worktrees",
+    status: "pending"
+  });
+}
 
 // Use TodoWrite tool to persist the plan
 TodoWrite({ todos });
@@ -424,7 +441,8 @@ TodoWrite({ todos });
 - Step 2.2: Update API documentation [PROJ-123]
 - User review and feedback
 - Merge to develop
-- Close completed tasks
+- Close completed tasks           // Only when TASK_SOURCE is jira or beads
+- Clean up session worktrees      // Only when using large_multi_worktree strategy
 ```
 
 **Why This Matters:**
