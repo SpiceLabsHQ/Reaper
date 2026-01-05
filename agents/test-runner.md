@@ -498,8 +498,8 @@ TEST_EXIT=$?
     "agent_type": "test-runner",
     "agent_version": "1.0.0",
     "execution_id": "unique-identifier",
-    "task_id": "[JIRA_KEY]",
-    "working_dir": "./trees/[JIRA_KEY]-description",
+    "task_id": "[TASK_ID]",
+    "working_dir": "./trees/[TASK_ID]-description",
     "timestamp": "ISO-8601"
   },
   "narrative_report": {

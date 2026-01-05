@@ -20,12 +20,12 @@ See @SPICE.md for standard git workflows, worktree patterns, and safety requirem
 ### 1. Branch Management
 ```bash
 # Create branch with validation
-create_branch "[JIRA_KEY]" "[DESCRIPTION]" "[BASE_BRANCH]"
-# - Validates ticket exists
-# - Checks for existing work: git log --grep="[JIRA_KEY]"
-# - Creates feature/[JIRA_KEY]-[DESCRIPTION] from base
+create_branch "[TASK_ID]" "[DESCRIPTION]" "[BASE_BRANCH]"
+# - Validates task exists (if using task tracking)
+# - Checks for existing work: git log --grep="[TASK_ID]"
+# - Creates feature/[TASK_ID]-[DESCRIPTION] from base
 
-# Delete branch safely  
+# Delete branch safely
 delete_branch "[BRANCH_NAME]" "[FORCE]" "[BACKUP]"
 # - Checks unmerged commits
 # - Creates backup ref: refs/backup/[TIMESTAMP]-[BRANCH]
@@ -35,14 +35,14 @@ delete_branch "[BRANCH_NAME]" "[FORCE]" "[BACKUP]"
 ### 2. Worktree Operations
 ```bash
 # Setup worktree (follows @SPICE-Worktrees.md)
-setup_worktree "[JIRA_KEY]" "[DESCRIPTION]"
-# Path: ./trees/[JIRA_KEY]-[DESCRIPTION]
-# Branch: feature/[JIRA_KEY]-[DESCRIPTION]
+setup_worktree "[TASK_ID]" "[DESCRIPTION]"
+# Path: ./trees/[TASK_ID]-[DESCRIPTION]
+# Branch: feature/[TASK_ID]-[DESCRIPTION]
 # Auto-detects and installs dependencies (npm/pip/bundle/go)
 # Returns JSON with environment status
 
 # Teardown with safety
-teardown_worktree "./trees/[JIRA_KEY]-[DESCRIPTION]"
+teardown_worktree "./trees/[TASK_ID]-[DESCRIPTION]"
 # - Backs up uncommitted changes to backup/[TIMESTAMP] branch
 # - Verifies merged status
 # - Removes worktree and optionally deletes branch
@@ -406,11 +406,11 @@ teardown_worktree "./trees/PROJ-123-fix-auth"
 ### POST_APPROVAL_CLEANUP
 ```bash
 # After user approval ("approved", "ship it", "merge it")
-1. git merge feature/[JIRA_KEY]-review --no-ff
-2. git push origin develop  
-3. git worktree remove ./trees/[JIRA_KEY]-[COMPONENT]
-4. git branch -d feature/[JIRA_KEY]-[COMPONENT]
-5. acli jira workitem transition --key [JIRA_KEY] --status Done
+1. git merge feature/[TASK_ID]-review --no-ff
+2. git push origin develop
+3. git worktree remove ./trees/[TASK_ID]-[COMPONENT]
+4. git branch -d feature/[TASK_ID]-[COMPONENT]
+5. Update task status (bd close [TASK_ID] or acli jira workitem transition --key [TASK_ID] --status Done)
 ```
 
 ### Strategy-Specific Workflows (DEPRECATED - See "Git Operations by Strategy" section above)
@@ -555,8 +555,8 @@ done
 
 | Operation | Command Pattern | Safety Check | Quality Validation |
 |-----------|----------------|--------------|-------------------|
-| Create branch | `feature/[JIRA_KEY]-[DESC]` | Check existing work | N/A |
-| Setup worktree | `./trees/[JIRA_KEY]-[DESC]` | Verify root directory | Install deps, validate env |
+| Create branch | `feature/[TASK_ID]-[DESC]` | Check existing work | N/A |
+| Setup worktree | `./trees/[TASK_ID]-[DESC]` | Verify root directory | Install deps, validate env |
 | Merge branch | Target: `develop` only | Test + conflict check | **MANDATORY: Test metrics + coverage + linting** |
 | Delete branch | With backup ref | Verify merged status | N/A |
 | Teardown worktree | Auto-backup changes | Check uncommitted | Run final quality check |

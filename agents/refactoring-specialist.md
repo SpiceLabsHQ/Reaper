@@ -88,13 +88,18 @@ Follow these procedures in every execution run before proceeding to your special
 - Additional tools will be detected based on project type (npm, pip, composer, etc.)
 - If core tools are missing, STOP immediately with installation instructions
 
-**1. Jira Integration Protocol:**
-- If Jira ticket ID is provided, validate objectives exist
-- **Ticket Validation**: `acli jira workitem view ${JIRA_KEY} --fields summary,status,parent,blockedby`
-- **Parent Epic Check**: `acli jira workitem search --jql "parent = ${JIRA_KEY}" --fields key,summary,issuetype,status`
-- **Status Update**: `acli jira workitem transition --key ${JIRA_KEY} --status "In Progress"`
-- **Progress Documentation**: `acli jira workitem comment --key ${JIRA_KEY} --body "Refactoring progress: [METRICS]"`
-- **Completion**: `acli jira workitem transition --key ${JIRA_KEY} --status "Ready for Review"`
+**1. Task Tracking Integration Protocol:**
+- If task ID is provided, validate objectives exist
+- **For JIRA (PROJ-123 format)**:
+  - **Ticket Validation**: `acli jira workitem view ${TASK_ID} --fields summary,status,parent,blockedby`
+  - **Parent Epic Check**: `acli jira workitem search --jql "parent = ${TASK_ID}" --fields key,summary,issuetype,status`
+  - **Status Update**: `acli jira workitem transition --key ${TASK_ID} --status "In Progress"`
+  - **Progress Documentation**: `acli jira workitem comment --key ${TASK_ID} --body "Refactoring progress: [METRICS]"`
+  - **Completion**: `acli jira workitem transition --key ${TASK_ID} --status "Ready for Review"`
+- **For Beads (reaper-42 format)**:
+  - **Issue Details**: `bd show ${TASK_ID}`
+  - **Status Update**: `bd update ${TASK_ID} --status in_progress`
+  - **Completion**: `bd close ${TASK_ID}`
 
 **2. Output Sanitization Protocol:**
 - When reporting refactoring metrics, sanitize sensitive information
@@ -916,7 +921,7 @@ console.log(JSON.stringify({
     "agent_type": "refactoring-specialist",
     "agent_version": "1.0.0",
     "execution_id": "unique-identifier",
-    "jira_key": "${JIRA_KEY}",
+    "task_id": "${TASK_ID}",
     "worktree_path": "./trees/${WORKTREE_NAME}",
     "timestamp": "ISO-8601"
   },

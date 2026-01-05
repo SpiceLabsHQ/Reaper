@@ -172,21 +172,21 @@ Implement smallest code change to make test pass without side effects
 **DO run targeted tests on YOUR changes:**
 ```bash
 # ✅ CORRECT: Test only the files you modified
-(cd "./trees/[JIRA_KEY]-fix" && npm test -- path/to/your/bug-fix.test.js)
-(cd "./trees/[JIRA_KEY]-fix" && npm test -- --testNamePattern="specific bug fix")
+(cd "./trees/[TASK_ID]-fix" && npm test -- path/to/your/bug-fix.test.js)
+(cd "./trees/[TASK_ID]-fix" && npm test -- --testNamePattern="specific bug fix")
 
 # ✅ CORRECT: Python - test only your module
-(cd "./trees/[JIRA_KEY]-fix" && pytest tests/test_your_fix.py)
+(cd "./trees/[TASK_ID]-fix" && pytest tests/test_your_fix.py)
 
 # ✅ CORRECT: PHP - test only your class
-(cd "./trees/[JIRA_KEY]-fix" && ./vendor/bin/phpunit tests/YourBugFixTest.php)
+(cd "./trees/[TASK_ID]-fix" && ./vendor/bin/phpunit tests/YourBugFixTest.php)
 ```
 
 **DO NOT run full test suite:**
 ```bash
 # ❌ WRONG: Full suite wastes context and time
-(cd "./trees/[JIRA_KEY]-fix" && npm test)  # DON'T DO THIS
-(cd "./trees/[JIRA_KEY]-fix" && pytest)     # DON'T DO THIS
+(cd "./trees/[TASK_ID]-fix" && npm test)  # DON'T DO THIS
+(cd "./trees/[TASK_ID]-fix" && pytest)     # DON'T DO THIS
 ```
 
 ### Why This Matters
@@ -212,15 +212,15 @@ Implement smallest code change to make test pass without side effects
 
 ```bash
 # Phase 1: RED - Confirm bug reproduces
-(cd "./trees/[JIRA_KEY]-fix" && npm test -- path/to/bug-test.js)
+(cd "./trees/[TASK_ID]-fix" && npm test -- path/to/bug-test.js)
 # Your test should FAIL, proving bug exists
 
 # Phase 2: GREEN - Verify fix works
-(cd "./trees/[JIRA_KEY]-fix" && npm test -- path/to/bug-test.js)
+(cd "./trees/[TASK_ID]-fix" && npm test -- path/to/bug-test.js)
 # Your test should PASS, proving bug is fixed
 
 # Phase 3: BLUE - Verify refactoring works
-(cd "./trees/[JIRA_KEY]-fix" && npm test -- path/to/bug-test.js)
+(cd "./trees/[TASK_ID]-fix" && npm test -- path/to/bug-test.js)
 # Your test still PASS after refactoring
 ```
 

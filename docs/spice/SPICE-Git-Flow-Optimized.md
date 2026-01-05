@@ -17,14 +17,14 @@ User must explicitly state: "merge to main", "update main branch", "deploy to pr
 ### Branch Types
 - **main**: Production only, protected
 - **develop**: Integration, protected  
-- **feature/[JIRA_KEY]-[DESCRIPTION]**: From develop
+- **feature/[TASK_ID]-[DESCRIPTION]**: From develop
 - **release/X.Y.Z**: develop → main+develop
-- **hotfix/[JIRA_KEY]-fix**: main → main+develop
+- **hotfix/[TASK_ID]-fix**: main → main+develop
 
 ### Rules
 - NO direct commits to main/develop
 - Delete feature branches after merge
-- Include Jira ticket in branch name
+- Include task ID in branch name
 
 ## 📝 Commit Standards
 
@@ -34,7 +34,7 @@ User must explicitly state: "merge to main", "update main branch", "deploy to pr
 
 <body>
 
-Ref: [JIRA_KEY]
+Ref: [TASK_ID]
 ```
 
 ### Types
@@ -56,32 +56,32 @@ git diff --cached | head
 ```bash
 Task --subagent_type reaper:branch-manager \
   --description "Setup environment" \
-  --prompt "Create feature branch for [JIRA_KEY]-[DESCRIPTION], setup worktree, validate"
+  --prompt "Create feature branch for [TASK_ID]-[DESCRIPTION], setup worktree, validate"
 ```
 
 ### Safe Merge
 ```bash
 Task --subagent_type reaper:branch-manager \
   --description "Safe merge" \
-  --prompt "Merge feature/[JIRA_KEY]-[DESCRIPTION] to develop with conflict detection"
+  --prompt "Merge feature/[TASK_ID]-[DESCRIPTION] to develop with conflict detection"
 ```
 
 ### Quality Chain
 ```bash
 # 1. Planning
-Task --subagent_type reaper:workflow-planner --prompt "Analyze [JIRA_KEY] for parallel work"
+Task --subagent_type reaper:workflow-planner --prompt "Analyze [TASK_ID] for parallel work"
 
 # 2. Implementation  
-Task --subagent_type reaper:bug-fixer --prompt "Fix [JIRA_KEY] with TDD"
+Task --subagent_type reaper:bug-fixer --prompt "Fix [TASK_ID] with TDD"
 # OR
-Task --subagent_type reaper:feature-developer --prompt "Implement [JIRA_KEY] with TDD"
+Task --subagent_type reaper:feature-developer --prompt "Implement [TASK_ID] with TDD"
 
 # 3. Quality
-Task --subagent_type reaper:test-runner --prompt "Run tests for [JIRA_KEY]"
-Task --subagent_type reaper:code-reviewer --prompt "Review [JIRA_KEY]"
+Task --subagent_type reaper:test-runner --prompt "Run tests for [TASK_ID]"
+Task --subagent_type reaper:code-reviewer --prompt "Review [TASK_ID]"
 
 # 4. Integration
-Task --subagent_type reaper:branch-manager --prompt "Merge [JIRA_KEY] to develop"
+Task --subagent_type reaper:branch-manager --prompt "Merge [TASK_ID] to develop"
 ```
 
 ## 🎨 Linting (MANDATORY)
@@ -107,7 +107,7 @@ Task --subagent_type reaper:branch-manager --prompt "Merge [JIRA_KEY] to develop
 ### Verification Pattern
 ```bash
 LINT_EXIT_CODE=0
-(cd ./trees/[JIRA_KEY]-[DESCRIPTION] && npm run lint) || LINT_EXIT_CODE=$?
+(cd ./trees/[TASK_ID]-[DESCRIPTION] && npm run lint) || LINT_EXIT_CODE=$?
 [ $LINT_EXIT_CODE -eq 0 ] || { echo "ERROR: Lint failed"; exit 1; }
 ```
 
@@ -116,19 +116,19 @@ LINT_EXIT_CODE=0
 ### Pre-Merge Checks
 ```bash
 # Check branch exists
-git show-ref --verify --quiet "refs/heads/feature/[JIRA_KEY]-[DESCRIPTION]"
+git show-ref --verify --quiet "refs/heads/feature/[TASK_ID]-[DESCRIPTION]"
 
 # Check for commits
-git log develop..feature/[JIRA_KEY]-[DESCRIPTION] --oneline
+git log develop..feature/[TASK_ID]-[DESCRIPTION] --oneline
 
 # Check worktree status
-git -C ./trees/[JIRA_KEY]-[DESCRIPTION] status --porcelain
+git -C ./trees/[TASK_ID]-[DESCRIPTION] status --porcelain
 ```
 
 ### Merge to Develop Only
 ```bash
 git checkout develop
-git merge feature/[JIRA_KEY]-[DESCRIPTION] --no-ff -m "Merge [JIRA_KEY]"
+git merge feature/[TASK_ID]-[DESCRIPTION] --no-ff -m "Merge [TASK_ID]"
 git push origin develop
 echo "✅ Merged to develop - main requires human approval"
 ```
@@ -136,16 +136,17 @@ echo "✅ Merged to develop - main requires human approval"
 ### Cleanup
 ```bash
 # Remove remote branch
-git push origin --delete feature/[JIRA_KEY]-[DESCRIPTION]
+git push origin --delete feature/[TASK_ID]-[DESCRIPTION]
 
 # Remove worktree
-git worktree remove ./trees/[JIRA_KEY]-[DESCRIPTION]
+git worktree remove ./trees/[TASK_ID]-[DESCRIPTION]
 
 # Remove local branch
-git branch -d feature/[JIRA_KEY]-[DESCRIPTION]
+git branch -d feature/[TASK_ID]-[DESCRIPTION]
 
-# Update Jira
-acli jira workitem transition --key [JIRA_KEY] --status "In Review"
+# Update task status
+# For Beads: bd close [TASK_ID]
+# For JIRA: acli jira workitem transition --key [TASK_ID] --status "In Review"
 ```
 
 ## 📦 Versioning
@@ -163,4 +164,4 @@ acli jira workitem transition --key [JIRA_KEY] --status "In Review"
 ## 🔗 Module Integration
 - **Worktrees**: @SPICE-Worktrees.md - ALL work in ./trees/
 - **Testing**: @SPICE-Testing.md - 80%+ coverage required
-- **Jira**: All commits reference tickets
+- **Task Tracking**: All commits reference task IDs

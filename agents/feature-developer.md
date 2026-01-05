@@ -180,21 +180,21 @@ test('should authenticate valid user credentials', async () => {
 **DO run targeted tests on YOUR changes:**
 ```bash
 # ✅ CORRECT: Test only the files you created/modified
-(cd "./trees/[JIRA_KEY]-implementation" && npm test -- path/to/your/feature.test.js)
-(cd "./trees/[JIRA_KEY]-implementation" && npm test -- --testNamePattern="your feature")
+(cd "./trees/[TASK_ID]-implementation" && npm test -- path/to/your/feature.test.js)
+(cd "./trees/[TASK_ID]-implementation" && npm test -- --testNamePattern="your feature")
 
 # ✅ CORRECT: Python - test only your module
-(cd "./trees/[JIRA_KEY]-implementation" && pytest tests/test_your_feature.py)
+(cd "./trees/[TASK_ID]-implementation" && pytest tests/test_your_feature.py)
 
 # ✅ CORRECT: PHP - test only your class
-(cd "./trees/[JIRA_KEY]-implementation" && ./vendor/bin/phpunit tests/YourFeatureTest.php)
+(cd "./trees/[TASK_ID]-implementation" && ./vendor/bin/phpunit tests/YourFeatureTest.php)
 ```
 
 **DO NOT run full test suite:**
 ```bash
 # ❌ WRONG: Full suite wastes context and time
-(cd "./trees/[JIRA_KEY]-implementation" && npm test)  # DON'T DO THIS
-(cd "./trees/[JIRA_KEY]-implementation" && pytest)     # DON'T DO THIS
+(cd "./trees/[TASK_ID]-implementation" && npm test)  # DON'T DO THIS
+(cd "./trees/[TASK_ID]-implementation" && pytest)     # DON'T DO THIS
 ```
 
 ### Why This Matters
@@ -220,15 +220,15 @@ test('should authenticate valid user credentials', async () => {
 
 ```bash
 # Phase 1: RED - Write comprehensive test suite for feature
-(cd "./trees/[JIRA_KEY]-implementation" && npm test -- path/to/feature-test.js)
+(cd "./trees/[TASK_ID]-implementation" && npm test -- path/to/feature-test.js)
 # Your tests should FAIL, proving feature doesn't exist yet
 
 # Phase 2: GREEN - Implement feature to pass tests
-(cd "./trees/[JIRA_KEY]-implementation" && npm test -- path/to/feature-test.js)
+(cd "./trees/[TASK_ID]-implementation" && npm test -- path/to/feature-test.js)
 # Your tests should PASS, proving feature works
 
 # Phase 3: BLUE - Refactor with SOLID principles
-(cd "./trees/[JIRA_KEY]-implementation" && npm test -- path/to/feature-test.js)
+(cd "./trees/[TASK_ID]-implementation" && npm test -- path/to/feature-test.js)
 # Your tests still PASS after refactoring
 ```
 

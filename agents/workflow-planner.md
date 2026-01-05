@@ -507,7 +507,7 @@ When creating ≥5 independent content items:
 **Implementation Workflow:**
 
 **Environment Setup:**
-- Create feature branch from develop: `feature/JIRA-KEY-description`
+- Create feature branch from develop: `feature/TASK-ID-description`
 - NO worktree isolation - all agents work on same branch
 - Each agent assigned exclusive files from reaper:workflow-planner
 - Install dependencies and validate environment once
@@ -522,9 +522,9 @@ When creating ≥5 independent content items:
 
 **Example Parallel Deployment:**
 ```
-Task --subagent_type reaper:feature-developer "JIRA_KEY: PROJ-123, FILES: src/auth.js tests/auth.test.js, EXCLUSIVE ownership"
-Task --subagent_type reaper:feature-developer "JIRA_KEY: PROJ-123, FILES: src/config.js tests/config.test.js, EXCLUSIVE ownership"
-Task --subagent_type reaper:bug-fixer "JIRA_KEY: PROJ-123, FILES: src/utils.js tests/utils.test.js, EXCLUSIVE ownership"
+Task --subagent_type reaper:feature-developer "TASK_ID: PROJ-123, FILES: src/auth.js tests/auth.test.js, EXCLUSIVE ownership"
+Task --subagent_type reaper:feature-developer "TASK_ID: PROJ-123, FILES: src/config.js tests/config.test.js, EXCLUSIVE ownership"
+Task --subagent_type reaper:bug-fixer "TASK_ID: PROJ-123, FILES: src/utils.js tests/utils.test.js, EXCLUSIVE ownership"
 ```
 
 **Quality Gate Placement:**
@@ -570,11 +570,11 @@ Task --subagent_type reaper:bug-fixer "JIRA_KEY: PROJ-123, FILES: src/utils.js t
 **Implementation Workflow:**
 
 **Environment Setup:**
-- Create review branch FIRST: `feature/JIRA-KEY-review` (consolidation target)
+- Create review branch FIRST: `feature/TASK-ID-review` (consolidation target)
 - Create worktrees for major work streams:
-  - `./trees/JIRA-KEY-auth` (authentication work)
-  - `./trees/JIRA-KEY-api` (API endpoints)
-  - `./trees/JIRA-KEY-ui` (user interface)
+  - `./trees/TASK-ID-auth` (authentication work)
+  - `./trees/TASK-ID-api` (API endpoints)
+  - `./trees/TASK-ID-ui` (user interface)
 - Each worktree branches from develop independently
 - Install dependencies in each worktree separately
 
@@ -625,11 +625,11 @@ For EACH worktree, execute this complete cycle:
 - Final review branch contains all consolidated work
 
 **User Commit Workflow:**
-- Present review branch path: `feature/JIRA-KEY-review`
+- Present review branch path: `feature/TASK-ID-review`
 - All worktrees consolidated and validated
 - Review branch ready for user to merge to develop
 - User reviews consolidated work on review branch
-- User merges manually: `git checkout develop && git merge feature/JIRA-KEY-review --no-ff`
+- User merges manually: `git checkout develop && git merge feature/TASK-ID-review --no-ff`
 
 ---
 
@@ -1311,7 +1311,7 @@ if (beads_tree.blocks.length > 0) {
   },
   "implementation_guidance": {
     "strategy_workflow": "Strategy 2: Medium Single Branch Implementation - Create feature branch, deploy parallel agents with exclusive file assignments, run full quality gates after all complete, user commits manually",
-    "environment_setup": "Create feature/JIRA-KEY-description from develop. Install dependencies once. No worktree isolation needed. Each agent assigned exclusive files.",
+    "environment_setup": "Create feature/TASK-ID-description from develop. Install dependencies once. No worktree isolation needed. Each agent assigned exclusive files.",
     "agent_deployment_sequence": [
       {
         "step": 1,

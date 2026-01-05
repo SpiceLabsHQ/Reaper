@@ -2,25 +2,25 @@
 description: Radar sweep your parallel worktrees for progress and drift.
 ---
 
-# Status of Worktrees for Jira Tickets
+# Status of Worktrees for Tasks
 
-Check the status of git worktrees and parallel development progress with Jira integration
+Check the status of git worktrees and parallel development progress
 
 ## Variables
 
-- `JIRA_KEY`: Filter by Jira ticket key (optional, e.g., PROJ-123)
+- `TASK_ID`: Filter by task ID (optional, e.g., PROJ-123, reaper-42)
 - `VERBOSE`: Show detailed status including uncommitted changes (true/false, default: false)
 
 ## Instructions
 
-Display comprehensive status information about worktrees, including Jira ticket details and progress.
+Display comprehensive status information about worktrees, including task details and progress.
 
 ### Pre-status Validation:
 ```bash
-# If JIRA_KEY provided, validate format
-if [ -n "${JIRA_KEY}" ]; then
-  if [[ ! "${JIRA_KEY}" =~ ^[A-Z]+-[0-9]+$ ]]; then
-    echo "ERROR: Invalid Jira KEY format. Expected: PROJ-123"
+# If TASK_ID provided, validate format (JIRA: PROJ-123, Beads: reaper-42)
+if [ -n "${TASK_ID}" ]; then
+  if [[ ! "${TASK_ID}" =~ ^[A-Za-z]+-[0-9]+$ ]]; then
+    echo "ERROR: Invalid TASK_ID format. Expected: PROJ-123 or reaper-42"
     exit 1
   fi
 fi
@@ -38,13 +38,17 @@ fi
 echo "=== Git Worktrees ==="
 git worktree list
 
-# Get Jira details if KEY provided
-if [ -n "${JIRA_KEY}" ] && command -v acli >/dev/null; then
+# Get task details if ID provided (supports JIRA via acli or Beads via bd)
+if [ -n "${TASK_ID}" ]; then
   echo ""
-  echo "=== Jira Ticket: ${JIRA_KEY} ==="
-  acli jira workitem view ${JIRA_KEY} --fields summary,status,assignee --format table || {
-    echo "Could not fetch Jira details"
-  }
+  echo "=== Task: ${TASK_ID} ==="
+  if [[ "${TASK_ID}" =~ ^[a-z]+-[0-9]+$ ]] && command -v bd >/dev/null; then
+    bd show "${TASK_ID}" || echo "Could not fetch Beads details"
+  elif command -v acli >/dev/null; then
+    acli jira workitem view "${TASK_ID}" --fields summary,status,assignee --format table || {
+      echo "Could not fetch Jira details"
+    }
+  fi
 fi
 
 # Detailed status for each worktree
@@ -56,16 +60,16 @@ check_worktree_status() {
   local worktree_path="$1"
   local worktree_name=$(basename "$worktree_path")
   
-  # Extract Jira KEY from worktree name
-  local jira_key=$(echo "$worktree_name" | grep -oE '^[A-Z]+-[0-9]+')
+  # Extract task ID from worktree name (JIRA: PROJ-123, Beads: reaper-42)
+  local task_id=$(echo "$worktree_name" | grep -oE '^[A-Za-z]+-[0-9]+')
   
   if [ -d "$worktree_path" ]; then
     echo ""
     echo "--- $worktree_name ---"
     
-    # Show Jira KEY if found
-    if [ -n "$jira_key" ]; then
-      echo "Jira Ticket: $jira_key"
+    # Show task ID if found
+    if [ -n "$task_id" ]; then
+      echo "Task ID: $task_id"
     fi
     
     # Get branch info
@@ -116,12 +120,12 @@ check_worktree_status() {
     last_commit=$(git log -1 --pretty=format:"%h - %s (%cr)" 2>/dev/null || echo "No commits yet")
     echo "Last commit: $last_commit"
     
-    # Check if commit references Jira
-    if [ -n "$jira_key" ]; then
-      if git log -1 --pretty=format:"%B" 2>/dev/null | grep -q "Ref: $jira_key"; then
-        echo "Commit compliance: ✓ References $jira_key"
+    # Check if commit references task ID
+    if [ -n "$task_id" ]; then
+      if git log -1 --pretty=format:"%B" 2>/dev/null | grep -q "Ref: $task_id"; then
+        echo "Commit compliance: ✓ References $task_id"
       else
-        echo "Commit compliance: ⚠️  Missing Ref: $jira_key"
+        echo "Commit compliance: ⚠️  Missing Ref: $task_id"
       fi
     fi
     
@@ -140,14 +144,14 @@ check_worktree_status() {
 }
 
 # Check worktrees based on filter
-if [ -n "${JIRA_KEY}" ]; then
-  # Filter by Jira KEY
-  if [ -d "trees" ] && ls trees/${JIRA_KEY}-* >/dev/null 2>&1; then
-    for worktree in trees/${JIRA_KEY}-*; do
+if [ -n "${TASK_ID}" ]; then
+  # Filter by task ID
+  if [ -d "trees" ] && ls trees/${TASK_ID}-* >/dev/null 2>&1; then
+    for worktree in trees/${TASK_ID}-*; do
       check_worktree_status "$worktree"
     done
   else
-    echo "No worktrees found for ${JIRA_KEY}"
+    echo "No worktrees found for ${TASK_ID}"
   fi
 else
   # Check all worktrees in trees directory
@@ -156,7 +160,7 @@ else
       check_worktree_status "$worktree"
     done
   else
-    echo "No trees/ directory found. Run /init-parallel JIRA-KEY first."
+    echo "No trees/ directory found. Run /init-parallel TASK-ID first."
   fi
 fi
 
@@ -167,10 +171,10 @@ total_worktrees=$(git worktree list | wc -l)
 echo "Total worktrees: $((total_worktrees - 1))" # Subtract 1 for main worktree
 
 if [ -d "trees" ]; then
-  # Count by Jira ticket
+  # Count by task ID
   echo ""
-  echo "Worktrees by Jira ticket:"
-  for key in $(ls trees | grep -oE '^[A-Z]+-[0-9]+' | sort -u); do
+  echo "Worktrees by task:"
+  for key in $(ls trees | grep -oE '^[A-Za-z]+-[0-9]+' | sort -u); do
     count=$(ls -d trees/${key}-* 2>/dev/null | wc -l)
     completed=$(find trees/${key}-* -name "RESULTS.md" 2>/dev/null | wc -l)
     echo "  $key: $count worktrees ($completed completed)"
@@ -218,11 +222,11 @@ done
 # Check all worktrees
 /status-worktrees
 
-# Check specific Jira ticket with details
+# Check specific task with details
 /status-worktrees PROJ-123 true
 
-# Quick status check for Jira ticket
-/status-worktrees PROJ-123 false
+# Quick status check for task
+/status-worktrees reaper-42 false
 ```
 
 ## Status Indicators
@@ -232,4 +236,4 @@ done
 - 📋 Task assigned (TASK.md exists)
 - 🔄 Uncommitted changes present
 - 📊 Branch divergence from origin
-- ⚠️ Missing Jira reference in commits
+- ⚠️ Missing task reference in commits

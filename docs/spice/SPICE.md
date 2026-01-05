@@ -367,7 +367,7 @@ git worktree add ./trees/PROJ-123-tests -b feature/PROJ-123-tests develop
 # REQUIRED: Systematic bug reproduction and fixing
 Task --subagent_type reaper:bug-fixer \
   --description "Fix reported bug with TDD" \
-  --prompt "Reproduce bug [JIRA_KEY]: [BUG_DESCRIPTION]. Write failing test, implement minimal fix, ensure comprehensive test coverage. Follow Red-Green-Refactor methodology."
+  --prompt "Reproduce bug [TASK_ID]: [BUG_DESCRIPTION]. Write failing test, implement minimal fix, ensure comprehensive test coverage. Follow Red-Green-Refactor methodology."
 ```
 
 **Agent Workflow:**
@@ -390,7 +390,7 @@ Task --subagent_type reaper:bug-fixer \
 # REQUIRED: Feature implementation with TDD and SOLID principles
 Task --subagent_type reaper:feature-developer \
   --description "Implement new feature" \
-  --prompt "Implement [FEATURE_NAME] for [JIRA_KEY]. Use TDD methodology, apply SOLID principles, ensure 80%+ test coverage. Create integration tests for feature workflows."
+  --prompt "Implement [FEATURE_NAME] for [TASK_ID]. Use TDD methodology, apply SOLID principles, ensure 80%+ test coverage. Create integration tests for feature workflows."
 ```
 
 **Agent Capabilities:**
@@ -413,7 +413,7 @@ Task --subagent_type reaper:feature-developer \
 # RECOMMENDED: Safe worktree setup and management
 Task --subagent_type reaper:branch-manager \
   --description "Setup worktree environment" \
-  --prompt "Create clean worktree for [JIRA_KEY], setup dependencies, validate environment. Provide safe merge operations when work complete."
+  --prompt "Create clean worktree for [TASK_ID], setup dependencies, validate environment. Provide safe merge operations when work complete."
 ```
 
 **Agent Benefits:**

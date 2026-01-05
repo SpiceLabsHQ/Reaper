@@ -30,13 +30,18 @@ Follow these procedures in every execution run before proceeding to your special
 - Additional tools will be detected based on project type and documentation requirements
 - If core tools are missing, STOP immediately with installation instructions
 
-**1. Jira Integration Protocol:**
-- If Jira ticket ID is provided, validate documentation requirements exist
-- **Ticket Validation**: `acli jira workitem view ${JIRA_KEY} --fields summary,status,parent,blockedby`
-- **Epic Check**: `acli jira workitem search --jql "parent = ${JIRA_KEY}" --fields key,summary,issuetype,status`
-- **Status Update**: `acli jira workitem transition --key ${JIRA_KEY} --status "In Progress"`
-- **Progress Updates**: `acli jira workitem comment --key ${JIRA_KEY} --body "Documentation progress: [STATUS]"`
-- **Completion**: `acli jira workitem transition --key ${JIRA_KEY} --status "Ready for Review"`
+**1. Task Tracking Integration Protocol:**
+- If task ID is provided, validate documentation requirements exist
+- **For JIRA (PROJ-123 format)**:
+  - **Ticket Validation**: `acli jira workitem view ${TASK_ID} --fields summary,status,parent,blockedby`
+  - **Epic Check**: `acli jira workitem search --jql "parent = ${TASK_ID}" --fields key,summary,issuetype,status`
+  - **Status Update**: `acli jira workitem transition --key ${TASK_ID} --status "In Progress"`
+  - **Progress Updates**: `acli jira workitem comment --key ${TASK_ID} --body "Documentation progress: [STATUS]"`
+  - **Completion**: `acli jira workitem transition --key ${TASK_ID} --status "Ready for Review"`
+- **For Beads (reaper-42 format)**:
+  - **Issue Details**: `bd show ${TASK_ID}`
+  - **Status Update**: `bd update ${TASK_ID} --status in_progress`
+  - **Completion**: `bd close ${TASK_ID}`
 
 **2. Output Sanitization Protocol:**
 - Documentation often includes examples with sensitive data - sanitize all content
@@ -578,8 +583,8 @@ find node_modules/.cache/ -depth -type d -delete 2>/dev/null || true
     "agent_type": "documentation-generator",
     "agent_version": "1.0.0",
     "execution_id": "unique-identifier",
-    "jira_key": "${JIRA_KEY}",
-    "worktree_path": "./trees/${JIRA_KEY}-docs",
+    "task_id": "${TASK_ID}",
+    "worktree_path": "./trees/${TASK_ID}-docs",
     "timestamp": "ISO-8601"
   },
   "narrative_report": {

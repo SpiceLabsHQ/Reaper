@@ -33,15 +33,15 @@ pwd | grep -q "/trees/" && {
 ### 2. Check for Existing Work
 ```bash
 # Prevent duplicate fixes - check if work already exists
-JIRA_KEY="PROJ-123"  # Extract from user request
+TASK_ID="PROJ-123"  # Extract from user request (e.g., PROJ-123, reaper-42)
 
 # Check develop branch for existing work
-git log --oneline develop --grep="$JIRA_KEY" | head -5
+git log --oneline develop --grep="$TASK_ID" | head -5
 
-if [ -n "$(git log --oneline develop --grep="$JIRA_KEY")" ]; then
-    echo "⚠️  WARNING: $JIRA_KEY may already be fixed in develop branch"
+if [ -n "$(git log --oneline develop --grep="$TASK_ID")" ]; then
+    echo "⚠️  WARNING: $TASK_ID may already be fixed in develop branch"
     echo "Review existing commits before proceeding:"
-    git log develop --grep="$JIRA_KEY" --oneline
+    git log develop --grep="$TASK_ID" --oneline
     # Ask user if they want to continue or cancel
 fi
 ```
@@ -62,16 +62,16 @@ fi
 
 ### Naming Convention
 
-**Format:** `./trees/JIRA-KEY-description`
+**Format:** `./trees/TASK-ID-description`
 
 **Examples:**
 - `./trees/PROJ-123-auth` (authentication feature)
-- `./trees/BUG-456-security` (security bug fix)
+- `./trees/reaper-42-security` (security bug fix)
 - `./trees/FEAT-789-oauth` (OAuth integration)
 
 **Rules:**
 - Always use `./trees/` directory
-- Include Jira ticket key
+- Include task ID (JIRA: PROJ-123, Beads: reaper-42)
 - Brief hyphenated description
 - Lowercase, no spaces
 
@@ -79,10 +79,10 @@ fi
 
 ```bash
 # Extract components from user request
-JIRA_KEY="PROJ-123"           # e.g., "PROJ-123" from user input
+TASK_ID="PROJ-123"            # e.g., "PROJ-123" or "reaper-42" from user input
 DESCRIPTION="auth"             # Brief description of the work
-WORKTREE_PATH="./trees/${JIRA_KEY}-${DESCRIPTION}"
-BRANCH_NAME="feature/${JIRA_KEY}-${DESCRIPTION}"
+WORKTREE_PATH="./trees/${TASK_ID}-${DESCRIPTION}"
+BRANCH_NAME="feature/${TASK_ID}-${DESCRIPTION}"
 
 # Create trees directory if it doesn't exist
 mkdir -p trees
@@ -238,10 +238,10 @@ echo "✅ Environment validation complete"
 #!/bin/bash
 # Complete worktree setup for PROJ-123
 
-JIRA_KEY="PROJ-123"
+TASK_ID="PROJ-123"
 DESCRIPTION="auth"
-WORKTREE_PATH="./trees/${JIRA_KEY}-${DESCRIPTION}"
-BRANCH_NAME="feature/${JIRA_KEY}-${DESCRIPTION}"
+WORKTREE_PATH="./trees/${TASK_ID}-${DESCRIPTION}"
+BRANCH_NAME="feature/${TASK_ID}-${DESCRIPTION}"
 
 # Step 1: Pre-flight checks
 echo "=== Pre-Flight Validation ==="
@@ -249,9 +249,9 @@ pwd | grep -q "/trees/" && { echo "ERROR: Must run from root"; exit 1; }
 
 # Step 2: Check for existing work
 echo "=== Checking for Existing Work ==="
-if [ -n "$(git log --oneline develop --grep="$JIRA_KEY")" ]; then
-    echo "⚠️  $JIRA_KEY may already exist in develop:"
-    git log develop --grep="$JIRA_KEY" --oneline
+if [ -n "$(git log --oneline develop --grep="$TASK_ID")" ]; then
+    echo "⚠️  $TASK_ID may already exist in develop:"
+    git log develop --grep="$TASK_ID" --oneline
     read -p "Continue anyway? (y/n) " -n 1 -r
     echo
     [[ ! $REPLY =~ ^[Yy]$ ]] && exit 0
@@ -296,7 +296,7 @@ echo "╚═══════════════════════�
 echo ""
 echo "📁 Worktree Path: $WORKTREE_PATH"
 echo "🌿 Branch Name: $BRANCH_NAME"
-echo "🎯 Jira Ticket: $JIRA_KEY"
+echo "🎯 Task ID: $TASK_ID"
 echo ""
 echo "Next steps:"
 echo "  1. Implement changes in worktree"
@@ -362,9 +362,9 @@ curl -I https://registry.npmjs.org/ 2>/dev/null | head -1
 Before considering setup complete, verify:
 
 - [ ] Running from root directory (not inside a worktree)
-- [ ] No existing work for this Jira ticket in develop
-- [ ] Worktree created at `./trees/JIRA-KEY-description`
-- [ ] Branch named `feature/JIRA-KEY-description`
+- [ ] No existing work for this task in develop
+- [ ] Worktree created at `./trees/TASK-ID-description`
+- [ ] Branch named `feature/TASK-ID-description`
 - [ ] Dependencies installed successfully
 - [ ] Environment is clean (no uncommitted changes)
 - [ ] On correct branch

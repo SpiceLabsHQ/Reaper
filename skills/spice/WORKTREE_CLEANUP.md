@@ -1,6 +1,6 @@
 ---
 name: worktree-cleanup
-description: Safe worktree removal with verification, merge validation, and Jira integration. Automatically activates when cleaning up worktrees, after merging features, completing tasks, or when worktree removal is needed. Prevents lost work through comprehensive safety checks.
+description: Safe worktree removal with verification, merge validation, and task tracking integration. Automatically activates when cleaning up worktrees, after merging features, completing tasks, or when worktree removal is needed. Prevents lost work through comprehensive safety checks.
 allowed-tools: [Bash, Read]
 ---
 
@@ -134,7 +134,7 @@ echo "✅ Pre-merge validation passed"
 
 ```bash
 BRANCH_NAME="feature/PROJ-123-description"
-JIRA_KEY="PROJ-123"  # Extract from branch name
+TASK_ID="PROJ-123"  # Extract from branch name
 
 echo "=== Merging to Develop ==="
 
@@ -152,7 +152,7 @@ git pull origin develop || {
 # Merge feature branch (no fast-forward)
 git merge "$BRANCH_NAME" --no-ff -m "feat: merge $BRANCH_NAME
 
-Ref: $JIRA_KEY" || {
+Ref: $TASK_ID" || {
     echo "ERROR: Merge failed!"
     echo "Resolve conflicts and retry"
     exit 1
@@ -238,29 +238,36 @@ git branch -d "$BRANCH_NAME" || {
 echo "✅ Deleted local branch $BRANCH_NAME"
 ```
 
-## Jira Integration
+## Task Tracking Integration
 
-Update Jira ticket status after successful merge:
+Update task status after successful merge:
 
 ```bash
-JIRA_KEY="PROJ-123"  # Extract from branch name or worktree path
+TASK_ID="PROJ-123"  # Extract from branch name or worktree path
 
-echo "=== Updating Jira Ticket ==="
+echo "=== Updating Task Status ==="
 
-# Transition ticket to "In Review" status
-acli jira workitem transition --key "$JIRA_KEY" --status "In Review" || {
-    echo "⚠️  WARNING: Could not transition $JIRA_KEY to In Review"
-    echo "Please manually update the ticket in Jira"
-    echo "Ticket: $JIRA_KEY → In Review"
-}
+# Detect task system and update accordingly
+if [[ "$TASK_ID" =~ ^[a-z]+-[0-9]+$ ]] && command -v bd >/dev/null; then
+    # Beads task
+    bd close "$TASK_ID" || {
+        echo "⚠️  WARNING: Could not close $TASK_ID"
+        echo "Please manually close: bd close $TASK_ID"
+    }
+elif command -v acli >/dev/null; then
+    # JIRA task
+    acli jira workitem transition --key "$TASK_ID" --status "In Review" || {
+        echo "⚠️  WARNING: Could not transition $TASK_ID to In Review"
+        echo "Please manually update the ticket"
+    }
+    # Optional: Add comment with merge details
+    LATEST_COMMIT=$(git log -1 --format="%h - %s")
+    acli jira workitem comment --key "$TASK_ID" --body "Merged to develop: $LATEST_COMMIT" 2>/dev/null || {
+        echo "Note: Could not add comment (not critical)"
+    }
+fi
 
-# Optional: Add comment with merge details
-LATEST_COMMIT=$(git log -1 --format="%h - %s")
-acli jira workitem comment --key "$JIRA_KEY" --body "Merged to develop: $LATEST_COMMIT" 2>/dev/null || {
-    echo "Note: Could not add Jira comment (not critical)"
-}
-
-echo "✅ Jira ticket updated"
+echo "✅ Task status updated"
 ```
 
 ## Complete Cleanup Workflow
@@ -271,10 +278,10 @@ echo "✅ Jira ticket updated"
 #!/bin/bash
 # Complete safe cleanup for PROJ-123
 
-JIRA_KEY="PROJ-123"
+TASK_ID="PROJ-123"
 DESCRIPTION="auth"
-WORKTREE_PATH="./trees/${JIRA_KEY}-${DESCRIPTION}"
-BRANCH_NAME="feature/${JIRA_KEY}-${DESCRIPTION}"
+WORKTREE_PATH="./trees/${TASK_ID}-${DESCRIPTION}"
+BRANCH_NAME="feature/${TASK_ID}-${DESCRIPTION}"
 
 # Step 1: Verify running from root
 echo "=== Pre-Flight Validation ==="
@@ -332,7 +339,7 @@ if [ -n "$UNMERGED" ]; then
 
     git merge "$BRANCH_NAME" --no-ff -m "feat: merge $BRANCH_NAME
 
-Ref: $JIRA_KEY" || {
+Ref: $TASK_ID" || {
         echo "ERROR: Merge failed"
         exit 1
     }
@@ -370,13 +377,17 @@ git branch -d "$BRANCH_NAME" || {
 }
 echo "✅ Deleted local branch"
 
-# Step 10: Update Jira ticket
-echo "=== Updating Jira Ticket ==="
-acli jira workitem transition --key "$JIRA_KEY" --status "In Review" || {
-    echo "WARNING: Could not update Jira ticket"
-    echo "Please manually transition $JIRA_KEY to In Review"
-}
-echo "✅ Jira ticket updated"
+# Step 10: Update task status
+echo "=== Updating Task Status ==="
+if [[ "$TASK_ID" =~ ^[a-z]+-[0-9]+$ ]] && command -v bd >/dev/null; then
+    bd close "$TASK_ID" || echo "WARNING: Could not close $TASK_ID"
+elif command -v acli >/dev/null; then
+    acli jira workitem transition --key "$TASK_ID" --status "In Review" || {
+        echo "WARNING: Could not update task"
+        echo "Please manually transition $TASK_ID"
+    }
+fi
+echo "✅ Task status updated"
 
 # Step 11: Display summary
 echo ""
@@ -387,7 +398,7 @@ echo ""
 echo "✅ Worktree removed: $WORKTREE_PATH"
 echo "✅ Branch deleted: $BRANCH_NAME"
 echo "✅ Merged to develop"
-echo "✅ Jira ticket updated: $JIRA_KEY → In Review"
+echo "✅ Task status updated: $TASK_ID"
 echo ""
 echo "⚠️  Main branch merge requires explicit user permission"
 echo ""
@@ -488,19 +499,19 @@ git merge feature/PROJ-123-description --no-ff
 git branch -D feature/PROJ-123-description
 ```
 
-### Issue: Jira transition fails
+### Issue: Task status update fails
 
-**Cause:** Workflow doesn't allow transition or ticket is blocked
+**Cause:** Workflow doesn't allow transition or task is blocked
 
 **Solution:**
 ```bash
-# Check current ticket status
+# For Beads tasks
+bd show reaper-42
+
+# For JIRA tasks - check current ticket status
 acli jira workitem view PROJ-123 --fields status,blockedby
 
-# View available transitions
-acli jira workitem view PROJ-123
-
-# Manually update in Jira UI if automated transition fails
+# Manually update if automated transition fails
 ```
 
 ## Validation Checklist
@@ -515,7 +526,7 @@ Before considering cleanup complete, verify:
 - [ ] Worktree removed successfully
 - [ ] Local branch deleted
 - [ ] Remote branch deleted (if existed)
-- [ ] Jira ticket transitioned to "In Review"
+- [ ] Task status updated (Beads: closed, JIRA: In Review)
 - [ ] No leftover files in `./trees/` directory
 
 ## Integration with SPICE Workflow

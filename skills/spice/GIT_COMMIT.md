@@ -15,7 +15,7 @@ Automates creation of SPICE-compliant commit messages following conventional com
 
 <body>
 
-Ref: JIRA-KEY
+Ref: TASK-ID
 ```
 
 ## Verification Protocol
@@ -77,13 +77,13 @@ The scope should identify the affected module, component, or area:
 
 ## Footer
 
-**REQUIRED**: Include Jira reference in footer:
+**REQUIRED**: Include task reference in footer:
 
 ```
 Ref: PROJ-123
 ```
 
-If no Jira ticket exists, document why:
+If no task ID exists, document why:
 
 ```
 Ref: N/A (emergency hotfix)
@@ -106,7 +106,7 @@ Includes token refresh and session management.
 Ref: PROJ-123
 ```
 
-❌ **Jira key in subject**
+❌ **Task ID in subject**
 ```
 feat(auth): add OAuth2 PROJ-123
 ```
@@ -139,7 +139,7 @@ Before writing commit message, verify:
 - [ ] Subject uses imperative mood
 - [ ] Scope accurately describes affected area
 - [ ] Body explains WHY, not just WHAT
-- [ ] Jira reference in footer (or documented reason for absence)
+- [ ] Task reference in footer (or documented reason for absence)
 - [ ] No breaking change footer unless API/interface changed
 
 ## Example Workflow

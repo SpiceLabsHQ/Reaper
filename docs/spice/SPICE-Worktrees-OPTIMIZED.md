@@ -6,7 +6,7 @@
 
 1. **NEVER use `cd` to enter worktrees** - Use `git -C` for git commands, subshells for others
 2. **ALWAYS verify before cleanup** - Check uncommitted changes and unmerged commits
-3. **ALWAYS check if work already exists** - `git log develop --grep="[JIRA_KEY]"`
+3. **ALWAYS check if work already exists** - `git log develop --grep="[TASK_ID]"`
 
 ## 🤖 Agent-Enhanced Workflow (RECOMMENDED)
 
@@ -14,17 +14,17 @@
 # Setup worktree via agent
 Task --subagent_type reaper:branch-manager \
   --description "Setup worktree environment" \
-  --prompt "Create clean worktree for [JIRA_KEY]-[DESCRIPTION], setup dependencies, validate environment"
+  --prompt "Create clean worktree for [TASK_ID]-[DESCRIPTION], setup dependencies, validate environment"
 
 # Teardown via agent  
 Task --subagent_type reaper:branch-manager \
   --description "Teardown worktree safely" \
-  --prompt "Clean up [JIRA_KEY]-[DESCRIPTION] worktree, merge to develop if ready, remove with validation"
+  --prompt "Clean up [TASK_ID]-[DESCRIPTION] worktree, merge to develop if ready, remove with validation"
 
 # Parallel work analysis
 Task --subagent_type reaper:workflow-planner \
   --description "Analyze parallel work opportunities" \
-  --prompt "Analyze [JIRA_KEY] for parallel worktree opportunities without merge conflicts"
+  --prompt "Analyze [TASK_ID] for parallel worktree opportunities without merge conflicts"
 ```
 
 ## 📋 Essential Commands
@@ -32,118 +32,119 @@ Task --subagent_type reaper:workflow-planner \
 ### Pre-flight Checks
 ```bash
 pwd | grep -q "/trees/" && { echo "ERROR: Must start from root"; exit 1; }
-git log --oneline develop --grep="[JIRA_KEY]" | head -5
+git log --oneline develop --grep="[TASK_ID]" | head -5
 ```
 
 ### Create Worktree
 ```bash
 mkdir -p trees
-git worktree add ./trees/[JIRA_KEY]-[DESCRIPTION] -b feature/[JIRA_KEY]-[DESCRIPTION] develop
+git worktree add ./trees/[TASK_ID]-[DESCRIPTION] -b feature/[TASK_ID]-[DESCRIPTION] develop
 ```
 
 ### Setup Environment (in worktree)
 ```bash
 # Node.js
-[ -f "./trees/[JIRA_KEY]-[DESCRIPTION]/package.json" ] && (cd ./trees/[JIRA_KEY]-[DESCRIPTION] && npm install)
+[ -f "./trees/[TASK_ID]-[DESCRIPTION]/package.json" ] && (cd ./trees/[TASK_ID]-[DESCRIPTION] && npm install)
 # Python
-[ -f "./trees/[JIRA_KEY]-[DESCRIPTION]/requirements.txt" ] && (cd ./trees/[JIRA_KEY]-[DESCRIPTION] && pip install -r requirements.txt)
+[ -f "./trees/[TASK_ID]-[DESCRIPTION]/requirements.txt" ] && (cd ./trees/[TASK_ID]-[DESCRIPTION] && pip install -r requirements.txt)
 # Ruby
-[ -f "./trees/[JIRA_KEY]-[DESCRIPTION]/Gemfile" ] && (cd ./trees/[JIRA_KEY]-[DESCRIPTION] && bundle install)
+[ -f "./trees/[TASK_ID]-[DESCRIPTION]/Gemfile" ] && (cd ./trees/[TASK_ID]-[DESCRIPTION] && bundle install)
 ```
 
 ### Remote Operations (NO cd)
 ```bash
 # Git commands - use -C flag
-git -C ./trees/[JIRA_KEY]-[DESCRIPTION] status
-git -C ./trees/[JIRA_KEY]-[DESCRIPTION] add .
-git -C ./trees/[JIRA_KEY]-[DESCRIPTION] commit -m "fix: [MESSAGE]\n\nRef: [JIRA_KEY]"
-git -C ./trees/[JIRA_KEY]-[DESCRIPTION] diff
-git -C ./trees/[JIRA_KEY]-[DESCRIPTION] log --oneline -10
-git -C ./trees/[JIRA_KEY]-[DESCRIPTION] fetch origin develop
-git -C ./trees/[JIRA_KEY]-[DESCRIPTION] rebase origin/develop
-git -C ./trees/[JIRA_KEY]-[DESCRIPTION] push origin feature/[JIRA_KEY]-[DESCRIPTION]
+git -C ./trees/[TASK_ID]-[DESCRIPTION] status
+git -C ./trees/[TASK_ID]-[DESCRIPTION] add .
+git -C ./trees/[TASK_ID]-[DESCRIPTION] commit -m "fix: [MESSAGE]\n\nRef: [TASK_ID]"
+git -C ./trees/[TASK_ID]-[DESCRIPTION] diff
+git -C ./trees/[TASK_ID]-[DESCRIPTION] log --oneline -10
+git -C ./trees/[TASK_ID]-[DESCRIPTION] fetch origin develop
+git -C ./trees/[TASK_ID]-[DESCRIPTION] rebase origin/develop
+git -C ./trees/[TASK_ID]-[DESCRIPTION] push origin feature/[TASK_ID]-[DESCRIPTION]
 
 # Non-git commands - use subshells
-(cd ./trees/[JIRA_KEY]-[DESCRIPTION] && npm test)
-(cd ./trees/[JIRA_KEY]-[DESCRIPTION] && npm run lint)
-(cd ./trees/[JIRA_KEY]-[DESCRIPTION] && npm run build)
-(cd ./trees/[JIRA_KEY]-[DESCRIPTION] && python -m pytest)
+(cd ./trees/[TASK_ID]-[DESCRIPTION] && npm test)
+(cd ./trees/[TASK_ID]-[DESCRIPTION] && npm run lint)
+(cd ./trees/[TASK_ID]-[DESCRIPTION] && npm run build)
+(cd ./trees/[TASK_ID]-[DESCRIPTION] && python -m pytest)
 ```
 
 ### Linting (MANDATORY before commit)
 ```bash
 # Node.js
-[ -f "./trees/[JIRA_KEY]-[DESCRIPTION]/package.json" ] && \
-  (cd ./trees/[JIRA_KEY]-[DESCRIPTION] && npm run lint:fix) || \
-  (cd ./trees/[JIRA_KEY]-[DESCRIPTION] && npm run lint)
+[ -f "./trees/[TASK_ID]-[DESCRIPTION]/package.json" ] && \
+  (cd ./trees/[TASK_ID]-[DESCRIPTION] && npm run lint:fix) || \
+  (cd ./trees/[TASK_ID]-[DESCRIPTION] && npm run lint)
 
 # Python  
-[ -f "./trees/[JIRA_KEY]-[DESCRIPTION]/requirements.txt" ] && \
-  (cd ./trees/[JIRA_KEY]-[DESCRIPTION] && black . && isort . && flake8 .)
+[ -f "./trees/[TASK_ID]-[DESCRIPTION]/requirements.txt" ] && \
+  (cd ./trees/[TASK_ID]-[DESCRIPTION] && black . && isort . && flake8 .)
 
 # Ruby
-[ -f "./trees/[JIRA_KEY]-[DESCRIPTION]/Gemfile" ] && \
-  (cd ./trees/[JIRA_KEY]-[DESCRIPTION] && bundle exec rubocop -a)
+[ -f "./trees/[TASK_ID]-[DESCRIPTION]/Gemfile" ] && \
+  (cd ./trees/[TASK_ID]-[DESCRIPTION] && bundle exec rubocop -a)
 
 # PHP
-[ -f "./trees/[JIRA_KEY]-[DESCRIPTION]/composer.json" ] && \
-  (cd ./trees/[JIRA_KEY]-[DESCRIPTION] && ./vendor/bin/php-cs-fixer fix .)
+[ -f "./trees/[TASK_ID]-[DESCRIPTION]/composer.json" ] && \
+  (cd ./trees/[TASK_ID]-[DESCRIPTION] && ./vendor/bin/php-cs-fixer fix .)
 
 # Go
-[ -f "./trees/[JIRA_KEY]-[DESCRIPTION]/go.mod" ] && \
-  (cd ./trees/[JIRA_KEY]-[DESCRIPTION] && gofmt -w . && golangci-lint run --fix)
+[ -f "./trees/[TASK_ID]-[DESCRIPTION]/go.mod" ] && \
+  (cd ./trees/[TASK_ID]-[DESCRIPTION] && gofmt -w . && golangci-lint run --fix)
 ```
 
 ### Testing (in worktree)
 ```bash
 # Node.js
-[ -f "./trees/[JIRA_KEY]-[DESCRIPTION]/package.json" ] && \
-  (cd ./trees/[JIRA_KEY]-[DESCRIPTION] && npm test -- --coverage)
+[ -f "./trees/[TASK_ID]-[DESCRIPTION]/package.json" ] && \
+  (cd ./trees/[TASK_ID]-[DESCRIPTION] && npm test -- --coverage)
 
 # Python
-[ -f "./trees/[JIRA_KEY]-[DESCRIPTION]/requirements.txt" ] && \
-  (cd ./trees/[JIRA_KEY]-[DESCRIPTION] && python -m pytest --cov)
+[ -f "./trees/[TASK_ID]-[DESCRIPTION]/requirements.txt" ] && \
+  (cd ./trees/[TASK_ID]-[DESCRIPTION] && python -m pytest --cov)
 
 # Ruby  
-[ -f "./trees/[JIRA_KEY]-[DESCRIPTION]/Rakefile" ] && \
-  (cd ./trees/[JIRA_KEY]-[DESCRIPTION] && rake test)
+[ -f "./trees/[TASK_ID]-[DESCRIPTION]/Rakefile" ] && \
+  (cd ./trees/[TASK_ID]-[DESCRIPTION] && rake test)
 ```
 
 ### Merge to Develop (NOT main)
 ```bash
 # Update from develop
-git -C ./trees/[JIRA_KEY]-[DESCRIPTION] fetch origin develop
-git -C ./trees/[JIRA_KEY]-[DESCRIPTION] rebase origin/develop
+git -C ./trees/[TASK_ID]-[DESCRIPTION] fetch origin develop
+git -C ./trees/[TASK_ID]-[DESCRIPTION] rebase origin/develop
 
 # Verify commits exist
-git log develop..feature/[JIRA_KEY]-[DESCRIPTION] --oneline
+git log develop..feature/[TASK_ID]-[DESCRIPTION] --oneline
 
 # Merge to develop ONLY
 git checkout develop
-git merge feature/[JIRA_KEY]-[DESCRIPTION] --no-ff -m "feat: merge feature/[JIRA_KEY]-[DESCRIPTION]\n\nRef: [JIRA_KEY]"
+git merge feature/[TASK_ID]-[DESCRIPTION] --no-ff -m "feat: merge feature/[TASK_ID]-[DESCRIPTION]\n\nRef: [TASK_ID]"
 git push origin develop
 
-# Update Jira
-acli jira workitem transition --key [JIRA_KEY] --status "In Review"
+# Update task status
+# For Beads: bd close [TASK_ID]
+# For JIRA: acli jira workitem transition --key [TASK_ID] --status "In Review"
 ```
 
 ### Safe Cleanup
 ```bash
 # Check uncommitted changes
-[ -n "$(git -C ./trees/[JIRA_KEY]-[DESCRIPTION] status --porcelain)" ] && \
+[ -n "$(git -C ./trees/[TASK_ID]-[DESCRIPTION] status --porcelain)" ] && \
   { echo "ERROR: Uncommitted changes"; exit 1; }
 
 # Check unmerged commits
-[ -n "$(git log develop..feature/[JIRA_KEY]-[DESCRIPTION] --oneline)" ] && \
+[ -n "$(git log develop..feature/[TASK_ID]-[DESCRIPTION] --oneline)" ] && \
   { echo "ERROR: Unmerged commits"; exit 1; }
 
 # Remove remote branch
-git show-ref --verify --quiet "refs/remotes/origin/feature/[JIRA_KEY]-[DESCRIPTION]" && \
-  git push origin --delete feature/[JIRA_KEY]-[DESCRIPTION]
+git show-ref --verify --quiet "refs/remotes/origin/feature/[TASK_ID]-[DESCRIPTION]" && \
+  git push origin --delete feature/[TASK_ID]-[DESCRIPTION]
 
 # Remove worktree and branch
-git worktree remove ./trees/[JIRA_KEY]-[DESCRIPTION]
-git branch -d feature/[JIRA_KEY]-[DESCRIPTION]
+git worktree remove ./trees/[TASK_ID]-[DESCRIPTION]
+git branch -d feature/[TASK_ID]-[DESCRIPTION]
 ```
 
 ## 🎯 Worktree Management
@@ -151,12 +152,12 @@ git branch -d feature/[JIRA_KEY]-[DESCRIPTION]
 ### List & Remove
 ```bash
 git worktree list
-git worktree remove ./trees/[JIRA_KEY]-[DESCRIPTION]
-git worktree remove ./trees/[JIRA_KEY]-[DESCRIPTION] --force  # Only if verified
+git worktree remove ./trees/[TASK_ID]-[DESCRIPTION]
+git worktree remove ./trees/[TASK_ID]-[DESCRIPTION] --force  # Only if verified
 ```
 
 ### Naming Convention
-- Format: `./trees/[JIRA_KEY]-[DESCRIPTION]`
+- Format: `./trees/[TASK_ID]-[DESCRIPTION]`
 - Examples: `./trees/PROJ-123-auth`, `./trees/BUG-456-security`
 
 ## ⚡ Parallel Development
@@ -168,13 +169,13 @@ cat > PARALLEL_WORK.md << EOF
 # Parallel Work - $(date)
 | KEY | Branch | Worktree | Status |
 |-----|--------|----------|--------|
-| [JIRA_KEY]-1 | feature/[JIRA_KEY]-1 | ./trees/[JIRA_KEY]-1 | In Progress |
-| [JIRA_KEY]-2 | feature/[JIRA_KEY]-2 | ./trees/[JIRA_KEY]-2 | In Progress |
+| [TASK_ID]-1 | feature/[TASK_ID]-1 | ./trees/[TASK_ID]-1 | In Progress |
+| [TASK_ID]-2 | feature/[TASK_ID]-2 | ./trees/[TASK_ID]-2 | In Progress |
 EOF
 
 # Create parallel worktrees
 for i in 1 2 3; do
-  git worktree add trees/[JIRA_KEY]-$i -b feature/[JIRA_KEY]-$i develop
+  git worktree add trees/[TASK_ID]-$i -b feature/[TASK_ID]-$i develop
 done
 ```
 
@@ -195,36 +196,36 @@ done
 ### Check Before Starting
 ```bash
 pwd | grep -q "/trees/" && { echo "ERROR: Start from root"; exit 1; }
-git log develop --grep="[JIRA_KEY]" | head -5
+git log develop --grep="[TASK_ID]" | head -5
 ```
 
 ### Standard Workflow
 ```bash
 # 1. Create worktree
-mkdir -p trees && git worktree add ./trees/[JIRA_KEY]-[DESCRIPTION] -b feature/[JIRA_KEY]-[DESCRIPTION] develop
+mkdir -p trees && git worktree add ./trees/[TASK_ID]-[DESCRIPTION] -b feature/[TASK_ID]-[DESCRIPTION] develop
 
 # 2. Setup environment  
-(cd ./trees/[JIRA_KEY]-[DESCRIPTION] && npm install)
+(cd ./trees/[TASK_ID]-[DESCRIPTION] && npm install)
 
 # 3. Work (no cd)
-git -C ./trees/[JIRA_KEY]-[DESCRIPTION] add .
-git -C ./trees/[JIRA_KEY]-[DESCRIPTION] commit -m "fix: [MESSAGE]\n\nRef: [JIRA_KEY]"
+git -C ./trees/[TASK_ID]-[DESCRIPTION] add .
+git -C ./trees/[TASK_ID]-[DESCRIPTION] commit -m "fix: [MESSAGE]\n\nRef: [TASK_ID]"
 
 # 4. Test in worktree
-(cd ./trees/[JIRA_KEY]-[DESCRIPTION] && npm test)
+(cd ./trees/[TASK_ID]-[DESCRIPTION] && npm test)
 
 # 5. Lint before merge
-(cd ./trees/[JIRA_KEY]-[DESCRIPTION] && npm run lint)
+(cd ./trees/[TASK_ID]-[DESCRIPTION] && npm run lint)
 
 # 6. Update from develop
-git -C ./trees/[JIRA_KEY]-[DESCRIPTION] rebase origin/develop
+git -C ./trees/[TASK_ID]-[DESCRIPTION] rebase origin/develop
 
 # 7. Merge to develop
-git checkout develop && git merge feature/[JIRA_KEY]-[DESCRIPTION] --no-ff
+git checkout develop && git merge feature/[TASK_ID]-[DESCRIPTION] --no-ff
 
 # 8. Clean up
-git worktree remove ./trees/[JIRA_KEY]-[DESCRIPTION]
-git branch -d feature/[JIRA_KEY]-[DESCRIPTION]
+git worktree remove ./trees/[TASK_ID]-[DESCRIPTION]
+git branch -d feature/[TASK_ID]-[DESCRIPTION]
 ```
 
 ## 📝 Key Rules Summary
@@ -236,6 +237,6 @@ git branch -d feature/[JIRA_KEY]-[DESCRIPTION]
 5. **Lint before commit** - Always run linting
 6. **Merge to develop only** - Never to main without permission
 7. **Verify before cleanup** - Check uncommitted/unmerged work
-8. **Update Jira** - Transition to "In Review" after merge
+8. **Update task status** - Close or transition to "In Review" after merge
 
 **Remember**: Main branch merges require explicit human permission
