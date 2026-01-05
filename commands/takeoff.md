@@ -406,6 +406,12 @@ todos.push({
   status: "pending"
 });
 
+todos.push({
+  content: "Close completed tasks",
+  activeForm: "Closing completed tasks",
+  status: "pending"
+});
+
 // Use TodoWrite tool to persist the plan
 TodoWrite({ todos });
 ```
@@ -418,6 +424,7 @@ TodoWrite({ todos });
 - Step 2.2: Update API documentation [PROJ-123]
 - User review and feedback
 - Merge to develop
+- Close completed tasks
 ```
 
 **Why This Matters:**
