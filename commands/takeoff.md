@@ -98,7 +98,7 @@ if [ -n "$TASK_ID" ]; then
     else
         # Task system query failed - require user description
         if [ -z "$TASK_DESCRIPTION" ] || [ ${#TASK_DESCRIPTION} -lt 10 ]; then
-            echo "ERROR: Could not fetch details for task '$TASK_ID' and no description provided"
+            echo "FLIGHT PLAN REJECTED: Could not fetch details for task '$TASK_ID' and no description provided"
             echo "Please provide: detailed task description OR verify task ID exists in task system"
             exit 1
         fi
@@ -107,7 +107,7 @@ if [ -n "$TASK_ID" ]; then
 else
     # No TASK_ID - must have description
     if [ -z "$TASK_DESCRIPTION" ] || [ ${#TASK_DESCRIPTION} -lt 10 ]; then
-        echo "ERROR: No task ID provided and description is missing or too vague"
+        echo "FLIGHT PLAN REJECTED: No task ID provided and description is missing or too vague"
         echo "Please provide: task identifier OR detailed description (>10 chars)"
         exit 1
     fi
@@ -713,7 +713,7 @@ Frequent commits on feature branches are GOOD practice. They:
 Provide a comprehensive summary:
 
 ```markdown
-## Work Complete - Ready for Review
+## Touchdown! Ready for Inspection
 
 ### What Was Built
 [Brief description of implemented functionality]
@@ -731,10 +731,10 @@ Provide a comprehensive summary:
 
 ---
 
-**What feedback do you have?** I can adjust the implementation, add tests,
-or address any concerns before we proceed.
+**Control tower, how do we look?** I can adjust the approach, run additional checks,
+or address any concerns before final landing.
 
-When you're satisfied, I can merge these changes to develop.
+When you're satisfied, I'll bring her in for landing on develop.
 ```
 
 #### Response Handling

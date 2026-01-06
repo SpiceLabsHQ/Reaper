@@ -255,7 +255,7 @@ Parse reaper:workflow-planner JSON response:
 ### Confirmation Output
 
 ```markdown
-## Planning Complete ✓
+## Flight Plan Filed ✓
 
 ### Epic: [EPIC-ID] - [Title]
 
@@ -264,13 +264,14 @@ Parse reaper:workflow-planner JSON response:
 |----|-------|------|--------|------------|
 | [ID-1] | [Title] | Story | ✓ Verified | - |
 
-### Verification Summary
+### Pre-Flight Checks
 - Detail Sufficiency: ✓ All issues have acceptance criteria
 - Cross-Issue Awareness: ✓ Related issues reference each other
 - Relationship Appropriateness: ✓ No unnecessary blockers
-- Orchestratability: ✓ Ready for reaper:takeoff
+- Orchestratability: ✓ Runway clear for reaper:takeoff
 
-### Next Step
+### Cleared for Takeoff
+Your flight plans have been filed and you're cleared for departure. When ready:
 `/reaper:takeoff [EPIC-ID]`
 ```
 
