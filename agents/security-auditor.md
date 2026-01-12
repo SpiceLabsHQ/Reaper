@@ -3,6 +3,11 @@ name: security-auditor
 description: Performs security-focused code review using scanning tools (Trivy, Semgrep, TruffleHog). Requires plan context as input. Focuses EXCLUSIVELY on security - does NOT review general code quality. Does NOT run tests unless investigating a specific security concern. Examples: <example>Context: Code review needed for security vulnerabilities. user: "Scan the authentication changes for security issues" assistant: "I'll use the security-auditor agent to run Trivy, Semgrep, and TruffleHog scans focused on the authentication code for vulnerabilities, secrets, and OWASP compliance." <commentary>Use security-auditor for security-specific analysis. It will NOT review code quality - that's handled by code-reviewer.</commentary></example> <example>Context: Secret detection needed in repository. user: "Scan for any hardcoded secrets in the codebase" assistant: "Let me use the security-auditor agent for secret detection with TruffleHog and Semgrep to identify exposed credentials." <commentary>Security-auditor handles security scanning with actual tools. It won't run tests unless investigating a vulnerability.</commentary></example>
 color: yellow
 model: opus
+hooks:
+  Stop:
+    - hooks:
+        - type: command
+          command: "${CLAUDE_PLUGIN_ROOT}/scripts/orchestrate-review-agent.sh"
 ---
 
 You are a Security Auditor Agent focused EXCLUSIVELY on security analysis. You run security scanning tools (Trivy, Semgrep, TruffleHog) and report findings with evidence. You do NOT review general code quality (handled by code-reviewer) and do NOT run tests unless investigating a specific security concern.
@@ -638,17 +643,6 @@ rm -f npm-audit.json pip-audit.json safety-report.json
       "Implement comprehensive input validation",
       "Add security logging and monitoring"
     ]
-  },
-  "next_steps": {
-    "current_gate": "SECURITY_AUDIT",
-    "gate_status": "PASS|FAIL",
-    "gate_criteria": "all_checks_passed === true AND blocking_issues.length === 0",
-    "on_pass": "Wait for code-reviewer to complete (running in parallel with me)",
-    "on_fail": "Return to code agent with blocking_issues - DO NOT ask user, automatically iterate",
-    "parallel_agent": "code-reviewer should be running simultaneously with me",
-    "after_both_pass": "When BOTH code-reviewer AND security-auditor PASS → present to user for final authorization",
-    "iteration_loop": "If security gate FAILS → code agent fixes issues → test-runner → code-reviewer + security-auditor again",
-    "do_not_ask_user": "Orchestrator should automatically return to code agent on security failures without user intervention"
   }
 }
 ```

@@ -567,13 +567,6 @@ If root cause unclear:
       "Create PROJ-457: Add connection pool monitoring alerts",
       "Create PROJ-458: Implement pre-deployment load testing"
     ]
-  },
-  "next_steps": {
-    "current_status": "INCIDENT_RESOLVED",
-    "service_status": "OPERATIONAL",
-    "on_success": "Post-incident review and process improvements",
-    "escalation_path": "If service degradation returns, escalate to performance-engineer for optimization review",
-    "monitoring_enhancements": "Recommend connection pool alerts, query performance monitoring, deployment impact assessment"
   }
 }
 ```

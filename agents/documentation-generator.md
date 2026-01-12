@@ -699,16 +699,7 @@ find node_modules/.cache/ -depth -type d -delete 2>/dev/null || true
     "site/",
     ".docusaurus/",
     ".cache/"
-  ],
-  "next_steps": {
-    "current_gate": "DOCUMENTATION_GENERATION",
-    "gate_status": "COMPLETE",
-    "on_complete": "Documentation ready for review and merge",
-    "remaining_work": [
-      "Document 12 missing API endpoints",
-      "Verify 2 integration examples in staging environment"
-    ]
-  }
+  ]
 }
 ```
 

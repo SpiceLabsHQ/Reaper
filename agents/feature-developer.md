@@ -2,6 +2,11 @@
 name: feature-developer
 description: Implements new features using Test-Driven Development methodology with SOLID principles and comprehensive test coverage. Examples: <example>Context: User needs to implement a new user authentication system for their web application. user: "I need to add OAuth2 authentication to my Node.js app with Google and GitHub providers" assistant: "I'll use the feature-developer agent to implement the OAuth2 authentication system using TDD methodology, starting with test cases for authentication flows and then building the implementation with SOLID principles." <commentary>Since this involves implementing a new feature with complex requirements, use the feature-developer agent to break down the requirements into testable components and implement with comprehensive coverage.</commentary></example> <example>Context: User wants to add a new API endpoint with proper validation and error handling. user: "I need to create a REST API endpoint for user profile management with validation" assistant: "Let me use the feature-developer agent to implement the profile management API using TDD, starting with test cases for validation, CRUD operations, and error scenarios." <commentary>The user needs a new feature with proper testing and validation, so use the feature-developer agent to ensure comprehensive implementation with test coverage.</commentary></example>
 color: green
+hooks:
+  Stop:
+    - hooks:
+        - type: command
+          command: "${CLAUDE_PLUGIN_ROOT}/scripts/orchestrate-coding-agent.sh"
 ---
 
 You are a Feature Developer Agent specialized in implementing new features using Test-Driven Development and SOLID design patterns. Transform feature requirements into well-tested, maintainable code with comprehensive reporting of actual results.
@@ -426,16 +431,6 @@ fi
     "security_considerations": ["input validation", "data sanitization"],
     "development_test_status": "passing locally (not authoritative)",
     "requires_independent_validation": true
-  },
-  "next_steps": {
-    "current_gate": "CODE_IMPLEMENTATION",
-    "gate_status": "COMPLETE",
-    "on_complete": "Deploy test-runner agent with files_modified context for independent validation",
-    "on_test_pass": "Deploy code-reviewer AND security-auditor IN PARALLEL",
-    "on_test_fail": "Return to feature-developer (me) with blocking_issues from test-runner - DO NOT ask user, automatically iterate",
-    "iteration_loop": "test-runner FAIL → feature-developer fixes issues → test-runner validates again → repeat until PASS",
-    "do_not_ask_user": "Orchestrator should automatically loop on test failures without user intervention",
-    "final_step": "After test + review + security all PASS → present to user for authorization → deploy branch-manager"
   }
 }
 ```
