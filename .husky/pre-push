@@ -4,20 +4,13 @@
 #
 # Behavior:
 #   - Feature branches: No interference (exits immediately)
-#   - Main branch with VERSION_BUMP=1: Creates release and pushes with tags
+#   - Main branch with VERSION_BUMP=1: Creates release, then lets push proceed
 #   - Main branch with VERSION_BUMP=0: Skips version check entirely
 #   - Main branch without env var: Fails with instructions (automation-friendly)
 #
 # For Claude Code agents:
-#   - Use VERSION_BUMP=1 to auto-release before pushing
-#   - Use VERSION_BUMP=0 to push without version bump (e.g., docs-only changes)
-
-# Prevent recursive hook execution
-# When we call git push from within this hook, it would trigger pre-push again
-if [ "$_VERSION_BUMP_HOOK_RUNNING" = "1" ]; then
-  exit 0
-fi
-export _VERSION_BUMP_HOOK_RUNNING=1
+#   - Use: VERSION_BUMP=1 git push --follow-tags
+#   - Or to skip: VERSION_BUMP=0 git push
 
 # Get the branch being pushed
 branch=$(git rev-parse --abbrev-ref HEAD)
@@ -27,12 +20,8 @@ if [ "$branch" != "main" ]; then
   exit 0
 fi
 
-# Get remote being pushed to (for the push command later)
-remote=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null | cut -d/ -f1)
-remote=${remote:-origin}
-
 # VERSION_BUMP=1: Auto-release mode
-# Creates version bump commit, tags it, and pushes everything including tags
+# Creates version bump commit and tag, then lets the push proceed
 if [ "$VERSION_BUMP" = "1" ]; then
   echo "══════════════════════════════════════════════════════════"
   echo "VERSION_BUMP=1: Running automated release..."
@@ -43,33 +32,18 @@ if [ "$VERSION_BUMP" = "1" ]; then
     echo ""
     echo "❌ RELEASE FAILED"
     echo "   npm run release exited with error"
-    echo "   Fix the issue and retry: VERSION_BUMP=1 git push"
-    exit 1
-  fi
-
-  echo ""
-  echo "✅ Release commit and tag created locally"
-  echo "   Pushing to $remote with --follow-tags..."
-  echo ""
-
-  # Push with follow-tags to include the new release commit and tag
-  if ! git push --follow-tags "$remote" "$branch"; then
-    echo ""
-    echo "❌ PUSH FAILED"
-    echo "   Release was created locally but push failed"
-    echo "   Retry with: git push --follow-tags $remote $branch"
+    echo "   Fix the issue and retry: VERSION_BUMP=1 git push --follow-tags"
     exit 1
   fi
 
   echo ""
   echo "══════════════════════════════════════════════════════════"
-  echo "✅ RELEASE COMPLETE"
-  echo "   Version bumped, tagged, and pushed to $remote/$branch"
+  echo "✅ Release created! Pushing now..."
   echo "══════════════════════════════════════════════════════════"
 
-  # Exit 1 to abort the original push (we already pushed everything)
-  # This prevents a duplicate/redundant push attempt
-  exit 1
+  # Exit 0 to let the original push proceed
+  # IMPORTANT: User must use --follow-tags for the tag to be pushed
+  exit 0
 fi
 
 # VERSION_BUMP=0: Explicit skip mode
@@ -97,10 +71,10 @@ if [ -z "$latest_tag" ]; then
   echo ""
   echo "  1. Create first release (recommended for new projects):"
   echo "     npm run release -- --first-release"
-  echo "     git push --follow-tags"
+  echo "     VERSION_BUMP=0 git push --follow-tags"
   echo ""
   echo "  2. Auto-release with version bump:"
-  echo "     VERSION_BUMP=1 git push"
+  echo "     VERSION_BUMP=1 git push --follow-tags"
   echo ""
   echo "  3. Skip version check (push without tag):"
   echo "     VERSION_BUMP=0 git push"
@@ -127,15 +101,15 @@ if [ "$new_commits" -gt 0 ]; then
   echo "Options:"
   echo ""
   echo "  1. Auto-release (bumps version based on conventional commits):"
-  echo "     VERSION_BUMP=1 git push"
+  echo "     VERSION_BUMP=1 git push --follow-tags"
   echo ""
-  echo "  2. Skip version bump (for docs/config changes):"
+  echo "  2. Skip version bump (for docs/only changes):"
   echo "     VERSION_BUMP=0 git push"
   echo ""
   echo "  3. Manual release with dry-run preview:"
   echo "     npm run release:dry-run   # Preview changes"
   echo "     npm run release           # Create release"
-  echo "     git push --follow-tags    # Push with tag"
+  echo "     VERSION_BUMP=0 git push --follow-tags"
   echo ""
   exit 1
 fi
