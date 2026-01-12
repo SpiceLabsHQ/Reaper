@@ -458,125 +458,59 @@ TEST_EXIT=$?
 
 ## REQUIRED JSON OUTPUT STRUCTURE
 
-**Return a single JSON object with ALL information - do not write separate files:**
+**Return a focused JSON object with authoritative test metrics for quality gate decisions.**
 
 ```json
 {
-  "pre_work_validation": {
-    "task_id": "PROJ-123",
-    "working_dir": "./trees/PROJ-123-test",
-    "description_source": "jira_ticket|markdown|file",
-    "test_command_provided": "npm test -- --coverage",
-    "lint_command_provided": "npm run lint",
-    "test_mode": "full",
-    "validation_passed": true,
-    "exit_reason": null
+  "gate_status": "PASS",
+  "task_id": "PROJ-123",
+  "working_dir": "./trees/PROJ-123-test",
+  "summary": "147 passed, 0 failed, 2 skipped, 82.5% coverage, lint clean",
+  "tests": {
+    "passed": 147,
+    "failed": 0,
+    "skipped": 2,
+    "total": 149
   },
-  "pre_execution_validation": {
-    "nested_directories_found": ["./trees/feature-branch/tests/", ".backup/unit/"],
-    "nested_directory_warnings": [
-      "Found 42 test files in ./trees/feature-branch/ - recommend excluding with --testPathIgnorePatterns",
-      "Found 15 test files in .backup/ directory - may cause duplicate test execution"
-    ],
-    "test_discovery": {
-      "total_test_files": 1182,
-      "test_paths_sample": [
-        "tests/unit/auth.test.js",
-        "tests/unit/api.test.js",
-        "tests/unit/validation.test.js",
-        "... (showing first 20 of 1182)"
-      ],
-      "discovery_command": "npx jest --listTests --testPathIgnorePatterns='trees|backup'"
-    },
-    "potential_misplacements": [
-      {
-        "path": "tests/unit/integration.test.js",
-        "reason": "filename contains 'integration' but located in unit directory",
-        "severity": "warning",
-        "recommendation": "Consider moving to tests/integration/ directory"
-      }
-    ],
-    "exclude_patterns_applied": ["**/trees/**", "**/*backup*/**", "**/node_modules/**"],
-    "validation_warnings": []
+  "coverage": {
+    "percentage": 82.5,
+    "threshold_met": true
   },
-  "agent_metadata": {
-    "agent_type": "test-runner",
-    "agent_version": "1.0.0",
-    "execution_id": "unique-identifier",
-    "task_id": "[TASK_ID]",
-    "working_dir": "./trees/[TASK_ID]-description",
-    "timestamp": "ISO-8601"
+  "lint": {
+    "errors": 0,
+    "warnings": 3
   },
-  "narrative_report": {
-    "summary": "Test execution completed for [component]",
-    "details": "📋 TEST EXECUTION SUMMARY:\n  Total Tests: 147\n  Passed: 145 ✅\n  Failed: 2 ❌\n  Coverage: 82.5%\n  Linting: Clean\n\n🔍 ANALYSIS:\n  Failed Tests: [test names]\n  Coverage Gaps: [uncovered areas]\n  Quality Issues: [lint warnings]",
-    "recommendations": "Address failed tests before proceeding to code review"
-  },
-  "test_metrics": {
-    "tests_total": 147,
-    "tests_passed": 145,
-    "tests_failed": 2,
-    "tests_skipped": 0,
-    "tests_errored": 0,
-    "test_exit_code": 1,
-    "test_command_provided": "npm test -- --coverage",
-    "test_command_executed": "npm test -- --coverage --testPathIgnorePatterns='trees|backup'",
-    "failed_test_details": [
-      {"name": "authentication.test.js > should handle invalid tokens", "error": "Expected false but received true"},
-      {"name": "validation.test.js > should reject empty input", "error": "AssertionError: expected null to be defined"}
-    ]
-  },
-  "coverage_metrics": {
-    "coverage_percentage": 82.5,
-    "lines": 82.5,
-    "branches": 78.3,
-    "functions": 85.1,
-    "statements": 81.9,
-    "meets_80_requirement": true,
-    "coverage_gaps": [
-      {"file": "src/auth.js", "lines": "45-52", "reason": "error handling paths"},
-      {"file": "src/validator.js", "lines": "23-25", "reason": "edge case validation"}
-    ]
-  },
-  "lint_metrics": {
-    "lint_errors": 0,
-    "lint_warnings": 3,
-    "lint_exit_code": 0,
-    "lint_command_provided": "npm run lint",
-    "lint_command_executed": "npm run lint",
-    "lint_skipped": false,
-    "lint_issues": [
-      {"file": "src/utils.js", "line": 15, "rule": "no-unused-vars", "severity": "warning"}
-    ]
-  },
-  "dependency_metrics": {
-    "install_exit_code": 0,
-    "install_success": true,
-    "vulnerabilities_found": 0,
-    "outdated_packages": 2
-  },
-  "validation_status": {
-    "all_checks_passed": false,
-    "blocking_issues": ["2 tests failed"],
-    "warnings": ["3 lint warnings", "2 outdated packages"],
-    "ready_for_merge": false,
-    "requires_iteration": true
-  },
-  "evidence": {
-    "commands_executed": [
-      {"command": "npm install", "exit_code": 0, "timestamp": "10:29:30"},
-      {"command": "npm run lint", "exit_code": 0, "timestamp": "10:30:00"},
-      {"command": "npm test -- --coverage", "exit_code": 1, "timestamp": "10:30:15"}
-    ]
-  },
-  "orchestrator_handoff": {
-    "priority_files_for_review": ["src/auth.js", "src/validator.js"],
-    "test_coverage_concerns": ["error handling paths", "edge case validation"],
-    "performance_notes": ["slow test: authentication.test.js (2.3s)"],
-    "integration_test_status": "required"
-  }
+  "blocking_issues": []
 }
 ```
+
+**Field definitions:**
+- `gate_status`: "PASS" or "FAIL" - orchestrator uses this for quality gate decisions
+- `task_id`: The task identifier provided in your prompt
+- `working_dir`: Where tests were executed
+- `summary`: One-line human-readable summary
+- `tests`: Test counts including skipped (important for detecting test manipulation)
+- `coverage`: Line coverage percentage and whether 80% threshold met
+- `lint`: Error and warning counts
+- `blocking_issues`: Array of issues that must be fixed (empty if gate passes)
+
+**When gate_status is "FAIL", include details in blocking_issues:**
+```json
+{
+  "gate_status": "FAIL",
+  "blocking_issues": [
+    "2 tests failed: auth.test.js > should validate token, user.test.js > should hash password",
+    "Coverage 72.3% below 80% threshold"
+  ]
+}
+```
+
+**Do NOT include:**
+- Pre-execution validation details
+- Command evidence/audit trails
+- Metadata like timestamps, versions, execution IDs
+- Verbose coverage gap analysis
+- Recommendations or handoff notes
 
 ## Data Extraction Guidelines
 

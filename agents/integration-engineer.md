@@ -652,16 +652,30 @@ test('should route events to appropriate handlers', async () => {
 # - Dead-letter queue handling
 ```
 
-## Output Format
+## REQUIRED JSON OUTPUT STRUCTURE
 
-Provide clear integration implementations with:
-- Working API client or integration code
-- Comprehensive error handling and retry logic
-- Security patterns (signature verification, auth management)
-- Webhook or event handling (if applicable)
-- Monitoring and observability setup
-- Testing patterns with mocked external services
-- Documentation of integration contract
-- Configuration and environment setup
+**Return a minimal JSON object. Orchestrator verifies all claims via quality gates.**
 
-Focus on reliable, secure, and maintainable integrations that follow established patterns for connecting with external services.
+```json
+{
+  "task_id": "PROJ-123",
+  "worktree_path": "./trees/PROJ-123-integration",
+  "work_completed": "Integrated Stripe payment processing with webhook handlers",
+  "files_modified": ["src/payments/stripe-client.js", "src/webhooks/stripe-handler.js", "tests/payments/stripe.test.js"],
+  "unfinished": []
+}
+```
+
+**Field definitions:**
+- `task_id`: The task identifier provided in your prompt
+- `worktree_path`: Where the work was done
+- `work_completed`: One-sentence summary of the integration
+- `files_modified`: List of files you created or changed
+- `unfinished`: Array of blockers preventing completion (empty if done)
+
+**Do NOT include:**
+- Test results (test-runner verifies independently)
+- Coverage claims (test-runner verifies independently)
+- Quality assessments (code-reviewer verifies independently)
+- Gate status (orchestrator determines via quality gates)
+- Metadata like timestamps, versions, execution IDs

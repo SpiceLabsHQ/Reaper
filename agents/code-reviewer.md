@@ -178,134 +178,47 @@ rm -f .tsbuildinfo *.tsbuildinfo 2>/dev/null || true
 
 ## REQUIRED JSON OUTPUT STRUCTURE
 
-**Return a single JSON object with ALL information - do not write separate files:**
+**Return a focused JSON object for quality gate decisions.**
 
 ```json
 {
-  "pre_work_validation": {
-    "task_id": "PROJ-123",
-    "working_dir": "./trees/PROJ-123-review",
-    "plan_source": "plan_file|jira|beads|inline",
-    "test_runner_results_received": true,
-    "validation_passed": true,
-    "exit_reason": null
-  },
-  "agent_metadata": {
-    "agent_type": "code-reviewer",
-    "agent_version": "2.0.0",
-    "execution_id": "unique-identifier",
-    "task_id": "PROJ-123",
-    "working_dir": "./trees/PROJ-123-review",
-    "timestamp": "ISO-8601"
-  },
-  "narrative_report": {
-    "summary": "Code review completed: [overall assessment]",
-    "details": "📋 CODE REVIEW SUMMARY:\n  Files Reviewed: [count]\n  Quality Score: [score]/10\n  SOLID Compliance: [assessment]\n  Plan Adherence: [match status]\n\n🔍 KEY FINDINGS:\n  Critical Issues: [list]\n  Quality Concerns: [list]\n  Test Quality Issues: [list]\n\n✅ STRENGTHS:\n  [positive findings]\n\n❌ IMPROVEMENTS NEEDED:\n  [areas for improvement]",
-    "recommendations": "Address critical issues before merge"
-  },
-  "plan_validation": {
-    "plan_source": "plan_file|jira|beads|inline",
-    "plan_content_summary": "Brief summary of what was planned",
-    "changes_match_plan": true,
-    "scope_deviations": [
-      {"type": "missing", "description": "Planned validation logic not implemented"},
-      {"type": "extra", "description": "Unplanned refactoring of utils.js"}
-    ],
-    "over_engineering_concerns": [
-      {"file": "src/factory.js", "description": "Factory pattern unnecessary for single implementation"}
-    ]
-  },
-  "test_runner_input": {
-    "test_exit_code": 0,
-    "coverage_percentage": 82.5,
-    "lint_exit_code": 0,
-    "tests_total": 147,
-    "tests_passed": 147,
-    "tests_failed": 0,
-    "summary": "Received and trusted from test-runner - NOT re-executed"
-  },
-  "review_analysis": {
-    "files_reviewed": ["src/auth.js", "src/validator.js", "tests/auth.test.js"],
-    "total_files": 12,
-    "lines_of_code_reviewed": 1247,
-    "complexity_score": 6.2,
-    "maintainability_index": 78.5
-  },
-  "compilation_results": {
-    "compilation_status": "PASS|FAIL",
-    "build_exit_code": 0,
-    "compilation_errors": [],
-    "compilation_warnings": ["Unused import in src/utils.js:5"],
-    "type_check_status": "PASS|FAIL",
-    "type_errors": []
-  },
-  "quality_assessment": {
-    "solid_principles": {
-      "single_responsibility": {"status": "PASS|FAIL", "violations": []},
-      "open_closed": {"status": "PASS|FAIL", "violations": []},
-      "liskov_substitution": {"status": "PASS|FAIL", "violations": []},
-      "interface_segregation": {"status": "PASS|FAIL", "violations": []},
-      "dependency_inversion": {"status": "PASS|FAIL", "violations": []}
-    },
-    "dry_violations": [
-      {"files": ["src/utils.js", "src/helpers.js"], "description": "Duplicate validation logic"}
-    ],
-    "code_smells": [
-      {"type": "long_method", "file": "src/processor.js", "line": 23, "severity": "medium", "description": "Method processData has 147 lines"},
-      {"type": "god_class", "file": "src/manager.js", "severity": "high", "description": "UserManager handles too many responsibilities"}
-    ],
-    "naming_issues": [
-      {"file": "src/utils.js", "line": 15, "current": "d", "suggested": "dateFormatter"}
-    ],
-    "error_handling_issues": [
-      {"file": "src/api.js", "line": 45, "description": "Empty catch block swallows errors"}
-    ],
-    "performance_concerns": [
-      {"type": "n_plus_one", "file": "src/queries.js", "line": 45, "description": "Potential N+1 query in getUsers()"},
-      {"type": "inefficient_algorithm", "file": "src/sort.js", "line": 12, "description": "O(n²) algorithm could be optimized"}
-    ]
-  },
-  "test_quality_review": {
-    "flaky_patterns_found": [
-      {"file": "tests/async.test.js", "line": 23, "pattern": "timing_dependent", "description": "Uses setTimeout with hardcoded delay"},
-      {"file": "tests/random.test.js", "line": 45, "pattern": "random_data", "description": "Uses Math.random() without seed"}
-    ],
-    "overkill_tests_found": [
-      {"file": "tests/model.test.js", "line": 12, "description": "Tests getter/setter methods that have no logic"},
-      {"file": "tests/framework.test.js", "line": 5, "description": "Tests framework behavior, not application code"}
-    ],
-    "missing_edge_cases": [
-      {"based_on_coverage_gap": "src/auth.js:45-52", "suggested_test": "Error handling for expired tokens"},
-      {"based_on_coverage_gap": "src/validator.js:23-25", "suggested_test": "Empty string validation"}
-    ],
-    "mock_concerns": [
-      {"file": "tests/service.test.js", "description": "Over-mocking: mocks internal implementation details rather than boundaries"}
-    ]
-  },
-  "validation_status": {
-    "all_checks_passed": false,
-    "blocking_issues": [
-      "1 high-severity code smell",
-      "Plan deviation: missing planned validation logic"
-    ],
-    "warnings": [
-      "3 compilation warnings",
-      "2 flaky test patterns",
-      "2 performance concerns"
-    ],
-    "ready_for_merge": false,
-    "requires_iteration": true
-  },
-  "evidence": {
-    "commands_executed": [
-      {"command": "npm run build", "exit_code": 0, "timestamp": "10:30:15"},
-      {"command": "npm run type-check", "exit_code": 0, "timestamp": "10:30:30"}
-    ],
-    "verification_methods": ["compilation_test", "static_analysis", "manual_code_review"],
-    "manual_review_areas": ["complex_business_logic", "test_quality"]
-  }
+  "gate_status": "PASS",
+  "task_id": "PROJ-123",
+  "working_dir": "./trees/PROJ-123-review",
+  "summary": "Code follows SOLID principles, matches plan, no critical issues",
+  "blocking_issues": []
 }
 ```
+
+**Field definitions:**
+- `gate_status`: "PASS" or "FAIL" - orchestrator uses this for quality gate decisions
+- `task_id`: The task identifier provided in your prompt
+- `working_dir`: Where the code was reviewed
+- `summary`: One-line human-readable summary of review findings
+- `blocking_issues`: Array of issues that must be fixed (empty if gate passes)
+
+**When gate_status is "FAIL", include specific issues:**
+```json
+{
+  "gate_status": "FAIL",
+  "task_id": "PROJ-123",
+  "working_dir": "./trees/PROJ-123-review",
+  "summary": "Found SOLID violations and plan deviation",
+  "blocking_issues": [
+    "SRP violation: UserManager in src/manager.js handles auth, validation, and persistence",
+    "Plan deviation: Missing input validation for email field (was in acceptance criteria)",
+    "God class: src/processor.js has 147-line method that should be extracted"
+  ]
+}
+```
+
+**Do NOT include:**
+- Pre-work validation details
+- Test runner input echo (you already received it)
+- Command evidence/audit trails
+- Metadata like timestamps, versions, execution IDs
+- Verbose quality assessment breakdowns
+- Recommendations or next steps
 
 ## Key Principles
 

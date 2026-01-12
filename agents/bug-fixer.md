@@ -397,64 +397,31 @@ fi
 
 ## REQUIRED JSON OUTPUT STRUCTURE
 
-**Return a single JSON object with ALL information - do not write separate report files:**
+**Return a minimal JSON object. Orchestrator verifies all claims via quality gates.**
 
 ```json
 {
-  "pre_work_validation": {
-    "task_id": "PROJ-123",
-    "worktree_path": "./trees/PROJ-123-fix",
-    "description_source": "ticket|markdown|file",
-    "validation_passed": true,
-    "exit_reason": null
-  },
-  "agent_metadata": {
-    "agent_type": "bug-fixer",
-    "agent_version": "1.0.0",
-    "execution_id": "unique-identifier",
-    "task_id": "[TASK_ID]",
-    "worktree_path": "./trees/[TASK_ID]-fix",
-    "timestamp": "ISO-8601"
-  },
-  "narrative_report": {
-    "summary": "Bug fix completed: [brief description]",
-    "details": "🐛 BUG FIX SUMMARY:\n  Root Cause: [IDENTIFIED_CAUSE]\n  Fix Type: [MINIMAL_FIX_DESCRIPTION]\n  TDD Phases: RED (reproduction) → GREEN (fix) → BLUE (refactor)\n\n📊 DEVELOPMENT STATUS:\n  Files Modified: [COUNT] files\n  Bug Reproduction Test: Added and verified\n  Development Tests: Passing locally (for TDD feedback only)\n\n⚠️ CRITICAL - ORCHESTRATOR NEXT STEPS:\n  1. Deploy test-runner agent for AUTHORITATIVE test validation\n  2. Do NOT use my development test status for quality gates\n  3. Enforce gates through agent delegation (see reaper:takeoff Section 3.2)\n  4. Return to me if test-runner finds issues",
-    "recommendations": "Ready for test-runner validation. Follow quality gate protocol: test-runner → code-reviewer → security-auditor → user authorization → branch-manager"
-  },
-  "bug_analysis": {
-    "description": "detailed bug description",
-    "severity": "critical|high|medium|low",
-    "root_cause": "primary cause identified",
-    "failure_point": {
-      "file": "path/to/file.js",
-      "line": 42,
-      "issue": "specific problem"
-    },
-    "affected_components": ["component-list"]
-  },
-  "fix_implementation": {
-    "files_modified": ["src/auth.js", "tests/auth.test.js"],
-    "lines_changed": "+15/-3",
-    "breaking_changes": false,
-    "tdd_phases_completed": ["RED", "GREEN", "BLUE"]
-  },
-  "validation_status": {
-    "implementation_complete": true,
-    "tests_passing_during_development": true,
-    "ready_for_quality_gates": true,
-    "blocking_issues": [],
-    "notes": "Bug fix implemented and verified locally. Ready for independent test-runner validation."
-  },
-  "orchestrator_handoff": {
-    "files_for_testing": ["src/auth.js", "src/user-validator.js"],
-    "test_strategy_needed": "unit and regression",
-    "complexity_areas": ["null handling", "edge cases"],
-    "security_considerations": ["input validation", "error handling"],
-    "development_test_status": "passing locally (not authoritative)",
-    "requires_independent_validation": true
-  }
+  "task_id": "PROJ-123",
+  "worktree_path": "./trees/PROJ-123-fix",
+  "work_completed": "Fixed email validation for plus signs in regex",
+  "files_modified": ["src/auth.js", "tests/auth.test.js"],
+  "unfinished": []
 }
 ```
+
+**Field definitions:**
+- `task_id`: The task identifier provided in your prompt
+- `worktree_path`: Where the work was done
+- `work_completed`: One-sentence summary of the fix
+- `files_modified`: List of files you created or changed
+- `unfinished`: Array of blockers preventing completion (empty if done)
+
+**Do NOT include:**
+- Test results (test-runner verifies independently)
+- Coverage claims (test-runner verifies independently)
+- Quality assessments (code-reviewer verifies independently)
+- Gate status (orchestrator determines via quality gates)
+- Metadata like timestamps, versions, execution IDs
 
 ## Validation Checklist
 

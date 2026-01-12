@@ -383,57 +383,31 @@ fi
 
 ## REQUIRED JSON OUTPUT STRUCTURE
 
-**Return a single JSON object with ALL information - do not write separate report files:**
+**Return a minimal JSON object. Orchestrator verifies all claims via quality gates.**
 
 ```json
 {
-  "pre_work_validation": {
-    "task_id": "PROJ-123",
-    "worktree_path": "./trees/PROJ-123-implementation",
-    "description_source": "ticket|markdown|file",
-    "validation_passed": true,
-    "exit_reason": null
-  },
-  "agent_metadata": {
-    "agent_type": "feature-developer",
-    "agent_version": "1.0.0",
-    "execution_id": "unique-identifier",
-    "task_id": "${TASK_ID}",
-    "worktree_path": "./trees/${TASK_ID}-implementation",
-    "timestamp": "ISO-8601"
-  },
-  "narrative_report": {
-    "summary": "Feature implementation completed: [brief description]",
-    "details": "🚀 FEATURE IMPLEMENTATION SUMMARY:\n  Feature: [FEATURE_NAME]\n  TDD Phases: RED (tests) → GREEN (implementation) → BLUE (refactor)\n  SOLID Principles: Applied throughout\n\n📊 DEVELOPMENT STATUS:\n  Files Modified: [COUNT] files\n  Integration Points: [INTEGRATION_POINTS]\n  Breaking Changes: [YES/NO]\n  Development Tests: Passing locally (for TDD feedback only)\n\n⚠️ CRITICAL - ORCHESTRATOR NEXT STEPS:\n  1. Deploy test-runner agent for AUTHORITATIVE test validation\n  2. Do NOT use my development test status for quality gates\n  3. Enforce gates through agent delegation (see reaper:takeoff Section 3.2)\n  4. Return to me if test-runner finds issues",
-    "recommendations": "Ready for test-runner validation. Follow quality gate protocol: test-runner → code-reviewer → security-auditor → user authorization → branch-manager"
-  },
-  "feature_implementation": {
-    "feature_name": "descriptive feature name",
-    "feature_type": "new|enhancement|modification",
-    "acceptance_criteria_met": true,
-    "files_modified": ["src/user-profile.js", "tests/user-profile.test.js"],
-    "integration_points": ["authentication", "database", "api"],
-    "breaking_changes": false,
-    "tdd_phases_completed": ["RED", "GREEN", "BLUE"],
-    "solid_principles_applied": ["SRP", "OCP", "LSP", "ISP", "DIP"]
-  },
-  "validation_status": {
-    "implementation_complete": true,
-    "tests_passing_during_development": true,
-    "ready_for_quality_gates": true,
-    "blocking_issues": [],
-    "notes": "Code written and verified locally. Ready for independent test-runner validation."
-  },
-  "orchestrator_handoff": {
-    "files_for_testing": ["src/user-profile.js", "src/profile-validator.js"],
-    "test_strategy_needed": "unit and integration",
-    "complexity_areas": ["validation logic", "database integration"],
-    "security_considerations": ["input validation", "data sanitization"],
-    "development_test_status": "passing locally (not authoritative)",
-    "requires_independent_validation": true
-  }
+  "task_id": "PROJ-123",
+  "worktree_path": "./trees/PROJ-123-implementation",
+  "work_completed": "Implemented OAuth2 authentication with Google and GitHub providers",
+  "files_modified": ["src/auth/oauth.js", "src/auth/providers.js", "tests/auth/oauth.test.js"],
+  "unfinished": []
 }
 ```
+
+**Field definitions:**
+- `task_id`: The task identifier provided in your prompt
+- `worktree_path`: Where the work was done
+- `work_completed`: One-sentence summary of the feature
+- `files_modified`: List of files you created or changed
+- `unfinished`: Array of blockers preventing completion (empty if done)
+
+**Do NOT include:**
+- Test results (test-runner verifies independently)
+- Coverage claims (test-runner verifies independently)
+- Quality assessments (code-reviewer verifies independently)
+- Gate status (orchestrator determines via quality gates)
+- Metadata like timestamps, versions, execution IDs
 
 ## Agent Completion Protocol
 

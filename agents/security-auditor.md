@@ -475,177 +475,47 @@ rm -f npm-audit.json pip-audit.json safety-report.json
 
 ## REQUIRED JSON OUTPUT STRUCTURE
 
-**Return a single JSON object with ALL information - do not write separate files:**
+**Return a focused JSON object for security gate decisions.**
 
 ```json
 {
-  "pre_work_validation": {
-    "task_id": "PROJ-123",
-    "working_dir": "./trees/PROJ-123-security",
-    "plan_source": "plan_file|jira|beads|inline",
-    "validation_passed": true,
-    "exit_reason": null
-  },
-  "plan_validation": {
-    "plan_source": "plan_file|jira|beads|inline",
-    "plan_content_summary": "Brief summary of what was planned",
-    "security_relevant_changes": [
-      "New authentication endpoint",
-      "Database query modifications",
-      "User input handling changes"
-    ]
-  },
-  "test_execution": {
-    "tests_run": false,
-    "reason": "No security investigation required",
-    "tests_executed": [],
-    "results": null
-  },
-  "agent_metadata": {
-    "agent_type": "security-auditor",
-    "agent_version": "2.0.0",
-    "execution_id": "unique-identifier",
-    "task_id": "PROJ-123",
-    "working_dir": "./trees/PROJ-123-security",
-    "timestamp": "ISO-8601"
-  },
-  "narrative_report": {
-    "summary": "Security audit completed: [overall risk level]",
-    "details": "🔒 SECURITY AUDIT SUMMARY:\n  Risk Level: [CRITICAL|HIGH|MEDIUM|LOW]\n  Critical Issues: [count]\n  High Issues: [count]\n  Tool Execution: [success rate]\n\n🔍 VERIFIED FINDINGS:\n  Secrets Found: [verified count]\n  Vulnerabilities: [by severity]\n  OWASP Top 10: [compliance status]\n\n⚠️ IMMEDIATE ACTIONS:\n  [critical fixes needed]\n\n📊 TOOL EXECUTION STATUS:\n  Trivy: [exit code]\n  Semgrep: [exit code]\n  TruffleHog: [exit code]",
-    "recommendations": "Address critical and high severity issues before release"
-  },
-  "security_assessment": {
-    "overall_risk_level": "CRITICAL|HIGH|MEDIUM|LOW",
-    "compliance_status": "COMPLIANT|NON_COMPLIANT|PARTIAL",
-    "audit_scope": ["dependencies", "static_analysis", "secrets", "infrastructure"],
-    "tools_executed": ["trivy", "semgrep", "trufflehog"],
-    "scan_coverage": "complete|partial|limited"
-  },
-  "tool_execution_status": {
-    "trivy_fs_exit_code": 0,
-    "semgrep_owasp_exit_code": 1,
-    "trufflehog_exit_code": 0,
-    "tool_failures": 0,
-    "cross_validation_enabled": true,
-    "execution_evidence": "all_tools_ran_successfully"
-  },
-  "vulnerability_findings": {
-    "critical": [
-      {
-        "type": "hardcoded_secret",
-        "file": "src/config.js",
-        "line": 15,
-        "description": "AWS access key hardcoded",
-        "verification_status": "VERIFIED_ACTIVE",
-        "remediation": "Revoke key, use environment variables",
-        "cvss_score": 9.8
-      }
-    ],
-    "high": [
-      {
-        "type": "sql_injection",
-        "file": "src/db/queries.js",
-        "line": 28,
-        "description": "Potential SQL injection in user query",
-        "verification_status": "VERIFIED",
-        "remediation": "Use parameterized queries",
-        "cvss_score": 8.1
-      }
-    ],
-    "medium": [],
-    "low": []
-  },
-  "dependency_security": {
-    "total_packages_scanned": 147,
-    "vulnerable_packages": 5,
-    "critical_cves": [
-      {
-        "package": "lodash",
-        "version": "4.17.20",
-        "cve": "CVE-2021-23337",
-        "cvss": 9.8,
-        "fix_version": "4.17.21"
-      }
-    ],
-    "outdated_packages": 12,
-    "license_issues": []
-  },
-  "secrets_analysis": {
-    "verified_active_secrets": 1,
-    "potential_secrets": 3,
-    "false_positives_filtered": 12,
-    "secret_types_found": ["aws_access_key", "database_password"],
-    "verification_methods": ["api_test", "pattern_match"]
-  },
-  "owasp_top10_assessment": {
-    "a01_broken_access_control": {"status": "PASS", "findings": 0},
-    "a02_cryptographic_failures": {"status": "FAIL", "findings": 2, "details": ["weak MD5 usage", "hardcoded encryption key"]},
-    "a03_injection": {"status": "FAIL", "findings": 1, "details": ["SQL injection in queries.js"]},
-    "a04_insecure_design": {"status": "PASS", "findings": 0},
-    "a05_security_misconfiguration": {"status": "WARN", "findings": 3},
-    "a06_vulnerable_components": {"status": "FAIL", "findings": 5},
-    "a07_identification_auth_failures": {"status": "PASS", "findings": 0},
-    "a08_software_data_integrity": {"status": "PASS", "findings": 0},
-    "a09_security_logging_monitoring": {"status": "WARN", "findings": 2},
-    "a10_server_side_request_forgery": {"status": "PASS", "findings": 0}
-  },
-  "infrastructure_security": {
-    "container_vulnerabilities": [
-      {
-        "image": "node:14-alpine",
-        "critical": 2,
-        "high": 5,
-        "recommendation": "upgrade to node:18-alpine"
-      }
-    ],
-    "configuration_issues": [
-      {"type": "missing_security_headers", "files": ["nginx.conf"], "severity": "medium"},
-      {"type": "debug_mode_enabled", "files": ["app.js"], "severity": "low"}
-    ]
-  },
-  "validation_status": {
-    "all_checks_passed": false,
-    "blocking_issues": [
-      "1 verified active secret",
-      "1 critical SQL injection vulnerability",
-      "5 critical dependency vulnerabilities"
-    ],
-    "warnings": [
-      "3 security misconfigurations",
-      "2 logging/monitoring gaps"
-    ],
-    "ready_for_merge": false,
-    "requires_iteration": true
-  },
-  "evidence": {
-    "commands_executed": [
-      {"command": "trivy fs .", "exit_code": 0, "timestamp": "10:30:15"},
-      {"command": "semgrep --config=security", "exit_code": 1, "timestamp": "10:30:30"},
-      {"command": "trufflehog git file://.", "exit_code": 0, "timestamp": "10:30:45"}
-    ],
-    "verification_methods": ["static_analysis", "dependency_scan", "secret_detection"],
-    "cross_tool_validation": true,
-    "manual_verification": ["secret_activity_check", "vulnerability_reproduction"]
-  },
-  "remediation_plan": {
-    "immediate_actions": [
-      "Revoke exposed AWS credentials",
-      "Fix SQL injection in db/queries.js:28",
-      "Upgrade lodash to patch CVE-2021-23337"
-    ],
-    "before_release": [
-      "Upgrade all high-severity dependencies",
-      "Implement missing security headers",
-      "Replace MD5 with SHA-256"
-    ],
-    "next_sprint": [
-      "Update base container image",
-      "Implement comprehensive input validation",
-      "Add security logging and monitoring"
-    ]
-  }
+  "gate_status": "PASS",
+  "task_id": "PROJ-123",
+  "working_dir": "./trees/PROJ-123-security",
+  "summary": "No critical vulnerabilities, no hardcoded secrets, dependencies clean",
+  "blocking_issues": []
 }
 ```
+
+**Field definitions:**
+- `gate_status`: "PASS" or "FAIL" - orchestrator uses this for quality gate decisions
+- `task_id`: The task identifier provided in your prompt
+- `working_dir`: Where the security scan was performed
+- `summary`: One-line human-readable summary of security findings
+- `blocking_issues`: Array of security issues that must be fixed (empty if gate passes)
+
+**When gate_status is "FAIL", include specific security issues:**
+```json
+{
+  "gate_status": "FAIL",
+  "task_id": "PROJ-123",
+  "working_dir": "./trees/PROJ-123-security",
+  "summary": "Found hardcoded secret and SQL injection vulnerability",
+  "blocking_issues": [
+    "CRITICAL: Hardcoded AWS access key in src/config.js:15 - must be moved to environment variable",
+    "HIGH: SQL injection in src/db/queries.js:28 - use parameterized queries",
+    "HIGH: CVE-2021-23337 in lodash@4.17.20 - upgrade to 4.17.21"
+  ]
+}
+```
+
+**Do NOT include:**
+- Pre-work validation details
+- Full OWASP Top 10 assessment breakdown
+- Tool execution evidence/audit trails
+- Metadata like timestamps, versions, execution IDs
+- Remediation plans or recommendations
+- Dependency counts or package statistics
 
 
 ## Verification Standards

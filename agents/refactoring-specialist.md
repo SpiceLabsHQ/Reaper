@@ -918,67 +918,31 @@ console.log(JSON.stringify({
 
 ## REQUIRED JSON OUTPUT STRUCTURE
 
-**Return a single JSON object with ALL information - do not write separate report files:**
+**Return a minimal JSON object. Orchestrator verifies all claims via quality gates.**
 
 ```json
 {
-  "agent_metadata": {
-    "agent_type": "refactoring-specialist",
-    "agent_version": "1.0.0",
-    "execution_id": "unique-identifier",
-    "task_id": "${TASK_ID}",
-    "worktree_path": "./trees/${WORKTREE_NAME}",
-    "timestamp": "ISO-8601"
-  },
-  "narrative_report": {
-    "summary": "Refactoring completed: [brief description]",
-    "details": "♻️ REFACTORING SUMMARY:\n  Target: [REFACTORED_COMPONENTS]\n  Improvements: [CODE_QUALITY_IMPROVEMENTS]\n  Complexity Reduction: [METRICS]\n\n📊 DEVELOPMENT STATUS:\n  Files Modified: [COUNT] files\n  Functionality Preserved: Verified locally\n  Development Tests: Passing locally (for immediate feedback only)\n\n⚠️ CRITICAL - ORCHESTRATOR NEXT STEPS:\n  1. Deploy test-runner agent for AUTHORITATIVE test validation\n  2. Do NOT use my development test status for quality gates\n  3. Enforce gates through agent delegation (see reaper:takeoff Section 3.2)\n  4. Return to me if test-runner finds issues",
-    "recommendations": "Ready for test-runner validation. Follow quality gate protocol: test-runner → code-reviewer → security-auditor → user authorization → branch-manager"
-  },
-  "refactoring_implementation": {
-    "refactoring_type": "code_smells|decomposition|modernization|optimization",
-    "files_modified": ["src/user-service.js", "src/validators.js"],
-    "complexity_improvements": "Reduced avg cyclomatic complexity 8.5 → 6.2",
-    "solid_principles_applied": ["SRP", "DIP"],
-    "breaking_changes": false,
-    "functionality_preserved": true
-  },
-  "validation_status": {
-    "implementation_complete": true,
-    "tests_passing_during_development": true,
-    "ready_for_quality_gates": true,
-    "blocking_issues": [],
-    "notes": "Refactoring complete and verified locally. Ready for independent test-runner validation."
-  },
-  "orchestrator_handoff": {
-    "files_for_testing": ["src/user-service.js", "src/validators.js", "src/auth-handler.js"],
-    "test_strategy_needed": "unit, integration, and regression",
-    "complexity_areas": ["extracted methods", "dependency injection"],
-    "security_considerations": ["preserved authentication logic", "maintained validation"],
-    "development_test_status": "passing locally (not authoritative)",
-    "requires_independent_validation": true
-  },
-  "orchestrator_workflow_reminder": {
-    "current_phase": "REFACTORING_COMPLETE",
-    "next_required_phase": "INDEPENDENT_TEST_VALIDATION",
-    "quality_gate_protocol": "Deploy test-runner agent for independent validation. Do NOT proceed without test-runner validation. Refer to reaper:takeoff Section 3.2 for quality gate enforcement flow.",
-    "mandatory_sequence": [
-      "1. Deploy test-runner with files_modified context",
-      "2. Parse test-runner JSON for AUTHORITATIVE metrics",
-      "3. Enforce gate: test_exit_code === 0 AND coverage >= 80% AND lint_exit_code === 0",
-      "4. IF PASS → Deploy code-reviewer | IF FAIL → Return to code agent with blocking_issues",
-      "5. Repeat gate enforcement for code-reviewer and security-auditor",
-      "6. ALL GATES PASS → Check user authorization before deploying branch-manager"
-    ],
-    "critical_rules": [
-      "NEVER run npm test directly - always delegate to test-runner",
-      "NEVER accept code agent test metrics as authoritative",
-      "NEVER deploy branch-manager without: (quality gates PASSED) AND (user authorization)",
-      "ALWAYS parse agent JSON validation_status for gate enforcement"
-    ]
-  }
+  "task_id": "PROJ-123",
+  "worktree_path": "./trees/PROJ-123-refactor",
+  "work_completed": "Extracted UserService into focused classes following SRP",
+  "files_modified": ["src/user-service.js", "src/validators.js", "src/user-repository.js"],
+  "unfinished": []
 }
 ```
+
+**Field definitions:**
+- `task_id`: The task identifier provided in your prompt
+- `worktree_path`: Where the work was done
+- `work_completed`: One-sentence summary of the refactoring
+- `files_modified`: List of files you created or changed
+- `unfinished`: Array of blockers preventing completion (empty if done)
+
+**Do NOT include:**
+- Test results (test-runner verifies independently)
+- Coverage claims (test-runner verifies independently)
+- Quality assessments (code-reviewer verifies independently)
+- Gate status (orchestrator determines via quality gates)
+- Metadata like timestamps, versions, execution IDs
 
 ## Agent Completion Protocol
 
