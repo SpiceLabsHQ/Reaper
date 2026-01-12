@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.2.0](https://github.com/SpiceLabsHQ/Reaper/compare/v1.1.2...v1.2.0) (2026-01-12)
+
+
+### Features
+
+* **agents:** add Stop hooks for orchestration flow ([40ad9c3](https://github.com/SpiceLabsHQ/Reaper/commit/40ad9c36fed8f1bd9ed55136b9659eccdb9bcfcc))
+
+
+### Refactoring
+
+* **agents:** slim down JSON output to essential fields ([dfb4afb](https://github.com/SpiceLabsHQ/Reaper/commit/dfb4afb9e389117c5156f6153101c48b0ab7d611))
+
 ## [1.1.2](https://github.com/SpiceLabsHQ/Reaper/compare/v1.1.1...v1.1.2) (2026-01-12)
 
 
