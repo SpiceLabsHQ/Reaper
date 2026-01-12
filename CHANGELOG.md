@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.1](https://github.com/SpiceLabsHQ/Reaper/compare/v1.1.0...v1.1.1) (2026-01-12)
+
+
+### Bug Fixes
+
+* **release:** simplify pre-push hook to avoid exit code confusion ([de2e5a7](https://github.com/SpiceLabsHQ/Reaper/commit/de2e5a786b704409ced5b64b08088a34118a75a2))
+
 ## [1.1.0](https://github.com/SpiceLabsHQ/Reaper/compare/v1.0.0...v1.1.0) (2026-01-12)
 
 
