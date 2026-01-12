@@ -1,6 +1,6 @@
 {
   "name": "reaper",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "SPICE Labs development workflow automation with specialized agents, commands, and skills for TDD-driven development",
   "author": {
     "name": "Spice Labs",
@@ -8,5 +8,12 @@
   },
   "repository": "https://github.com/SpiceLabsHQ/Reaper",
   "license": "MIT",
-  "keywords": ["development", "workflow", "agents", "automation", "tdd", "spice"]
+  "keywords": [
+    "development",
+    "workflow",
+    "agents",
+    "automation",
+    "tdd",
+    "spice"
+  ]
 }

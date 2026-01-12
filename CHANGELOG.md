@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.0](https://github.com/SpiceLabsHQ/Reaper/compare/v1.0.0...v1.1.0) (2026-01-12)
+
+
+### Features
+
+* **release:** add automated semantic versioning with commit-and-tag-version ([b449185](https://github.com/SpiceLabsHQ/Reaper/commit/b449185d582c1c61d73118daa55cbeb26112f671))
+
 ## 1.0.0 (2026-01-12)
 
 
