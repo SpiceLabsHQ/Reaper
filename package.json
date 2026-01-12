@@ -5,7 +5,9 @@
   "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prepare": "husky"
+    "prepare": "husky",
+    "release": "commit-and-tag-version",
+    "release:dry-run": "commit-and-tag-version --dry-run"
   },
   "repository": {
     "type": "git",
@@ -22,6 +24,7 @@
   "devDependencies": {
     "@commitlint/cli": "^20.3.0",
     "@commitlint/config-conventional": "^20.3.0",
+    "commit-and-tag-version": "^12.6.1",
     "husky": "^9.1.7"
   }
 }

@@ -1,0 +1,26 @@
+{
+  "bumpFiles": [
+    {
+      "filename": "package.json",
+      "type": "json"
+    },
+    {
+      "filename": ".claude-plugin/plugin.json",
+      "type": "json"
+    }
+  ],
+  "tagPrefix": "v",
+  "commitUrlFormat": "https://github.com/SpiceLabsHQ/Reaper/commit/{{hash}}",
+  "compareUrlFormat": "https://github.com/SpiceLabsHQ/Reaper/compare/{{previousTag}}...{{currentTag}}",
+  "types": [
+    { "type": "feat", "section": "Features" },
+    { "type": "fix", "section": "Bug Fixes" },
+    { "type": "perf", "section": "Performance" },
+    { "type": "refactor", "section": "Refactoring" },
+    { "type": "docs", "section": "Documentation" },
+    { "type": "style", "section": "Styling" },
+    { "type": "test", "section": "Tests" },
+    { "type": "chore", "hidden": true },
+    { "type": "ci", "hidden": true }
+  ]
+}
