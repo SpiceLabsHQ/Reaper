@@ -14,19 +14,17 @@ When Claude removes a worktree while the shell's current working directory (CWD)
 
 ### The Fix
 
-The `worktree-cleanup.sh` script solves this by:
-
-1. Resolving the worktree path to absolute
-2. Finding the project root (parent of `./trees/`)
-3. **Changing to project root BEFORE any removal operations**
-4. Then safely removing the worktree
+**CRITICAL**: The `worktree-cleanup.sh` script runs in a **subshell**. Its internal `cd` does NOT affect Claude's shell session. You MUST `cd` to project root yourself BEFORE calling the script.
 
 ```bash
-# The critical fix in worktree-cleanup.sh
-PROJECT_ROOT=$(find_project_root "$WORKTREE_PATH")
-cd "$PROJECT_ROOT" || exit 1  # ← This is the key
-git worktree remove "$WORKTREE_PATH"
+# ✅ CORRECT: Use git rev-parse to reliably get project root, then chain with cleanup
+cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123 --delete-branch
+
+# ❌ WRONG: Script's internal cd only affects the subshell, not your session
+${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123 --delete-branch
 ```
+
+**Why this matters**: When you run a bash script, it executes in its own process. Any `cd` commands inside the script only affect that process. When the script exits, your shell session is still in the original (now deleted) directory.
 
 ## Script Reference
 
@@ -194,72 +192,31 @@ When removing a worktree with an associated feature branch, you MUST specify one
 
 **Examples:**
 ```bash
+# IMPORTANT: Always cd to project root first to avoid breaking the shell!
+# Use git rev-parse --show-toplevel to reliably get the repo root
+
 # After merging: delete the branch
-worktree-cleanup.sh ./trees/PROJ-123-auth --delete-branch
+cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./trees/PROJ-123-auth --delete-branch
 
 # Keep branch for later work
-worktree-cleanup.sh ./trees/PROJ-123-auth --keep-branch
+cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./trees/PROJ-123-auth --keep-branch
 
 # Preview what would happen
-worktree-cleanup.sh ./trees/PROJ-123-auth --delete-branch --dry-run
+cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./trees/PROJ-123-auth --delete-branch --dry-run
 
 # Force removal with uncommitted changes
-worktree-cleanup.sh ./trees/PROJ-123-auth --delete-branch --force
-```
-
-## Error Recovery
-
-### Shell Already Broken
-
-If Claude's shell is already in a broken state (CWD was deleted):
-
-```bash
-# Reset to home directory first
-cd ~
-
-# Then navigate to project
-cd /path/to/project
-
-# Clean up stale entries
-git worktree prune
-
-# List remaining worktrees
-git worktree list
-```
-
-### Worktree Won't Remove
-
-If standard removal fails:
-
-```bash
-# Try force removal
-git worktree remove ./trees/PROJ-123-auth --force
-
-# If that fails, manual cleanup
-rm -rf ./trees/PROJ-123-auth
-git worktree prune
-```
-
-### Branch Won't Delete
-
-If branch deletion fails:
-
-```bash
-# Check if fully merged
-git log develop..feature/PROJ-123-auth --oneline
-
-# Force delete if you're sure
-git branch -D feature/PROJ-123-auth
+cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./trees/PROJ-123-auth --delete-branch --force
 ```
 
 ## Best Practices
 
 ### For Claude/LLMs
 
-1. **Always use the cleanup script** - Never use `git worktree remove` directly
-2. **Check status before cleanup** - Run `worktree-status.sh` first
-3. **Use --dry-run** - Preview actions before executing
-4. **Commit before cleanup** - Avoid losing work
+1. **ALWAYS `cd` to project root first** - The cleanup script runs in a subshell; you must `cd` in your own session before calling it
+2. **Always use the cleanup script** - Never use `git worktree remove` directly
+3. **Check status before cleanup** - Run `worktree-status.sh` first
+4. **Use --dry-run** - Preview actions before executing
+5. **Commit before cleanup** - Avoid losing work
 
 ### For Humans
 

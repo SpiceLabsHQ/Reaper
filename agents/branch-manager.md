@@ -41,8 +41,9 @@ setup_worktree "[TASK_ID]" "[DESCRIPTION]"
 # Auto-detects and installs dependencies (npm/pip/bundle/go)
 # Returns JSON with environment status
 
-# Teardown with safety
-teardown_worktree "./trees/[TASK_ID]-[DESCRIPTION]"
+# Teardown with safety (ALWAYS cd to project root first!)
+cd "$(git rev-parse --show-toplevel)" && teardown_worktree "./trees/[TASK_ID]-[DESCRIPTION]"
+# - CRITICAL: Must cd to project root BEFORE cleanup to avoid breaking shell
 # - Backs up uncommitted changes to backup/[TIMESTAMP] branch
 # - Verifies merged status
 # - Removes worktree and optionally deletes branch
@@ -285,8 +286,8 @@ Ref: PROJ-123"
 git checkout feature/PROJ-123-review
 git merge feature/PROJ-123-auth --no-ff
 
-#    g. branch-manager: Clean up worktree
-teardown_worktree "./trees/PROJ-123-auth"
+#    g. branch-manager: Clean up worktree (ALWAYS cd to project root first!)
+cd "$(git rev-parse --show-toplevel)" && teardown_worktree "./trees/PROJ-123-auth"
 
 # 3. REPEAT step 2 for each remaining work stream
 # 4. Review branch contains all consolidated, quality-validated work
@@ -408,9 +409,10 @@ teardown_worktree "./trees/PROJ-123-fix-auth"
 # After user approval ("approved", "ship it", "merge it")
 1. git merge feature/[TASK_ID]-review --no-ff
 2. git push origin develop
-3. git worktree remove ./trees/[TASK_ID]-[COMPONENT]
-4. git branch -d feature/[TASK_ID]-[COMPONENT]
-5. Update task status (bd close [TASK_ID] or acli jira workitem transition --key [TASK_ID] --status Done)
+3. cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./trees/[TASK_ID]-[COMPONENT] --delete-branch
+   # CRITICAL: MUST cd to project root first! Cleanup script runs in subshell.
+   # Use the worktree-cleanup.sh script, never git worktree remove directly.
+4. Update task status (bd close [TASK_ID] or acli jira workitem transition --key [TASK_ID] --status Done)
 ```
 
 ### Strategy-Specific Workflows (DEPRECATED - See "Git Operations by Strategy" section above)
@@ -464,8 +466,8 @@ Ref: PROJ-123"
 git checkout feature/PROJ-123-review
 git merge feature/PROJ-123-auth --no-ff
 
-#    e. Cleanup worktree (CRITICAL: verify no build artifacts)
-teardown_worktree "./trees/PROJ-123-auth" --verify-no-artifacts
+#    e. Cleanup worktree (CRITICAL: cd to project root first, verify no build artifacts)
+cd "$(git rev-parse --show-toplevel)" && teardown_worktree "./trees/PROJ-123-auth" --verify-no-artifacts
 
 # 4. REPEAT step 3 for each remaining worktree until all consolidated
 
@@ -539,15 +541,16 @@ done
 
 1. **NEVER merge to main** without explicit permission
 2. **ALWAYS backup** before destructive operations
-3. **MANDATORY QUALITY VALIDATION** before merge:
+3. **ALWAYS `cd` to project root BEFORE worktree cleanup** - The cleanup script runs in a subshell; its internal `cd` does NOT affect your shell. If you're inside a worktree when it's deleted, the shell breaks permanently.
+4. **MANDATORY QUALITY VALIDATION** before merge:
    - Run tests and capture detailed metrics (total/passed/failed/skipped/errored)
    - Verify 80%+ coverage requirement
    - Run linting and capture error/warning counts
    - Extract and report all metrics in standardized JSON format
-4. **VERIFY merge status** before cleanup: `git log develop..[BRANCH]`
-5. **START from root**, not from within worktrees: `pwd | grep -q "/trees/" && exit`
-6. **CREATE worktrees** only in `./trees/` directory
-7. **PROVIDE EVIDENCE** for all quality claims with exit codes and metric extraction
+5. **VERIFY merge status** before cleanup: `git log develop..[BRANCH]`
+6. **START from root**, not from within worktrees: `pwd | grep -q "/trees/" && exit`
+7. **CREATE worktrees** only in `./trees/` directory
+8. **PROVIDE EVIDENCE** for all quality claims with exit codes and metric extraction
 
 ---
 
