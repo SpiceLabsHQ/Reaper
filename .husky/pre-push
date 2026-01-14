@@ -9,20 +9,30 @@
 #
 # The VERSION_BUMP=0 confirms you've handled versioning intentionally.
 
-branch=$(git rev-parse --abbrev-ref HEAD)
-
-# Only applies to main branch
-if [ "$branch" != "main" ]; then
-  exit 0
-fi
-
 # VERSION_BUMP=0 means "I've handled versioning, allow the push"
 if [ "$VERSION_BUMP" = "0" ]; then
   exit 0
 fi
 
-# Check for version tag
-latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+# Read push info from stdin to detect pushes TO main (not just FROM main)
+# Format: <local ref> <local sha> <remote ref> <remote sha>
+pushing_to_main=false
+local_sha=""
+
+while read local_ref local_sha remote_ref remote_sha; do
+  if [ "$remote_ref" = "refs/heads/main" ]; then
+    pushing_to_main=true
+    break
+  fi
+done
+
+# Only applies when pushing to main branch
+if [ "$pushing_to_main" = "false" ]; then
+  exit 0
+fi
+
+# Check for version tag on the commit being pushed
+latest_tag=$(git describe --tags --abbrev=0 "$local_sha" 2>/dev/null || echo "")
 
 if [ -z "$latest_tag" ]; then
   echo ""
@@ -38,8 +48,8 @@ if [ -z "$latest_tag" ]; then
   exit 1
 fi
 
-# Check for commits since last tag
-new_commits=$(git rev-list "$latest_tag"..HEAD --count 2>/dev/null || echo "0")
+# Check for commits since last tag on the ref being pushed
+new_commits=$(git rev-list "$latest_tag".."$local_sha" --count 2>/dev/null || echo "0")
 
 if [ "$new_commits" -gt 0 ]; then
   echo ""
@@ -59,5 +69,5 @@ if [ "$new_commits" -gt 0 ]; then
   exit 1
 fi
 
-# HEAD is tagged - push is fine
+# Ref being pushed is tagged - push is fine
 exit 0
