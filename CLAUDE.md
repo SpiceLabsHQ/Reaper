@@ -79,24 +79,75 @@ git worktree remove ./trees/TASK-ID
 ## Project Structure
 
 ```
-agents/          # Specialized AI agent definitions (18 agents)
-commands/        # Slash commands (/takeoff, /flight-plan, /claude-sync, /status-worktrees)
-skills/          # Auto-activating utilities
-  spice/         # Code formatting, linting, git hooks, worktree management
-  worktree-manager/  # Worktree lifecycle with safe cleanup
-hooks/           # Claude Code hooks (session start triggers bd daemon)
+src/             # SOURCE TEMPLATES - Edit files here
+  agents/        # Agent EJS templates
+  skills/        # Skill EJS templates
+  commands/      # Command EJS templates
+  hooks/         # Hook templates
+  partials/      # Shared EJS partials
+
+agents/          # GENERATED - Do not edit directly
+commands/        # GENERATED - Do not edit directly
+skills/          # GENERATED - Do not edit directly
+hooks/           # GENERATED - Do not edit directly
+
+scripts/         # Build tooling
 docs/spice/      # Development standards documentation
 ```
+
+## Template Build System
+
+**CRITICAL**: This project uses an EJS template build system. Generated files live at the project root (not in `dist/`).
+
+### Source vs Generated Files
+
+| Location | Type | Action |
+|----------|------|--------|
+| `src/agents/*.ejs` | Source | ✅ Edit these |
+| `src/skills/**/*.ejs` | Source | ✅ Edit these |
+| `src/commands/*.ejs` | Source | ✅ Edit these |
+| `src/partials/*.ejs` | Source | ✅ Edit these (shared content) |
+| `agents/*.md` | Generated | ❌ Never edit - changes will be overwritten |
+| `skills/**/*.md` | Generated | ❌ Never edit - changes will be overwritten |
+| `commands/*.md` | Generated | ❌ Never edit - changes will be overwritten |
+| `hooks/hooks.json` | Generated | ❌ Never edit - changes will be overwritten |
+
+### Build Commands
+
+```bash
+npm run build        # Compile all templates to project root
+npm run build:watch  # Watch mode for development
+```
+
+### Workflow for Editing Agents/Skills/Commands
+
+1. **Edit the source template** in `src/` (e.g., `src/agents/bug-fixer.ejs`)
+2. **Run build**: `npm run build`
+3. **Verify output** in project root (e.g., `agents/bug-fixer.md`)
+4. **Commit both** source and generated files
+
+The pre-commit hook automatically runs the build and stages generated files.
+
+### Partials (Shared Content)
+
+Common sections are extracted into `src/partials/*.ejs`:
+- `pre-work-validation-coding.ejs` - Validation for coding agents
+- `output-requirements.ejs` - JSON output requirements (parameterized)
+- `git-prohibitions.ejs` - Git operation restrictions
+- `tdd-testing-protocol.ejs` - TDD methodology
+- `artifact-cleanup-coding.ejs` - Cleanup protocols
+
+Use EJS includes: `<%- include('partials/output-requirements', { isReviewAgent: true }) %>`
 
 ### Agent Categories
 
 | Category | Agents |
 |----------|--------|
 | Planning | reaper:workflow-planner, reaper:api-designer, reaper:cloud-architect, reaper:database-architect |
-| Development | reaper:feature-developer, reaper:bug-fixer, reaper:refactoring-specialist, reaper:branch-manager |
+| Development | reaper:feature-developer, reaper:bug-fixer, reaper:refactoring-dev, reaper:branch-manager |
 | Quality | reaper:test-runner, reaper:code-reviewer, reaper:security-auditor, reaper:performance-engineer |
 | Ops | reaper:deployment-engineer, reaper:integration-engineer, reaper:incident-responder |
-| Meta | reaper:documentation-generator, reaper:claude-agent-architect |
+| Meta | reaper:technical-writer, reaper:claude-agent-architect |
 
 ### Agent Naming Convention
 
@@ -131,3 +182,4 @@ bd sync                    # Sync with git remote
 - Never merge to `main` without explicit user permission
 - Never skip hooks (`--no-verify`, `HUSKY=0`)
 - Never fabricate task IDs or test results
+- Never edit generated files directly—edit `src/` templates instead

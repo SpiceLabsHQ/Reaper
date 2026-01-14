@@ -1,0 +1,450 @@
+---
+description: Surface changes since CLAUDE.md last touched down.
+---
+
+# Synchronize CLAUDE.md with Recent Code Changes
+
+Analyze git commits since CLAUDE.md was last modified and identify **critical, non-obvious changes** that should be documented for LLM context.
+
+This command uses parallel specialized agents to thoroughly analyze commits across multiple dimensions.
+
+## Phase 1: Pre-Flight Validation
+
+First, validate that we're in a git repository and locate CLAUDE.md:
+
+```bash
+# Ensure we're in a git repository
+if ! git rev-parse --git-dir > /dev/null 2>&1; then
+    echo "ERROR: Not in a git repository"
+    exit 1
+fi
+
+# Get repository root
+REPO_ROOT=$(git rev-parse --show-toplevel)
+cd "$REPO_ROOT"
+
+# Warn if in worktree
+if [[ "$PWD" == *"/trees/"* ]]; then
+    echo "WARNING: Currently in a worktree. Analyzing from repository root: $REPO_ROOT"
+    echo ""
+fi
+```
+
+## Phase 2: Locate CLAUDE.md
+
+Determine which CLAUDE.md file to analyze:
+
+```bash
+# Find CLAUDE.md
+if [ -f "CLAUDE.md" ]; then
+    CLAUDE_MD="CLAUDE.md"
+    CLAUDE_MD_LOCATION="project root"
+elif [ -f ".claude/CLAUDE.md" ]; then
+    CLAUDE_MD=".claude/CLAUDE.md"
+    CLAUDE_MD_LOCATION=".claude directory"
+else
+    echo "INFO: No CLAUDE.md found in this project."
+    echo "Analyzing recent commits to suggest initial documentation."
+    echo ""
+    CLAUDE_MD=""
+    CLAUDE_MD_LOCATION="none (will suggest creation)"
+fi
+
+echo "=== CLAUDE.md Synchronization Analysis ==="
+echo "Repository: $(basename "$REPO_ROOT")"
+echo "CLAUDE.md location: $CLAUDE_MD_LOCATION"
+echo ""
+```
+
+## Phase 3: Identify Baseline Commit
+
+Find the starting point for analysis:
+
+```bash
+# Determine baseline commit
+if [ -n "$CLAUDE_MD" ] && [ -f "$CLAUDE_MD" ]; then
+    # Find last commit that modified CLAUDE.md
+    BASELINE_COMMIT=$(git log -1 --format="%H" -- "$CLAUDE_MD" 2>/dev/null)
+
+    if [ -z "$BASELINE_COMMIT" ]; then
+        echo "WARNING: CLAUDE.md exists but has no git history (untracked?)"
+        # Use last 30 days as fallback
+        BASELINE_COMMIT=$(git log --since="30 days ago" --format="%H" | tail -1)
+        if [ -z "$BASELINE_COMMIT" ]; then
+            BASELINE_COMMIT=$(git rev-list --max-parents=0 HEAD 2>/dev/null)
+        fi
+        echo "Using fallback baseline: last 30 days or first commit"
+    else
+        BASELINE_DATE=$(git log -1 --format="%ci" "$BASELINE_COMMIT")
+        BASELINE_SUBJECT=$(git log -1 --format="%s" "$BASELINE_COMMIT")
+        echo "Last CLAUDE.md update:"
+        echo "  Commit: ${BASELINE_COMMIT:0:7}"
+        echo "  Date: $BASELINE_DATE"
+        echo "  Message: $BASELINE_SUBJECT"
+    fi
+else
+    # No CLAUDE.md - analyze recent history (last 30 days or 50 commits max)
+    BASELINE_COMMIT=$(git log --since="30 days ago" --format="%H" | tail -1)
+
+    if [ -z "$BASELINE_COMMIT" ]; then
+        # New repo - use first commit
+        BASELINE_COMMIT=$(git rev-list --max-parents=0 HEAD 2>/dev/null)
+    fi
+
+    echo "No CLAUDE.md found. Analyzing recent changes:"
+    echo "  Baseline: ${BASELINE_COMMIT:0:7} (30 days ago or first commit)"
+fi
+
+echo ""
+
+# Count commits to analyze
+COMMIT_COUNT=$(git rev-list --count ${BASELINE_COMMIT}..HEAD 2>/dev/null || echo "0")
+
+if [ "$COMMIT_COUNT" -eq 0 ]; then
+    echo "✅ No new commits since last CLAUDE.md update."
+    echo "CLAUDE.md is up to date!"
+    exit 0
+fi
+
+echo "📊 Found $COMMIT_COUNT commits to analyze"
+echo ""
+```
+
+## Phase 4: Extract Commit Data
+
+Gather comprehensive commit information for agent analysis:
+
+```bash
+# Create temporary files for commit data
+TEMP_DIR=$(mktemp -d)
+COMMIT_LOG="$TEMP_DIR/commits.log"
+COMMIT_STATS="$TEMP_DIR/stats.txt"
+
+# Get detailed commit log with file changes
+git log ${BASELINE_COMMIT}..HEAD \
+    --pretty=format:"COMMIT: %H%nAUTHOR: %an%nDATE: %ci%nSUBJECT: %s%nBODY:%n%b%n---FILES---" \
+    --name-status > "$COMMIT_LOG"
+
+# Get commit statistics
+git log ${BASELINE_COMMIT}..HEAD \
+    --pretty=format:"%h|%s" \
+    --shortstat > "$COMMIT_STATS"
+
+echo "📝 Commit data extracted to temporary files"
+echo "   - Full log: $COMMIT_LOG"
+echo "   - Statistics: $COMMIT_STATS"
+echo ""
+```
+
+## Phase 5: Launch Parallel Analysis Agents
+
+**CRITICAL INSTRUCTION:**
+
+You must now launch **4 specialized agents in parallel** to analyze the commits. Each agent will focus on a specific category of changes.
+
+**Use a SINGLE message with 4 Task tool calls to launch all agents in parallel.**
+
+### Agent 1: Architecture Analyzer
+
+Launch an Explore agent to analyze architectural and design changes:
+
+```plaintext
+Task --subagent_type Explore --description "Analyze architecture changes"
+
+Analyze commits from ${BASELINE_COMMIT} to HEAD for CRITICAL, NON-OBVIOUS architecture changes.
+
+COMMIT DATA: $(cat $COMMIT_LOG)
+
+Focus on:
+- Framework migrations (REST → GraphQL, Redux → Zustand, etc.)
+- Design pattern changes (MVC → event-driven, monolith → microservices)
+- Major structural refactoring (codebase reorganization, module splits)
+- State management changes
+- Database architecture changes (SQL → NoSQL, sharding, replication)
+
+FILTERING RULES:
+✅ INCLUDE: Changes that fundamentally alter how code should be written or understood
+❌ EXCLUDE: Normal refactoring visible in current files, standard code improvements
+
+For each finding, provide:
+1. **Title** (brief description)
+2. **Commits** (short hashes)
+3. **What Changed** (technical summary)
+4. **Why It Matters** (impact on LLM understanding)
+5. **Suggested Documentation** (ready-to-paste CLAUDE.md content)
+
+Return findings in markdown format with clear sections.
+```
+
+### Agent 2: Environment Analyzer
+
+Launch an Explore agent to analyze environment and infrastructure changes:
+
+```plaintext
+Task --subagent_type Explore --description "Analyze environment changes"
+
+Analyze commits from ${BASELINE_COMMIT} to HEAD for CRITICAL, NON-OBVIOUS environment/infrastructure changes.
+
+COMMIT DATA: $(cat $COMMIT_LOG)
+
+Focus on:
+- Feature flags (LaunchDarkly, env vars that control code paths)
+- Environment-specific behavior (staging vs production differences)
+- Docker/container configuration changes
+- CI/CD pipeline modifications
+- Infrastructure as Code (Terraform, CloudFormation, K8s configs)
+- Multi-tenant or multi-environment patterns
+
+FILTERING RULES:
+✅ INCLUDE: Runtime configuration that changes code behavior in non-obvious ways
+❌ EXCLUDE: Standard env vars visible in .env.example, obvious config changes
+
+For each finding, provide:
+1. **Title** (brief description)
+2. **Commits** (short hashes)
+3. **What Changed** (technical summary)
+4. **Why It Matters** (impact on LLM understanding)
+5. **Suggested Documentation** (ready-to-paste CLAUDE.md content)
+
+Return findings in markdown format with clear sections.
+```
+
+### Agent 3: Workflow Analyzer
+
+Launch an Explore agent to analyze workflow and tooling changes:
+
+```plaintext
+Task --subagent_type Explore --description "Analyze workflow changes"
+
+Analyze commits from ${BASELINE_COMMIT} to HEAD for CRITICAL, NON-OBVIOUS workflow/tooling changes.
+
+COMMIT DATA: $(cat $COMMIT_LOG)
+
+Focus on:
+- Custom build processes (code generation, proto compilation, asset processing)
+- Special testing requirements (must test against staging, integration test patterns)
+- Deployment workflows (blue-green, canary, rollback procedures)
+- Git workflows (branch strategies, required hooks, merge policies)
+- Development constraints ("never modify X", "always run Y before Z")
+- Custom scripts in /scripts, /bin, or package.json
+
+FILTERING RULES:
+✅ INCLUDE: Workflows that LLMs must follow to avoid breaking things
+❌ EXCLUDE: Standard npm scripts, obvious build steps
+
+For each finding, provide:
+1. **Title** (brief description)
+2. **Commits** (short hashes)
+3. **What Changed** (technical summary)
+4. **Why It Matters** (impact on LLM understanding)
+5. **Suggested Documentation** (ready-to-paste CLAUDE.md content)
+
+Return findings in markdown format with clear sections.
+```
+
+### Agent 4: Integration Analyzer
+
+Launch an Explore agent to analyze integration and dependency changes:
+
+```plaintext
+Task --subagent_type Explore --description "Analyze integration changes"
+
+Analyze commits from ${BASELINE_COMMIT} to HEAD for CRITICAL, NON-OBVIOUS integration/dependency changes.
+
+COMMIT DATA: $(cat $COMMIT_LOG)
+
+Focus on:
+- Third-party service integrations (Stripe, Auth0, Twilio, etc.)
+- Webhook handling patterns (retry logic, signature verification)
+- Custom authentication flows (OAuth, SAML, custom JWT)
+- API rate limiting or quota management
+- Non-standard dependencies (forked libraries, internal packages)
+- Monorepo workspace patterns
+- Message queue integrations (RabbitMQ, Kafka, SQS)
+
+FILTERING RULES:
+✅ INCLUDE: Integration patterns that aren't obvious from reading package.json
+❌ EXCLUDE: Standard NPM/pip packages, obvious third-party libraries
+
+For each finding, provide:
+1. **Title** (brief description)
+2. **Commits** (short hashes)
+3. **What Changed** (technical summary)
+4. **Why It Matters** (impact on LLM understanding)
+5. **Suggested Documentation** (ready-to-paste CLAUDE.md content)
+
+Return findings in markdown format with clear sections.
+```
+
+## Phase 6: Aggregate and Present Findings
+
+After all 4 agents complete their analysis, aggregate their findings and present a comprehensive human-readable report:
+
+### Report Structure
+
+```markdown
+## 📋 CLAUDE.md Synchronization Report
+
+**Repository:** [repo name]
+**Analyzed:** [count] commits from [baseline short hash] ([date]) to present
+**CLAUDE.md Status:** [location or "not found"]
+
+---
+
+### 🏗️ Architecture Changes
+
+[Agent 1 findings - categorized by priority]
+
+**[HIGH] [Finding Title]**
+- **Commits:** a3f9d81, b7e2c45
+- **What Changed:** [Technical summary]
+- **Why It Matters:** [Impact on LLM understanding]
+- **Suggested Documentation:**
+  ```markdown
+  [Ready-to-paste content for CLAUDE.md]
+  ```
+
+[Repeat for each architecture finding]
+
+---
+
+### 🌍 Environment & Infrastructure
+
+[Agent 2 findings - categorized by priority]
+
+[Same format as above]
+
+---
+
+### 🔧 Workflow & Tooling
+
+[Agent 3 findings - categorized by priority]
+
+[Same format as above]
+
+---
+
+### 📦 Integrations & Dependencies
+
+[Agent 4 findings - categorized by priority]
+
+[Same format as above]
+
+---
+
+### 📌 Summary
+
+**Total Findings:** [count high], [count medium], [count low] priority
+
+**Priority Breakdown:**
+- 🔴 **High Priority** ([count]): Critical for LLM correctness - update CLAUDE.md immediately
+- 🟡 **Medium Priority** ([count]): Important context - should be documented
+- 🟢 **Low Priority** ([count]): Nice to have - optional documentation
+
+---
+
+### 💡 Recommendations
+
+1. **Immediate Actions**
+   - Update root CLAUDE.md with [X] high-priority findings
+   - Add [specific critical context]
+
+2. **Directory-Specific Documentation**
+   Consider creating focused CLAUDE.md files for complex areas:
+   - `src/api/CLAUDE.md` - For API-specific patterns (if extensive API changes)
+   - `scripts/CLAUDE.md` - For custom workflow documentation (if complex build processes)
+   - [Other suggestions based on findings]
+
+3. **Keep Monitoring**
+   - Watch for additional feature flags (document as added)
+   - Track architecture migrations (update when complete)
+   - [Other ongoing patterns]
+
+---
+
+### ✅ Next Steps
+
+I can help you with:
+
+1. **Update CLAUDE.md** - Apply suggested documentation to root CLAUDE.md
+2. **Create directory-specific docs** - Set up focused CLAUDE.md files for complex areas
+3. **Review specific findings** - Show detailed analysis for any category
+4. **Generate git commit** - Commit CLAUDE.md updates with proper message
+
+What would you like to do next?
+```
+
+## Phase 7: Interactive Next Steps
+
+After presenting the report, offer to help the user:
+
+1. **Apply updates to CLAUDE.md** (if they approve)
+2. **Create directory-specific CLAUDE.md files** (if suggested)
+3. **Review detailed agent reports** (if they want more context)
+4. **Commit changes** (with proper commit message)
+
+### Example Interactions
+
+**If user says:** "Update CLAUDE.md with the high priority findings"
+- Apply suggested documentation
+- Show diff for review
+- Offer to commit
+
+**If user says:** "Create the suggested directory docs"
+- Create focused CLAUDE.md files in suggested locations
+- Populate with relevant content from findings
+- Show what was created
+
+**If user says:** "Show me more detail on the architecture changes"
+- Present full agent report for architecture category
+- Include all commits analyzed
+- Explain filtering decisions
+
+## Important Notes
+
+### Filtering Philosophy
+
+**Remember:** CLAUDE.md is loaded into context on every conversation. Keep it minimal and high-signal.
+
+**The Two-Question Test:**
+1. **Critical?** Would an LLM agent make mistakes without this knowledge?
+2. **Non-Obvious?** Can this be discovered by reading current files with available tools?
+
+Both must be "yes" to document.
+
+### Examples of What to Document
+
+✅ **DO Document:**
+- Feature flags that control code paths
+- "Never modify files in /generated" constraints
+- Custom webhook retry logic requiring specific patterns
+- Multi-tenant configuration affecting all code
+- Event-driven async patterns (RabbitMQ, Kafka)
+
+❌ **DON'T Document:**
+- New API endpoints (visible via grep)
+- Standard dependencies (visible in package.json)
+- Normal refactoring (visible in current code)
+- Bug fixes (visible in git history)
+- Test additions (visible in test files)
+
+### Directory-Specific Documentation
+
+For complex topics that only affect specific directories, suggest creating focused CLAUDE.md files:
+
+- `src/webhooks/CLAUDE.md` - Webhook handling patterns
+- `packages/api/CLAUDE.md` - API-specific context (in monorepos)
+- `scripts/CLAUDE.md` - Custom build/deployment workflows
+
+These are loaded automatically when Claude works in those directories, keeping root CLAUDE.md minimal.
+
+## Cleanup
+
+```bash
+# Clean up temporary files
+rm -rf "$TEMP_DIR"
+```
+
+---
+
+**End of command. Remember to launch all 4 agents in parallel in a single message using multiple Task tool calls.**

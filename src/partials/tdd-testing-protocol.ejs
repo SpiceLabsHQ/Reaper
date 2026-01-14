@@ -1,0 +1,76 @@
+## 🧪 TDD TESTING PROTOCOL
+
+**CRITICAL: You test YOUR changes only - NOT the full test suite**
+
+### Testing Scope During Development
+
+**DO run targeted tests on YOUR <%= typeof targetedTestType !== 'undefined' ? targetedTestType : 'changes' %>:**
+```bash
+<% if (typeof testExamples !== 'undefined') { -%>
+<%= testExamples %>
+<% } else { -%>
+# ✅ CORRECT: Test only the files you modified
+(cd "./trees/[TASK_ID]-fix" && npm test -- path/to/your/bug-fix.test.js)
+(cd "./trees/[TASK_ID]-fix" && npm test -- --testNamePattern="specific bug fix")
+
+# ✅ CORRECT: Python - test only your module
+(cd "./trees/[TASK_ID]-fix" && pytest tests/test_your_fix.py)
+
+# ✅ CORRECT: PHP - test only your class
+(cd "./trees/[TASK_ID]-fix" && ./vendor/bin/phpunit tests/YourBugFixTest.php)
+<% } -%>
+```
+
+**DO NOT run full test suite:**
+```bash
+# ❌ WRONG: Full suite wastes context and time
+<% if (typeof wrongExamples !== 'undefined') { -%>
+<%= wrongExamples %>
+<% } else { -%>
+(cd "./trees/[TASK_ID]-fix" && npm test)  # DON'T DO THIS
+(cd "./trees/[TASK_ID]-fix" && pytest)     # DON'T DO THIS
+<% } -%>
+```
+
+### Why This Matters
+
+**Your job (<%= typeof agentName !== 'undefined' ? agentName : 'bug-fixer' %>):**
+<% if (typeof agentResponsibilities !== 'undefined') { -%>
+<%= agentResponsibilities %>
+<% } else { -%>
+- Reproduce bug with failing test (RED)
+- Implement minimal fix (GREEN)
+- Refactor for quality (BLUE)
+- Test YOUR changes in isolation
+<% } -%>
+
+**test-runner agent's job (quality gate):**
+- Run FULL test suite with all tests
+- Validate complete coverage metrics
+- Check for regressions across entire codebase
+- Provide authoritative test results
+
+**Separation prevents:**
+- Context exhaustion from running hundreds of tests repeatedly
+- Wasted time on redundant test execution
+- Agent conflicts during parallel development (Strategy 2)
+
+### <%= typeof cycleTitle !== 'undefined' ? cycleTitle : 'TDD Red-Green-Refactor Cycle' %>
+
+```bash
+<% if (typeof cycleContent !== 'undefined') { -%>
+<%= cycleContent %>
+<% } else { -%>
+# Phase 1: RED - Confirm bug reproduces
+(cd "./trees/[TASK_ID]-fix" && npm test -- path/to/bug-test.js)
+# Your test should FAIL, proving bug exists
+
+# Phase 2: GREEN - Verify fix works
+(cd "./trees/[TASK_ID]-fix" && npm test -- path/to/bug-test.js)
+# Your test should PASS, proving bug is fixed
+
+# Phase 3: BLUE - Verify refactoring works
+(cd "./trees/[TASK_ID]-fix" && npm test -- path/to/bug-test.js)
+# Your test still PASS after refactoring
+<% } -%>
+```

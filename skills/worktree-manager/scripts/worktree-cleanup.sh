@@ -1,143 +1,215 @@
-#!/usr/bin/env bash
+#!/bin/bash
+# worktree-cleanup.sh - Safely remove a git worktree with explicit branch disposition
+#
+# This script solves the CWD problem: when Claude removes a worktree while the shell's
+# current working directory is inside that worktree, all subsequent commands fail.
+# We change to project root BEFORE removal to prevent this.
+#
+# Exit codes:
+#   0 - Success
+#   1 - Error (invalid input, git failure)
+#   2 - Safety check failed (uncommitted changes)
+#   3 - Branch disposition required (no --keep-branch or --delete-branch specified)
+
 set -euo pipefail
 
-# Worktree Cleanup Script
-# Safe worktree removal that handles CWD issues
-#
-# CRITICAL: This script changes to project root BEFORE removing the worktree
-# to prevent breaking the shell when CWD is inside the worktree.
-#
-# Usage: worktree-cleanup.sh <worktree-path> [--force] [--dry-run] [--keep-branch]
-
-# --- Color Output ---
+# Colors for output
 RED='\033[0;31m'
-GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# --- Helper Functions ---
-info() { echo -e "${BLUE}ℹ${NC} $*"; }
-success() { echo -e "${GREEN}✓${NC} $*"; }
-warn() { echo -e "${YELLOW}⚠${NC} $*" >&2; }
-error() { echo -e "${RED}✗${NC} $*" >&2; }
+# Protected branches that should never be deleted
+PROTECTED_BRANCHES="develop main master"
+
+# Script options
+WORKTREE_PATH=""
+FORCE=false
+DRY_RUN=false
+KEEP_BRANCH=false
+DELETE_BRANCH=false
 
 usage() {
     cat << EOF
 Usage: $(basename "$0") <worktree-path> [options]
 
-Safe worktree removal that prevents CWD errors.
+Safely remove a git worktree with explicit branch disposition.
+
+Arguments:
+  worktree-path    Path to the worktree to remove (e.g., ./trees/PROJ-123-auth)
 
 Options:
-    --force         Skip safety checks (uncommitted changes, unmerged commits)
-    --dry-run       Show what would happen without making changes
-    --keep-branch   Remove worktree but keep the git branch
-    --help          Show this help message
+  --keep-branch    Remove worktree but keep the associated branch
+  --delete-branch  Remove worktree AND delete the associated branch (local and remote)
+  --force          Skip safety checks (uncommitted changes warning)
+  --dry-run        Show what would happen without making changes
 
-Examples:
-    $(basename "$0") ./trees/PROJ-123-auth
-    $(basename "$0") ./trees/PROJ-123-auth --force
-    $(basename "$0") ./trees/PROJ-123-auth --dry-run
-    $(basename "$0") ./trees/PROJ-123-auth --keep-branch
+Branch Disposition (REQUIRED for non-protected branches):
+  You MUST specify either --keep-branch or --delete-branch when removing a worktree
+  that has an associated feature branch. This prevents accidental branch deletion.
+
+  Protected branches (${PROTECTED_BRANCHES}) are never deleted and don't require
+  disposition flags.
 
 Exit codes:
-    0   Success
-    1   Error (invalid input, git failure)
-    2   Safety check failed (uncommitted changes, unmerged commits)
+  0  Success
+  1  Error (invalid input, git failure)
+  2  Safety check failed (uncommitted changes without --force)
+  3  Branch disposition required (no --keep-branch or --delete-branch specified)
+
+Examples:
+  # Keep the branch for later work
+  $(basename "$0") ./trees/PROJ-123-auth --keep-branch
+
+  # Delete the branch after merge
+  $(basename "$0") ./trees/PROJ-123-auth --delete-branch
+
+  # Preview what would happen
+  $(basename "$0") ./trees/PROJ-123-auth --delete-branch --dry-run
+
+  # Force removal even with uncommitted changes
+  $(basename "$0") ./trees/PROJ-123-auth --delete-branch --force
 EOF
-    exit 0
 }
 
-# Find project root from worktree path
+log_info() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+log_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+log_warn() {
+    echo -e "${YELLOW}[WARN]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1" >&2
+}
+
+# Check if a branch is protected
+is_protected_branch() {
+    local branch="$1"
+    for protected in $PROTECTED_BRANCHES; do
+        if [[ "$branch" == "$protected" ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Find the project root (parent of ./trees/)
 find_project_root() {
     local worktree_path="$1"
     local abs_path
 
     # Resolve to absolute path
-    abs_path=$(cd "$(dirname "$worktree_path")" 2>/dev/null && pwd)/$(basename "$worktree_path")
+    abs_path=$(cd "$worktree_path" 2>/dev/null && pwd) || {
+        log_error "Cannot resolve worktree path: $worktree_path"
+        exit 1
+    }
 
-    # If path contains /trees/, project root is parent of trees/
+    # Look for ./trees/ in the path and get parent
     if [[ "$abs_path" == *"/trees/"* ]]; then
         echo "${abs_path%%/trees/*}"
-        return 0
+    else
+        # Fallback: use git worktree list to find main worktree
+        local main_worktree
+        main_worktree=$(git -C "$abs_path" worktree list --porcelain | grep "^worktree " | head -1 | cut -d' ' -f2)
+        echo "$main_worktree"
     fi
-
-    # Fallback: use git to find toplevel from parent directory
-    local parent_dir
-    parent_dir=$(dirname "$abs_path")
-    if [[ -d "$parent_dir" ]]; then
-        git -C "$parent_dir" rev-parse --show-toplevel 2>/dev/null && return 0
-    fi
-
-    # Last resort: try current directory's git root
-    git rev-parse --show-toplevel 2>/dev/null && return 0
-
-    return 1
 }
 
-# Get branch name from worktree
+# Get the branch associated with a worktree
 get_worktree_branch() {
     local worktree_path="$1"
-    git -C "$worktree_path" branch --show-current 2>/dev/null || \
-    git -C "$worktree_path" rev-parse --abbrev-ref HEAD 2>/dev/null || \
-    echo ""
+    local abs_path
+
+    abs_path=$(cd "$worktree_path" 2>/dev/null && pwd) || return 1
+
+    # Get branch from worktree list
+    git worktree list --porcelain | awk -v path="$abs_path" '
+        $1 == "worktree" { current_path = $2 }
+        $1 == "branch" && current_path == path {
+            # Strip refs/heads/ prefix
+            sub(/^refs\/heads\//, "", $2)
+            print $2
+            exit
+        }
+    '
 }
 
-# Check for uncommitted changes
+# Check for uncommitted changes in worktree
 has_uncommitted_changes() {
     local worktree_path="$1"
-    [[ -n "$(git -C "$worktree_path" status --porcelain 2>/dev/null)" ]]
+    local status
+
+    status=$(git -C "$worktree_path" status --porcelain 2>/dev/null)
+    [[ -n "$status" ]]
 }
 
-# Check for unmerged commits (commits not in develop or main)
-get_unmerged_commits() {
+# Get count of unmerged commits
+get_unmerged_count() {
     local worktree_path="$1"
     local branch="$2"
-    local base_branch="develop"
+    local base_branch="${3:-develop}"
 
-    # Try develop first, then main
-    if ! git show-ref --verify --quiet "refs/heads/develop" 2>/dev/null; then
-        base_branch="main"
-    fi
-
-    git log "${base_branch}..${branch}" --oneline 2>/dev/null || echo ""
+    # Count commits not in base branch
+    git -C "$worktree_path" rev-list --count "$base_branch..$branch" 2>/dev/null || echo "0"
 }
 
-# --- Main ---
-main() {
-    local worktree_path=""
-    local force=false
-    local dry_run=false
-    local keep_branch=false
+# Check if remote branch exists
+remote_branch_exists() {
+    local branch="$1"
+    local project_root="$2"
 
-    # Parse arguments
+    git -C "$project_root" ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1
+}
+
+# Parse command line arguments
+parse_args() {
+    if [[ $# -lt 1 ]]; then
+        log_error "Missing required argument: worktree-path"
+        echo ""
+        usage
+        exit 1
+    fi
+
     while [[ $# -gt 0 ]]; do
         case "$1" in
+            --help|-h)
+                usage
+                exit 0
+                ;;
             --force)
-                force=true
+                FORCE=true
                 shift
                 ;;
             --dry-run)
-                dry_run=true
+                DRY_RUN=true
                 shift
                 ;;
             --keep-branch)
-                keep_branch=true
+                KEEP_BRANCH=true
                 shift
                 ;;
-            --help|-h)
-                usage
+            --delete-branch)
+                DELETE_BRANCH=true
+                shift
                 ;;
             -*)
-                error "Unknown option: $1"
-                echo "Use --help for usage information"
+                log_error "Unknown option: $1"
+                echo ""
+                usage
                 exit 1
                 ;;
             *)
-                if [[ -z "$worktree_path" ]]; then
-                    worktree_path="$1"
+                if [[ -z "$WORKTREE_PATH" ]]; then
+                    WORKTREE_PATH="$1"
                 else
-                    error "Too many arguments"
+                    log_error "Unexpected argument: $1"
                     exit 1
                 fi
                 shift
@@ -145,167 +217,227 @@ main() {
         esac
     done
 
-    # Validate input
-    if [[ -z "$worktree_path" ]]; then
-        error "Worktree path is required"
-        echo "Use --help for usage information"
+    # Validate worktree path provided
+    if [[ -z "$WORKTREE_PATH" ]]; then
+        log_error "Missing required argument: worktree-path"
+        echo ""
+        usage
         exit 1
     fi
 
-    # Resolve to absolute path for consistent handling
-    if [[ ! "$worktree_path" = /* ]]; then
-        worktree_path="$(pwd)/$worktree_path"
+    # Check for mutually exclusive flags
+    if [[ "$KEEP_BRANCH" == true && "$DELETE_BRANCH" == true ]]; then
+        log_error "Cannot specify both --keep-branch and --delete-branch"
+        echo ""
+        echo "Choose one:"
+        echo "  --keep-branch    Keep the branch for future work"
+        echo "  --delete-branch  Delete the branch (after merge)"
+        exit 1
+    fi
+}
+
+# Main cleanup logic
+main() {
+    parse_args "$@"
+
+    # Validate worktree exists
+    if [[ ! -d "$WORKTREE_PATH" ]]; then
+        log_error "Worktree directory does not exist: $WORKTREE_PATH"
+        exit 1
     fi
 
-    # Normalize path (remove trailing slash, resolve ..)
-    worktree_path=$(cd "$(dirname "$worktree_path")" 2>/dev/null && pwd)/$(basename "$worktree_path") || {
-        # If cd fails, the directory might not exist - try parent
-        local parent_dir
-        parent_dir=$(dirname "$worktree_path")
-        if [[ -d "$parent_dir" ]]; then
-            worktree_path="$(cd "$parent_dir" && pwd)/$(basename "$worktree_path")"
-        fi
-    }
-
-    info "Worktree path: $worktree_path"
+    # Get absolute path
+    local abs_worktree_path
+    abs_worktree_path=$(cd "$WORKTREE_PATH" && pwd)
 
     # Find project root
     local project_root
-    project_root=$(find_project_root "$worktree_path") || {
-        error "Cannot determine project root from: $worktree_path"
+    project_root=$(find_project_root "$WORKTREE_PATH")
+
+    if [[ -z "$project_root" || ! -d "$project_root" ]]; then
+        log_error "Cannot determine project root from worktree path"
         exit 1
-    }
-
-    info "Project root: $project_root"
-
-    # CRITICAL: Change to project root BEFORE any worktree operations
-    # This prevents the shell from breaking when CWD is inside the worktree
-    info "Changing to project root (critical CWD fix)..."
-    cd "$project_root" || {
-        error "Cannot change to project root: $project_root"
-        exit 1
-    }
-    success "Changed to: $(pwd)"
-
-    # Check if worktree exists
-    if [[ ! -d "$worktree_path" ]]; then
-        warn "Worktree directory does not exist: $worktree_path"
-        info "Pruning stale worktree entries..."
-        if [[ "$dry_run" == true ]]; then
-            info "[DRY RUN] Would run: git worktree prune"
-        else
-            git worktree prune
-            success "Pruned stale entries"
-        fi
-        exit 0
     fi
 
-    # Get branch name
+    # Get the branch associated with this worktree
     local branch
-    branch=$(get_worktree_branch "$worktree_path")
-    if [[ -n "$branch" ]]; then
-        info "Branch: $branch"
+    branch=$(get_worktree_branch "$abs_worktree_path")
+
+    log_info "Worktree: $abs_worktree_path"
+    log_info "Project root: $project_root"
+    [[ -n "$branch" ]] && log_info "Associated branch: $branch"
+
+    # Check if branch is protected
+    local is_protected=false
+    if [[ -n "$branch" ]] && is_protected_branch "$branch"; then
+        is_protected=true
+        log_info "Branch '$branch' is a protected branch (will not be deleted)"
+    fi
+
+    # BRANCH DISPOSITION CHECK
+    # If worktree has an associated branch that is NOT protected, require explicit disposition
+    if [[ -n "$branch" && "$is_protected" == false ]]; then
+        if [[ "$KEEP_BRANCH" == false && "$DELETE_BRANCH" == false ]]; then
+            log_error "Branch disposition required for non-protected branch '$branch'"
+            echo ""
+            echo -e "${YELLOW}You must specify what to do with the branch:${NC}"
+            echo ""
+            echo "  --keep-branch    Keep the branch for future work or review"
+            echo "                   Use this if the branch hasn't been merged yet,"
+            echo "                   or you want to preserve it for reference."
+            echo ""
+            echo "  --delete-branch  Delete the branch (local and remote)"
+            echo "                   Use this after the branch has been merged,"
+            echo "                   or if you want to discard the work."
+            echo ""
+            echo "Example:"
+            echo "  $(basename "$0") $WORKTREE_PATH --delete-branch"
+            echo "  $(basename "$0") $WORKTREE_PATH --keep-branch"
+            echo ""
+            exit 3
+        fi
     fi
 
     # Safety checks (unless --force)
-    if [[ "$force" != true ]]; then
-        # Check for uncommitted changes
-        if has_uncommitted_changes "$worktree_path"; then
-            error "Uncommitted changes detected in worktree!"
-            echo ""
-            git -C "$worktree_path" status --short
+    if [[ "$FORCE" == false ]]; then
+        if has_uncommitted_changes "$abs_worktree_path"; then
+            log_error "Worktree has uncommitted changes"
             echo ""
             echo "Options:"
-            echo "  1. Commit changes: git -C $worktree_path commit -am 'message'"
-            echo "  2. Stash changes:  git -C $worktree_path stash"
-            echo "  3. Discard:        git -C $worktree_path reset --hard"
-            echo "  4. Force cleanup:  $(basename "$0") $worktree_path --force"
+            echo "  1. Commit or stash your changes first"
+            echo "  2. Use --force to remove anyway (changes will be lost)"
             exit 2
         fi
-        success "No uncommitted changes"
 
-        # Check for unmerged commits
+        # Warn about unmerged commits (non-blocking)
         if [[ -n "$branch" ]]; then
-            local unmerged
-            unmerged=$(get_unmerged_commits "$worktree_path" "$branch")
-            if [[ -n "$unmerged" ]]; then
-                warn "Branch has unmerged commits:"
-                echo "$unmerged"
-                echo ""
-                echo "These commits may be lost! Options:"
-                echo "  1. Merge first:   git checkout develop && git merge $branch"
-                echo "  2. Force cleanup: $(basename "$0") $worktree_path --force"
-                exit 2
+            local unmerged_count
+            unmerged_count=$(get_unmerged_count "$abs_worktree_path" "$branch")
+            if [[ "$unmerged_count" -gt 0 ]]; then
+                log_warn "Branch has $unmerged_count unmerged commit(s)"
+                if [[ "$DELETE_BRANCH" == true ]]; then
+                    log_warn "These commits will be lost if you delete the branch"
+                fi
             fi
-            success "All commits are merged"
         fi
-    else
-        warn "Skipping safety checks (--force)"
     fi
 
-    # --- Execute Cleanup ---
-
-    if [[ "$dry_run" == true ]]; then
+    # DRY RUN: Show what would happen
+    if [[ "$DRY_RUN" == true ]]; then
         echo ""
-        info "[DRY RUN] Would execute:"
-        echo "  git worktree remove $worktree_path"
-        if [[ "$keep_branch" != true && -n "$branch" ]]; then
-            echo "  git branch -d $branch"
+        echo -e "${BLUE}=== DRY RUN - No changes will be made ===${NC}"
+        echo ""
+        echo "Would perform the following actions:"
+        echo ""
+        local step=1
+        echo "  $step. Change to project root: $project_root"
+        ((step++))
+        echo "  $step. Remove worktree: $abs_worktree_path"
+        ((step++))
+
+        if [[ -n "$branch" ]]; then
+            if [[ "$is_protected" == true ]]; then
+                echo "  $step. Branch disposition: SKIP (protected branch '$branch')"
+                ((step++))
+            elif [[ "$KEEP_BRANCH" == true ]]; then
+                echo "  $step. Branch disposition: KEEP branch '$branch'"
+                ((step++))
+            elif [[ "$DELETE_BRANCH" == true ]]; then
+                echo "  $step. Branch disposition: DELETE branch '$branch' (local)"
+                ((step++))
+                if remote_branch_exists "$branch" "$project_root"; then
+                    echo "  $step. Branch disposition: DELETE branch '$branch' (remote)"
+                    ((step++))
+                fi
+            fi
+        else
+            echo "  $step. Branch disposition: N/A (no associated branch)"
+            ((step++))
         fi
-        echo "  git worktree prune"
+
+        echo "  $step. Prune stale worktree entries"
+        echo ""
+        echo -e "${BLUE}=== End dry run ===${NC}"
         exit 0
     fi
 
-    # Remove worktree
-    info "Removing worktree..."
-    if git worktree remove "$worktree_path" 2>/dev/null; then
-        success "Removed worktree: $worktree_path"
+    # ACTUAL CLEANUP
+    echo ""
+    log_info "Starting worktree cleanup..."
+
+    # Step 1: Change to project root (THE CRITICAL FIX)
+    log_info "Changing to project root..."
+    cd "$project_root" || {
+        log_error "Failed to change to project root: $project_root"
+        exit 1
+    }
+
+    # Step 2: Remove the worktree
+    log_info "Removing worktree..."
+    if [[ "$FORCE" == true ]]; then
+        git worktree remove "$abs_worktree_path" --force || {
+            log_error "Failed to remove worktree"
+            exit 1
+        }
     else
-        # Try force removal
-        warn "Standard removal failed, trying force removal..."
-        if git worktree remove "$worktree_path" --force 2>/dev/null; then
-            success "Force removed worktree: $worktree_path"
-        else
-            # Manual cleanup as last resort
-            warn "Git worktree remove failed, cleaning up manually..."
-            rm -rf "$worktree_path"
-            git worktree prune
-            success "Manually cleaned up: $worktree_path"
-        fi
+        git worktree remove "$abs_worktree_path" || {
+            log_error "Failed to remove worktree"
+            exit 1
+        }
     fi
+    log_success "Worktree removed: $abs_worktree_path"
 
-    # Delete branch (unless --keep-branch)
-    if [[ "$keep_branch" != true && -n "$branch" && "$branch" != "develop" && "$branch" != "main" && "$branch" != "master" ]]; then
-        info "Deleting branch: $branch"
-        if git branch -d "$branch" 2>/dev/null; then
-            success "Deleted branch: $branch"
-        elif git branch -D "$branch" 2>/dev/null; then
-            warn "Force deleted branch: $branch (had unmerged commits)"
-        else
-            warn "Could not delete branch: $branch"
-        fi
-
-        # Try to delete remote branch
-        if git show-ref --verify --quiet "refs/remotes/origin/$branch" 2>/dev/null; then
-            info "Deleting remote branch: origin/$branch"
-            if git push origin --delete "$branch" 2>/dev/null; then
-                success "Deleted remote branch"
+    # Step 3: Handle branch disposition
+    if [[ -n "$branch" ]]; then
+        if [[ "$is_protected" == true ]]; then
+            log_info "Skipping branch deletion (protected branch: $branch)"
+        elif [[ "$KEEP_BRANCH" == true ]]; then
+            log_info "Keeping branch: $branch"
+        elif [[ "$DELETE_BRANCH" == true ]]; then
+            # Delete local branch
+            log_info "Deleting local branch: $branch"
+            if git branch -d "$branch" 2>/dev/null; then
+                log_success "Local branch deleted: $branch"
+            elif git branch -D "$branch" 2>/dev/null; then
+                log_warn "Local branch force-deleted (was not fully merged): $branch"
             else
-                warn "Could not delete remote branch (may require permissions)"
+                log_warn "Could not delete local branch: $branch (may already be deleted)"
+            fi
+
+            # Delete remote branch if exists
+            if remote_branch_exists "$branch" "$project_root"; then
+                log_info "Deleting remote branch: origin/$branch"
+                if git push origin --delete "$branch" 2>/dev/null; then
+                    log_success "Remote branch deleted: origin/$branch"
+                else
+                    log_warn "Could not delete remote branch: origin/$branch"
+                fi
+            else
+                log_info "No remote branch to delete"
             fi
         fi
-    elif [[ "$keep_branch" == true ]]; then
-        info "Keeping branch: $branch (--keep-branch)"
     fi
 
-    # Prune stale worktree entries
-    git worktree prune 2>/dev/null || true
+    # Step 4: Prune stale worktree entries
+    log_info "Pruning stale worktree entries..."
+    git worktree prune
 
     echo ""
-    success "Cleanup complete!"
+    log_success "Worktree cleanup complete!"
+
+    # Summary
     echo ""
-    echo "Remaining worktrees:"
-    git worktree list
+    echo "Summary:"
+    echo "  Worktree removed: $abs_worktree_path"
+    if [[ -n "$branch" ]]; then
+        if [[ "$is_protected" == true ]]; then
+            echo "  Branch: $branch (protected, not deleted)"
+        elif [[ "$KEEP_BRANCH" == true ]]; then
+            echo "  Branch: $branch (kept)"
+        elif [[ "$DELETE_BRANCH" == true ]]; then
+            echo "  Branch: $branch (deleted)"
+        fi
+    fi
 }
 
 main "$@"
