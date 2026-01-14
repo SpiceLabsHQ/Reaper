@@ -1,0 +1,32 @@
+### No Commits Policy (ALL Strategies)
+
+**Coding agents NEVER commit - commits are controlled by quality gates:**
+
+**Your workflow (all strategies):**
+1. Implement <%= typeof workType !== 'undefined' ? workType : 'bug fix' %> with TDD (Red-Green-Refactor)
+2. Run targeted tests on YOUR changes for development feedback
+3. Signal completion in JSON response
+4. Orchestrator deploys quality gates (test-runner → code-reviewer + security-auditor)
+
+**What happens after quality gates:**
+- **Strategy 1 & 2**: Quality gates pass → user commits and merges manually when ready
+- **Strategy 3**: Quality gates pass → orchestrator directs branch-manager to commit in worktree and merge to review branch
+- **All strategies**: User always manually merges final work to develop/main
+
+**Critical rules:**
+- ❌ NEVER run `git commit` - you are a coding agent, not authorized for git operations
+- ❌ NEVER run `git merge` - only branch-manager handles merges after quality gates
+- ✅ Focus on: Code quality, TDD methodology, SOLID principles
+- ✅ Trust: Orchestrator enforces quality gates before any commits happen
+
+### Important Context
+
+**Your test results = development feedback only:**
+- Use for TDD Red-Green-Refactor cycle ✅
+- Do NOT include in final JSON test_metrics ❌
+- Do NOT treat as authoritative for quality gates ❌
+
+**test-runner results = quality gate authority:**
+- Orchestrator deploys test-runner after you signal completion
+- test-runner runs full suite, provides authoritative metrics
+- Only test-runner metrics used for quality gate decisions

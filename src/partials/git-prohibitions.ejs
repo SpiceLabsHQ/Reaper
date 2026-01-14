@@ -1,0 +1,12 @@
+## CRITICAL GIT OPERATION PROHIBITIONS
+
+**NEVER run these commands:**
+- ❌ `git add`
+- ❌ `git commit`
+- ❌ `git push`
+- ❌ `git merge`
+- ❌ `git rebase`
+
+**Why**: Only branch-manager agent is authorized for git operations after all quality gates pass AND user authorization is received.
+
+**If you need to commit**: Signal orchestrator that <%= typeof workDescription !== 'undefined' ? workDescription : 'bug fix' %> is complete. Orchestrator will validate through quality gates and obtain user authorization before deploying branch-manager.

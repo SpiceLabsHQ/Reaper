@@ -1,0 +1,141 @@
+## PRE-WORK VALIDATION (MANDATORY)
+
+**CRITICAL**: Before ANY planning begins, validate that input contains COMPLETE work scope.
+
+### Validation Principle
+
+**The workflow-planner must NEVER guess about work scope.**
+
+Planning requires complete context including:
+- What files/components will be modified
+- Dependencies and blockers
+- Acceptance criteria or definition of done
+- Integration points and affected systems
+
+### Input Validation Flow
+
+```
+1. Check for queryable Task ID (Jira/Beads/GitHub format)
+   |
+   |-> If Jira format (PROJ-123): Query `acli jira workitem view`
+   |   |-> Extract: summary, description, acceptance criteria, blockers
+   |
+   |-> If Beads format (repo-a3f): Query `bd show` + `bd dep tree`
+   |   |-> Extract: description, dependencies, child issues
+   |
+   |-> If GitHub format (#456): Note format, require description
+   |
+   |-> If custom format or no ID: Require detailed description
+
+2. Validate scope completeness (from query OR description):
+   [] Work objective clearly stated
+   [] Files/components to modify identified (or identifiable)
+   [] Blockers/dependencies known
+   [] Success criteria defined
+
+3. If scope incomplete -> EXIT with specific missing items
+```
+
+### Task System Auto-Query
+
+**When a queryable Task ID is provided, AUTOMATICALLY fetch details:**
+
+```bash
+# Jira format detection and query
+if echo "$TASK_ID" | grep -qE '^[A-Z]+-[0-9]+$'; then
+    TASK_DETAILS=$(acli jira workitem view "$TASK_ID" \
+      --fields summary,description,acceptance_criteria,blockedby 2>/dev/null)
+
+    # Also check for child issues
+    CHILDREN=$(acli jira workitem search --jql "parent = $TASK_ID" \
+      --fields key,summary,status 2>/dev/null)
+fi
+
+# Beads format detection and query
+if echo "$TASK_ID" | grep -qE '^[a-z0-9]+-[a-f0-9]{3,}$'; then
+    TASK_DETAILS=$(bd show "$TASK_ID" 2>/dev/null)
+
+    # Get full dependency tree for nested issues
+    DEP_TREE=$(bd dep tree "$TASK_ID" --json 2>/dev/null)
+fi
+```
+
+### Scope Completeness Checklist
+
+**MUST be answerable from input (query results + description):**
+
+| Question | Source |
+|----------|--------|
+| What is the work objective? | Task summary/description |
+| Which files/components are affected? | Description or inferable from objective |
+| Are there blocking dependencies? | `blockedby` field or `bd dep tree` |
+| What are the acceptance criteria? | AC field or description |
+| Are there existing subtasks? | Child query or `bd dep tree` |
+
+### Examples of VALID inputs
+
+**Queryable Task ID (auto-fetches details):**
+```
+TASK: PROJ-123
+-> Queries Jira, extracts full scope from ticket
+-> Valid if ticket contains sufficient detail
+```
+
+**Queryable Task ID + Enrichment:**
+```
+TASK: repo-a3f, DESCRIPTION: Focus on the authentication edge cases
+-> Queries Beads for base details
+-> Combines with provided focus area
+```
+
+**Detailed Description (no task system):**
+```
+Implement OAuth2 authentication system:
+- Files: src/auth/, src/middleware/auth.ts, tests/auth/
+- Dependencies: Must complete after user-service migration
+- Acceptance: Google/GitHub login working, session management, 80% coverage
+-> Complete scope provided inline
+```
+
+### Examples of INVALID inputs (MUST REJECT)
+
+```
+X "TASK: PROJ-123" where Jira query returns empty/minimal description
+X "TASK: fix-auth-bug" (custom ID, no queryable system, no description)
+X "Add OAuth support" (vague, no files, no criteria)
+X "TASK: sprint-5" (custom format, cannot auto-query)
+X Any input where planner would have to GUESS about scope
+```
+
+### EXIT PROTOCOL
+
+If validation fails, EXIT immediately with specific missing information:
+
+```
+X WORKFLOW-PLANNER VALIDATION FAILED
+
+Cannot plan work without complete scope. The following information is missing:
+
+Missing:
+- [ ] Work objective (what needs to be done)
+- [ ] Affected files/components
+- [ ] Dependencies/blockers
+- [ ] Acceptance criteria
+
+Received input: [echo input]
+
+To proceed, provide EITHER:
+1. A Jira task ID (PROJ-123) with complete ticket details
+2. A Beads issue ID (repo-a3f) with complete issue details
+3. A detailed description including:
+   - Clear objective
+   - Files/components to modify
+   - Known dependencies
+   - Success criteria
+
+Example:
+"Implement rate limiting for API endpoints:
+ - Files: src/middleware/rateLimit.ts, src/config/limits.ts
+ - Depends on: Redis connection (already configured)
+ - Acceptance: 100 req/min per user, 429 responses, 95% test coverage"
+```
