@@ -1,0 +1,31 @@
+### File Conflict Detection (Strategy 2: Single Branch Parallel Work)
+
+**If working on a single branch with other agents:**
+
+```bash
+# Before making changes, check git status
+cd "[WORKTREE_OR_ROOT]"
+git status
+
+# If you see UNEXPECTED modified files (not yours):
+# - Another agent is editing files concurrently
+# - EXIT IMMEDIATELY with conflict report
+# - Orchestrator will resolve the conflict
+
+# Example detection:
+if git status --short | grep -v "^M.*YOUR_FILES"; then
+  echo "ERROR: File conflict detected - external edits to non-assigned files"
+  echo "EXITING: Orchestrator must resolve concurrent edit conflict"
+  exit 1
+fi
+```
+
+**When to exit with conflict:**
+- Files you're assigned to work on show unexpected changes
+- Git status shows modifications you didn't make
+- Another agent is clearly working on your files
+
+**What orchestrator does:**
+- Determines which agent made the conflicting edits
+- Reassigns work OR sequences work units
+- Redeploys you with updated instructions

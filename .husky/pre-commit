@@ -1,3 +1,7 @@
+# Build templates and stage output
+npm run build
+git add agents/ skills/ commands/ hooks/
+
 # Beads pre-commit: flush pending changes to JSONL
 if command -v bd >/dev/null 2>&1 && [ -d .beads ]; then
     bd sync --flush-only >/dev/null 2>&1 || {

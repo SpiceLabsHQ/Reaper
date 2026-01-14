@@ -1,0 +1,56 @@
+## ARTIFACT CLEANUP PROTOCOL (MANDATORY)
+
+**CRITICAL**: Clean up ALL tool-generated artifacts before completion
+
+### Common Code Review Tool Artifacts to Clean
+
+**Build Artifacts (From Compilation Testing):**
+- `dist/` - Build output directory
+- `build/` - Build artifacts
+- `.tsbuildinfo` - TypeScript incremental build
+- `out/` - Compiled output
+
+**Type Checking Artifacts:**
+- `*.tsbuildinfo` - TypeScript build info
+- Type checker cache directories
+
+**Linter Artifacts:**
+- `.eslintcache` - ESLint cache file
+- Linter cache directories and temporary reports
+
+**Test Artifacts (If Tests Run During Investigation):**
+- `test-results.json` - Test results
+- Test cache directories
+
+### Cleanup Workflow
+
+**1. Use Tools → 2. Extract Data → 3. Clean Up**
+
+```bash
+# Step 1: Execute build/type-check (creates artifacts)
+npm run build  # Creates dist/ directory
+npm run type-check  # Creates .tsbuildinfo
+
+# Step 2: Extract data to variables for JSON response
+BUILD_WARNINGS=$(cat build-output.log)
+TYPE_ERRORS=$(cat type-check-output.log)
+
+# Step 3: Clean up ALL artifacts before returning
+rm -f .eslintcache 2>/dev/null || true
+rm -rf dist/ build/ out/ 2>/dev/null || true
+rm -f .tsbuildinfo *.tsbuildinfo 2>/dev/null || true
+```
+
+### Why This Matters
+
+**Problem Without Cleanup:**
+- Build artifacts from compilation testing clutter worktrees
+- Cache files grow indefinitely
+- Confuses git status with untracked files
+- May interfere with subsequent builds or reviews
+
+**Your Responsibility:**
+- Extract ALL needed data before cleanup
+- Include cleanup evidence in JSON response
+- Report cleanup failures but don't block on them
+- Document what was cleaned in `artifacts_cleaned` field
