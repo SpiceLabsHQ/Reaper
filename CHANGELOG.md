@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.3.0](https://github.com/SpiceLabsHQ/Reaper/compare/v1.2.0...v1.3.0) (2026-01-14)
+
+
+### Features
+
+* **build:** add EJS template build system for DRY plugin development ([e7c3031](https://github.com/SpiceLabsHQ/Reaper/commit/e7c303116a79ea98d43dbca07a50c6c942bff1a7))
+* **worktree-manager:** require explicit branch disposition on cleanup ([e85ebfb](https://github.com/SpiceLabsHQ/Reaper/commit/e85ebfbaea10db48268c95ce89e1c9d6fa5c3378))
+
+
+### Bug Fixes
+
+* **hooks:** detect pushes TO main, not just FROM main ([93a9bc1](https://github.com/SpiceLabsHQ/Reaper/commit/93a9bc1821bc271769a54ae948117eb18948f5e0))
+* **worktree-manager:** add CWD safety instructions for cleanup ([a07fc93](https://github.com/SpiceLabsHQ/Reaper/commit/a07fc931969411c003167307c615a718698f9314))
+
+
+### Refactoring
+
+* **agents:** standardize agent naming conventions ([8e69c7d](https://github.com/SpiceLabsHQ/Reaper/commit/8e69c7d4c5dd0d711bc82fcfdc15fa692a5b90ce))
+
 ## [1.2.0](https://github.com/SpiceLabsHQ/Reaper/compare/v1.1.2...v1.2.0) (2026-01-12)
 
 
