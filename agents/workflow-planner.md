@@ -383,7 +383,7 @@ analysis = {
 
 // Recommended approach:
 // - Deploy orchestrator to create files in parallel OR
-// - Deploy 10 parallel reaper:documentation-generator agents, one per skill
+// - Deploy 10 parallel reaper:technical-writer agents, one per skill
 // - Total ~2,500 tokens per agent vs ~29,000 serially
 // - Dramatic token efficiency improvement
 ```
@@ -583,7 +583,7 @@ Task --subagent_type reaper:bug-fixer "TASK_ID: PROJ-123, FILES: src/utils.js te
 For EACH worktree, execute this complete cycle:
 
 1. **Implementation Phase:**
-   - Deploy code agent (reaper:bug-fixer, reaper:feature-developer, reaper:refactoring-specialist)
+   - Deploy code agent (reaper:bug-fixer, reaper:feature-developer, reaper:refactoring-dev)
    - Agent works ONLY in assigned worktree
    - Small work packages (max 5 files, 500 LOC per package)
    - Agent runs targeted tests on their changes (TDD feedback)
@@ -651,7 +651,7 @@ For EACH worktree, execute this complete cycle:
 - Architecture-aware implementation
 - Ideal for: new functionality, feature additions, capability expansion
 
-**Code Improvements → `reaper:refactoring-specialist` agent**
+**Code Improvements → `reaper:refactoring-dev` agent**
 - Preserve functionality while improving structure
 - SOLID principle enforcement
 - Technical debt reduction

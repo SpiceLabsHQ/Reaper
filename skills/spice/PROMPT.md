@@ -16,8 +16,8 @@ We have a multi-skill package at `~/.claude/skills/spice/` that provides automat
 
 **Existing Agents (DON'T create skills for these):**
 - reaper:test-runner, reaper:code-reviewer, reaper:security-auditor
-- reaper:documentation-generator, reaper:deployment-engineer
-- reaper:refactoring-specialist, reaper:incident-responder
+- reaper:technical-writer, reaper:deployment-engineer
+- reaper:refactoring-dev, reaper:incident-responder
 - reaper:branch-manager, reaper:bug-fixer, reaper:feature-developer
 - reaper:workflow-planner, reaper:performance-engineer
 

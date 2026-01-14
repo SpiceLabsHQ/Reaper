@@ -1,5 +1,5 @@
 #!/bin/bash
-# Orchestration hook for coding agents (feature-developer, bug-fixer, refactoring-specialist, integration-engineer)
+# Orchestration hook for coding agents (feature-developer, bug-fixer, refactoring-dev, integration-engineer)
 # Outputs instructions for the orchestrator to follow after a coding agent completes
 
 cat << 'EOF'

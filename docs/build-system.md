@@ -54,7 +54,7 @@ reaper/
 
 | Partial | Used By | Description |
 |---------|---------|-------------|
-| `pre-work-validation-coding.ejs` | bug-fixer, feature-developer, refactoring-specialist, integration-engineer | Validates TASK, WORKTREE_PATH, DESCRIPTION |
+| `pre-work-validation-coding.ejs` | bug-fixer, feature-developer, refactoring-dev, integration-engineer | Validates TASK, WORKTREE_PATH, DESCRIPTION |
 | `pre-work-validation-review.ejs` | code-reviewer, security-auditor, test-runner | Validates TASK, WORKING_DIR, PLAN_CONTEXT |
 | `pre-work-validation-planning.ejs` | workflow-planner, api-designer, database-architect, cloud-architect | Validates task scope completeness |
 
@@ -65,7 +65,7 @@ reaper/
 | `directory-exclusions.ejs` | All coding agents | Standard exclusion patterns for tests/linting |
 | `output-requirements.ejs` | All agents | JSON output requirements, no file writing |
 | `git-prohibitions.ejs` | Coding agents | Never run git add/commit/push/merge |
-| `tdd-testing-protocol.ejs` | bug-fixer, feature-developer, refactoring-specialist | TDD Red-Green-Blue cycle |
+| `tdd-testing-protocol.ejs` | bug-fixer, feature-developer, refactoring-dev | TDD Red-Green-Blue cycle |
 | `artifact-cleanup-coding.ejs` | Coding agents | Clean up test/lint artifacts |
 | `artifact-cleanup-review.ejs` | Review agents | Clean up scan/build artifacts |
 | `file-conflict-detection.ejs` | Coding agents | Strategy 2 parallel work safety |
@@ -97,11 +97,11 @@ Templates use these EJS variables passed during compilation:
 
 ```javascript
 const AGENT_TYPES = {
-  coding: ['bug-fixer', 'feature-developer', 'refactoring-specialist', 'integration-engineer'],
+  coding: ['bug-fixer', 'feature-developer', 'refactoring-dev', 'integration-engineer'],
   review: ['code-reviewer', 'security-auditor', 'test-runner'],
   planning: ['workflow-planner', 'api-designer', 'database-architect', 'cloud-architect'],
   operations: ['branch-manager', 'deployment-engineer', 'incident-responder'],
-  documentation: ['documentation-generator', 'claude-agent-architect'],
+  documentation: ['technical-writer', 'claude-agent-architect'],
   performance: ['performance-engineer']
 };
 ```
@@ -271,7 +271,7 @@ The build should also run in CI to verify:
 
 ### pre-work-validation-coding.ejs
 
-For coding agents (bug-fixer, feature-developer, refactoring-specialist, integration-engineer):
+For coding agents (bug-fixer, feature-developer, refactoring-dev, integration-engineer):
 
 - Validates TASK identifier + DESCRIPTION
 - Validates WORKTREE_PATH format (./trees/[task-id]-description)
