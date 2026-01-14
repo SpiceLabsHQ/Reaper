@@ -21,14 +21,24 @@ All scripts are located in `${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/script
 | `worktree-create.sh` | `<task-id> <description> [--base-branch <branch>]` |
 | `worktree-list.sh` | `[--json] [--verbose]` |
 | `worktree-status.sh` | `<worktree-path>` |
-| `worktree-cleanup.sh` | `<worktree-path> [--force] [--dry-run] [--keep-branch]` |
+| `worktree-cleanup.sh` | `<worktree-path> --keep-branch\|--delete-branch [--force] [--dry-run]` |
 
 ### Safe Worktree Removal
 
-The cleanup script changes to project root BEFORE attempting removal, preventing shell breakage:
+The cleanup script changes to project root BEFORE attempting removal, preventing shell breakage.
+
+**IMPORTANT:** You must specify branch disposition for non-protected branches:
+- `--keep-branch` - Keep the branch for future work
+- `--delete-branch` - Delete the branch (after merge)
+
+Protected branches (`develop`, `main`, `master`) are never deleted.
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-description
+# After merge: delete the branch
+${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-description --delete-branch
+
+# Keep branch for later
+${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-description --keep-branch
 ```
 
 ### Why This Matters
@@ -58,14 +68,24 @@ ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-list.sh --verbose
 ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-status.sh ./trees/PROJ-123-auth-feature
 ```
 
-### Safely remove a worktree
+### Safely remove a worktree (delete branch after merge)
 ```bash
-${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-auth-feature
+${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-auth-feature --delete-branch
 ```
 
-### Force remove (emergency)
+### Safely remove a worktree (keep branch for later)
 ```bash
-${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-auth-feature --force
+${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-auth-feature --keep-branch
+```
+
+### Preview what would happen
+```bash
+${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-auth-feature --delete-branch --dry-run
+```
+
+### Force remove (emergency, with uncommitted changes)
+```bash
+${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-auth-feature --delete-branch --force
 ```
 
 ## Error Recovery

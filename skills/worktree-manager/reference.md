@@ -148,36 +148,64 @@ Checks detailed health of a specific worktree.
 
 ### worktree-cleanup.sh
 
-Safely removes a worktree, handling the CWD issue.
+Safely removes a worktree, handling the CWD issue. **Requires explicit branch disposition.**
 
 ```bash
 ~/.claude/skills/worktree-manager/scripts/worktree-cleanup.sh <worktree-path> [options]
 ```
 
-**Options:**
+**Branch Disposition (REQUIRED):**
+
+When removing a worktree with an associated feature branch, you MUST specify one of:
+
 | Option | Description |
 |--------|-------------|
-| `--force` | Skip safety checks |
-| `--dry-run` | Show what would happen |
-| `--keep-branch` | Remove worktree but keep branch |
+| `--keep-branch` | Remove worktree but keep branch for future work |
+| `--delete-branch` | Remove worktree AND delete branch (local and remote) |
+
+**Note:** Protected branches (`develop`, `main`, `master`) are never deleted and don't require disposition flags.
+
+**Other Options:**
+| Option | Description |
+|--------|-------------|
+| `--force` | Skip safety checks (uncommitted changes warning) |
+| `--dry-run` | Show what would happen without making changes |
 
 **Exit codes:**
 | Code | Meaning |
 |------|---------|
 | 0 | Success |
 | 1 | Error (invalid input, git failure) |
-| 2 | Safety check failed (uncommitted changes) |
+| 2 | Safety check failed (uncommitted changes without --force) |
+| 3 | Branch disposition required (missing --keep-branch or --delete-branch) |
 
 **Safety checks (unless --force):**
 1. No uncommitted changes
-2. No unmerged commits (warns only)
+2. No unmerged commits (warns only, non-blocking)
 
 **Cleanup actions:**
 1. Change to project root (CWD fix)
 2. Remove worktree directory
-3. Delete local branch (unless --keep-branch)
-4. Delete remote branch (if exists)
-5. Prune stale worktree entries
+3. Handle branch disposition:
+   - `--keep-branch`: Branch is preserved
+   - `--delete-branch`: Delete local branch, then remote if exists
+   - Protected branch: Skip deletion (informational note only)
+4. Prune stale worktree entries
+
+**Examples:**
+```bash
+# After merging: delete the branch
+worktree-cleanup.sh ./trees/PROJ-123-auth --delete-branch
+
+# Keep branch for later work
+worktree-cleanup.sh ./trees/PROJ-123-auth --keep-branch
+
+# Preview what would happen
+worktree-cleanup.sh ./trees/PROJ-123-auth --delete-branch --dry-run
+
+# Force removal with uncommitted changes
+worktree-cleanup.sh ./trees/PROJ-123-auth --delete-branch --force
+```
 
 ## Error Recovery
 
