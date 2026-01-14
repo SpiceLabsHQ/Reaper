@@ -90,7 +90,7 @@ Plan in detail upfront. Claude coordinates the airspace. You only see finished w
               │
               ▼
 ┌─────────────────────────────┐
-│        Code Agent           │ ← reaper:bug-fixer / reaper:feature-developer / reaper:refactoring-specialist
+│        Code Agent           │ ← reaper:bug-fixer / reaper:feature-developer / reaper:refactoring-dev
 └─────────────────────────────┘
               │
               ▼
@@ -133,7 +133,7 @@ The `workflow-planner` calculates a complexity score based on file impact, depen
 |-------|---------|
 | `reaper:feature-developer` | Implements new features with TDD and SOLID principles |
 | `reaper:bug-fixer` | Systematic bug reproduction and minimal fixes with TDD |
-| `reaper:refactoring-specialist` | Code improvements while preserving functionality |
+| `reaper:refactoring-dev` | Code improvements while preserving functionality |
 | `reaper:branch-manager` | Git operations, worktree management, safe merges |
 
 ### Quality
@@ -157,7 +157,7 @@ The `workflow-planner` calculates a complexity score based on file impact, depen
 
 | Agent | Purpose |
 |-------|---------|
-| `reaper:documentation-generator` | Technical documentation from codebases |
+| `reaper:technical-writer` | Technical documentation from codebases |
 | `reaper:claude-agent-architect` | Agent design, creation, and quality control |
 
 ---

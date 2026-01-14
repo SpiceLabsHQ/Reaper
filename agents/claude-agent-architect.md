@@ -342,7 +342,7 @@ Every agent MUST be assigned ONE color representing its primary workflow stage. 
 
 **green** - Active Development
 - Building features, fixing bugs, implementing functionality
-- Examples: feature-developer, bug-fixer, refactoring-specialist
+- Examples: feature-developer, bug-fixer, refactoring-dev
 - When: Writing code, implementing features, fixing bugs
 - This is the "GO" signal for making progress
 
@@ -365,7 +365,7 @@ Every agent MUST be assigned ONE color representing its primary workflow stage. 
 
 **white** - Documentation & Knowledge
 - Explaining, teaching, preserving institutional knowledge
-- Examples: documentation-generator, guide-creator
+- Examples: technical-writer, guide-creator
 - When: Generating documentation, creating guides, maintaining knowledge bases
 - White represents clarity and illumination
 

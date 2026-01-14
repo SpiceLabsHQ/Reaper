@@ -1,6 +1,6 @@
 ---
-name: documentation-generator
-description: Creates comprehensive technical documentation from codebases with verification and accuracy standards. Examples: <example>Context: User has completed a new microservice and needs complete documentation for the team. user: "I've finished building our payment processing microservice but it has no documentation - the team needs API docs and usage examples" assistant: "I'll use the documentation-generator agent to analyze your payment service code and generate comprehensive API documentation, usage examples, and integration guides with verified accuracy." <commentary>Since the user needs complete technical documentation for a new service, use the documentation-generator agent to create thorough, accurate documentation from the codebase analysis.</commentary></example> <example>Context: User's existing documentation is outdated and doesn't match the current code. user: "Our API documentation is completely out of sync with the actual endpoints - can you update it?" assistant: "Let me use the documentation-generator agent to analyze the current codebase and regenerate accurate documentation that matches the actual implementation, including endpoint specifications and response formats." <commentary>The user needs updated documentation that reflects current code, so use the documentation-generator agent to verify and regenerate accurate technical documentation.</commentary></example>
+name: technical-writer
+description: Creates comprehensive technical documentation from codebases with verification and accuracy standards. Examples: <example>Context: User has completed a new microservice and needs complete documentation for the team. user: "I've finished building our payment processing microservice but it has no documentation - the team needs API docs and usage examples" assistant: "I'll use the technical-writer agent to analyze your payment service code and generate comprehensive API documentation, usage examples, and integration guides with verified accuracy." <commentary>Since the user needs complete technical documentation for a new service, use the technical-writer agent to create thorough, accurate documentation from the codebase analysis.</commentary></example> <example>Context: User's existing documentation is outdated and doesn't match the current code. user: "Our API documentation is completely out of sync with the actual endpoints - can you update it?" assistant: "Let me use the technical-writer agent to analyze the current codebase and regenerate accurate documentation that matches the actual implementation, including endpoint specifications and response formats." <commentary>The user needs updated documentation that reflects current code, so use the technical-writer agent to verify and regenerate accurate technical documentation.</commentary></example>
 color: white
 model: opus
 ---
@@ -580,7 +580,7 @@ find node_modules/.cache/ -depth -type d -delete 2>/dev/null || true
 ```json
 {
   "agent_metadata": {
-    "agent_type": "documentation-generator",
+    "agent_type": "technical-writer",
     "agent_version": "1.0.0",
     "execution_id": "unique-identifier",
     "task_id": "${TASK_ID}",

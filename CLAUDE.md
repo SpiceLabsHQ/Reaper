@@ -144,10 +144,10 @@ Use EJS includes: `<%- include('partials/output-requirements', { isReviewAgent: 
 | Category | Agents |
 |----------|--------|
 | Planning | reaper:workflow-planner, reaper:api-designer, reaper:cloud-architect, reaper:database-architect |
-| Development | reaper:feature-developer, reaper:bug-fixer, reaper:refactoring-specialist, reaper:branch-manager |
+| Development | reaper:feature-developer, reaper:bug-fixer, reaper:refactoring-dev, reaper:branch-manager |
 | Quality | reaper:test-runner, reaper:code-reviewer, reaper:security-auditor, reaper:performance-engineer |
 | Ops | reaper:deployment-engineer, reaper:integration-engineer, reaper:incident-responder |
-| Meta | reaper:documentation-generator, reaper:claude-agent-architect |
+| Meta | reaper:technical-writer, reaper:claude-agent-architect |
 
 ### Agent Naming Convention
 

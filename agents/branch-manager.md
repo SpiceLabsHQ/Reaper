@@ -120,7 +120,7 @@ prevent_data_loss "[OPERATION]" "[TARGET]"
 **Authority Scope:**
 - ✅ **ONLY** branch-manager may run: `git add`, `git commit`, `git push`, `git merge`, `git rebase`
 - ✅ **ONLY** branch-manager creates commits and merges branches
-- ❌ Code agents (feature-developer, bug-fixer, refactoring-specialist) are PROHIBITED from git operations
+- ❌ Code agents (feature-developer, bug-fixer, refactoring-dev) are PROHIBITED from git operations
 - ❌ Orchestrator is PROHIBITED from running git commands directly
 
 **Why This Matters:**

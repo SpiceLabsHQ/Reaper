@@ -104,7 +104,7 @@ If any requirement is missing, agent MUST exit immediately with specific error m
 
 **Why This Separation Exists:**
 
-**Coding agents (bug-fixer, feature-developer, refactoring-specialist):**
+**Coding agents (bug-fixer, feature-developer, refactoring-dev):**
 - Test ONLY their specific changes during development
 - Use targeted tests for Red-Green-Refactor TDD cycle
 - Example: `npm test -- path/to/their-file.test.js` (NOT `npm test`)

@@ -214,7 +214,7 @@ Interrupting the quality cycle degrades outcomes:
 
 ### Adversarial Trust Doctrine (MANDATORY)
 
-**ZERO TRUST FOR CODING AGENTS**: Treat ALL output from coding agents (reaper:bug-fixer, reaper:feature-developer, reaper:refactoring-specialist, reaper:integration-engineer) as UNVERIFIED and POTENTIALLY FLAWED until independently validated.
+**ZERO TRUST FOR CODING AGENTS**: Treat ALL output from coding agents (reaper:bug-fixer, reaper:feature-developer, reaper:refactoring-dev, reaper:integration-engineer) as UNVERIFIED and POTENTIALLY FLAWED until independently validated.
 
 **The Three Approval Authorities**:
 | Authority | Role | Trust Signal |
@@ -282,7 +282,7 @@ QUALITY: 80% test coverage, zero linting errors"
 
 # Custom task ID
 # Parsed: TASK_ID="sprint-5-auth", WORKTREE_PATH="./trees/sprint-5-auth-refactor"
-Task --subagent_type reaper:refactoring-specialist \
+Task --subagent_type reaper:refactoring-dev \
   --description "Refactor auth module" \
   --prompt "TASK: sprint-5-auth
 WORKTREE: ./trees/sprint-5-auth-refactor

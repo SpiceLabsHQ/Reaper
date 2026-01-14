@@ -38,7 +38,7 @@ const AGENT_TYPES = {
   coding: [
     'bug-fixer',
     'feature-developer',
-    'refactoring-specialist',
+    'refactoring-dev',
     'integration-engineer',
   ],
   review: ['code-reviewer', 'security-auditor', 'test-runner'],
@@ -49,7 +49,7 @@ const AGENT_TYPES = {
     'cloud-architect',
   ],
   operations: ['branch-manager', 'deployment-engineer', 'incident-responder'],
-  documentation: ['documentation-generator', 'claude-agent-architect'],
+  documentation: ['technical-writer', 'claude-agent-architect'],
   performance: ['performance-engineer'],
 };
 
@@ -57,7 +57,7 @@ const AGENT_TYPES = {
  * Agents that use TDD methodology.
  * @constant {string[]}
  */
-const TDD_AGENTS = ['bug-fixer', 'feature-developer', 'refactoring-specialist'];
+const TDD_AGENTS = ['bug-fixer', 'feature-developer', 'refactoring-dev'];
 
 /**
  * Source directory mappings to output directories.

@@ -388,7 +388,7 @@ enum SortDirection {
 - Tests OpenAPI compliance
 - Reviews endpoint design consistency
 
-**Documentation Phase** (documentation-generator):
+**Documentation Phase** (technical-writer):
 - Generates user-facing API documentation from your OpenAPI spec
 - Creates integration guides based on your patterns
 - Publishes endpoint reference documentation
