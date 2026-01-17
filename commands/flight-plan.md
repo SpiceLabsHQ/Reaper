@@ -64,11 +64,137 @@ These 3 core todos define your complete scope. When all complete, STOP.
 
 ---
 
-## Phase 2: Analyze and Decompose
+## Phase 1.5: Codebase Research (Parallel Exploration)
+
+Before decomposing work, spawn parallel Explore agents to research the codebase. This research informs accurate work unit definitions in Phase 2.
+
+### When to Research
+
+Research is **required** when:
+- Planning involves existing codebase modifications
+- Feature touches multiple modules or systems
+- Integration points are unclear from the request
+
+Research is **skipped** when:
+- Creating a new standalone project from scratch
+- Request is purely documentation or configuration
+- User explicitly provides file lists and architecture details
+
+### Spawn Parallel Explore Agents
+
+Launch multiple Explore agents simultaneously, each targeting a specific research aspect:
+
+```bash
+# Spawn research agents in parallel (all run concurrently)
+Task --subagent_type Explore \
+  --prompt "RESEARCH: Find files and patterns related to '$PLANNING_REQUEST'
+
+  Search for:
+  - Files likely affected by this feature/change
+  - Existing implementations of similar functionality
+  - Test files that cover related code paths
+
+  Output: JSON with { files: [...], patterns_found: [...], notes: string }"
+
+Task --subagent_type Explore \
+  --prompt "RESEARCH: Analyze architecture for '$PLANNING_REQUEST'
+
+  Investigate:
+  - Module structure in affected areas
+  - Design patterns currently in use
+  - Abstraction layers and boundaries
+
+  Output: JSON with { architecture: {...}, design_patterns: [...], boundaries: string }"
+
+Task --subagent_type Explore \
+  --prompt "RESEARCH: Identify dependencies and integration points for '$PLANNING_REQUEST'
+
+  Discover:
+  - Internal dependencies between modules
+  - External API/service integrations
+  - Shared utilities and helpers used
+  - Database/storage touchpoints
+
+  Output: JSON with { internal_deps: [...], external_integrations: [...], shared_utils: [...] }"
+```
+
+### Aggregate Research Findings
+
+After all Explore agents complete, aggregate their findings into a research summary:
+
+```markdown
+### Codebase Research Summary
+
+**Affected Files** (from file discovery):
+- [list of files likely to be modified]
+- [list of related test files]
+
+**Architecture Context** (from architecture analysis):
+- Current patterns: [patterns in use]
+- Module boundaries: [relevant boundaries]
+
+**Dependencies** (from integration analysis):
+- Internal: [module dependencies]
+- External: [API/service integrations]
+- Shared: [common utilities]
+
+**Planning Implications**:
+- [key insights that affect work unit decomposition]
+- [potential complexity areas identified]
+- [parallel work opportunities discovered]
+```
+
+### Use Research in Phase 2
+
+The research summary directly informs Phase 2 decomposition:
+- File lists help define work unit scope
+- Architecture context ensures pattern consistency
+- Dependencies reveal hidden blockers and integration needs
+- Parallel opportunities inform work groupings
+
+---
+
+## Phase 2: Quick Analysis (Minimal Questions)
+
+### Question Philosophy
+
+**CRITICAL: Bias toward action, not interrogation.**
+
+- Generate a first-pass plan immediately based on available context
+- Only ask clarifying questions if input is **truly ambiguous** (rare)
+- Maximum 0-2 upfront questions, asked together (never more)
+- When in doubt, make reasonable assumptions and note them in the plan
+
+### When Questions Are Appropriate
+
+Ask upfront ONLY if:
+- The request could mean two fundamentally different things (scope ambiguity)
+- A critical constraint is completely unknown and uninferable
+- The wrong assumption would waste significant effort
+
+**Do NOT ask about:**
+- Implementation details (resolve during planning)
+- Nice-to-have clarifications (make assumptions, note them)
+- Things discoverable from codebase exploration
+- Preferences that can be refined later
+
+### Question Format (When Necessary)
+
+If you must ask (rare), use this format:
+
+```
+I'll create a plan for [brief restatement]. One quick clarification:
+
+[Single critical question]?
+
+Or I can proceed assuming [reasonable default].
+```
+
+Always offer the "proceed with assumptions" escape hatch. Never present more than 2 questions.
 
 ### Work Analysis
 
-Identify:
+Using research from Phase 1.5, identify:
 1. **Epic Definition:** Title, goal, scope boundaries, success criteria
 2. **Work Units:** Discrete issues following constraints below
 3. **Parallel Opportunities:** Units with no file overlap or dependencies
@@ -95,38 +221,90 @@ Mark units as `Assignee: user` when they require:
 
 ---
 
-## Phase 3: Generate Plan Document
+## Phase 3: Present Initial Plan
 
-Present plan with these sections:
+**Goal: Show something useful quickly, then refine iteratively.**
+
+Present a complete first-pass plan. Document any assumptions made so user can correct them.
 
 ### Required Sections
 
 1. **Overview:** Goal (1-2 sentences), Scope (included/excluded), Success criteria
-2. **Work Units Table:**
+2. **Assumptions:** List any assumptions made (user can correct in feedback)
+3. **Work Units Table:**
    | # | Title | Type | Hours | Parallel | Assignee | Blocked By |
    |---|-------|------|-------|----------|----------|------------|
    | 1 | Example unit | Story | 2h | Group A | agent | - |
 
-3. **Unit Details:** Description, acceptance criteria, estimated files (per unit)
-4. **Parallel Execution:** Groups, sequence diagram
-5. **Dependencies:**
+4. **Unit Details:** Description, acceptance criteria, estimated files (per unit)
+5. **Parallel Execution:** Groups, sequence diagram
+6. **Dependencies:**
    ```mermaid
    flowchart TD
        Epic --> Unit1 & Unit2
        Unit1 & Unit2 --> Unit3
    ```
-6. **User Intervention:** Table of manual tasks with reasons
-7. **Estimates:** Total units, parallelizable %, critical path
-8. **Next Steps:** Approval instructions
+7. **User Intervention:** Table of manual tasks with reasons
+8. **Estimates:** Total units, parallelizable %, critical path
+
+### Conversational Feedback Prompt
+
+End the plan with a natural prompt (NOT a numbered survey):
+
+```markdown
+---
+
+**Ready to create these issues?**
+
+Reply "go" to create as shown, or just tell me what to change.
+```
+
+Do NOT list questions. Let the user respond naturally with any concerns or changes.
 
 ---
 
-## Phase 4: User Approval
+## Phase 4: Iterative Refinement
 
-Wait for response:
-- **Approve:** "yes", "looks good", "go ahead", "approved", "create", "lgtm"
-- **Cancel:** "cancel", "no", "stop", "abort"
-- **Modify:** Any description of changes → regenerate plan
+### Handling User Feedback
+
+Parse response type:
+- **Approve:** "yes", "looks good", "go ahead", "approved", "create", "lgtm", "go" → Proceed to Phase 5
+- **Cancel:** "cancel", "no", "stop", "abort" → Acknowledge and stop
+- **Feedback:** Any other response → Refine and re-present
+
+### Refinement Process
+
+When user provides feedback:
+
+1. **Acknowledge briefly** - "Got it, I'll [summary of change]."
+2. **Apply changes** - Update the plan based on feedback
+3. **Re-present** - Show updated plan (full or diff based on change scope)
+4. **Prompt again** - Same conversational format
+
+### Refinement Guidelines
+
+- Keep cycles fast - don't re-run all research for minor tweaks
+- After major feedback, may re-run targeted Explore agents
+- Track which assumptions were corrected
+- If 3+ cycles without convergence, summarize outstanding questions concisely
+
+### Example Refinement Exchange
+
+```
+User: "Unit 3 should come before unit 2, and add a migration task"
+
+Agent: "Got it - swapping order and adding migration unit."
+
+[Updated plan with changes highlighted]
+
+---
+
+**Ready to create these issues?**
+
+Reply "go" to create as shown, or just tell me what to change.
+```
+
+The flow should feel like a conversation, not an interview
 
 ---
 
@@ -177,25 +355,43 @@ If no task system available, output full plan as markdown for manual use.
 
 ---
 
-## Phase 6: Issue Quality Review (Subagent Verification)
+## Phase 6: Issue Quality Review (Forked Subagent Verification)
 
 Update todo #3 to `in_progress`.
 
-### Deploy reaper:workflow-planner for Verification
+### Why Fork? Session Context Inheritance
 
-After creating issues, launch reaper:workflow-planner in VERIFICATION_MODE to review them:
+The verification subagent is invoked as a **forked subagent**, meaning it inherits full parent session context:
+
+| Benefit | Description |
+|---------|-------------|
+| **Conversation History** | All prior user requirements, clarifications, and feedback |
+| **Research Results** | Phase 1.5 Explore agent findings (files, architecture, dependencies) |
+| **Cached File Reads** | Any files already read during planning are accessible |
+| **Refinement Context** | Phase 4 iterations and user corrections |
+
+This allows a **minimal prompt** - the planner can reference "the original request" or "research findings" without re-explaining everything.
+
+### Deploy Forked reaper:workflow-planner for Verification
+
+After creating issues, launch reaper:workflow-planner as a forked subagent:
 
 ```bash
+# Fork pattern: subagent inherits full parent session context
 Task --subagent_type reaper:workflow-planner \
   --model opus \
   --prompt "MODE: VERIFICATION (not planning)
+
 EPIC: $EPIC_ID
 TASK_SYSTEM: $TASK_SYSTEM
-ORIGINAL_REQUEST: [original planning request]
 CREATED_ISSUES: [list of issue IDs created in Phase 5]
 
-You are reviewing issues that were ALREADY CREATED. Do NOT create new issues.
-Query the issue hierarchy and verify each issue meets orchestratability criteria.
+You have full access to this session's context:
+- The original planning request and user clarifications
+- Research findings from Phase 1.5 Explore agents
+- Any refinements made during Phase 4 iterations
+
+Verify the created issues meet orchestratability criteria. Do NOT create new issues.
 
 VERIFICATION QUERIES:
 - Beads: bd dep tree $EPIC_ID (full hierarchy)
@@ -206,44 +402,39 @@ VERIFICATION QUERIES:
 VERIFICATION CRITERIA:
 
 1. **Issue Detail Sufficiency**
-   - Each issue has clear objective (what needs to be done)
-   - Affected files/components specified or discoverable
-   - Acceptance criteria present (when is it done?)
-   - Size within limits (≤5 files, ≤500 LOC estimated)
+   - Clear objective (what needs to be done)
+   - Affected files/components (reference research findings if needed)
+   - Acceptance criteria present
+   - Size within limits (≤5 files, ≤500 LOC)
 
 2. **Cross-Issue Awareness**
-   - Related issues (same module, same API) reference each other
-   - File overlap between issues is documented
-   - No agent will accidentally duplicate work from another issue
-   - Each issue knows what OTHER issues are working on nearby code
+   - Related issues reference each other
+   - File overlap documented (use research findings)
+   - No duplicate work between issues
 
 3. **Relationship Appropriateness**
-   - parent-child used for hierarchy (epic → story → task)
-   - blocks ONLY for true execution order (A must finish before B starts)
-   - Blockers are DISCOURAGED - prefer parallel work when possible
-   - No circular dependencies in the graph
+   - parent-child for hierarchy
+   - blocks ONLY for true execution order
+   - No circular dependencies
 
 4. **Orchestratability**
-   - reaper:takeoff can determine execution order from relationships
-   - Parallel work opportunities are clear and documented
-   - Critical path is identifiable
-   - Agents know scope boundaries (when to stop working)
+   - reaper:takeoff can determine execution order
+   - Parallel opportunities documented
+   - Scope boundaries clear
 
 AUTO-FIX PROTOCOL (MANDATORY):
-For each failing check, update the issue directly using:
-- Beads: bd update <id> --description 'updated description'
-- Jira: acli jira workitem update <id> --description 'updated description'
+For each failing check, update directly:
+- Beads: bd update <id> --description 'updated'
+- Jira: acli jira workitem update <id> --description 'updated'
 
-Fixes to apply:
-- Missing acceptance criteria → Add to issue description
-- Missing cross-references → Add 'Related: <other-id>' to descriptions
-- Inappropriate blockers → Remove with bd dep remove, add parent-child instead
-- Missing file scope → Add 'Files: ...' to description
+Fixes: Add missing acceptance criteria, cross-references, file scope. Remove inappropriate blockers.
 
-After applying fixes, re-verify the fixed issues. Max 2 iterations.
+Max 2 fix iterations.
 
 OUTPUT: JSON with verification_mode, issues_verified, verification_results, validation_status"
 ```
+
+**Note:** The prompt is intentionally concise. The forked subagent can access the full planning conversation without explicit repetition.
 
 ### Handling Verification Results
 
@@ -295,4 +486,4 @@ Provide the orchestrate command and await user's next request.
 
 - **Task system unavailable:** Detect early, offer markdown fallback
 - **Creation failure:** Track created issues, rollback on error, report clearly
-- **Insufficient context:** Ask clarifying questions before planning
+- **Insufficient context:** Make reasonable assumptions, document them, let user correct in refinement
