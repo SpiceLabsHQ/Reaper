@@ -382,10 +382,20 @@ QUALITY: 80% test coverage, zero linting errors, TDD methodology"
 
 If `PRE_PLANNED === true`, the issue already has child tasks with acceptance criteria from flight-plan. Extract work units directly from children:
 
+**CRITICAL: Execute Full Scope (All Non-Closed Tasks)**
+
+Takeoff MUST execute ALL non-closed child tasks, not just unblocked ones:
+- **Closed tasks**: Skip (already completed)
+- **Open tasks (unblocked)**: Execute immediately
+- **Open tasks (blocked)**: Execute AFTER their blockers complete
+
+Dependencies determine execution ORDER, not whether a task gets executed. If task B is blocked by task A, include BOTH in the plan - execute A first, then B.
+
 ```javascript
-// PRE-PLANNED PATH: Extract work units from existing child issues
+// PRE-PLANNED PATH: Extract ALL non-closed work units from child issues
+// IMPORTANT: Include blocked tasks too - dependencies affect ORDER, not inclusion
 if (PRE_PLANNED) {
-  console.log("PRE-PLANNED WORKFLOW: Extracting work units from child issues");
+  console.log("PRE-PLANNED WORKFLOW: Extracting ALL non-closed work units (full scope)");
 
   let workUnits = [];
 
@@ -529,10 +539,12 @@ const STRATEGY_RATIONALE = plan.strategy_selection.rationale;
 
 **CRITICAL: Write Plan to TodoWrite (Session Persistence)**
 
-After obtaining work units (from either path), IMMEDIATELY write all work units to TodoWrite:
+After obtaining work units (from either path), IMMEDIATELY write ALL non-closed work units to TodoWrite.
+
+**Full Scope Rule**: Every non-closed task from the epic MUST appear in the TodoWrite plan. If 5 tasks exist and 2 are closed, the plan should have 3 work unit todos. Blocked tasks are included - they execute after their blockers.
 
 ```javascript
-// Convert work units to TodoWrite format
+// Convert ALL work units to TodoWrite format (no filtering here - filtering happened during extraction)
 //
 // FORMATTING STANDARD:
 // 1. Format: "Step X.Y: <descriptive task name> [TASK-ID]"
