@@ -126,6 +126,68 @@ else
 fi
 ```
 
+### 4. Pre-Planned Issue Detection
+
+**After fetching task details, check if the issue is already pre-planned (has child tasks with acceptance criteria).**
+
+Pre-planned issues skip the workflow-planner call and extract work units directly from child issues.
+
+```bash
+# Initialize pre-planned detection variables
+PRE_PLANNED=false
+CHILD_WORK_UNITS=""
+
+# Only check for pre-planned structure if task came from a tracked system
+if [ "$TASK_SOURCE" = "beads" ] || [ "$TASK_SOURCE" = "jira" ]; then
+
+    if [ "$TASK_SOURCE" = "beads" ]; then
+        # Query child issues using bd dep tree with --direction=up (shows dependents/children)
+        CHILDREN_JSON=$(bd dep tree "$TASK_ID" --direction=up --json 2>/dev/null || echo "[]")
+
+        # Check if there are children at depth 1 (direct children)
+        # Children have depth > 0 in the tree output
+        CHILD_COUNT=$(echo "$CHILDREN_JSON" | jq '[.[] | select(.depth == 1)] | length' 2>/dev/null || echo "0")
+
+        if [ "$CHILD_COUNT" -gt 0 ]; then
+            # Check if children have acceptance criteria (look for "Acceptance Criteria:" in description)
+            CHILDREN_WITH_CRITERIA=$(echo "$CHILDREN_JSON" | jq '[.[] | select(.depth == 1) | select(.description | contains("Acceptance Criteria:"))] | length' 2>/dev/null || echo "0")
+
+            if [ "$CHILDREN_WITH_CRITERIA" -gt 0 ]; then
+                PRE_PLANNED=true
+                # Extract child work units for later use
+                CHILD_WORK_UNITS="$CHILDREN_JSON"
+                echo "PRE-PLANNED DETECTED: Issue $TASK_ID has $CHILD_COUNT child tasks with acceptance criteria"
+            fi
+        fi
+
+    elif [ "$TASK_SOURCE" = "jira" ]; then
+        # Query Jira for child issues using parent field
+        CHILDREN_JSON=$(acli jira workitem list --parent "$TASK_ID" --json 2>/dev/null || echo "[]")
+
+        # Check if there are children
+        CHILD_COUNT=$(echo "$CHILDREN_JSON" | jq 'length' 2>/dev/null || echo "0")
+
+        if [ "$CHILD_COUNT" -gt 0 ]; then
+            # Check if children have acceptance criteria field populated
+            CHILDREN_WITH_CRITERIA=$(echo "$CHILDREN_JSON" | jq '[.[] | select(.fields.acceptance_criteria != null and .fields.acceptance_criteria != "")] | length' 2>/dev/null || echo "0")
+
+            if [ "$CHILDREN_WITH_CRITERIA" -gt 0 ]; then
+                PRE_PLANNED=true
+                CHILD_WORK_UNITS="$CHILDREN_JSON"
+                echo "PRE-PLANNED DETECTED: Issue $TASK_ID has $CHILD_COUNT child tasks with acceptance criteria"
+            fi
+        fi
+    fi
+fi
+
+# Log the detection result
+if [ "$PRE_PLANNED" = "true" ]; then
+    echo "FLIGHT PATH: Skipping workflow-planner → using pre-planned work units from child issues"
+else
+    echo "FLIGHT PATH: Standard workflow → deploying workflow-planner for analysis"
+fi
+```
+
 ## Worktree Management (MANDATORY)
 
 **Use the `worktree-manager` skill for ALL worktree operations to prevent Bash tool breakage.**
@@ -312,13 +374,117 @@ QUALITY: 80% test coverage, zero linting errors, TDD methodology"
 
 ## Orchestration Protocol
 
-### 1. PLAN & STRATEGY SELECTION (Mandatory)
-Deploy reaper:workflow-planner to analyze work size and select optimal strategy:
+### 1. PLAN & STRATEGY SELECTION (Conditional)
+
+**Check PRE_PLANNED status to determine workflow path:**
+
+#### Path A: Pre-Planned Issues (Skip workflow-planner)
+
+If `PRE_PLANNED === true`, the issue already has child tasks with acceptance criteria from flight-plan. Extract work units directly from children:
+
+**CRITICAL: Execute Full Scope (All Non-Closed Tasks)**
+
+Takeoff MUST execute ALL non-closed child tasks, not just unblocked ones:
+- **Closed tasks**: Skip (already completed)
+- **Open tasks (unblocked)**: Execute immediately
+- **Open tasks (blocked)**: Execute AFTER their blockers complete
+
+Dependencies determine execution ORDER, not whether a task gets executed. If task B is blocked by task A, include BOTH in the plan - execute A first, then B.
+
+```javascript
+// PRE-PLANNED PATH: Extract ALL non-closed work units from child issues
+// IMPORTANT: Include blocked tasks too - dependencies affect ORDER, not inclusion
+if (PRE_PLANNED) {
+  console.log("PRE-PLANNED WORKFLOW: Extracting ALL non-closed work units (full scope)");
+
+  let workUnits = [];
+
+  if (TASK_SOURCE === "beads") {
+    // Parse children from CHILD_WORK_UNITS (bd dep tree --direction=up --json output)
+    const children = JSON.parse(CHILD_WORK_UNITS)
+      .filter(issue => issue.depth === 1)  // Direct children only
+      .filter(issue => issue.status !== "closed");  // Skip already completed
+
+    workUnits = children.map((child, index) => {
+      // Extract file scope from description if present (look for "Files:" section)
+      const filesMatch = child.description?.match(/Files:\s*([^\n]+)/i);
+      const files = filesMatch ? filesMatch[1].trim() : "";
+
+      // Extract acceptance criteria for scope
+      const criteriaMatch = child.description?.match(/Acceptance Criteria:([\s\S]*?)(?:\n\n|$)/i);
+      const acceptanceCriteria = criteriaMatch ? criteriaMatch[1].trim() : "";
+
+      return {
+        id: child.id,
+        description: child.title,
+        full_description: child.description,
+        files: files,
+        acceptance_criteria: acceptanceCriteria,
+        status: child.status,
+        priority: child.priority,
+        group: 1,  // All pre-planned tasks in group 1 (parallel) unless dependencies specify otherwise
+        unit_number: index + 1,
+        size_metrics: {
+          estimated_files: files.split(",").length || 1,
+          estimated_loc: 200,  // Conservative estimate
+          estimated_hours: 1
+        },
+        context_safe: true
+      };
+    });
+
+  } else if (TASK_SOURCE === "jira") {
+    // Parse children from CHILD_WORK_UNITS (Jira list --parent output)
+    const children = JSON.parse(CHILD_WORK_UNITS)
+      .filter(issue => issue.fields?.status?.name !== "Done");
+
+    workUnits = children.map((child, index) => ({
+      id: child.key,
+      description: child.fields?.summary,
+      full_description: child.fields?.description,
+      acceptance_criteria: child.fields?.acceptance_criteria || "",
+      status: child.fields?.status?.name,
+      priority: child.fields?.priority?.name,
+      group: 1,
+      unit_number: index + 1,
+      size_metrics: {
+        estimated_files: 3,
+        estimated_loc: 200,
+        estimated_hours: 1
+      },
+      context_safe: true
+    }));
+  }
+
+  // Determine strategy based on child count and file overlap
+  const SELECTED_STRATEGY = workUnits.length <= 1 ? "very_small_direct" :
+                            workUnits.length <= 4 ? "medium_single_branch" :
+                            "large_multi_worktree";
+
+  console.log(`PRE-PLANNED: Selected strategy '${SELECTED_STRATEGY}' with ${workUnits.length} work units`);
+
+  // Build plan object compatible with standard workflow
+  const plan = {
+    pre_planned: true,
+    task_decomposition: { work_units: workUnits },
+    strategy_selection: {
+      selected_strategy: SELECTED_STRATEGY,
+      rationale: `Pre-planned epic with ${workUnits.length} existing child tasks`
+    }
+  };
+}
+```
+
+#### Path B: Standard Workflow (Deploy workflow-planner)
+
+If `PRE_PLANNED === false`, deploy reaper:workflow-planner to analyze work and create plan:
+
 ```bash
-# Use parsed inputs from pre-flight validation
-Task --subagent_type reaper:workflow-planner \
-  --description "Analyze work and select strategy" \
-  --prompt "TASK: $TASK_ID
+# STANDARD PATH: Deploy workflow-planner for analysis
+if [ "$PRE_PLANNED" = "false" ]; then
+  Task --subagent_type reaper:workflow-planner \
+    --description "Analyze work and select strategy" \
+    --prompt "TASK: $TASK_ID
 DESCRIPTION: $IMPLEMENTATION_PLAN
 ANALYZE: Estimate work size using measurable criteria:
   - File impact (count × complexity)
@@ -332,34 +498,37 @@ OUTPUT: Strategy selection with detailed rationale:
   - large_multi_worktree (score >30 or overlap): Isolated worktrees
 VALIDATE: All work units ≤5 files, ≤500 LOC, ≤2 hours, context-safe
 FILE ASSIGNMENT: Provide specific file paths when possible, exclusive ownership for parallel work"
+fi
 ```
 
 #### Work Package Size Validation (YOU MUST ENFORCE):
-**After reaper:workflow-planner responds, validate each work package:**
+**After obtaining work units (from either path), validate each work package:**
 
 ```javascript
-// Parse reaper:workflow-planner JSON and validate package sizes AND strategy
-const plan = JSON.parse(workflowPlannerResponse);
+// Parse plan (from workflow-planner OR pre-planned extraction)
+// Note: 'plan' is already populated from Path A or Path B above
 
 // Validate strategy selection exists
 if (!plan.strategy_selection || !plan.strategy_selection.selected_strategy) {
-  return "REJECT: reaper:workflow-planner must include strategy_selection with selected_strategy";
+  return "REJECT: Plan must include strategy_selection with selected_strategy";
 }
 
-// Validate work packages
-for (const workUnit of plan.task_decomposition.work_units) {
-  // Reject oversized packages
-  if (workUnit.size_metrics.estimated_files > 5) {
-    return `REJECT: Work unit ${workUnit.id} has ${workUnit.size_metrics.estimated_files} files (max 5)`;
-  }
-  if (workUnit.size_metrics.estimated_loc > 500) {
-    return `REJECT: Work unit ${workUnit.id} has ${workUnit.size_metrics.estimated_loc} LOC (max 500)`;
-  }
-  if (workUnit.size_metrics.estimated_hours > 2) {
-    return `REJECT: Work unit ${workUnit.id} estimated ${workUnit.size_metrics.estimated_hours}h (max 2h)`;
-  }
-  if (!workUnit.context_safe) {
-    return `REJECT: Work unit ${workUnit.id} not context safe for single agent`;
+// Validate work packages (skip for pre-planned as they come from verified flight-plan)
+if (!plan.pre_planned) {
+  for (const workUnit of plan.task_decomposition.work_units) {
+    // Reject oversized packages
+    if (workUnit.size_metrics.estimated_files > 5) {
+      return `REJECT: Work unit ${workUnit.id} has ${workUnit.size_metrics.estimated_files} files (max 5)`;
+    }
+    if (workUnit.size_metrics.estimated_loc > 500) {
+      return `REJECT: Work unit ${workUnit.id} has ${workUnit.size_metrics.estimated_loc} LOC (max 500)`;
+    }
+    if (workUnit.size_metrics.estimated_hours > 2) {
+      return `REJECT: Work unit ${workUnit.id} estimated ${workUnit.size_metrics.estimated_hours}h (max 2h)`;
+    }
+    if (!workUnit.context_safe) {
+      return `REJECT: Work unit ${workUnit.id} not context safe for single agent`;
+    }
   }
 }
 
@@ -370,10 +539,12 @@ const STRATEGY_RATIONALE = plan.strategy_selection.rationale;
 
 **CRITICAL: Write Plan to TodoWrite (Session Persistence)**
 
-After validating the reaper:workflow-planner response, IMMEDIATELY write all work units to TodoWrite:
+After obtaining work units (from either path), IMMEDIATELY write ALL non-closed work units to TodoWrite.
+
+**Full Scope Rule**: Every non-closed task from the epic MUST appear in the TodoWrite plan. If 5 tasks exist and 2 are closed, the plan should have 3 work unit todos. Blocked tasks are included - they execute after their blockers.
 
 ```javascript
-// Convert reaper:workflow-planner work units to TodoWrite format
+// Convert ALL work units to TodoWrite format (no filtering here - filtering happened during extraction)
 //
 // FORMATTING STANDARD:
 // 1. Format: "Step X.Y: <descriptive task name> [TASK-ID]"
@@ -382,14 +553,22 @@ After validating the reaper:workflow-planner response, IMMEDIATELY write all wor
 //    - Task name should describe WHAT is being done
 //    - Task ID appended in brackets when applicable
 //
-// 2. MANDATORY final tasks (NO task IDs):
+// 2. For PRE-PLANNED issues: Use child task ID instead of parent ID
+//    - Format: "Step X.Y: <task title> [child-task-id]"
+//    - Example: "Step 1.1: Add iterative scope refinement [reaper-bou.1]"
+//
+// 3. MANDATORY final tasks (NO task IDs):
 //    - Penultimate: "User review and feedback"
 //    - Ultimate: "Merge to <branch>"
 
 const todos = plan.task_decomposition.work_units.map((workUnit) => {
   const groupNum = workUnit.group || 1;
   const unitNum = workUnit.unit_number || 1;
-  const taskIdSuffix = TASK_ID ? ` [${TASK_ID}]` : '';
+
+  // For pre-planned issues, use the child's task ID; otherwise use parent task ID
+  const taskIdSuffix = plan.pre_planned
+    ? ` [${workUnit.id}]`  // Child task ID (e.g., reaper-bou.1)
+    : (TASK_ID ? ` [${TASK_ID}]` : '');  // Parent task ID
 
   return {
     content: `Step ${groupNum}.${unitNum}: ${workUnit.description}${taskIdSuffix}`,
@@ -433,7 +612,7 @@ if (strategy_selection.selected_strategy === "large_multi_worktree") {
 TodoWrite({ todos });
 ```
 
-**Example TodoWrite Output:**
+**Example TodoWrite Output (Standard Workflow):**
 ```
 - Step 1.1: Setup authentication module structure [PROJ-123]
 - Step 1.2: Implement OAuth2 token validation [PROJ-123]
@@ -443,6 +622,18 @@ TodoWrite({ todos });
 - Merge to develop
 - Close completed tasks           // Only when TASK_SOURCE is jira or beads
 - Clean up session worktrees      // Only when using large_multi_worktree strategy
+```
+
+**Example TodoWrite Output (Pre-Planned Epic):**
+```
+- Step 1.1: Add iterative scope refinement with AskUserQuestion [reaper-bou.1]
+- Step 1.2: Add parallel Explore agents for codebase research [reaper-bou.2]
+- Step 1.3: Invoke workflow-planner as forked subagent [reaper-bou.3]
+- Step 1.4: Skip workflow-planner for pre-planned issues [reaper-bou.4]
+- Step 1.5: Build and validate templates [reaper-bou.5]
+- User review and feedback
+- Merge to develop
+- Close completed tasks
 ```
 
 **Why This Matters:**
