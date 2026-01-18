@@ -1,7 +1,5 @@
 ---
-name: flight-plan
 description: Chart work into flight-ready issues with dependencies mapped.
-user-invocable: true
 ---
 
 ## Phase 0: Enter Plan Mode

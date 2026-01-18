@@ -1,7 +1,5 @@
 ---
-name: status-worktrees
 description: Radar sweep your parallel worktrees for progress and drift.
-user-invocable: true
 ---
 
 # Status of Worktrees for Tasks
@@ -61,23 +59,23 @@ echo "=== Worktree Details ==="
 check_worktree_status() {
   local worktree_path="$1"
   local worktree_name=$(basename "$worktree_path")
-
+  
   # Extract task ID from worktree name (JIRA: PROJ-123, Beads: reaper-42)
   local task_id=$(echo "$worktree_name" | grep -oE '^[A-Za-z]+-[0-9]+')
-
+  
   if [ -d "$worktree_path" ]; then
     echo ""
     echo "--- $worktree_name ---"
-
+    
     # Show task ID if found
     if [ -n "$task_id" ]; then
       echo "Task ID: $task_id"
     fi
-
+    
     # Get branch info
     branch=$(cd "$worktree_path" && git branch --show-current)
     echo "Branch: $branch"
-
+    
     # Check for RESULTS.md
     if [ -f "$worktree_path/RESULTS.md" ]; then
       echo "Implementation: COMPLETED ✓ (has RESULTS.md)"
@@ -90,26 +88,26 @@ check_worktree_status() {
     else
       echo "Implementation: IN PROGRESS ⏳"
     fi
-
+    
     # Check for TASK.md
     if [ -f "$worktree_path/TASK.md" ]; then
       echo "Task: Assigned 📋 (has TASK.md)"
     fi
-
+    
     # Git status summary
     cd "$worktree_path"
-
+    
     # Count changes
     staged=$(git diff --cached --numstat | wc -l)
     unstaged=$(git diff --numstat | wc -l)
     untracked=$(git ls-files --others --exclude-standard | wc -l)
-
+    
     if [ $staged -gt 0 ] || [ $unstaged -gt 0 ] || [ $untracked -gt 0 ]; then
       echo "Changes: $staged staged, $unstaged unstaged, $untracked untracked 🔄"
     else
       echo "Changes: Working tree clean"
     fi
-
+    
     # Test coverage if available
     if [ -f package.json ] && [ "${VERBOSE}" = "true" ]; then
       coverage=$(npm test -- --coverage 2>/dev/null | grep "All files" | awk '{print $10}' || echo "N/A")
@@ -117,11 +115,11 @@ check_worktree_status() {
         echo "Test Coverage: $coverage"
       fi
     fi
-
+    
     # Last commit
     last_commit=$(git log -1 --pretty=format:"%h - %s (%cr)" 2>/dev/null || echo "No commits yet")
     echo "Last commit: $last_commit"
-
+    
     # Check if commit references task ID
     if [ -n "$task_id" ]; then
       if git log -1 --pretty=format:"%B" 2>/dev/null | grep -q "Ref: $task_id"; then
@@ -130,7 +128,7 @@ check_worktree_status() {
         echo "Commit compliance: ⚠️  Missing Ref: $task_id"
       fi
     fi
-
+    
     # Verbose mode - show actual changes
     if [ "${VERBOSE}" = "true" ] && ([ $staged -gt 0 ] || [ $unstaged -gt 0 ] || [ $untracked -gt 0 ]); then
       echo ""
@@ -140,7 +138,7 @@ check_worktree_status() {
         echo "  ... and $(($(git status --short | wc -l) - 10)) more files"
       fi
     fi
-
+    
     cd - > /dev/null
   fi
 }
@@ -181,7 +179,7 @@ if [ -d "trees" ]; then
     completed=$(find trees/${key}-* -name "RESULTS.md" 2>/dev/null | wc -l)
     echo "  $key: $count worktrees ($completed completed)"
   done
-
+  
   total_results=$(find trees -name "RESULTS.md" | wc -l)
   total_trees=$(ls -d trees/* 2>/dev/null | wc -l)
   if [ $total_trees -gt 0 ]; then
@@ -207,7 +205,7 @@ for worktree in trees/*; do
     if git show-ref --verify --quiet "refs/remotes/origin/$branch"; then
       behind=$(cd "$worktree" && git rev-list --count HEAD..origin/$branch 2>/dev/null || echo "0")
       ahead=$(cd "$worktree" && git rev-list --count origin/$branch..HEAD 2>/dev/null || echo "0")
-
+      
       if [ "$behind" -gt 0 ] || [ "$ahead" -gt 0 ]; then
         echo "$branch: $ahead ahead, $behind behind origin 📊"
       fi

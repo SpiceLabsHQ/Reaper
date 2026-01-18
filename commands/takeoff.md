@@ -1,7 +1,5 @@
 ---
-name: takeoff
 description: Dispatch agents through quality gates until work lands on your desk.
-user-invocable: true
 ---
 
 # Work Supervisor Mode with Iterative Quality Loops

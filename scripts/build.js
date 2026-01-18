@@ -67,6 +67,7 @@ const TDD_AGENTS = ['bug-fixer', 'feature-developer', 'refactoring-dev'];
 const DIRECTORY_MAP = {
   agents: 'agents',
   skills: 'skills',
+  commands: 'commands',
   hooks: 'hooks',
 };
 
