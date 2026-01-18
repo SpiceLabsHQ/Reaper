@@ -1,6 +1,6 @@
 {
   "name": "reaper",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "SPICE Labs development workflow automation with specialized agents, commands, and skills for TDD-driven development",
   "author": {
     "name": "Spice Labs",
