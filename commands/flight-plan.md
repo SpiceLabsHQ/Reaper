@@ -7,7 +7,7 @@ description: Chart work into flight-ready issues with dependencies mapped.
 ### Plan File Path
 
 Write the plan to Claude's plans directory with a semantic name:
-`~/.claude/plans/reaper-[semantic-name].md`
+`./.claude/plans/reaper-[semantic-name].md`
 
 Derive the semantic name from the planning request:
 - "Add OAuth authentication" → `reaper-oauth-auth.md`
@@ -324,13 +324,13 @@ Mark units as `Assignee: user` when they require:
 
 **Goal: Create the plan file as the single source of truth.**
 
-Use the Write tool to create the plan file at `~/.claude/plans/reaper-[semantic-name].md` following the schema from Phase 0.
+Use the Write tool to create the plan file at `./.claude/plans/reaper-[semantic-name].md` following the schema from Phase 0.
 
 ### Write the Plan File
 
 ```
 Write({
-  file_path: "~/.claude/plans/reaper-[semantic-name].md",
+  file_path: "./.claude/plans/reaper-[semantic-name].md",
   content: `# Plan: [Epic Title]
 
 ## Input
@@ -434,7 +434,7 @@ When user provides feedback:
 1. **Log the feedback** (APPEND to User Feedback section):
 ```
 Edit({
-  file_path: "~/.claude/plans/reaper-[semantic-name].md",
+  file_path: "./.claude/plans/reaper-[semantic-name].md",
   old_string: "## User Feedback\n[existing content]",
   new_string: "## User Feedback\n[existing content]\n\n<!-- Feedback entry: [ISO timestamp] -->\n**User said:** \"[user's feedback]\"\n**Changes made:** [summary of what was changed]"
 })
@@ -448,7 +448,7 @@ Edit({
 3. **Update Status** (REPLACE iteration count):
 ```
 Edit({
-  file_path: "~/.claude/plans/reaper-[semantic-name].md",
+  file_path: "./.claude/plans/reaper-[semantic-name].md",
   old_string: "- Iterations: [N]",
   new_string: "- Iterations: [N+1]"
 })
@@ -501,7 +501,7 @@ Agent actions:
 4. Update Status iterations: 0 → 1
 
 Agent response:
-"Updated the plan at `~/.claude/plans/reaper-unit-reorder.md`.
+"Updated the plan at `./.claude/plans/reaper-unit-reorder.md`.
 
 **Changes made:**
 - Swapped Unit 2 and Unit 3 execution order
@@ -566,7 +566,7 @@ When `TASK_SYSTEM` is `markdown_only`, the plan file becomes the primary deliver
 
 ```
 Edit({
-  file_path: "~/.claude/plans/reaper-[semantic-name].md",
+  file_path: "./.claude/plans/reaper-[semantic-name].md",
   old_string: "- Ready for Issues: no",
   new_string: "- Ready for Issues: yes (manual)\n- Output Mode: Markdown Only"
 })
@@ -578,7 +578,7 @@ Insert a new section before the Status section:
 
 ```
 Edit({
-  file_path: "~/.claude/plans/reaper-[semantic-name].md",
+  file_path: "./.claude/plans/reaper-[semantic-name].md",
   old_string: "## Status",
   new_string: `## Manual Execution Guide
 
