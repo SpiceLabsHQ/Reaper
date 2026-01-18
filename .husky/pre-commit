@@ -1,6 +1,6 @@
 # Build templates and stage output
 npm run build
-git add agents/ skills/ commands/ hooks/
+git add agents/ skills/ hooks/
 
 # Beads pre-commit: flush pending changes to JSONL
 if command -v bd >/dev/null 2>&1 && [ -d .beads ]; then
