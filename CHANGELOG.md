@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.5.0](https://github.com/SpiceLabsHQ/Reaper/compare/v1.3.0...v1.5.0) (2026-01-18)
+
+
+### Features
+
+* **commands:** enhance takeoff & flight-plan commands ([dc317c0](https://github.com/SpiceLabsHQ/Reaper/commit/dc317c074413a129ee5b1feb49173098f1c9b041))
+* **commands:** integrate native plan mode into flight-plan ([3c8bf5c](https://github.com/SpiceLabsHQ/Reaper/commit/3c8bf5c1dc76746a2435d7c9bf5943260637d64b))
+* **skills:** convert commands to user-invocable skills ([851efd5](https://github.com/SpiceLabsHQ/Reaper/commit/851efd5a49cf1a87034f094fd5b8301af039ab7b))
+
+
+### Bug Fixes
+
+* **skills:** restructure user-invocable skills for proper discovery ([840fa39](https://github.com/SpiceLabsHQ/Reaper/commit/840fa39d5d3c7a5dab0533e4d537a530a7098d2f))
+* **takeoff:** reinforce full-scope execution for pre-planned epics ([a9943d2](https://github.com/SpiceLabsHQ/Reaper/commit/a9943d21523649501c09dd4221095b5762663667))
+
 ## [1.3.0](https://github.com/SpiceLabsHQ/Reaper/compare/v1.2.0...v1.3.0) (2026-01-14)
 
 
