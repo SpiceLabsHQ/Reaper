@@ -1,5 +1,7 @@
 ---
+name: claude-sync
 description: Surface changes since CLAUDE.md last touched down.
+user-invocable: true
 ---
 
 # Synchronize CLAUDE.md with Recent Code Changes

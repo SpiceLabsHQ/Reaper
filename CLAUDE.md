@@ -81,13 +81,11 @@ git worktree remove ./trees/TASK-ID
 ```
 src/             # SOURCE TEMPLATES - Edit files here
   agents/        # Agent EJS templates
-  skills/        # Skill EJS templates
-  commands/      # Command EJS templates
+  skills/        # Skill EJS templates (including user-invocable orchestration skills)
   hooks/         # Hook templates
   partials/      # Shared EJS partials
 
 agents/          # GENERATED - Do not edit directly
-commands/        # GENERATED - Do not edit directly
 skills/          # GENERATED - Do not edit directly
 hooks/           # GENERATED - Do not edit directly
 
@@ -105,11 +103,9 @@ docs/spice/      # Development standards documentation
 |----------|------|--------|
 | `src/agents/*.ejs` | Source | ✅ Edit these |
 | `src/skills/**/*.ejs` | Source | ✅ Edit these |
-| `src/commands/*.ejs` | Source | ✅ Edit these |
 | `src/partials/*.ejs` | Source | ✅ Edit these (shared content) |
 | `agents/*.md` | Generated | ❌ Never edit - changes will be overwritten |
 | `skills/**/*.md` | Generated | ❌ Never edit - changes will be overwritten |
-| `commands/*.md` | Generated | ❌ Never edit - changes will be overwritten |
 | `hooks/hooks.json` | Generated | ❌ Never edit - changes will be overwritten |
 
 ### Build Commands
@@ -119,7 +115,7 @@ npm run build        # Compile all templates to project root
 npm run build:watch  # Watch mode for development
 ```
 
-### Workflow for Editing Agents/Skills/Commands
+### Workflow for Editing Agents/Skills
 
 1. **Edit the source template** in `src/` (e.g., `src/agents/bug-fixer.ejs`)
 2. **Run build**: `npm run build`
@@ -127,6 +123,10 @@ npm run build:watch  # Watch mode for development
 4. **Commit both** source and generated files
 
 The pre-commit hook automatically runs the build and stages generated files.
+
+### User-Invocable Skills
+
+Orchestration skills (flight-plan, takeoff, status-worktrees, claude-sync) are user-invocable via `/reaper:*` syntax. They are defined in `src/skills/orchestration/` with `user-invocable: true` in their frontmatter.
 
 ### Partials (Shared Content)
 

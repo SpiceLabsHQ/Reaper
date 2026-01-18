@@ -67,7 +67,6 @@ const TDD_AGENTS = ['bug-fixer', 'feature-developer', 'refactoring-dev'];
 const DIRECTORY_MAP = {
   agents: 'agents',
   skills: 'skills',
-  commands: 'commands',
   hooks: 'hooks',
 };
 
@@ -234,11 +233,6 @@ function buildTemplateVars(sourceType, filename, relativePath) {
     // Extract parent skill if nested (e.g., spice/CODE_FORMATTER -> spice)
     const pathParts = relativePath.split(path.sep);
     vars.PARENT_SKILL = pathParts.length > 2 ? pathParts[1] : null;
-  }
-
-  // Command-specific variables
-  if (sourceType === 'commands') {
-    vars.COMMAND_NAME = filename;
   }
 
   // Hook-specific variables
