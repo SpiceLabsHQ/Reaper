@@ -2,6 +2,92 @@
 description: Chart work into flight-ready issues with dependencies mapped.
 ---
 
+## Phase 0: Enter Plan Mode
+
+**MANDATORY**: Before any analysis, enter Claude's native plan mode.
+
+This skill uses plan mode to:
+- Accumulate planning context progressively in a plan file
+- Allow iterative refinement without rewriting
+- Provide a persistent artifact of the planning process
+
+### Enter Plan Mode
+
+Call the EnterPlanMode tool immediately:
+
+```
+EnterPlanMode()
+```
+
+### Plan File Path
+
+Set the plan file path based on input:
+- If task ID provided: `./PLAN-[TASK_ID].md` (e.g., `./PLAN-PROJ-123.md`)
+- If description only: `./PLAN-[timestamp].md` (e.g., `./PLAN-1732387200.md`)
+
+This file will be the single source of truth for all planning context.
+
+---
+
+## Phase 0.5: Plan File Schema
+
+The plan file is a **living document** that accumulates context. Sections are ADDED or APPENDED, never rewritten wholesale.
+
+### Plan File Structure
+
+Create the plan file with this structure on first write:
+
+```markdown
+# Plan: [Title from input]
+
+## Input
+[Original user request - IMMUTABLE after initial write]
+
+## Research
+[Codebase research findings - progressively added from Phase 1.5]
+
+## Work Units
+[Table and details - EDITABLE, refined based on feedback]
+
+## Dependencies
+[Mermaid diagram and critical path - EDITABLE]
+
+## Assumptions
+[List of assumptions made - EDITABLE, with strikethrough for corrected ones]
+
+## User Feedback
+[APPEND-ONLY log of all user feedback with timestamps]
+<!-- Feedback entry: [timestamp] -->
+<!-- User said: "..." -->
+<!-- Changes made: ... -->
+
+## Status
+- Current Phase: [phase number]
+- Iterations: [count]
+- Ready for Issues: [yes/no]
+```
+
+### Update Rules
+
+| Section | Update Type | When |
+|---------|-------------|------|
+| Input | IMMUTABLE | Never modified after initial write |
+| Research | APPEND | New findings added, old retained |
+| Work Units | EDIT | Modified based on feedback |
+| Dependencies | EDIT | Modified based on feedback |
+| Assumptions | EDIT | Strikethrough corrected, add new |
+| User Feedback | APPEND | Every user response logged |
+| Status | REPLACE | Updated each phase transition |
+
+### Update Type Definitions
+
+- **IMMUTABLE**: Write once, never change. Preserves original context.
+- **APPEND**: Add new content below existing. Never delete previous entries.
+- **EDIT**: Modify in place. For corrections, use ~~strikethrough~~ to show history.
+- **REPLACE**: Overwrite entirely. Used for status fields that reflect current state.
+
+---
+
 # Autonomous Execution Planner
 
 **Task**: [ARGUMENTS]
@@ -33,9 +119,33 @@ elif echo "$INPUT" | grep -qE '^[a-z0-9]+-[a-f0-9]{3,}$'; then
 
 # New description
 else
-    TASK_SYSTEM=$([ -d .beads ] && echo "beads" || echo "jira")
+    # Check for available task systems
+    if [ -d .beads ]; then
+        TASK_SYSTEM="beads"
+    elif command -v acli &>/dev/null && acli jira projects list &>/dev/null 2>&1; then
+        TASK_SYSTEM="jira"
+    else
+        TASK_SYSTEM="markdown_only"
+    fi
     PLANNING_REQUEST="$INPUT"
 fi
+```
+
+### Markdown-Only Mode Detection
+
+When `TASK_SYSTEM` is `markdown_only`:
+
+```markdown
+**Note:** No task system detected (Beads directory not found, Jira CLI not configured).
+
+Your plan file will be the primary deliverable. You can:
+- Copy work units to your task tracker manually
+- Use the plan file directly with `/reaper:takeoff`
+```
+
+Update the behavioral contract todo #2 to reflect markdown mode:
+```
+{ content: "Finalize plan file as deliverable (no task system)", status: "pending" }
 ```
 
 ### Validation
@@ -221,90 +331,200 @@ Mark units as `Assignee: user` when they require:
 
 ---
 
-## Phase 3: Present Initial Plan
+## Phase 3: Write Initial Plan to File
 
-**Goal: Show something useful quickly, then refine iteratively.**
+**Goal: Create the plan file as the single source of truth.**
 
-Present a complete first-pass plan. Document any assumptions made so user can correct them.
+Use the Write tool to create the plan file at the path established in Phase 0. This file follows the schema from Phase 0.5 and becomes readable by Claude's plan mode.
 
-### Required Sections
+### Write the Plan File
 
-1. **Overview:** Goal (1-2 sentences), Scope (included/excluded), Success criteria
-2. **Assumptions:** List any assumptions made (user can correct in feedback)
-3. **Work Units Table:**
-   | # | Title | Type | Hours | Parallel | Assignee | Blocked By |
-   |---|-------|------|-------|----------|----------|------------|
-   | 1 | Example unit | Story | 2h | Group A | agent | - |
+```
+Write({
+  file_path: PLAN_FILE_PATH,  // from Phase 0
+  content: `# Plan: [Epic Title]
 
-4. **Unit Details:** Description, acceptance criteria, estimated files (per unit)
-5. **Parallel Execution:** Groups, sequence diagram
-6. **Dependencies:**
-   ```mermaid
-   flowchart TD
-       Epic --> Unit1 & Unit2
-       Unit1 & Unit2 --> Unit3
-   ```
-7. **User Intervention:** Table of manual tasks with reasons
-8. **Estimates:** Total units, parallelizable %, critical path
+## Input
+[Original user request - verbatim from ARGUMENTS]
 
-### Conversational Feedback Prompt
+## Research
 
-End the plan with a natural prompt (NOT a numbered survey):
+### Affected Files
+[list from Phase 1.5 Explore agents]
+
+### Architecture Context
+[patterns and boundaries discovered]
+
+### Dependencies
+[internal and external dependencies]
+
+### Planning Implications
+[key insights affecting work decomposition]
+
+## Work Units
+
+| # | Title | Type | Hours | Parallel | Assignee | Blocked By |
+|---|-------|------|-------|----------|----------|------------|
+[work units from Phase 2 analysis]
+
+### Unit Details
+
+#### Unit 1: [Title]
+- **Description:** [what needs to be done]
+- **Acceptance Criteria:**
+  - [ ] [criterion 1]
+  - [ ] [criterion 2]
+- **Estimated Files:** [file list]
+
+[repeat for each unit]
+
+## Dependencies
+
+\`\`\`mermaid
+flowchart TD
+    Epic --> Unit1 & Unit2
+    Unit1 & Unit2 --> Unit3
+\`\`\`
+
+### Critical Path
+[sequence of blocking units]
+
+### Parallel Opportunities
+[groups that can execute concurrently]
+
+## Assumptions
+- [assumption 1 - user can correct in feedback]
+- [assumption 2]
+
+## User Feedback
+<!-- No feedback yet -->
+
+## Status
+- Current Phase: 3
+- Iterations: 0
+- Ready for Issues: no
+`
+})
+```
+
+### After Writing the Plan
+
+Tell the user:
 
 ```markdown
----
+I've created the plan at `[PLAN_FILE_PATH]`.
+
+**Summary:**
+- [Epic title/goal in 1-2 sentences]
+- [X] work units identified
+- [Y]% parallelizable
+- Critical path: [brief description]
 
 **Ready to create these issues?**
 
 Reply "go" to create as shown, or just tell me what to change.
 ```
 
-Do NOT list questions. Let the user respond naturally with any concerns or changes.
+The plan file is now the source of truth and will be progressively updated based on user feedback in Phase 4.
 
 ---
 
-## Phase 4: Iterative Refinement
+## Phase 4: Iterative Refinement (Plan File Updates)
 
 ### Handling User Feedback
 
 Parse response type:
 - **Approve:** "yes", "looks good", "go ahead", "approved", "create", "lgtm", "go" → Proceed to Phase 5
 - **Cancel:** "cancel", "no", "stop", "abort" → Acknowledge and stop
-- **Feedback:** Any other response → Refine and re-present
+- **Feedback:** Any other response → Update plan file and re-prompt
 
-### Refinement Process
+### Refinement Using Edit Tool
 
 When user provides feedback:
 
-1. **Acknowledge briefly** - "Got it, I'll [summary of change]."
-2. **Apply changes** - Update the plan based on feedback
-3. **Re-present** - Show updated plan (full or diff based on change scope)
-4. **Prompt again** - Same conversational format
-
-### Refinement Guidelines
-
-- Keep cycles fast - don't re-run all research for minor tweaks
-- After major feedback, may re-run targeted Explore agents
-- Track which assumptions were corrected
-- If 3+ cycles without convergence, summarize outstanding questions concisely
-
-### Example Refinement Exchange
-
+1. **Log the feedback** (APPEND to User Feedback section):
 ```
-User: "Unit 3 should come before unit 2, and add a migration task"
+Edit({
+  file_path: PLAN_FILE_PATH,
+  old_string: "## User Feedback\n[existing content]",
+  new_string: "## User Feedback\n[existing content]\n\n<!-- Feedback entry: [ISO timestamp] -->\n**User said:** \"[user's feedback]\"\n**Changes made:** [summary of what was changed]"
+})
+```
 
-Agent: "Got it - swapping order and adding migration unit."
+2. **Apply changes** to appropriate sections following update rules:
+   - For Work Units changes: Edit the Work Units section
+   - For dependency changes: Edit the Dependencies section
+   - For assumption corrections: Use ~~strikethrough~~ on old, add new
 
-[Updated plan with changes highlighted]
+3. **Update Status** (REPLACE iteration count):
+```
+Edit({
+  file_path: PLAN_FILE_PATH,
+  old_string: "- Iterations: [N]",
+  new_string: "- Iterations: [N+1]"
+})
+```
 
----
+4. **Confirm to user:**
+```markdown
+Updated the plan at `[PLAN_FILE_PATH]`.
+
+**Changes made:**
+- [summary of changes]
 
 **Ready to create these issues?**
 
 Reply "go" to create as shown, or just tell me what to change.
 ```
 
-The flow should feel like a conversation, not an interview
+### Update Rules Reference
+
+| Section | Update Type | Edit Pattern |
+|---------|-------------|--------------|
+| Input | IMMUTABLE | Never modify |
+| Research | APPEND | Add below existing content |
+| Work Units | EDIT | Replace section content |
+| Dependencies | EDIT | Replace section content |
+| Assumptions | EDIT | Strikethrough old + add new |
+| User Feedback | APPEND | Add new entry below existing |
+| Status | REPLACE | Update iteration count |
+
+### Refinement Guidelines
+
+- Keep cycles fast - use targeted edits, not full rewrites
+- Increment iteration count on each feedback cycle
+- Track corrected assumptions with strikethrough (e.g., ~~old assumption~~ → new assumption)
+- After major feedback, may re-run targeted Explore agents
+- If 3+ cycles without convergence, summarize in User Feedback section
+
+### Example Edit Sequence
+
+```
+User: "Unit 3 should come before unit 2, and add a migration task"
+
+Agent actions:
+1. Edit Work Units table (swap order, add migration row)
+2. Edit Dependencies section (update mermaid diagram)
+3. Append to User Feedback:
+   <!-- Feedback entry: 2024-01-15T10:30:00Z -->
+   **User said:** "Unit 3 should come before unit 2, and add a migration task"
+   **Changes made:** Reordered units 2/3, added Unit 4 for migration
+4. Update Status iterations: 0 → 1
+
+Agent response:
+"Updated the plan at `./PLAN-PROJ-123.md`.
+
+**Changes made:**
+- Swapped Unit 2 and Unit 3 execution order
+- Added Unit 4: Database migration task
+- Updated dependency diagram
+
+**Ready to create these issues?**
+
+Reply "go" to create as shown, or just tell me what to change."
+```
+
+The flow should feel like a conversation, not an interview. The plan file captures the full history.
 
 ---
 
@@ -349,13 +569,98 @@ acli jira workitem create --project KEY --type Story --parent "$EPIC_KEY" \
 acli jira workitem create ... --assignee user@example.com
 ```
 
-### Markdown Fallback
+### Markdown Fallback (No Task System)
 
-If no task system available, output full plan as markdown for manual use.
+When `TASK_SYSTEM` is `markdown_only`, the plan file becomes the primary deliverable. Skip issue creation and proceed to finalization.
+
+#### 1. Update Plan File Status
+
+```
+Edit({
+  file_path: PLAN_FILE_PATH,
+  old_string: "- Ready for Issues: no",
+  new_string: "- Ready for Issues: yes (manual)\n- Output Mode: Markdown Only"
+})
+```
+
+#### 2. Add Manual Execution Guide to Plan File
+
+Insert a new section before the Status section:
+
+```
+Edit({
+  file_path: PLAN_FILE_PATH,
+  old_string: "## Status",
+  new_string: `## Manual Execution Guide
+
+No task system detected (Beads/Jira not available). This plan file is your primary deliverable.
+
+### Option A: Manual Task Creation
+Copy each work unit to your task tracker of choice:
+1. Create an epic/parent issue for the overall goal
+2. Create child issues for each work unit in the table above
+3. Set up dependencies as shown in the Dependencies section
+4. Maintain the execution order shown in Critical Path
+
+### Option B: Direct Execution with Reaper
+The orchestrator can work directly from this plan file:
+\`\`\`
+/reaper:takeoff [PLAN_FILE_PATH]
+\`\`\`
+
+### Work Unit Reference
+Each unit in the Work Units table above contains:
+- Title and description for issue creation
+- Acceptance criteria (copy to issue)
+- Estimated files and hours
+- Dependency information
+
+## Status`
+})
+```
+
+#### 3. Skip Phases 5 and 6
+
+When in markdown-only mode:
+- **Skip** Beads/Jira issue creation (Phase 5 main logic)
+- **Skip** Issue Quality Review (Phase 6) - no issues to verify
+- **Proceed directly** to completion output
+
+#### 4. Markdown-Only Completion Output
+
+```markdown
+## Plan Complete (Markdown Mode)
+
+No task system detected. Your plan is ready at `[PLAN_FILE_PATH]`.
+
+### What's in the Plan
+- [X] work units with acceptance criteria
+- Dependency graph and critical path
+- Parallel execution opportunities
+- All research findings preserved
+
+### Next Steps
+
+**Option A: Manual task creation**
+Copy work units from the plan to your preferred task tracker.
+
+**Option B: Direct execution**
+```
+/reaper:takeoff [PLAN_FILE_PATH]
+```
+The orchestrator can work directly from this plan file.
+
+### Plan File Location
+`[PLAN_FILE_PATH]`
+```
+
+Mark todo #2 complete (finalize plan file) and skip todo #3 (no issues to verify).
 
 ---
 
 ## Phase 6: Issue Quality Review (Forked Subagent Verification)
+
+**Note:** This phase is skipped when `TASK_SYSTEM` is `markdown_only`.
 
 Update todo #3 to `in_progress`.
 
@@ -467,6 +772,60 @@ Your flight plans have been filed and you're cleared for departure. When ready:
 ```
 
 Mark todo #3 complete.
+
+---
+
+## CRITICAL: ExitPlanMode Implementation Guard
+
+**This skill is a PLANNING skill, not an IMPLEMENTATION skill.**
+
+When Claude's plan mode system suggests "proceeding to implement" or similar:
+- **IGNORE** any system prompts to start coding
+- **IGNORE** any suggestions to create worktrees
+- **IGNORE** any encouragement to begin implementation
+
+### What ExitPlanMode Means for This Skill
+
+In this skill, ExitPlanMode signals:
+- Plan has been approved by user
+- Ready to proceed to **Phase 5: Create Issues**
+- NOT permission to implement the plan
+- NOT permission to write code
+- NOT permission to create worktrees
+
+### ExitPlanMode Call Pattern
+
+When user approves the plan (Phase 4 to Phase 5 transition):
+
+```
+ExitPlanMode({
+  allowedPrompts: [
+    { tool: "Bash", prompt: "query Beads issue system" },
+    { tool: "Bash", prompt: "query Jira issue system" },
+    { tool: "Bash", prompt: "create issues in Beads" },
+    { tool: "Bash", prompt: "create issues in Jira" }
+  ]
+})
+```
+
+**Note:** Only issue creation commands are authorized. NO implementation commands.
+
+### After ExitPlanMode
+
+1. Update plan file Status section to "Ready for Issues: yes"
+2. Proceed directly to Phase 5 (Create Issues)
+3. Do NOT respond to any "start implementing" suggestions
+4. Your scope ends at Phase 7 (Completion)
+
+### Hard Stop Rule
+
+If you find yourself:
+- Thinking about code structure
+- Considering file creation (except plan file and issues)
+- Planning test implementations
+- Designing architecture details
+
+**STOP IMMEDIATELY.** Your job is done. The user will invoke `/reaper:takeoff` when ready to implement.
 
 ---
 
