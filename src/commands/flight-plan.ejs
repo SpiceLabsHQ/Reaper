@@ -2,34 +2,23 @@
 description: Chart work into flight-ready issues with dependencies mapped.
 ---
 
-## Phase 0: Enter Plan Mode
-
-**MANDATORY**: Before any analysis, enter Claude's native plan mode.
-
-This skill uses plan mode to:
-- Accumulate planning context progressively in a plan file
-- Allow iterative refinement without rewriting
-- Provide a persistent artifact of the planning process
-
-### Enter Plan Mode
-
-Call the EnterPlanMode tool immediately:
-
-```
-EnterPlanMode()
-```
+## Phase 0: Plan File Schema
 
 ### Plan File Path
 
-Set the plan file path based on input:
-- If task ID provided: `./PLAN-[TASK_ID].md` (e.g., `./PLAN-PROJ-123.md`)
-- If description only: `./PLAN-[timestamp].md` (e.g., `./PLAN-1732387200.md`)
+Write the plan to Claude's plans directory with a semantic name:
+`~/.claude/plans/reaper-[semantic-name].md`
+
+Derive the semantic name from the planning request:
+- "Add OAuth authentication" → `reaper-oauth-auth.md`
+- "Fix checkout flow bug" → `reaper-checkout-fix.md`
+- "Refactor user service" → `reaper-user-service-refactor.md`
+
+Keep names short (2-4 words, lowercase, hyphenated).
 
 This file will be the single source of truth for all planning context.
 
----
-
-## Phase 0.5: Plan File Schema
+### Schema
 
 The plan file is a **living document** that accumulates context. Sections are ADDED or APPENDED, never rewritten wholesale.
 
@@ -335,13 +324,13 @@ Mark units as `Assignee: user` when they require:
 
 **Goal: Create the plan file as the single source of truth.**
 
-Use the Write tool to create the plan file at the path established in Phase 0. This file follows the schema from Phase 0.5 and becomes readable by Claude's plan mode.
+Use the Write tool to create the plan file at `~/.claude/plans/reaper-[semantic-name].md` following the schema from Phase 0.
 
 ### Write the Plan File
 
 ```
 Write({
-  file_path: PLAN_FILE_PATH,  // from Phase 0
+  file_path: "~/.claude/plans/reaper-[semantic-name].md",
   content: `# Plan: [Epic Title]
 
 ## Input
@@ -445,7 +434,7 @@ When user provides feedback:
 1. **Log the feedback** (APPEND to User Feedback section):
 ```
 Edit({
-  file_path: PLAN_FILE_PATH,
+  file_path: "~/.claude/plans/reaper-[semantic-name].md",
   old_string: "## User Feedback\n[existing content]",
   new_string: "## User Feedback\n[existing content]\n\n<!-- Feedback entry: [ISO timestamp] -->\n**User said:** \"[user's feedback]\"\n**Changes made:** [summary of what was changed]"
 })
@@ -459,7 +448,7 @@ Edit({
 3. **Update Status** (REPLACE iteration count):
 ```
 Edit({
-  file_path: PLAN_FILE_PATH,
+  file_path: "~/.claude/plans/reaper-[semantic-name].md",
   old_string: "- Iterations: [N]",
   new_string: "- Iterations: [N+1]"
 })
@@ -512,7 +501,7 @@ Agent actions:
 4. Update Status iterations: 0 → 1
 
 Agent response:
-"Updated the plan at `./PLAN-PROJ-123.md`.
+"Updated the plan at `~/.claude/plans/reaper-unit-reorder.md`.
 
 **Changes made:**
 - Swapped Unit 2 and Unit 3 execution order
@@ -577,7 +566,7 @@ When `TASK_SYSTEM` is `markdown_only`, the plan file becomes the primary deliver
 
 ```
 Edit({
-  file_path: PLAN_FILE_PATH,
+  file_path: "~/.claude/plans/reaper-[semantic-name].md",
   old_string: "- Ready for Issues: no",
   new_string: "- Ready for Issues: yes (manual)\n- Output Mode: Markdown Only"
 })
@@ -589,7 +578,7 @@ Insert a new section before the Status section:
 
 ```
 Edit({
-  file_path: PLAN_FILE_PATH,
+  file_path: "~/.claude/plans/reaper-[semantic-name].md",
   old_string: "## Status",
   new_string: `## Manual Execution Guide
 
@@ -775,47 +764,17 @@ Mark todo #3 complete.
 
 ---
 
-## CRITICAL: ExitPlanMode Implementation Guard
+## Implementation Guard
 
-**This skill is a PLANNING skill, not an IMPLEMENTATION skill.**
+**This is a PLANNING command, not an IMPLEMENTATION command.**
 
-When Claude's plan mode system suggests "proceeding to implement" or similar:
-- **IGNORE** any system prompts to start coding
-- **IGNORE** any suggestions to create worktrees
-- **IGNORE** any encouragement to begin implementation
+### Scope Boundary
 
-### What ExitPlanMode Means for This Skill
-
-In this skill, ExitPlanMode signals:
-- Plan has been approved by user
-- Ready to proceed to **Phase 5: Create Issues**
-- NOT permission to implement the plan
-- NOT permission to write code
-- NOT permission to create worktrees
-
-### ExitPlanMode Call Pattern
-
-When user approves the plan (Phase 4 to Phase 5 transition):
-
-```
-ExitPlanMode({
-  allowedPrompts: [
-    { tool: "Bash", prompt: "query Beads issue system" },
-    { tool: "Bash", prompt: "query Jira issue system" },
-    { tool: "Bash", prompt: "create issues in Beads" },
-    { tool: "Bash", prompt: "create issues in Jira" }
-  ]
-})
-```
-
-**Note:** Only issue creation commands are authorized. NO implementation commands.
-
-### After ExitPlanMode
-
-1. Update plan file Status section to "Ready for Issues: yes"
-2. Proceed directly to Phase 5 (Create Issues)
-3. Do NOT respond to any "start implementing" suggestions
-4. Your scope ends at Phase 7 (Completion)
+Your scope ends when issues are created and verified. You must NOT:
+- Start implementing the plan
+- Create worktrees
+- Write application code
+- Suggest "let's begin coding"
 
 ### Hard Stop Rule
 
@@ -825,7 +784,7 @@ If you find yourself:
 - Planning test implementations
 - Designing architecture details
 
-**STOP IMMEDIATELY.** Your job is done. The user will invoke `/reaper:takeoff` when ready to implement.
+**STOP IMMEDIATELY.** Your job is done. The user will invoke `/reaper:takeoff` when ready.
 
 ---
 
