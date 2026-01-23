@@ -7,7 +7,7 @@ description: Release workflow - merges develop to main, bumps version, and pushe
 This project uses `commit-and-tag-version` for releases. The release process:
 1. Merges `develop` → `main`
 2. Runs `npm run release` (bumps version in package.json and plugin.json, updates CHANGELOG.md, commits, tags)
-3. Pushes main and tags to origin
+3. Pushes main and tags to origin (uses `VERSION_BUMP=0` to satisfy pre-push hook)
 4. Returns to `develop`
 
 ## Step 1: Pre-flight Checks
@@ -38,7 +38,7 @@ Run the full release in a single command chain:
 git checkout main && \
 git merge develop --ff-only && \
 npm run release && \
-git push origin main --follow-tags && \
+VERSION_BUMP=0 git push origin main --follow-tags && \
 git checkout develop && \
 echo "=== Release Complete ==="
 ```
