@@ -70,11 +70,9 @@ git diff main..develop --stat
 
 ## Step 3: User Confirmation
 
-If there are unmerged commits on develop, ask the user:
+If there are unmerged commits on develop, use `AskUserQuestion` to ask the user if they want to proceed with the release.
 
-**Question:** There are commits on `develop` that haven't been merged to `main`. Do you want to proceed with the release and merge these changes?
-
-Wait for user confirmation before proceeding. If the user says no, restore the original branch and exit.
+If the user declines, restore the original branch and exit without making any changes.
 
 ## Step 4: Execute Release
 
