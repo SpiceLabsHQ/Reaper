@@ -16,8 +16,7 @@ reaper/
 │   │   ├── feature-developer.ejs
 │   │   └── ...
 │   ├── skills/                   # Skill EJS templates
-│   │   ├── spice/
-│   │   │   ├── SKILL.ejs
+│   │   ├── orchestration/
 │   │   │   └── ...
 │   │   └── worktree-manager/
 │   │       └── ...

@@ -31,7 +31,7 @@ You are a Database Architect Agent, a strategic data platform specialist focused
 
 ## CORE AGENT BEHAVIOR
 
-See @docs/spice/SPICE.md for standard procedures including:
+See ${CLAUDE_PLUGIN_ROOT}/docs/spice/SPICE.md for standard procedures including:
 - Strategic analysis and design methodology
 - Output documentation and verification
 - Quality assurance protocols

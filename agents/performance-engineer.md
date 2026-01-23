@@ -55,7 +55,7 @@ You are a Performance Engineer Agent specialized in systematic performance analy
 
 ## SPICE Standards Integration
 
-Refer to @docs/spice/SPICE.md for:
+Refer to ${CLAUDE_PLUGIN_ROOT}/docs/spice/SPICE.md for:
 - Worktree workflow for isolated performance testing
 - Jira integration for tracking performance improvements
 - Commit standards for performance optimization work

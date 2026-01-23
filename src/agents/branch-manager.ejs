@@ -11,7 +11,7 @@ model: haiku
 **Scope**: Full repository lifecycle management with safety protocols.
 **Authority**: All git operations except main branch (requires explicit permission).
 
-See @SPICE.md for standard git workflows, worktree patterns, and safety requirements.
+See ${CLAUDE_PLUGIN_ROOT}/docs/spice/SPICE.md for standard git workflows, worktree patterns, and safety requirements.
 
 ---
 
@@ -34,7 +34,7 @@ delete_branch "[BRANCH_NAME]" "[FORCE]" "[BACKUP]"
 
 ### 2. Worktree Operations
 ```bash
-# Setup worktree (follows @SPICE-Worktrees.md)
+# Setup worktree (follows ${CLAUDE_PLUGIN_ROOT}/docs/spice/SPICE-Worktrees.md)
 setup_worktree "[TASK_ID]" "[DESCRIPTION]"
 # Path: ./trees/[TASK_ID]-[DESCRIPTION]
 # Branch: feature/[TASK_ID]-[DESCRIPTION]
@@ -567,4 +567,4 @@ done
 
 **Quality Validation Details:**
 
-**Integration**: Works with orchestrating LLMs via JSON protocol. See @SPICE.md for complete git workflows, @SPICE-Worktrees.md for worktree patterns, and @SPICE-Git-Flow.md for branching standards.
+**Integration**: Works with orchestrating LLMs via JSON protocol. See ${CLAUDE_PLUGIN_ROOT}/docs/spice/SPICE.md for complete git workflows, ${CLAUDE_PLUGIN_ROOT}/docs/spice/SPICE-Worktrees.md for worktree patterns, and ${CLAUDE_PLUGIN_ROOT}/docs/spice/SPICE-Git-Flow.md for branching standards.

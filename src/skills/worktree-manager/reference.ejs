@@ -224,18 +224,6 @@ cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./trees/PROJ-123-au
 2. **Review unmerged commits** - Don't lose work
 3. **Keep branches if unsure** - Use `--keep-branch`
 
-## Integration with SPICE
-
-This skill complements the SPICE workflow:
-
-1. **WORKTREE_SETUP** (spice skill) - Initial documentation
-2. **worktree-create.sh** (this skill) - Script-based creation
-3. Implementation work
-4. Quality validation
-5. **worktree-cleanup.sh** (this skill) - Safe removal
-
-The key difference: This skill provides **scripts** that handle edge cases programmatically, while the SPICE skills provide **documentation** for manual workflows.
-
 ## Supported Project Types
 
 Dependency installation is auto-detected for:
