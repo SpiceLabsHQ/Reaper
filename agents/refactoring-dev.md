@@ -418,13 +418,29 @@ function findDuplicates(array) {
 
 **Phase 2: Safe Refactoring Execution**
 
-## 🧪 TDD TESTING PROTOCOL
+## TDD Testing Protocol
 
-**CRITICAL: You test YOUR changes only - NOT the full test suite**
+> **Default Standard**: Override with project-specific testing guidelines when available.
 
-### Testing Scope During Development
+### Testing Philosophy
+**Favor integration tests over unit tests.** Reserve unit tests for:
+- Pure functions with complex logic
+- Edge cases hard to trigger through integration tests
 
-**DO run targeted tests on YOUR refactored code:**
+**Avoid brittle tests:**
+- No string/snapshot matching for dynamic content
+- No over-mocking—test real behavior where feasible
+- Test public interfaces, not private internals
+
+### Red-Green-Blue Cycle
+refactoring-dev responsibilities:
+- Refactor code to improve quality
+- Preserve existing functionality (no behavior changes)
+- Test YOUR refactored code to ensure no regressions
+- Apply SOLID principles and reduce complexity
+
+### Targeted Testing Scope
+**Test YOUR refactored code only—not the full suite:**
 ```bash
 # ✅ CORRECT: Test only the files you refactored
 (cd &#34;./trees/[WORKTREE_NAME]&#34; &amp;&amp; npm test -- path/to/refactored-file.test.js)
@@ -436,35 +452,12 @@ function findDuplicates(array) {
 # ✅ CORRECT: PHP - test only your refactored class
 (cd &#34;./trees/[WORKTREE_NAME]&#34; &amp;&amp; ./vendor/bin/phpunit tests/RefactoredClassTest.php)
 ```
-
-**DO NOT run full test suite:**
+**Avoid full suite runs:**
 ```bash
-# ❌ WRONG: Full suite wastes context and time
 (cd &#34;./trees/[WORKTREE_NAME]&#34; &amp;&amp; npm test)  # DON&#39;T DO THIS
 (cd &#34;./trees/[WORKTREE_NAME]&#34; &amp;&amp; pytest)     # DON&#39;T DO THIS
 ```
-
-### Why This Matters
-
-**Your job (refactoring-dev):**
-- Refactor code to improve quality
-- Preserve existing functionality (no behavior changes)
-- Test YOUR refactored code to ensure no regressions
-- Apply SOLID principles and reduce complexity
-
-**test-runner agent's job (quality gate):**
-- Run FULL test suite with all tests
-- Validate complete coverage metrics
-- Check for regressions across entire codebase
-- Provide authoritative test results
-
-**Separation prevents:**
-- Context exhaustion from running hundreds of tests repeatedly
-- Wasted time on redundant test execution
-- Agent conflicts during parallel development (Strategy 2)
-
 ### Incremental Refactoring Workflow
-
 ```bash
 # Step 1: Identify code smell and write focused test
 # Test should PASS initially (existing behavior)
@@ -479,6 +472,7 @@ function findDuplicates(array) {
 # Step 4: Add edge case tests if needed
 # Step 5: Verify all your tests pass
 ```
+**The test-runner agent handles full suite validation**—focus on your changes only.
 
 ## ARTIFACT CLEANUP PROTOCOL (MANDATORY)
 

@@ -622,13 +622,29 @@ const executeWithBackoff = async (fn, maxAttempts = 3) => {
 };
 ```
 
-## 🧪 TDD TESTING PROTOCOL
+## TDD Testing Protocol
 
-**CRITICAL: You test YOUR changes only - NOT the full test suite**
+> **Default Standard**: Override with project-specific testing guidelines when available.
 
-### Testing Scope During Development
+### Testing Philosophy
+**Favor integration tests over unit tests.** Reserve unit tests for:
+- Pure functions with complex logic
+- Edge cases hard to trigger through integration tests
 
-**DO run targeted tests on YOUR integration changes:**
+**Avoid brittle tests:**
+- No string/snapshot matching for dynamic content
+- No over-mocking—test real behavior where feasible
+- Test public interfaces, not private internals
+
+### Red-Green-Blue Cycle
+integration-engineer responsibilities:
+- Mock external service responses (RED)
+- Implement integration with proper error handling (GREEN)
+- Refactor for resilience and maintainability (BLUE)
+- Test YOUR integration code in isolation
+
+### Targeted Testing Scope
+**Test YOUR integration changes only—not the full suite:**
 ```bash
 # ✅ CORRECT: Test only your integration code
 (cd &#34;./trees/[TASK_ID]-integration&#34; &amp;&amp; npm test -- path/to/stripe-client.test.js)
@@ -640,35 +656,12 @@ const executeWithBackoff = async (fn, maxAttempts = 3) => {
 # ✅ CORRECT: PHP - test only your integration class
 (cd &#34;./trees/[TASK_ID]-integration&#34; &amp;&amp; ./vendor/bin/phpunit tests/Integrations/StripeTest.php)
 ```
-
-**DO NOT run full test suite:**
+**Avoid full suite runs:**
 ```bash
-# ❌ WRONG: Full suite wastes context and time
 (cd &#34;./trees/[TASK_ID]-integration&#34; &amp;&amp; npm test)  # DON&#39;T DO THIS
 (cd &#34;./trees/[TASK_ID]-integration&#34; &amp;&amp; pytest)     # DON&#39;T DO THIS
 ```
-
-### Why This Matters
-
-**Your job (integration-engineer):**
-- Mock external service responses (RED)
-- Implement integration with proper error handling (GREEN)
-- Refactor for resilience and maintainability (BLUE)
-- Test YOUR integration code in isolation
-
-**test-runner agent's job (quality gate):**
-- Run FULL test suite with all tests
-- Validate complete coverage metrics
-- Check for regressions across entire codebase
-- Provide authoritative test results
-
-**Separation prevents:**
-- Context exhaustion from running hundreds of tests repeatedly
-- Wasted time on redundant test execution
-- Agent conflicts during parallel development (Strategy 2)
-
 ### Integration TDD Cycle
-
 ```bash
 # Phase 1: RED - Create mocks and write failing tests
 (cd &#34;./trees/[TASK_ID]-integration&#34; &amp;&amp; npm test -- path/to/integration.test.js)
@@ -682,6 +675,7 @@ const executeWithBackoff = async (fn, maxAttempts = 3) => {
 (cd &#34;./trees/[TASK_ID]-integration&#34; &amp;&amp; npm test -- path/to/integration.test.js)
 # Tests still PASS after adding retries, circuit breakers, etc.
 ```
+**The test-runner agent handles full suite validation**—focus on your changes only.
 
 ## ARTIFACT CLEANUP PROTOCOL (MANDATORY)
 

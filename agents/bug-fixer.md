@@ -168,66 +168,33 @@ Implement smallest code change to make test pass without side effects
 - Validate cross-component compatibility
 - Update documentation if behavior changed
 
-## 🧪 TDD TESTING PROTOCOL
+## TDD Testing Protocol
 
-**CRITICAL: You test YOUR changes only - NOT the full test suite**
+> **Default Standard**: Override with project-specific testing guidelines when available.
 
-### Testing Scope During Development
+### Testing Philosophy
+**Favor integration tests over unit tests.** Reserve unit tests for:
+- Pure functions with complex logic
+- Edge cases hard to trigger through integration tests
 
-**DO run targeted tests on YOUR changes:**
+**Avoid brittle tests:**
+- No string/snapshot matching for dynamic content
+- No over-mocking—test real behavior where feasible
+- Test public interfaces, not private internals
+
+### Red-Green-Blue Cycle
+Agent responsibilities:
+1. **RED**: Write failing test capturing expected behavior
+2. **GREEN**: Implement minimal code to pass
+3. **BLUE**: Refactor without changing behavior
+
+### Targeted Testing Scope
+**Test YOUR changes only—not the full suite:**
 ```bash
-# ✅ CORRECT: Test only the files you modified
-(cd "./trees/[TASK_ID]-fix" && npm test -- path/to/your/bug-fix.test.js)
-(cd "./trees/[TASK_ID]-fix" && npm test -- --testNamePattern="specific bug fix")
-
-# ✅ CORRECT: Python - test only your module
-(cd "./trees/[TASK_ID]-fix" && pytest tests/test_your_fix.py)
-
-# ✅ CORRECT: PHP - test only your class
-(cd "./trees/[TASK_ID]-fix" && ./vendor/bin/phpunit tests/YourBugFixTest.php)
+(cd "./trees/[TASK_ID]" && npm test -- path/to/your.test.js)
+(cd "./trees/[TASK_ID]" && pytest tests/test_your_module.py -v)
 ```
-
-**DO NOT run full test suite:**
-```bash
-# ❌ WRONG: Full suite wastes context and time
-(cd "./trees/[TASK_ID]-fix" && npm test)  # DON'T DO THIS
-(cd "./trees/[TASK_ID]-fix" && pytest)     # DON'T DO THIS
-```
-
-### Why This Matters
-
-**Your job (bug-fixer):**
-- Reproduce bug with failing test (RED)
-- Implement minimal fix (GREEN)
-- Refactor for quality (BLUE)
-- Test YOUR changes in isolation
-
-**test-runner agent's job (quality gate):**
-- Run FULL test suite with all tests
-- Validate complete coverage metrics
-- Check for regressions across entire codebase
-- Provide authoritative test results
-
-**Separation prevents:**
-- Context exhaustion from running hundreds of tests repeatedly
-- Wasted time on redundant test execution
-- Agent conflicts during parallel development (Strategy 2)
-
-### TDD Red-Green-Refactor Cycle
-
-```bash
-# Phase 1: RED - Confirm bug reproduces
-(cd "./trees/[TASK_ID]-fix" && npm test -- path/to/bug-test.js)
-# Your test should FAIL, proving bug exists
-
-# Phase 2: GREEN - Verify fix works
-(cd "./trees/[TASK_ID]-fix" && npm test -- path/to/bug-test.js)
-# Your test should PASS, proving bug is fixed
-
-# Phase 3: BLUE - Verify refactoring works
-(cd "./trees/[TASK_ID]-fix" && npm test -- path/to/bug-test.js)
-# Your test still PASS after refactoring
-```
+**The test-runner agent handles full suite validation**—focus on your changes only.
 
 ## ARTIFACT CLEANUP PROTOCOL (MANDATORY)
 
