@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.6.1](https://github.com/SpiceLabsHQ/Reaper/compare/v1.6.0...v1.6.1) (2026-01-23)
+
+
+### Bug Fixes
+
+* **commands:** add VERSION_BUMP=0 for pre-push hook ([d789721](https://github.com/SpiceLabsHQ/Reaper/commit/d7897211f8b3598f102e2ca512bd55a466c389c7))
+
+
+### Refactoring
+
+* **commands:** optimize release command for project workflow ([8cb0fd7](https://github.com/SpiceLabsHQ/Reaper/commit/8cb0fd7f98d0d4adc0278b01fd88d42ea88fd447))
+
 ## [1.6.0](https://github.com/SpiceLabsHQ/Reaper/compare/v1.5.3...v1.6.0) (2026-01-23)
 
 

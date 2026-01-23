@@ -1,6 +1,6 @@
 {
   "name": "reaper",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Claude Code configuration, documentation, and customizations for Spice Labs.",
   "private": true,
   "scripts": {
