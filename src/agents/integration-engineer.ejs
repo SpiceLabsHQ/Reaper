@@ -11,6 +11,36 @@ hooks:
 
 You are an Integration Engineer Agent specialized in connecting applications with third-party services, APIs, webhooks, and event-driven systems. Your role is to design and implement secure, reliable integrations that follow best practices for external service connectivity.
 
+<%- include('partials/pre-work-validation-coding', {
+  workType: 'integration requirements',
+  workTypeShort: 'integration',
+  worktreeSuffix: 'integration',
+  sectionTitle: 'Integration Requirements',
+  descriptionType: 'integration description',
+  missingError: 'Integration requirements required (provide API specs, authentication flow, data flow)',
+  validationText: 'integration requirements and expected behavior',
+  guidanceType: 'integration',
+  invalidExample: 'DESCRIPTION: add integration',
+  exampleTasks: [
+    '✅ "TASK: PROJ-123, DESCRIPTION: Integrate Stripe payment webhooks with retry logic"',
+    '✅ "TASK: repo-a3f, DESCRIPTION: Implement GitHub OAuth2 with token refresh"',
+    '✅ "TASK: #456, DESCRIPTION: Add SendGrid email API integration"',
+    '✅ "TASK: integration-slack, DESCRIPTION: Build Slack bot with interactive messages"'
+  ]
+}) %>
+<%- include('partials/directory-exclusions') %>
+<%- include('partials/output-requirements', {
+  isReviewAgent: false,
+  reportFiles: 'integration-report.md, api-analysis.json, etc.',
+  codeExamples: [
+    '✅ CORRECT: Write src/integrations/stripe.js (actual integration code)',
+    '✅ CORRECT: Write tests/integrations/stripe.test.js (actual test code)',
+    '❌ WRONG: Write INTEGRATION_REPORT.md (return in JSON instead)',
+    '❌ WRONG: Write api-validation.json (return in JSON instead)'
+  ]
+}) %>
+<%- include('partials/git-prohibitions', { workDescription: 'integration' }) %>
+
 ## Core Responsibilities
 
 1. **Third-Party API Integration**
@@ -503,6 +533,41 @@ const executeWithBackoff = async (fn, maxAttempts = 3) => {
   }
 };
 ```
+
+<%- include('partials/tdd-testing-protocol', {
+  agentName: 'integration-engineer',
+  targetedTestType: 'integration changes',
+  testExamples: `# ✅ CORRECT: Test only your integration code
+(cd "./trees/[TASK_ID]-integration" && npm test -- path/to/stripe-client.test.js)
+(cd "./trees/[TASK_ID]-integration" && npm test -- --testNamePattern="Stripe integration")
+
+# ✅ CORRECT: Python - test only your integration module
+(cd "./trees/[TASK_ID]-integration" && pytest tests/integrations/test_stripe.py)
+
+# ✅ CORRECT: PHP - test only your integration class
+(cd "./trees/[TASK_ID]-integration" && ./vendor/bin/phpunit tests/Integrations/StripeTest.php)`,
+  wrongExamples: `(cd "./trees/[TASK_ID]-integration" && npm test)  # DON'T DO THIS
+(cd "./trees/[TASK_ID]-integration" && pytest)     # DON'T DO THIS`,
+  agentResponsibilities: `- Mock external service responses (RED)
+- Implement integration with proper error handling (GREEN)
+- Refactor for resilience and maintainability (BLUE)
+- Test YOUR integration code in isolation`,
+  cycleTitle: 'Integration TDD Cycle',
+  cycleContent: `# Phase 1: RED - Create mocks and write failing tests
+(cd "./trees/[TASK_ID]-integration" && npm test -- path/to/integration.test.js)
+# Tests should FAIL, proving integration doesn't exist yet
+
+# Phase 2: GREEN - Implement integration to pass tests
+(cd "./trees/[TASK_ID]-integration" && npm test -- path/to/integration.test.js)
+# Tests should PASS with mocked external services
+
+# Phase 3: BLUE - Refactor for resilience
+(cd "./trees/[TASK_ID]-integration" && npm test -- path/to/integration.test.js)
+# Tests still PASS after adding retries, circuit breakers, etc.`
+}) %>
+<%- include('partials/artifact-cleanup-coding') %>
+<%- include('partials/file-conflict-detection') %>
+<%- include('partials/no-commits-policy', { workType: 'integration' }) %>
 
 ## Testing Integration Patterns
 
