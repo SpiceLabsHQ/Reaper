@@ -1,10 +1,10 @@
 ---
-description: Release workflow - merges develop to beads-sync and pushes
+description: Release workflow - merges develop to main and pushes
 ---
 
 # Release Workflow
 
-This command safely promotes code from `develop` to `beads-sync` (main release branch).
+This command safely promotes code from `develop` to `main`.
 
 ## Step 1: Pre-flight Checks
 
@@ -29,8 +29,8 @@ if ! git rev-parse --verify develop >/dev/null 2>&1; then
   exit 1
 fi
 
-if ! git rev-parse --verify beads-sync >/dev/null 2>&1; then
-  echo "ERROR: 'beads-sync' branch not found"
+if ! git rev-parse --verify main >/dev/null 2>&1; then
+  echo "ERROR: 'main' branch not found"
   exit 1
 fi
 
@@ -45,12 +45,12 @@ Fetch the latest from remote and compare the branches:
 # Fetch latest from origin
 git fetch origin
 
-# Show commits on develop that are not on beads-sync
+# Show commits on develop that are not on main
 echo ""
-echo "=== Commits on develop not yet on beads-sync ==="
-COMMITS=$(git log beads-sync..develop --oneline)
+echo "=== Commits on develop not yet on main ==="
+COMMITS=$(git log main..develop --oneline)
 if [ -z "$COMMITS" ]; then
-  echo "No new commits to release. develop and beads-sync are in sync."
+  echo "No new commits to release. develop and main are in sync."
   echo ""
   echo "Nothing to do. Staying on current branch."
   exit 0
@@ -59,20 +59,20 @@ echo "$COMMITS"
 echo ""
 
 # Count commits
-COMMIT_COUNT=$(git rev-list beads-sync..develop --count)
+COMMIT_COUNT=$(git rev-list main..develop --count)
 echo "Total: $COMMIT_COUNT commit(s) to release"
 echo ""
 
 # Show file statistics
 echo "=== Files Changed ==="
-git diff beads-sync..develop --stat
+git diff main..develop --stat
 ```
 
 ## Step 3: User Confirmation
 
 If there are unmerged commits on develop, ask the user:
 
-**Question:** There are commits on `develop` that haven't been merged to `beads-sync`. Do you want to proceed with the release and merge these changes?
+**Question:** There are commits on `develop` that haven't been merged to `main`. Do you want to proceed with the release and merge these changes?
 
 Wait for user confirmation before proceeding. If the user says no, restore the original branch and exit.
 
@@ -81,28 +81,28 @@ Wait for user confirmation before proceeding. If the user says no, restore the o
 If the user confirms, perform the merge:
 
 ```bash
-# Checkout beads-sync
-git checkout beads-sync
+# Checkout main
+git checkout main
 
-# Pull latest beads-sync from remote
-git pull origin beads-sync
+# Pull latest main from remote
+git pull origin main
 
-# Merge develop into beads-sync (fast-forward if possible)
+# Merge develop into main (fast-forward if possible)
 echo ""
-echo "Merging develop into beads-sync..."
+echo "Merging develop into main..."
 if git merge develop --ff-only 2>/dev/null; then
   echo "✓ Fast-forward merge successful"
 else
   echo "Fast-forward not possible, performing merge commit..."
-  git merge develop -m "Merge develop into beads-sync for release"
+  git merge develop -m "Merge develop into main for release"
   echo "✓ Merge commit created"
 fi
 
 # Push to remote
 echo ""
-echo "Pushing beads-sync to origin..."
-git push origin beads-sync
-echo "✓ Pushed to origin/beads-sync"
+echo "Pushing main to origin..."
+git push origin main
+echo "✓ Pushed to origin/main"
 ```
 
 ## Step 5: Restore Working Branch
