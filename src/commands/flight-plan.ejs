@@ -60,7 +60,6 @@ Create the plan file with this structure on first write:
 - **IMMUTABLE**: Write once, never change. Preserves original context.
 - **APPEND**: Add new content below existing. Never delete previous entries.
 - **EDIT**: Modify in place. For corrections, use ~~strikethrough~~ to show history.
-- **REPLACE**: Overwrite entirely. Used for status fields that reflect current state.
 
 ---
 
