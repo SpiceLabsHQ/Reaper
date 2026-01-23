@@ -19,6 +19,9 @@ Thumbs.db
 !.vscode/settings.json
 !.vscode/extensions.json
 
+# Claude Code local files
+.claude/plans/
+
 # Local-only files (user-specific overrides)
 *.local.*
 *.local
