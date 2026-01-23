@@ -7,7 +7,7 @@ description: Chart work into flight-ready issues with dependencies mapped.
 ### Plan File Path
 
 Write the plan to Claude's plans directory with a semantic name:
-`./.claude/plans/reaper-[semantic-name].md`
+`$CLAUDE_PROJECT_DIR/.claude/plans/reaper-[semantic-name].md`
 
 Derive the semantic name from the planning request:
 - "Add OAuth authentication" → `reaper-oauth-auth.md`
@@ -20,7 +20,7 @@ This file will be the single source of truth for all planning context.
 
 ### Schema
 
-The plan file is a **living document** that accumulates context. Sections are ADDED or APPENDED, never rewritten wholesale.
+The plan file is a **structured document** containing the implementation plan. Sections are ADDED or APPENDED, never rewritten wholesale.
 
 ### Plan File Structure
 
@@ -43,17 +43,6 @@ Create the plan file with this structure on first write:
 
 ## Assumptions
 [List of assumptions made - EDITABLE, with strikethrough for corrected ones]
-
-## User Feedback
-[APPEND-ONLY log of all user feedback with timestamps]
-<!-- Feedback entry: [timestamp] -->
-<!-- User said: "..." -->
-<!-- Changes made: ... -->
-
-## Status
-- Current Phase: [phase number]
-- Iterations: [count]
-- Ready for Issues: [yes/no]
 ```
 
 ### Update Rules
@@ -65,8 +54,6 @@ Create the plan file with this structure on first write:
 | Work Units | EDIT | Modified based on feedback |
 | Dependencies | EDIT | Modified based on feedback |
 | Assumptions | EDIT | Strikethrough corrected, add new |
-| User Feedback | APPEND | Every user response logged |
-| Status | REPLACE | Updated each phase transition |
 
 ### Update Type Definitions
 
@@ -324,13 +311,13 @@ Mark units as `Assignee: user` when they require:
 
 **Goal: Create the plan file as the single source of truth.**
 
-Use the Write tool to create the plan file at `./.claude/plans/reaper-[semantic-name].md` following the schema from Phase 0.
+Use the Write tool to create the plan file at `$CLAUDE_PROJECT_DIR/.claude/plans/reaper-[semantic-name].md` following the schema from Phase 0.
 
 ### Write the Plan File
 
 ```
 Write({
-  file_path: "./.claude/plans/reaper-[semantic-name].md",
+  file_path: "$CLAUDE_PROJECT_DIR/.claude/plans/reaper-[semantic-name].md",
   content: `# Plan: [Epic Title]
 
 ## Input
@@ -384,14 +371,6 @@ flowchart TD
 ## Assumptions
 - [assumption 1 - user can correct in feedback]
 - [assumption 2]
-
-## User Feedback
-<!-- No feedback yet -->
-
-## Status
-- Current Phase: 3
-- Iterations: 0
-- Ready for Issues: no
 `
 })
 ```
@@ -431,30 +410,12 @@ Parse response type:
 
 When user provides feedback:
 
-1. **Log the feedback** (APPEND to User Feedback section):
-```
-Edit({
-  file_path: "./.claude/plans/reaper-[semantic-name].md",
-  old_string: "## User Feedback\n[existing content]",
-  new_string: "## User Feedback\n[existing content]\n\n<!-- Feedback entry: [ISO timestamp] -->\n**User said:** \"[user's feedback]\"\n**Changes made:** [summary of what was changed]"
-})
-```
-
-2. **Apply changes** to appropriate sections following update rules:
+1. **Apply changes** to appropriate sections following update rules:
    - For Work Units changes: Edit the Work Units section
    - For dependency changes: Edit the Dependencies section
    - For assumption corrections: Use ~~strikethrough~~ on old, add new
 
-3. **Update Status** (REPLACE iteration count):
-```
-Edit({
-  file_path: "./.claude/plans/reaper-[semantic-name].md",
-  old_string: "- Iterations: [N]",
-  new_string: "- Iterations: [N+1]"
-})
-```
-
-4. **Confirm to user:**
+2. **Confirm to user:**
 ```markdown
 Updated the plan at `[PLAN_FILE_PATH]`.
 
@@ -475,16 +436,12 @@ Reply "go" to create as shown, or just tell me what to change.
 | Work Units | EDIT | Replace section content |
 | Dependencies | EDIT | Replace section content |
 | Assumptions | EDIT | Strikethrough old + add new |
-| User Feedback | APPEND | Add new entry below existing |
-| Status | REPLACE | Update iteration count |
 
 ### Refinement Guidelines
 
 - Keep cycles fast - use targeted edits, not full rewrites
-- Increment iteration count on each feedback cycle
 - Track corrected assumptions with strikethrough (e.g., ~~old assumption~~ → new assumption)
 - After major feedback, may re-run targeted Explore agents
-- If 3+ cycles without convergence, summarize in User Feedback section
 
 ### Example Edit Sequence
 
@@ -494,14 +451,9 @@ User: "Unit 3 should come before unit 2, and add a migration task"
 Agent actions:
 1. Edit Work Units table (swap order, add migration row)
 2. Edit Dependencies section (update mermaid diagram)
-3. Append to User Feedback:
-   <!-- Feedback entry: 2024-01-15T10:30:00Z -->
-   **User said:** "Unit 3 should come before unit 2, and add a migration task"
-   **Changes made:** Reordered units 2/3, added Unit 4 for migration
-4. Update Status iterations: 0 → 1
 
 Agent response:
-"Updated the plan at `./.claude/plans/reaper-unit-reorder.md`.
+"Updated the plan at `$CLAUDE_PROJECT_DIR/.claude/plans/reaper-unit-reorder.md`.
 
 **Changes made:**
 - Swapped Unit 2 and Unit 3 execution order
@@ -513,7 +465,7 @@ Agent response:
 Reply "go" to create as shown, or just tell me what to change."
 ```
 
-The flow should feel like a conversation, not an interview. The plan file captures the full history.
+The flow should feel like a conversation, not an interview.
 
 ---
 
@@ -562,25 +514,17 @@ acli jira workitem create ... --assignee user@example.com
 
 When `TASK_SYSTEM` is `markdown_only`, the plan file becomes the primary deliverable. Skip issue creation and proceed to finalization.
 
-#### 1. Update Plan File Status
+#### 1. Add Manual Execution Guide to Plan File
+
+Append the Manual Execution Guide section at the end of the plan file:
 
 ```
 Edit({
-  file_path: "./.claude/plans/reaper-[semantic-name].md",
-  old_string: "- Ready for Issues: no",
-  new_string: "- Ready for Issues: yes (manual)\n- Output Mode: Markdown Only"
-})
-```
+  file_path: "$CLAUDE_PROJECT_DIR/.claude/plans/reaper-[semantic-name].md",
+  old_string: "- [assumption 2]",
+  new_string: `- [assumption 2]
 
-#### 2. Add Manual Execution Guide to Plan File
-
-Insert a new section before the Status section:
-
-```
-Edit({
-  file_path: "./.claude/plans/reaper-[semantic-name].md",
-  old_string: "## Status",
-  new_string: `## Manual Execution Guide
+## Manual Execution Guide
 
 No task system detected (Beads/Jira not available). This plan file is your primary deliverable.
 
@@ -602,20 +546,18 @@ Each unit in the Work Units table above contains:
 - Title and description for issue creation
 - Acceptance criteria (copy to issue)
 - Estimated files and hours
-- Dependency information
-
-## Status`
+- Dependency information`
 })
 ```
 
-#### 3. Skip Phases 5 and 6
+#### 2. Skip Phases 5 and 6
 
 When in markdown-only mode:
 - **Skip** Beads/Jira issue creation (Phase 5 main logic)
 - **Skip** Issue Quality Review (Phase 6) - no issues to verify
 - **Proceed directly** to completion output
 
-#### 4. Markdown-Only Completion Output
+#### 3. Markdown-Only Completion Output
 
 ```markdown
 ## Plan Complete (Markdown Mode)
