@@ -294,6 +294,14 @@ Using research from Phase 1.5, identify:
 | LOC per unit | ~500 |
 | Estimated time | 1-2 hours |
 | Responsibility | Single testable outcome |
+| TDD methodology | Tests BEFORE implementation |
+
+**TDD Requirement:** Each work unit MUST follow Red-Green-Blue cycle:
+1. **RED**: Write failing tests that define expected behavior
+2. **GREEN**: Implement minimal code to pass tests
+3. **BLUE**: Refactor while keeping tests green
+
+**Anti-pattern warning:** Never structure work units as "implement feature" followed by "add tests". Tests and implementation belong in the SAME work unit, with tests written FIRST.
 
 ### User Intervention Markers
 
@@ -484,8 +492,24 @@ else
     EPIC_ID=$(bd create "[Epic Title]" -t epic -p 1)
 fi
 
-# Create child issues with parent relationship
-ISSUE_ID=$(bd create "[Title]" -t task -p 2 --parent "$EPIC_ID")
+# Create child issues with parent relationship and TDD-structured description
+ISSUE_ID=$(bd create "[Title]" -t task -p 2 --parent "$EPIC_ID" \
+    --description "## Objective
+[What needs to be done]
+
+## TDD Approach
+Follow Red-Green-Blue cycle:
+1. RED: Write failing tests that define expected behavior
+2. GREEN: Implement minimal code to pass tests
+3. BLUE: Refactor while keeping tests green
+
+## Acceptance Criteria
+- [ ] [criterion from plan]
+- [ ] All tests pass
+- [ ] Code coverage meets threshold
+
+## Scope
+Files: [estimated files from plan]")
 
 # For user intervention tasks
 bd create "[Manual QA]" -t task --parent "$EPIC_ID" --assignee user
@@ -501,9 +525,25 @@ bd dep add "$BLOCKED_ID" "$BLOCKER_ID" --type blocks
 ### Jira Adaptation
 
 ```bash
-# Create with parent
+# Create with parent and TDD-structured description
 acli jira workitem create --project KEY --type Story --parent "$EPIC_KEY" \
-    --summary "[Title]" --description "[Description]"
+    --summary "[Title]" \
+    --description "h2. Objective
+[What needs to be done]
+
+h2. TDD Approach
+Follow Red-Green-Blue cycle:
+# RED: Write failing tests that define expected behavior
+# GREEN: Implement minimal code to pass tests
+# BLUE: Refactor while keeping tests green
+
+h2. Acceptance Criteria
+* [criterion from plan]
+* All tests pass
+* Code coverage meets threshold
+
+h2. Scope
+Files: [estimated files from plan]"
 
 # Assign to user
 acli jira workitem create ... --assignee user@example.com
