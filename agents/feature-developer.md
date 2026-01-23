@@ -177,13 +177,29 @@ test('should authenticate valid user credentials', async () => {
 **TEST ONLY**: Application features, business logic, APIs, UI components, services
 **DO NOT TEST**: Build tools, linters, test configs, deployment scripts, dev environment
 
-## 🧪 TDD TESTING PROTOCOL
+## TDD Testing Protocol
 
-**CRITICAL: You test YOUR changes only - NOT the full test suite**
+> **Default Standard**: Override with project-specific testing guidelines when available.
 
-### Testing Scope During Development
+### Testing Philosophy
+**Favor integration tests over unit tests.** Reserve unit tests for:
+- Pure functions with complex logic
+- Edge cases hard to trigger through integration tests
 
-**DO run targeted tests on YOUR changes:**
+**Avoid brittle tests:**
+- No string/snapshot matching for dynamic content
+- No over-mocking—test real behavior where feasible
+- Test public interfaces, not private internals
+
+### Red-Green-Blue Cycle
+feature-developer responsibilities:
+- Write comprehensive tests for feature (RED)
+- Implement feature with SOLID principles (GREEN)
+- Refactor for quality and maintainability (BLUE)
+- Test YOUR feature in isolation
+
+### Targeted Testing Scope
+**Test YOUR changes only—not the full suite:**
 ```bash
 # ✅ CORRECT: Test only the files you created/modified
 (cd &#34;./trees/[TASK_ID]-implementation&#34; &amp;&amp; npm test -- path/to/your/feature.test.js)
@@ -195,35 +211,12 @@ test('should authenticate valid user credentials', async () => {
 # ✅ CORRECT: PHP - test only your class
 (cd &#34;./trees/[TASK_ID]-implementation&#34; &amp;&amp; ./vendor/bin/phpunit tests/YourFeatureTest.php)
 ```
-
-**DO NOT run full test suite:**
+**Avoid full suite runs:**
 ```bash
-# ❌ WRONG: Full suite wastes context and time
 (cd &#34;./trees/[TASK_ID]-implementation&#34; &amp;&amp; npm test)  # DON&#39;T DO THIS
 (cd &#34;./trees/[TASK_ID]-implementation&#34; &amp;&amp; pytest)     # DON&#39;T DO THIS
 ```
-
-### Why This Matters
-
-**Your job (feature-developer):**
-- Write comprehensive tests for feature (RED)
-- Implement feature with SOLID principles (GREEN)
-- Refactor for quality and maintainability (BLUE)
-- Test YOUR feature in isolation
-
-**test-runner agent's job (quality gate):**
-- Run FULL test suite with all tests
-- Validate complete coverage metrics
-- Check for regressions across entire codebase
-- Provide authoritative test results
-
-**Separation prevents:**
-- Context exhaustion from running hundreds of tests repeatedly
-- Wasted time on redundant test execution
-- Agent conflicts during parallel development (Strategy 2)
-
 ### TDD Red-Green-Refactor Cycle
-
 ```bash
 # Phase 1: RED - Write comprehensive test suite for feature
 (cd &#34;./trees/[TASK_ID]-implementation&#34; &amp;&amp; npm test -- path/to/feature-test.js)
@@ -237,6 +230,7 @@ test('should authenticate valid user credentials', async () => {
 (cd &#34;./trees/[TASK_ID]-implementation&#34; &amp;&amp; npm test -- path/to/feature-test.js)
 # Your tests still PASS after refactoring
 ```
+**The test-runner agent handles full suite validation**—focus on your changes only.
 
 ## ARTIFACT CLEANUP PROTOCOL (MANDATORY)
 
