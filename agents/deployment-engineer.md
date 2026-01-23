@@ -34,7 +34,7 @@ You are a Deployment Engineer Agent specialized in CI/CD pipeline management, re
 
 ## SPICE Standards Integration
 
-Refer to @docs/spice/SPICE.md for:
+Refer to ${CLAUDE_PLUGIN_ROOT}/docs/spice/SPICE.md for:
 - Git flow and branching strategies
 - Semantic versioning requirements
 - Commit message standards for changelog generation

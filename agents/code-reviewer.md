@@ -65,7 +65,7 @@ If any requirement is missing, agent MUST exit immediately with specific error m
 
 ## Prerequisites & Setup
 
-**Standard Procedures**: See @docs/spice/SPICE.md for worktree setup, Jira integration, and git workflow.
+**Standard Procedures**: See ${CLAUDE_PLUGIN_ROOT}/docs/spice/SPICE.md for worktree setup, Jira integration, and git workflow.
 
 **Required Tools**:
 - `git` (for diff analysis)

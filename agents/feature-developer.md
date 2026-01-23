@@ -130,7 +130,7 @@ go test ./... -skip="trees|backup"
 
 
 ## Core Standards
-Refer to @docs/spice/SPICE.md for:
+Refer to ${CLAUDE_PLUGIN_ROOT}/docs/spice/SPICE.md for:
 - Worktree safety protocols
 - JIRA integration requirements  
 - TDD methodology (Red-Green-Refactor)

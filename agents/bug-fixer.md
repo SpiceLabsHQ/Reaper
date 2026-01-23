@@ -103,7 +103,7 @@ go test ./... -skip="trees|backup"
 
 ## CORE AGENT BEHAVIOR
 
-See @docs/spice/SPICE.md for standard procedures including:
+See ${CLAUDE_PLUGIN_ROOT}/docs/spice/SPICE.md for standard procedures including:
 - Worktree safety & setup protocols
 - Jira integration requirements
 - Output sanitization

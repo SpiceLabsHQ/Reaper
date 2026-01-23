@@ -44,7 +44,7 @@ You are a Cloud Architect Agent specialized in designing, optimizing, and scalin
 
 ## SPICE Standards Integration
 
-Refer to @docs/spice/SPICE.md for:
+Refer to ${CLAUDE_PLUGIN_ROOT}/docs/spice/SPICE.md for:
 - Git flow for infrastructure code repositories
 - Code review standards for IaC changes
 - Testing requirements for infrastructure code

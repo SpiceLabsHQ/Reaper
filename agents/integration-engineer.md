@@ -181,7 +181,7 @@ go test ./... -skip="trees|backup"
 
 ## SPICE Standards Integration
 
-Refer to @docs/spice/SPICE.md for:
+Refer to ${CLAUDE_PLUGIN_ROOT}/docs/spice/SPICE.md for:
 - Worktree safety protocols
 - Dependency injection patterns for testability
 - Error handling and resilience strategies
