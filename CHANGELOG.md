@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.6.0](https://github.com/SpiceLabsHQ/Reaper/compare/v1.5.3...v1.6.0) (2026-01-23)
+
+
+### Features
+
+* **commands:** add /release command for merging develop to beads-sync ([df6d6a3](https://github.com/SpiceLabsHQ/Reaper/commit/df6d6a3b858dd0c696474dd91198a951e3199674))
+* **flight-plan:** enforce TDD methodology in work unit planning ([ebd5ced](https://github.com/SpiceLabsHQ/Reaper/commit/ebd5ced2b64c33bf0f2c75e0e8e6f396df112a01))
+
+
+### Bug Fixes
+
+* **commands:** use AskUserQuestion for release confirmation ([ead0b1c](https://github.com/SpiceLabsHQ/Reaper/commit/ead0b1c22f8be16411228d441c14d85c2f0184e6))
+* **commands:** use main branch instead of beads-sync for releases ([f0daef9](https://github.com/SpiceLabsHQ/Reaper/commit/f0daef9e3e25443bd17e9a79fd6e7e3537bd756d))
+* **worktree-manager:** restore missing shell scripts from EJS refactor ([6e156b2](https://github.com/SpiceLabsHQ/Reaper/commit/6e156b271d907526b14292dc5962501b4660cf48))
+
+
+### Refactoring
+
+* **agents:** use shared partials for consistent agent structure ([ab04fb6](https://github.com/SpiceLabsHQ/Reaper/commit/ab04fb6e2b82325df879f090a781365dd353ba3c))
+* **flight-plan:** remove session tracking from plan output ([3bdc0e9](https://github.com/SpiceLabsHQ/Reaper/commit/3bdc0e9800031f4fc422eb40c560e9c34861a39d))
+* **partials:** rewrite TDD testing protocol with testing philosophy ([55b82b0](https://github.com/SpiceLabsHQ/Reaper/commit/55b82b066923a3f52ad186e7bf7c6f4d531f207d))
+* remove Spice skill and standardize doc paths to CLAUDE_PLUGIN_ROOT ([de641fc](https://github.com/SpiceLabsHQ/Reaper/commit/de641fc263aed74c28fdbf90adc748c9b694b024))
+
+
+### Styling
+
+* **flight-plan:** remove orphaned REPLACE update type definition ([10ae772](https://github.com/SpiceLabsHQ/Reaper/commit/10ae772f48eba499236c68034612fffcefc37232))
+
 ## [1.5.3](https://github.com/SpiceLabsHQ/Reaper/compare/v1.5.2...v1.5.3) (2026-01-18)
 
 
