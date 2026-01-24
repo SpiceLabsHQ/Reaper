@@ -2,6 +2,21 @@
 description: Chart work into flight-ready issues with dependencies mapped.
 ---
 
+## CRITICAL: Tool Prohibitions
+
+**DO NOT USE the `EnterPlanMode` tool.** This command IS the planning workflow. Using EnterPlanMode would:
+- Create a redundant planning layer
+- Conflict with this command's plan file workflow
+- Confuse the user with duplicate approval flows
+
+**FORBIDDEN TOOLS:**
+- `EnterPlanMode` - Never use. You are already in planning mode via this command.
+- `ExitPlanMode` - Never use. This command manages its own completion flow.
+
+If you feel tempted to call EnterPlanMode, remember: this command writes plans to `$CLAUDE_PROJECT_DIR/.claude/plans/` and manages user approval directly. That IS the plan mode.
+
+---
+
 ## Phase 0: Plan File Schema
 
 ### Plan File Path
