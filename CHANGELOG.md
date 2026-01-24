@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.7.0](https://github.com/SpiceLabsHQ/Reaper/compare/v1.6.1...v1.7.0) (2026-01-24)
+
+
+### Features
+
+* **worktree-manager:** add timeout wrapper with AI remediation output ([6637d78](https://github.com/SpiceLabsHQ/Reaper/commit/6637d788e09fc41f6d4d283ab5960de5fa21bef5))
+
+
+### Bug Fixes
+
+* **commands:** prohibit EnterPlanMode in flight-plan command ([fbe2d08](https://github.com/SpiceLabsHQ/Reaper/commit/fbe2d088139f9ac047f2c040b68d33eefb9f18cc))
+
 ## [1.6.1](https://github.com/SpiceLabsHQ/Reaper/compare/v1.6.0...v1.6.1) (2026-01-23)
 
 
