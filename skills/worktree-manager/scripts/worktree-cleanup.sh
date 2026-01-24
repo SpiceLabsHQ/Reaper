@@ -10,6 +10,7 @@
 #   1 - Error (invalid input, git failure)
 #   2 - Safety check failed (uncommitted changes)
 #   3 - Branch disposition required (no --keep-branch or --delete-branch specified)
+#   4 - Timeout (operation exceeded time limit)
 
 set -euo pipefail
 
@@ -22,6 +23,12 @@ NC='\033[0m' # No Color
 
 # Protected branches that should never be deleted
 PROTECTED_BRANCHES="develop main master"
+
+# Timeout configuration (can be overridden via environment variables)
+# WORKTREE_REMOVE_TIMEOUT: Time limit for git worktree remove (large node_modules take time)
+# NETWORK_TIMEOUT: Time limit for network operations (git push)
+WORKTREE_REMOVE_TIMEOUT="${WORKTREE_REMOVE_TIMEOUT:-120}"
+NETWORK_TIMEOUT="${NETWORK_TIMEOUT:-30}"
 
 # Script options
 WORKTREE_PATH=""
@@ -57,6 +64,11 @@ Exit codes:
   1  Error (invalid input, git failure)
   2  Safety check failed (uncommitted changes without --force)
   3  Branch disposition required (no --keep-branch or --delete-branch specified)
+  4  Timeout (operation exceeded time limit)
+
+Environment variables:
+  WORKTREE_REMOVE_TIMEOUT  Seconds to wait for worktree removal (default: 120)
+  NETWORK_TIMEOUT          Seconds to wait for network operations (default: 30)
 
 Examples:
   # Keep the branch for later work
@@ -87,6 +99,87 @@ log_warn() {
 
 log_error() {
     echo -e "${RED}[ERROR]${NC} $1" >&2
+}
+
+# Portable timeout function
+# Works on Linux (timeout), macOS with coreutils (gtimeout), or falls back to background process
+# Returns exit code 124 on timeout (matches GNU timeout behavior)
+# Usage: run_with_timeout <seconds> <command> [args...]
+run_with_timeout() {
+    local timeout_seconds="$1"
+    shift
+    local cmd=("$@")
+
+    # Try GNU timeout (Linux)
+    if command -v timeout >/dev/null 2>&1; then
+        timeout "$timeout_seconds" "${cmd[@]}"
+        return $?
+    fi
+
+    # Try gtimeout (macOS with coreutils installed via brew)
+    if command -v gtimeout >/dev/null 2>&1; then
+        gtimeout "$timeout_seconds" "${cmd[@]}"
+        return $?
+    fi
+
+    # Fallback: background process + sleep + kill pattern
+    local pid
+    local exit_code
+
+    # Run command in background
+    "${cmd[@]}" &
+    pid=$!
+
+    # Wait for command or timeout
+    local count=0
+    while kill -0 "$pid" 2>/dev/null; do
+        if [[ $count -ge $timeout_seconds ]]; then
+            # Timeout reached - kill the process
+            kill -TERM "$pid" 2>/dev/null
+            sleep 1
+            kill -KILL "$pid" 2>/dev/null
+            wait "$pid" 2>/dev/null
+            return 124  # GNU timeout exit code for timeout
+        fi
+        sleep 1
+        ((count++))
+    done
+
+    # Command completed before timeout
+    wait "$pid"
+    return $?
+}
+
+# Output AI Remediation Guide for timeout errors
+# Usage: output_timeout_remediation <worktree_path> <timeout_seconds> <operation>
+output_timeout_remediation() {
+    local worktree_path="$1"
+    local timeout_seconds="$2"
+    local operation="$3"
+
+    cat << EOF
+
+=== AI REMEDIATION GUIDE ===
+ERROR_CODE: 4
+ERROR_TYPE: TIMEOUT
+WORKTREE_PATH: ${worktree_path}
+TIMEOUT_SECONDS: ${timeout_seconds}
+OPERATION: ${operation}
+
+REMEDIATION_STEPS:
+1. RETRY_WITH_LONGER_TIMEOUT:
+   WORKTREE_REMOVE_TIMEOUT=300 worktree-cleanup.sh ${worktree_path} --delete-branch
+
+2. PRE_DELETE_LARGE_DIRECTORIES:
+   rm -rf ${worktree_path}/node_modules
+   rm -rf ${worktree_path}/.venv
+   worktree-cleanup.sh ${worktree_path} --delete-branch
+
+3. FORCE_PRUNE_WORKTREE:
+   rm -rf ${worktree_path}
+   git worktree prune
+=== END AI REMEDIATION GUIDE ===
+EOF
 }
 
 # Check if a branch is protected
@@ -372,18 +465,24 @@ main() {
         exit 1
     }
 
-    # Step 2: Remove the worktree
-    log_info "Removing worktree..."
+    # Step 2: Remove the worktree (with timeout protection)
+    log_info "Removing worktree (timeout: ${WORKTREE_REMOVE_TIMEOUT}s)..."
+    local remove_exit_code
     if [[ "$FORCE" == true ]]; then
-        git worktree remove "$abs_worktree_path" --force || {
-            log_error "Failed to remove worktree"
-            exit 1
-        }
+        run_with_timeout "$WORKTREE_REMOVE_TIMEOUT" git worktree remove "$abs_worktree_path" --force
+        remove_exit_code=$?
     else
-        git worktree remove "$abs_worktree_path" || {
-            log_error "Failed to remove worktree"
-            exit 1
-        }
+        run_with_timeout "$WORKTREE_REMOVE_TIMEOUT" git worktree remove "$abs_worktree_path"
+        remove_exit_code=$?
+    fi
+
+    if [[ $remove_exit_code -eq 124 ]]; then
+        log_error "Worktree removal timed out after ${WORKTREE_REMOVE_TIMEOUT} seconds"
+        output_timeout_remediation "$abs_worktree_path" "$WORKTREE_REMOVE_TIMEOUT" "git worktree remove"
+        exit 4
+    elif [[ $remove_exit_code -ne 0 ]]; then
+        log_error "Failed to remove worktree"
+        exit 1
     fi
     log_success "Worktree removed: $abs_worktree_path"
 
@@ -404,10 +503,18 @@ main() {
                 log_warn "Could not delete local branch: $branch (may already be deleted)"
             fi
 
-            # Delete remote branch if exists
+            # Delete remote branch if exists (with timeout protection)
             if remote_branch_exists "$branch" "$project_root"; then
-                log_info "Deleting remote branch: origin/$branch"
-                if git push origin --delete "$branch" 2>/dev/null; then
+                log_info "Deleting remote branch: origin/$branch (timeout: ${NETWORK_TIMEOUT}s)..."
+                local push_exit_code
+                run_with_timeout "$NETWORK_TIMEOUT" git push origin --delete "$branch" 2>/dev/null
+                push_exit_code=$?
+
+                if [[ $push_exit_code -eq 124 ]]; then
+                    log_error "Remote branch deletion timed out after ${NETWORK_TIMEOUT} seconds"
+                    output_timeout_remediation "$abs_worktree_path" "$NETWORK_TIMEOUT" "git push origin --delete"
+                    exit 4
+                elif [[ $push_exit_code -eq 0 ]]; then
                     log_success "Remote branch deleted: origin/$branch"
                 else
                     log_warn "Could not delete remote branch: origin/$branch"
