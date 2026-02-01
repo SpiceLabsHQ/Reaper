@@ -186,17 +186,24 @@ gh pr create \
   --body "$PR_BODY"
 ```
 
-**Bitbucket** (via Bitbucket API):
+**Bitbucket** (via `acli` — preferred, consistent with Jira workflow):
 ```bash
-# Extract org/repo from remote URL
-# SSH: git@bitbucket.org:org/repo.git → org/repo
-# HTTPS: https://bitbucket.org/org/repo.git → org/repo
+# acli handles auth, repo detection, and API calls
+acli bitbucket pullrequest create \
+  --source "$BRANCH" \
+  --destination "$TARGET_BRANCH" \
+  --title "<conventional title>" \
+  --description "$PR_BODY"
+```
+
+If `acli` is not available, fall back to the Bitbucket REST API:
+```bash
 REPO_SLUG=$(echo "$REMOTE_URL" | sed -E 's#.*bitbucket\.org[:/]([^/]+/[^/]+?)(\.git)?$#\1#')
 
 curl -s -X POST \
   "https://api.bitbucket.org/2.0/repositories/$REPO_SLUG/pullrequests" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $(git credential fill <<< "host=bitbucket.org" 2>/dev/null | grep password | cut -d= -f2)" \
+  -H "Authorization: Bearer $BITBUCKET_TOKEN" \
   -d '{
     "title": "<conventional title>",
     "description": "'"$PR_BODY"'",
@@ -206,7 +213,7 @@ curl -s -X POST \
   }'
 ```
 
-**Note on Bitbucket auth**: Try these in order:
+**Bitbucket auth fallback order** (when acli unavailable):
 1. `BITBUCKET_TOKEN` environment variable
 2. `BITBUCKET_APP_PASSWORD` environment variable
 3. Git credential helper (`git credential fill`)
@@ -255,7 +262,7 @@ This is a fast-path shipping command. For full orchestration with quality gates,
 
 ## Error Handling
 
-- **No CLI tool for host**: Fall back to REST API, then to push-only with manual PR URL
+- **No CLI tool for host**: Try `acli` (Bitbucket), `gh` (GitHub), `glab` (GitLab), then REST API, then push-only with manual PR URL
 - **Auth failure**: Report which auth methods were tried, suggest setting the appropriate token env var
 - **Push rejected**: Check if branch exists on remote, suggest force-push only if user confirms
 - **No changes**: Report "nothing to ship" and stop
