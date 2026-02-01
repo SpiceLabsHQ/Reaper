@@ -18,11 +18,11 @@ and interactions as possible. Go beyond the basics to create a
 fully-featured implementation.
 ```
 
-Claude 4.x models follow instructions with high precision. This means vague prompts get literally vague results, but precise prompts get precisely what you asked for.
+Modern frontier models (Claude 4.x, GPT-4.1, Gemini 3) follow instructions with high precision. This means vague prompts get literally vague results, but precise prompts get precisely what you asked for.
 
 ### 2. Provide Context and Motivation
 
-Explain *why*, not just *what*. Claude 4.x generalizes from explanations, inferring related constraints from reasoning.
+Explain *why*, not just *what*. Frontier models generalize from explanations, inferring related constraints from reasoning.
 
 ```
 # Less effective (rigid rule)
@@ -36,7 +36,7 @@ pronounce them.
 
 ### 3. Define Output Format Explicitly
 
-Specify the shape of the response: JSON schema, markdown structure, prose paragraphs, or XML-tagged sections. Claude 4.x models are highly steerable on format.
+Specify the shape of the response: JSON schema, markdown structure, prose paragraphs, or XML-tagged sections. Most frontier models are highly steerable on format, though the mechanisms differ by provider (see Model-Specific Guidance).
 
 **Techniques for format control:**
 - XML format indicators: `<smoothly_flowing_prose_paragraphs>` tags
@@ -67,18 +67,16 @@ The formatting style in the prompt influences the response style. If you don't w
 - Frontier models where explicit CoT provides diminishing lift (Wharton, June 2025)
 - Out-of-distribution tasks where CoT can be counterproductive (arXiv, 2025-2026)
 
-**Claude 4.x specifics:**
-- Models are sensitive to the word "think" when extended thinking is disabled
-- Prefer alternatives: "consider," "evaluate," "reflect"
-- Use interleaved thinking for reflection after tool use:
-  ```
-  After receiving tool results, carefully reflect on their quality
-  and determine optimal next steps before proceeding.
-  ```
+**Model-specific notes:**
+- Claude 4.x: Sensitive to the word "think" when extended thinking is disabled — prefer "consider," "evaluate," "reflect"
+- OpenAI o-series (o1, o3): Built-in CoT — explicit step-by-step instructions are redundant and can hurt performance
+- OpenAI GPT-4.1/4o: Still benefits from explicit CoT prompting ("think aloud" boosts reliability)
+- DeepSeek R1: Native CoT via `<think>` tag — avoid step-by-step instructions; use zero-shot
+- Gemini 3: Optimized reasoning at default temperature (1.0) — changing temperature degrades CoT performance
 
 ### Few-Shot Prompting
 
-**The shift:** Modern frontier models understand most tasks from descriptions alone. Few-shot examples can bias the model toward patterns that don't generalize. Some reasoning models actually perform worse with few-shot examples.
+**The shift:** Modern frontier models understand most tasks from descriptions alone. Few-shot examples can bias the model toward patterns that don't generalize. Reasoning models (OpenAI o-series, DeepSeek R1) actively perform worse with few-shot examples.
 
 **When examples are still valuable:**
 - Demonstrating exact output format or schema
@@ -161,125 +159,184 @@ There is no single optimizer for all cases. Increased compression comes at the c
 
 ---
 
-## Claude 4.x Model-Specific Guidance
+## Model-Specific Guidance
 
-### Precise Instruction Following
+Each model family has distinct prompting characteristics. Prompts that perform well on one model may underperform on another. This section covers the major frontier model families.
 
-Claude 4.x follows instructions more precisely than predecessors:
-- Be explicit about "above and beyond" behavior if you want it
-- Examples in the prompt are taken very literally — ensure alignment with desired behavior
-- Aggressive trigger language ("CRITICAL: You MUST...") can cause overtriggering in Opus 4.5
-- Use natural language instead of all-caps directives where possible
+### Anthropic Claude (4.x / Opus 4.5 / Sonnet 4.5 / Haiku 4.5)
 
-### Extended and Interleaved Thinking
+**Key characteristics:** Precise instruction following, XML tag affinity, context awareness, aggressive parallel tool calling.
 
-```
-After receiving tool results, carefully reflect on their quality
-and determine optimal next steps before proceeding. Use your
-thinking to plan and iterate based on this new information.
-```
+**Prompting patterns:**
+- **XML semantic tags** are the recommended structuring mechanism (`<critical>`, `<instructions>`, `<constraint>`)
+- **Thinking sensitivity**: When extended thinking is disabled, avoid the word "think" — use "consider," "evaluate," "reflect"
+- **Overtriggering**: Opus 4.5 is more responsive to system prompts than prior models. Aggressive language ("CRITICAL: You MUST...") can cause overtriggering — use natural language instead
+- **Anti-overengineering**: Opus 4.5 tends to create extra files and unnecessary abstractions. Explicit constraints are needed to keep solutions minimal
+- **Parallel tool calling**: Steerable to ~100% reliability with explicit instructions
+- **Context awareness**: Claude 4.5 can track its remaining context window. Prompt it to save state before compaction
+- **Long-horizon state**: Excels at multi-session work using git, structured state files (JSON), and setup scripts
+- **Code grounding**: Prompt with "ALWAYS read files before proposing edits" to prevent hallucination
 
-### Long-Horizon Reasoning and State Tracking
+**Structuring with XML tags:**
+```xml
+<use_parallel_tool_calls>
+  Make all independent tool calls in parallel.
+</use_parallel_tool_calls>
 
-Claude 4.5 excels at maintaining orientation across extended sessions:
-- Use structured formats (JSON) for state data
-- Use unstructured text for progress notes
-- Use git for state tracking across sessions
-- Write tests before starting work in structured format (e.g., `tests.json`)
-- Create setup scripts for graceful restarts across context windows
+<critical>
+  NEVER commit to main without explicit authorization.
+</critical>
 
-### Context Awareness
-
-Claude 4.5 models can track their remaining context window:
-```
-Your context window will be automatically compacted as it
-approaches its limit, allowing you to continue working
-indefinitely. Do not stop tasks early due to token budget
-concerns. Save progress and state before context refreshes.
+<instructions type="sequential">
+  1. Validate inputs
+  2. Execute task
+  3. Report results
+</instructions>
 ```
 
-### Parallel Tool Calling
+**Model tiers:**
+- **Opus 4.5**: Strategic analysis, complex trade-offs, deep reasoning
+- **Sonnet 4.5**: Strong balance of capability and cost for most tasks
+- **Haiku 4.5**: Fast, cost-efficient systematic work and procedural execution
 
-Claude 4.x aggressively parallelizes tool calls. Steerable to ~100% reliability:
-```
-If you intend to call multiple tools and there are no
-dependencies between the calls, make all independent calls
-in parallel. Never use placeholders or guess missing parameters.
-```
+### OpenAI GPT-4.1 / GPT-4o
 
-### Anti-Overengineering
+**Key characteristics:** Literal instruction following (even more than GPT-4o), 1M token context, strong agentic capabilities, enhanced tool calling.
 
-Claude 4.x (especially Opus 4.5) tends to overengineer. Explicit constraints help:
-```
-Avoid over-engineering. Only make changes that are directly
-requested or clearly necessary. Keep solutions simple and focused.
-Don't create helpers, utilities, or abstractions for one-time
-operations. Don't design for hypothetical future requirements.
-```
+**Prompting patterns:**
+- **Literal compliance**: GPT-4.1 follows instructions more literally than GPT-4o. Prompts must be migrated — what worked on 4o may underperform. A single clear sentence is usually enough to steer behavior
+- **Agentic prompts need three reminders**: (1) Persistence — don't yield until the task is fully done, (2) Tool-calling encouragement — use tools for accuracy, (3) Planning and reflection — articulate intentions and reflect on outcomes. These three instructions alone increased SWE-bench score by ~20%
+- **Use the API `tools` field** for tool descriptions, not manual injection into the system prompt (+2% SWE-bench from this alone)
+- **Long context**: Place instructions at both the beginning and end of large context blocks to avoid "lost-in-the-middle" failures
+- **CoT still helps**: GPT-4.1 is not a reasoning model, so explicit "think aloud" prompting boosts reliability
+- **Structured output**: Performs well with numeric constraints ("3 bullets," "under 50 words") and format hints ("in JSON")
+- **Pin model versions** in production (`gpt-4.1-2025-04-14`) for consistent behavior
 
-### Code Exploration
+**Key difference from GPT-4o:** 87.4% on IFEval vs 81.0%; 1M token context vs 128K; 26% cheaper; random code edits dropped from 9% to 2%.
 
-Opus 4.5 can be overly conservative about exploring code. Direct guidance helps:
-```
-ALWAYS read and understand relevant files before proposing code
-edits. Do not speculate about code you have not inspected.
-Be rigorous and persistent in searching code for key facts.
-```
+### OpenAI o-Series (o1, o3-mini, o3)
 
-### Minimizing Hallucinations
+**Key characteristics:** Built-in chain-of-thought reasoning, self-fact-checking, large context windows (up to 200K).
 
-```
-Never speculate about code you have not opened. If the user
-references a specific file, you MUST read the file before
-answering. Give grounded and hallucination-free answers.
-```
+**Prompting patterns:**
+- **Do NOT use explicit CoT prompting** — the model reasons internally. Instructions like "let's think step by step" are redundant and can be counterproductive
+- **Do NOT use few-shot examples** — these are not recommended for reasoning models and can degrade performance
+- **Keep prompts simple and direct** — present the problem clearly; the model analyzes deeply on its own
+- **Request conciseness explicitly** — otherwise the model errs on the side of thoroughness
+- **System prompts work differently**: Use for high-level behavior guidance, not step-by-step reasoning scaffolding
+- **Great as planners**: Use o-series as "the planner" producing detailed multi-step solutions, then assign GPT-4.1/4o-mini as "the doer" for each step
+- **Strong at evaluation**: Effective for benchmarking and validating other model responses
+
+### Google Gemini (2.5 / 3)
+
+**Key characteristics:** PTCF framework affinity, multimodal native, very large context windows, simplify-first philosophy (Gemini 3).
+
+**Prompting patterns:**
+- **PTCF framework**: Gemini performs best with Persona, Task, Context, Format structure
+- **Gemini 3 — simplify aggressively**: Cut 30-50% of prompt verbosity compared to Gemini 2.x. State the goal and format; skip obvious rules. Elaborate prompts from 2.x produce verbose, over-explained outputs in 3
+- **Temperature**: For Gemini 3, keep temperature at default 1.0. Changing it causes looping or degraded performance, especially on reasoning tasks
+- **Thinking levels**: Use `LOW` thinking level with "think silently" for lower latency
+- **Avoid over-constraining**: Instructions like "do not infer" or "do not guess" can cause the model to fail at basic logic
+- **Time awareness**: Add current date/time to system instructions for time-sensitive queries
+- **Knowledge cutoff**: Explicitly state the model's knowledge cutoff date
+- **Structured output**: Use `responseSchema` parameter for strict JSON output matching a defined schema
+- **Context engineering is empirical**: There is no perfect template. Treat patterns as baselines and iterate
+
+### Meta Llama (4 Maverick / Scout)
+
+**Key characteristics:** Open-weight MoE architecture, massive context (Scout: 10M tokens, Maverick: 1M), special token format, multimodal native.
+
+**Prompting patterns:**
+- **Special token format**: Uses `<|begin_of_text|>`, `<|header_start|>system<|header_end|>`, `<|eot|>` tokens. Use framework `apply_chat_template` rather than manual token construction
+- **System prompts work well**: Define role and behavior in the system message
+- **Prompt Ops toolkit**: Meta's `llama-prompt-ops` package automates prompt transformation from other models to Llama format
+- **Standard techniques apply**: Few-shot, role-based prompts, and RAG all work well
+- **Cross-model migration**: Prompts optimized for GPT or Claude may need adaptation — architectural and training differences affect behavior
+- **Grounding**: "A well-crafted prompt can help reduce hallucination by providing clear and accurate information and context"
+
+### DeepSeek (V3 / R1)
+
+**Key characteristics:** Two distinct models with opposite prompting requirements. V3 is a traditional chat model; R1 is a reasoning model with native CoT.
+
+**DeepSeek V3 (Chat):**
+- Behaves similarly to GPT-4o or Claude Sonnet — standard techniques apply
+- **Leverage system prompts and personas**: Responds exceptionally well to role-playing
+- **Context caching**: Place static data at the beginning of prompts for API-level caching (up to 90% cost discount on repeated prefixes)
+- **Multi-turn**: Use system role consistency and explicit function-calling schemas
+- Supports function calling, JSON mode, and structured outputs
+
+**DeepSeek R1 (Reasoning):**
+- **Avoid system prompts entirely** — place all instructions in the user role
+- **Use zero-shot prompting** — few-shot examples degrade performance. The model mimics example patterns instead of reasoning
+- **Keep prompts minimal and direct** — simpler prompts produce better results
+- **Temperature**: Use 0.5-0.7 (0.6 sweet spot). High temperature fractures reasoning chains. Note: the official API ignores sampling parameters for R1; only `max_tokens` works
+- **Force `<think>` tag if needed** — occasionally R1 skips its thinking phase, degrading output
+- **Use structured formatting** (XML/Markdown) to define tasks within the user message
+- **Negative instructions work**: Unlike most models, explicitly stating what to avoid can help R1
+
+### Mistral (Large 2 / Magistral)
+
+**Key characteristics:** Strong instruction following, PTCF-like structure, native function calling, structured output support.
+
+**Prompting patterns:**
+- **Role definition first**: Start with "You are a <role>, your task is to <task>" — effective for steering toward verticals
+- **Markdown/XML formatting**: Critical for long prompts. Makes structure intuitive for both model and developer
+- **Avoid contradictions in long prompts**: As system prompts grow, slight contradictions appear. Use explicit decision-tree logic to resolve ambiguity
+- **Structured output**: Use custom structured outputs (more reliable than JSON mode). Only ask the model to generate what is strictly necessary
+- **Few-shot works well**: Example prompting improves understanding, accuracy, and especially output format compliance
+- **Magistral** (reasoning models, June 2025): Specialized for multi-step logic with transparent chain-of-thought reasoning traces
+- **Iterative refinement**: Different Mistral model updates can change behavior — revisit prompts regularly
 
 ---
 
-## XML Tags for LLM Structure
+## Cross-Model Comparison Matrix
 
-XML tags are the recommended way to structure prompts for Claude models. They provide semantic clarity about content type and intent.
+| Capability | Claude 4.x | GPT-4.1 | o-Series | Gemini 3 | Llama 4 | DeepSeek R1 | DeepSeek V3 | Mistral L2 |
+|---|---|---|---|---|---|---|---|---|
+| **System prompt** | Strong | Strong | Limited | Strong | Strong | Avoid | Strong | Strong |
+| **XML tags** | Recommended | Supported | N/A | Supported | Supported | User-msg only | Supported | Supported |
+| **Few-shot** | Sparingly | Sparingly | Avoid | Sparingly | Works well | Avoid | Works well | Works well |
+| **Explicit CoT** | Careful* | Helpful | Avoid | Avoid over-constraining | Works | Avoid | Helpful | Helpful |
+| **Built-in reasoning** | Extended thinking | No | Yes | Thinking levels | No | Yes (`<think>`) | No | Magistral only |
+| **Max context** | 200K | 1M | 200K | 1M+ | 10M (Scout) | 128K | 128K | 128K |
+| **Parallel tool calls** | Aggressive | Strong | N/A | Supported | Supported | N/A | Supported | Supported |
+| **Structured output** | XML/JSON | JSON | JSON | `responseSchema` | JSON | Markdown/XML | JSON mode | Custom schemas |
+| **Overengineering risk** | High (Opus) | Moderate | Low | Low | Low | Low | Moderate | Low |
 
-### Common Patterns
+\* Claude: avoid the word "think" when extended thinking is disabled
+
+---
+
+## Prompt Structure Tags (Cross-Model)
+
+XML/markdown tags work across all major model families for structuring prompts. Claude models have the strongest affinity, but GPT-4.1, Gemini, Llama, and Mistral all benefit from structured sections.
+
+### Universal Patterns
 
 ```xml
-<!-- Behavioral directives -->
-<use_parallel_tool_calls>
-  If you intend to call multiple tools and there are no
-  dependencies, make all independent calls in parallel.
-</use_parallel_tool_calls>
+<!-- Works well across Claude, GPT-4.1, Gemini, Llama, Mistral -->
+<role>You are a security auditor specializing in OWASP Top 10.</role>
 
-<!-- Safety constraints -->
-<critical>
-  NEVER commit to main branch without explicit user authorization.
-</critical>
+<task>Analyze the provided code for SQL injection vulnerabilities.</task>
 
-<!-- Sequential instructions -->
-<instructions type="sequential">
-  1. Validate all inputs before processing
-  2. Execute TDD cycle (Red, Green, Refactor)
-  3. Report results with evidence
-</instructions>
+<output_format>
+  Return findings as a JSON array with fields: file, line, severity, description, fix.
+</output_format>
 
-<!-- Format control -->
-<smoothly_flowing_prose_paragraphs>
-  Write the prose sections of your response in flowing
-  paragraphs rather than bullet points.
-</smoothly_flowing_prose_paragraphs>
-
-<!-- Typed constraints -->
-<constraint type="safety">
-  Git operations are forbidden for coding agents.
-</constraint>
+<constraints>
+  - Only report vulnerabilities you can confirm from the code
+  - Do not speculate about code you have not read
+</constraints>
 ```
 
-### Benefits
+### Model-Specific Considerations
 
-- Semantic tags (`<critical>`, `<constraint>`) convey urgency and importance
-- Typed tags (`<instructions type="sequential">`) clarify content structure
-- Nested tags show relationships and hierarchy
-- Tags help LLMs parse long prompts and retain key information
-- Tags enable clean separation of concerns within a single prompt
+- **Claude**: Strongest XML tag support. Use semantic tags like `<critical>`, `<constraint type="safety">` for emphasis
+- **GPT-4.1**: Responds well to XML structure. Use the API `tools` field rather than embedding tool schemas in XML
+- **Gemini 3**: Supports XML-like tags. Use `<Plan>`, `<Execute>`, `<Validate>`, `<Format>` workflow tags
+- **DeepSeek R1**: Place all XML structure in user message, not system prompt
+- **Llama 4**: Uses its own special tokens for role structure; XML tags work within message content
+- **Mistral**: Markdown and XML both work. Markdown may be more natural for shorter prompts
 
 ---
 
@@ -302,7 +359,7 @@ A central orchestrator manages all agent interactions:
 A capable model plans; cheaper models execute:
 - Up to 90% cost reduction
 - Separation of strategic thinking from systematic implementation
-- Natural fit for Opus/Haiku model pairing
+- Natural fit for tiered model pairings: Claude Opus/Haiku, OpenAI o3/GPT-4.1-mini, Gemini Pro/Flash
 
 ### Common Failure Patterns
 
@@ -349,8 +406,7 @@ These are the most common prompt engineering mistakes. The `ai-prompt-engineer` 
 
 ## Sources
 
-- [Anthropic Claude 4.x Prompting Best Practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-4-best-practices)
-- [Anthropic Interactive Prompt Engineering Tutorial](https://github.com/anthropics/prompt-eng-interactive-tutorial)
+### General
 - [IBM 2026 Guide to Prompt Engineering](https://www.ibm.com/think/prompt-engineering)
 - [Prompt Engineering Guide (promptingguide.ai)](https://www.promptingguide.ai/)
 - [Lakera Ultimate Guide (2025)](https://www.lakera.ai/blog/prompt-engineering-guide)
@@ -360,3 +416,34 @@ These are the most common prompt engineering mistakes. The `ai-prompt-engineer` 
 - [Token Optimization for AI Agents (Medium)](https://medium.com/elementor-engineers/optimizing-token-usage-in-agent-based-assistants-ffd1822ece9c)
 - [Agentic AI Design Patterns 2026 (Medium)](https://medium.com/@dewasheesh.rana/agentic-ai-design-patterns-2026-ed-e3a5125162c5)
 - [PromptBuilder Best Practices 2025](https://promptbuilder.cc/blog/prompt-engineering-best-practices-2025)
+
+### Anthropic Claude
+- [Claude 4.x Prompting Best Practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-4-best-practices)
+- [Anthropic Interactive Prompt Engineering Tutorial](https://github.com/anthropics/prompt-eng-interactive-tutorial)
+
+### OpenAI GPT / o-Series
+- [OpenAI Prompt Engineering Guide](https://platform.openai.com/docs/guides/prompt-engineering)
+- [OpenAI Reasoning Best Practices](https://platform.openai.com/docs/guides/reasoning-best-practices)
+- [GPT-4.1 Prompting Guide (Cookbook)](https://cookbook.openai.com/examples/gpt4-1_prompting_guide)
+- [Microsoft: Prompt Engineering for O1/O3-mini](https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/prompt-engineering-for-openai%E2%80%99s-o1-and-o3-mini-reasoning-models/4374010)
+
+### Google Gemini
+- [Gemini API Prompt Design Strategies](https://ai.google.dev/gemini-api/docs/prompting-strategies)
+- [Gemini 3 Prompting Guide (Vertex AI)](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/start/gemini-3-prompting-guide)
+- [Gemini 3 Best Practices (Philipp Schmid)](https://www.philschmid.de/gemini-3-prompt-practices)
+- [Gemini 2.5 Pro Best Practices (Google Cloud Community)](https://medium.com/google-cloud/best-practices-for-prompt-engineering-with-gemini-2-5-pro-755cb473de70)
+
+### Meta Llama
+- [Llama 4 Model Card and Prompt Format](https://www.llama.com/docs/model-cards-and-prompt-formats/llama4/)
+- [Meta Prompt Engineering How-To Guide](https://www.llama.com/docs/how-to-guides/prompting/)
+- [Llama Prompt Ops Toolkit](https://www.marktechpost.com/2025/05/03/meta-ai-releases-llama-prompt-ops-a-python-toolkit-for-prompt-optimization-on-llama-models/)
+
+### DeepSeek
+- [DeepSeek R1 & V3 Prompting Guide](https://passhulk.com/blog/deepseek-prompt-engineering-guide-master-r1-v3-models-2025/)
+- [Prompting DeepSeek R1 (Together.ai)](https://docs.together.ai/docs/prompting-deepseek-r1)
+- [DeepSeek Prompting Techniques (DataStudios)](https://www.datastudios.org/post/deepseek-prompting-techniques-strategies-limits-best-practices-etc)
+
+### Mistral
+- [Mistral Official Prompting Guide](https://docs.mistral.ai/guides/prompting_capabilities)
+- [Mistral System Prompt Best Practices (PromptLayer)](https://blog.promptlayer.com/mistral-system-prompt/)
+- [Mistral Tokenization & Chat Templates](https://docs.mistral.ai/cookbooks/concept-deep-dive-tokenization-chat_templates)
