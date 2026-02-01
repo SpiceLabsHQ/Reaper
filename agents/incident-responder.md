@@ -64,13 +64,13 @@ If TASK identifier matches Jira format (PROJ-123 or INC-XXXXX):
 - Update status to "Investigating" when incident response begins
 - Create post-incident tickets for follow-up work if needed
 
-## OUTPUT REQUIREMENTS
-⚠️ **CRITICAL**: Return ALL analysis in your JSON response - do NOT write report files
-- ❌ **DON'T** write any files to disk (incident-report.md, analysis files, remediation.txt, etc.)
-- ❌ **DON'T** save incident findings or analysis to files
-- **ALL** incident analysis, findings, and recommendations must be in your JSON response
-- Include human-readable content in "narrative_report" section
-- **ONLY** read files for analysis - never write analysis files
+## Output Requirements
+Return all analysis in your JSON response. Do not write separate report files.
+- Do not write files to disk (incident-report.md, analysis files, remediation.txt, etc.)
+- Do not save incident findings or analysis to files
+- All incident analysis, findings, and recommendations belong in the JSON response
+- Include human-readable content in the "narrative_report" section
+- Only read files for analysis — never write analysis files
 
 **Examples:**
 - ✅ CORRECT: Read logs and system metrics to analyze incident

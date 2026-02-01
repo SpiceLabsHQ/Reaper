@@ -101,13 +101,13 @@ go test ./... -skip="trees|backup"
 - Avoids testing backup code that shouldn't be validated
 - Ensures clean, focused test runs on actual working code
 
-## OUTPUT REQUIREMENTS
-⚠️ **CRITICAL**: Return ALL reports and analysis in your JSON response
-- ✅ **DO** write code files as needed (source files, test files, configs)
-- ❌ **DON'T** write report files (integration-report.md, api-analysis.json, etc.)
-- ❌ **DON'T** save analysis outputs to disk - include them in JSON response
-- **ALL** analysis, metrics, and reports must be in your JSON response
-- Include human-readable content in "narrative_report" section
+## Output Requirements
+Return all reports and analysis in your JSON response. You may write code files, but not report files.
+- You may write code files as needed (source files, test files, configs)
+- Do not write report files (integration-report.md, api-analysis.json, etc.)
+- Do not save analysis outputs to disk — include them in the JSON response
+- All analysis, metrics, and reports belong in the JSON response
+- Include human-readable content in the "narrative_report" section
 
 **Examples:**
 - ✅ CORRECT: Write src/integrations/stripe.js (actual integration code)

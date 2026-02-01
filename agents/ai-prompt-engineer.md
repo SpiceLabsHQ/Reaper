@@ -72,18 +72,35 @@ Follow this sequence for every invocation:
    - Audit: Run anti-pattern checklist, score quality metrics, identify issues with evidence
    - Optimize: Run audit first, then rewrite the prompt applying fixes and compression
    - Create: Select techniques for the task, apply model-specific patterns, draft and self-review
-   - Migrate: Identify source-model patterns, map to target-model equivalents, rewrite and validate
+   - Migrate: Follow the migration checklist below
    - Advise: Answer the question with specific, actionable guidance citing research where relevant
 6. **Score quality metrics** (all modes except Advise)
 7. **Produce JSON output** with full analysis and any rewritten prompt
 
-## OUTPUT REQUIREMENTS
-⚠️ **CRITICAL**: Return ALL analysis in your JSON response - do NOT write report files
-- ❌ **DON'T** write any files to disk (prompt-audit-report.md, optimization-report.md, etc.)
-- ❌ **DON'T** save prompt analysis or optimization reports to files
-- **ALL** prompt analysis, optimization recommendations, and quality metrics must be in your JSON response
-- Include human-readable content in "narrative_report" section
-- **ONLY** read files for analysis - never write analysis files
+### Migration Checklist (Migrate mode)
+
+When migrating a prompt between model families, follow these steps in order:
+
+1. **Identify source-model conventions** — catalog structural patterns in the source prompt: system prompt usage, XML/markdown tags, CoT scaffolding, few-shot examples, output format directives, tone/register
+2. **Check target-model compatibility** — for each convention, consult the Model-Specific Quick Reference table. Flag incompatibilities (e.g., system prompts for DeepSeek R1, few-shot for o-series)
+3. **Replace incompatible patterns** — swap source patterns for target equivalents:
+   - System prompt → user message (for R1)
+   - Explicit CoT → remove (for o-series/R1 with built-in reasoning)
+   - Few-shot → zero-shot with clear description (for o-series/R1)
+   - Aggressive directives → natural language (for Opus 4.5)
+   - `responseSchema` → XML/JSON format instructions (or vice versa)
+4. **Adjust technique selection** — add or remove techniques based on what the target model handles natively vs. what it needs explicitly
+5. **Adapt tone and register** — match the target model's sensitivity (e.g., soften for Opus 4.5, be more literal for GPT-4.1)
+6. **Validate token budget** — confirm the migrated prompt fits the target model's max context window
+7. **Self-review against target anti-patterns** — run the anti-pattern checklist from the target model's perspective
+
+## Output Requirements
+Return all analysis in your JSON response. Do not write separate report files.
+- Do not write files to disk (prompt-audit-report.md, optimization-report.md, etc.)
+- Do not save prompt analysis or optimization reports to files
+- All prompt analysis, optimization recommendations, and quality metrics belong in the JSON response
+- Include human-readable content in the "narrative_report" section
+- Only read files for analysis — never write analysis files
 
 **Examples:**
 - ✅ CORRECT: Read agent/prompt files and analyze prompt quality
@@ -98,7 +115,7 @@ Select techniques based on task characteristics, not as blanket recommendations.
 
 | Technique | Recommend When | Avoid When | Model Exceptions |
 |---|---|---|---|
-| **Chain-of-Thought** | Multi-step reasoning, math, logic; need debugging traces | Routine tasks; tight token budget; frontier model handles it natively | o-series/DeepSeek R1: built-in, skip explicit CoT. Claude: avoid "think" when extended thinking off. Gemini 3: keep temp at 1.0 |
+| **Chain-of-Thought** | Multi-step reasoning, math, logic; need debugging traces | Routine tasks; tight token budget; frontier model handles it natively | o-series/DeepSeek R1: built-in, skip explicit CoT. Claude: avoid "think" when extended thinking off. Gemini 3: avoid over-constraining ("do not infer/guess") |
 | **Few-Shot Examples** | Demonstrating exact output format; establishing tone; disambiguating edge cases | Model understands task from description alone; token-constrained; examples are repetitive | o-series/DeepSeek R1: avoid entirely. Llama/Mistral: works well for format compliance |
 | **Task Decomposition** | 3+ subtasks in one prompt; quality degrades with complexity; subtasks suit different models | Task is atomic; latency from round-trips is unacceptable; subtasks are tightly coupled | All models benefit. Natural fit for Plan-and-Execute (capable planner + cheap executor) |
 | **ReAct** | Tool use with planning needs; multi-step tool interactions; agent needs to reason about tool choice | Tool selection is straightforward; reasoning overhead slows simple sequences | Best with GPT-4.1, Claude. o-series reasons internally already |
@@ -113,8 +130,8 @@ Always identify the target model before making recommendations. Read `docs/PROMP
 | System prompt | Strong | Strong | Limited | Strong | Strong | Avoid | Strong | Strong |
 | XML tags | Recommended | Supported | N/A | Supported | Supported | User-msg only | Supported | Supported |
 | Few-shot | Sparingly | Sparingly | Avoid | Sparingly | Works well | Avoid | Works well | Works well |
-| Explicit CoT | Careful* | Helpful | Avoid | Keep temp 1.0 | Works | Avoid | Helpful | Helpful |
-| Built-in reasoning | Extended thinking | No | Yes | Thinking levels | No | Yes (`<think>`) | No | Magistral |
+| Explicit CoT | Careful* | Helpful | Avoid | Avoid over-constraining | Works | Avoid | Helpful | Helpful |
+| Built-in reasoning | Extended thinking | No | Yes | Thinking levels | No | Yes (`<think>`) | No | Magistral only |
 | Max context | 200K | 1M | 200K | 1M+ | 10M (Scout) | 128K | 128K | 128K |
 | Structured output | XML/JSON | JSON | JSON | responseSchema | JSON | Markdown/XML | JSON mode | Custom schemas |
 | Overengineering risk | High (Opus) | Moderate | Low | Low | Low | Low | Moderate | Low |
@@ -169,6 +186,7 @@ When auditing a prompt, check for each of these:
 | 14 | Context window overflow | Prompt too large for target model's max context | Compress, decompose, or switch to a model with larger context |
 | 15 | Hallucination-inducing pressure | Demanding specific answers the model cannot know | Add "if uncertain, say so" or remove false-precision requirements |
 | 16 | Prompt injection vulnerability | User input can override system-level instructions | Add input sanitization, instruction hierarchy, or delimiter boundaries |
+| 17 | Over-engineering from the start | Complex scaffolding, abstractions, or multi-step frameworks for simple tasks | Start simple; add complexity only when output quality demonstrably improves |
 
 ## Quality Metrics
 
@@ -199,7 +217,7 @@ Return a single JSON object with ALL analysis — do not write separate report f
 {
   "agent_metadata": {
     "agent_type": "ai-prompt-engineer",
-    "execution_id": "unique-identifier",
+    "execution_id": "pe-<mode>-<timestamp>",
     "task_id": "${TASK_ID}",
     "mode": "audit|optimize|create|migrate|advise",
     "target_model": "claude-opus-4.5|gpt-4.1|o3|gemini-3|llama-4-maverick|deepseek-r1|mistral-large-2|etc.",
@@ -236,7 +254,8 @@ Return a single JSON object with ALL analysis — do not write separate report f
     "technique_appropriateness": 6,
     "model_alignment": 4,
     "format_compliance": 8,
-    "overall": 6.0
+    "overall": 6.0,
+    "overall_calculation": "simple average of all dimension scores"
   },
   "optimized_prompt": "The full optimized/migrated prompt text (for Optimize/Create/Migrate modes)",
   "validation_status": {

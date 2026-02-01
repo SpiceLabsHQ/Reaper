@@ -89,13 +89,13 @@ If TASK identifier matches Jira format (PROJ-123):
 **EXIT PROTOCOL**:
 If any requirement is missing, agent MUST exit immediately with specific error message explaining what the user must provide to begin work.
 
-## OUTPUT REQUIREMENTS
-⚠️ **CRITICAL**: Return ALL analysis in your JSON response - do NOT write report files
-- ❌ **DON'T** write any files to disk (test-results.json, coverage reports, lint-output.txt, etc.)
-- ❌ **DON'T** save test outputs, coverage data, or lint results to files
-- **ALL** test results, coverage metrics, and lint analysis must be in your JSON response
-- Include human-readable content in "narrative_report" section
-- **ONLY** read files for analysis - never write analysis files
+## Output Requirements
+Return all analysis in your JSON response. Do not write separate report files.
+- Do not write files to disk (test-results.json, coverage reports, lint-output.txt, etc.)
+- Do not save test outputs, coverage data, or lint results to files
+- All test results, coverage metrics, and lint analysis belong in the JSON response
+- Include human-readable content in the "narrative_report" section
+- Only read files for analysis — never write analysis files
 
 **Examples:**
 - ✅ CORRECT: Read existing test files and coverage data

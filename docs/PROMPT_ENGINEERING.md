@@ -390,6 +390,10 @@ These are the most common prompt engineering mistakes. The `ai-prompt-engineer` 
 | Repeating same examples | Overfitting to specific patterns | Provide diverse examples |
 | Vague references in long conversations | Model loses track of context | Be specific with names, quotes, or re-state context |
 | Over-indexing on third-party frameworks | Generic tools often underperform custom solutions | Build essential components yourself first |
+| Missing output format | Model produces unpredictable response shapes | Add explicit format specification (JSON schema, XML structure, etc.) |
+| Aggressive trigger language | ALL CAPS, "CRITICAL," "MUST" overuse causes overtriggering (especially Opus 4.5) | Tone down to natural language; reserve emphasis for genuine safety constraints |
+| Style mismatch | Prompt uses one format (markdown) but expects a different output format (prose) | Match prompt formatting style to desired output style |
+| Dead context | Instructions reference tools, features, or scenarios not in scope | Remove irrelevant instructions or make them conditional |
 | No grounding constraint | Model claims facts without verification | Add "read before answering" or "investigate before claiming" instructions |
 | Conflicting instructions | Contradictory rules in long prompts cause unpredictable behavior | Resolve with explicit decision-tree logic or priority ordering |
 | Context window overflow | Prompt too large for target model's max context | Compress, decompose, or switch to a model with larger context |
