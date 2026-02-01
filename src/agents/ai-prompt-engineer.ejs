@@ -95,15 +95,13 @@ When migrating a prompt between model families, follow these steps in order:
 7. **Self-review against target anti-patterns** — run the anti-pattern checklist from the target model's perspective
 
 <%- include('partials/output-requirements', {
-  isReviewAgent: true,
-  reportFiles: 'prompt-audit-report.md, optimization-report.md, etc.',
-  saveType: 'prompt analysis or optimization reports',
-  contentType: 'prompt analysis, optimization recommendations, and quality metrics',
-  reviewExamples: [
-    '✅ CORRECT: Read agent/prompt files and analyze prompt quality',
-    '✅ CORRECT: Write optimized prompt files when in Optimize, Create, or Migrate mode',
-    '❌ WRONG: Write PROMPT_AUDIT_REPORT.md (return in JSON instead)',
-    '❌ WRONG: Write optimization-analysis.json (return in JSON instead)'
+  isReviewAgent: false,
+  reportFiles: 'prompt-audit-report.md, optimization-report.md, optimization-analysis.json, etc.',
+  codeExamples: [
+    'Correct: Read agent/prompt files and analyze prompt quality',
+    'Correct: Write optimized prompt files when in Optimize, Create, or Migrate mode',
+    'Wrong: Write PROMPT_AUDIT_REPORT.md (return in JSON instead)',
+    'Wrong: Write optimization-analysis.json (return in JSON instead)'
   ]
 }) %>
 
@@ -266,6 +264,14 @@ Return a single JSON object with ALL analysis — do not write separate report f
   "artifacts_cleaned": []
 }
 ```
+
+**Field applicability by mode:**
+- **Advise**: omit `quality_scores`, `prompt_analysis`, and `optimized_prompt` (set to null)
+- **Audit**: omit `optimized_prompt` (set to null)
+- **Optimize/Create/Migrate**: all fields apply
+- `migration_notes`: populate only in Migrate mode; null otherwise
+- `files_modified`: list files written in Optimize/Create/Migrate modes; empty array otherwise
+- `artifacts_cleaned`: list temporary files removed; empty array if none created
 
 ## Cleanup
 

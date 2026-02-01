@@ -95,18 +95,18 @@ When migrating a prompt between model families, follow these steps in order:
 7. **Self-review against target anti-patterns** — run the anti-pattern checklist from the target model's perspective
 
 ## Output Requirements
-Return all analysis in your JSON response. Do not write separate report files.
-- Do not write files to disk (prompt-audit-report.md, optimization-report.md, etc.)
-- Do not save prompt analysis or optimization reports to files
-- All prompt analysis, optimization recommendations, and quality metrics belong in the JSON response
+Return all reports and analysis in your JSON response. You may write code files, but not report files.
+- You may write code files as needed (source files, test files, configs)
+- Do not write report files (prompt-audit-report.md, optimization-report.md, optimization-analysis.json, etc.)
+- Do not save analysis outputs to disk — include them in the JSON response
+- All analysis, metrics, and reports belong in the JSON response
 - Include human-readable content in the "narrative_report" section
-- Only read files for analysis — never write analysis files
 
 **Examples:**
-- ✅ CORRECT: Read agent/prompt files and analyze prompt quality
-- ✅ CORRECT: Write optimized prompt files when in Optimize, Create, or Migrate mode
-- ❌ WRONG: Write PROMPT_AUDIT_REPORT.md (return in JSON instead)
-- ❌ WRONG: Write optimization-analysis.json (return in JSON instead)
+- Correct: Read agent/prompt files and analyze prompt quality
+- Correct: Write optimized prompt files when in Optimize, Create, or Migrate mode
+- Wrong: Write PROMPT_AUDIT_REPORT.md (return in JSON instead)
+- Wrong: Write optimization-analysis.json (return in JSON instead)
 
 
 ## Technique Selection
@@ -268,6 +268,14 @@ Return a single JSON object with ALL analysis — do not write separate report f
   "artifacts_cleaned": []
 }
 ```
+
+**Field applicability by mode:**
+- **Advise**: omit `quality_scores`, `prompt_analysis`, and `optimized_prompt` (set to null)
+- **Audit**: omit `optimized_prompt` (set to null)
+- **Optimize/Create/Migrate**: all fields apply
+- `migration_notes`: populate only in Migrate mode; null otherwise
+- `files_modified`: list files written in Optimize/Create/Migrate modes; empty array otherwise
+- `artifacts_cleaned`: list temporary files removed; empty array if none created
 
 ## Cleanup
 
