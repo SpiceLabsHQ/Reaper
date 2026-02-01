@@ -30,6 +30,9 @@ Check your available tools to determine your role:
 /reaper:takeoff <TASK-ID>
 /reaper:takeoff <description>
 
+# Fast-path: commit, push, and open PR from a worktree
+/reaper:ship <worktree-path>
+
 # Check worktree status
 /reaper:status-worktrees
 
@@ -59,6 +62,8 @@ Use `bd list` to find issue IDs, or `bd create` to create one.
 - All tests run in worktrees (`./trees/`), never in root
 - Run linting before every commit (enforced by husky)
 - Quality gates: reaper:test-runner → reaper:code-reviewer + reaper:security-auditor
+- Self-learning: recurring quality gate failures surface as CLAUDE.md update candidates
+- Auto-formatting: PostToolUse hook formats code on every write/edit (detects Prettier, Biome, ESLint)
 
 ### Worktree Isolation
 
@@ -126,7 +131,7 @@ The pre-commit hook automatically runs the build and stages generated files.
 
 ### User-Invocable Skills
 
-Orchestration skills (flight-plan, takeoff, status-worktrees, claude-sync) are user-invocable via `/reaper:*` syntax. They are defined in `src/skills/orchestration/` with `user-invocable: true` in their frontmatter.
+Orchestration skills (flight-plan, takeoff, ship, status-worktrees, claude-sync) are user-invocable via `/reaper:*` syntax. They are defined in `src/skills/orchestration/` with `user-invocable: true` in their frontmatter.
 
 ### Partials (Shared Content)
 

@@ -837,6 +837,44 @@ Frequent commits on feature branches are GOOD practice. They:
 
 **After all gates pass:** Present completed work to user, seek feedback, then merge only after explicit approval.
 
+## 3.3 LEARNING EXTRACTION (Post-Quality-Gate)
+
+**Purpose**: When quality gates required multiple iterations, surface recurring patterns as candidate CLAUDE.md entries so the project accumulates learnings over time.
+
+**Trigger**: Any work unit that required **2+ auto-iterations** before all gates passed.
+
+**Process**:
+1. After all quality gates pass but BEFORE presenting to user, check the iteration count for each gate
+2. If total iterations >= 2, review the `blocking_issues` from each failed attempt
+3. Identify **recurring categories** (same class of issue across iterations — e.g., repeated formatting failures, same SOLID violation pattern, missing env var)
+4. For each recurring category, draft a 1-line CLAUDE.md entry that would prevent recurrence
+5. Include `suggested_claude_md_entries` from `reaper:code-reviewer` JSON if present
+
+**Two-Question Filter** (from claude-sync): Only surface entries where BOTH are true:
+- **Critical?** Would Claude make this class of mistake again without the entry?
+- **Non-Obvious?** Can't be discovered by reading existing files?
+
+**Maximum**: 3 suggestions per takeoff session. Keep signal high.
+
+**Presentation**: Include in the Touchdown output as an optional section:
+
+```markdown
+### Suggested CLAUDE.md Updates
+These patterns caused multiple iteration cycles. Adding them would prevent recurrence:
+
+- `[Ready-to-paste CLAUDE.md entry]`
+- `[Ready-to-paste CLAUDE.md entry]`
+
+Apply these? I can add them to your project's CLAUDE.md now.
+```
+
+If no patterns recurred (single-iteration success), omit this section entirely.
+
+**Rules**:
+- Never auto-apply — always present for user approval
+- Only suggest entries derived from actual iteration failures, not hypothetical improvements
+- Entries must be actionable instructions, not observations
+
 
 ## AGENT JSON VALIDATION PROTOCOL
 
@@ -920,6 +958,17 @@ Provide a comprehensive summary:
 ### How to Test
 [Instructions for the user to verify the work]
 
+[IF learning extraction from Section 3.3 produced suggestions, include:]
+
+### Suggested CLAUDE.md Updates
+These patterns caused multiple iteration cycles. Adding them would prevent recurrence:
+
+- `[entry]`
+
+Apply these? I can add them to your project's CLAUDE.md now.
+
+[END IF — omit section entirely on single-iteration success]
+
 ---
 
 **Control tower, how do we look?** I can adjust the approach, run additional checks,
@@ -966,10 +1015,11 @@ Purpose: Safe cleanup of $WORKTREE_PATH
    - Deploy agents as specified
    - Mark todo as `completed` immediately after finishing
 6. **AUTO-ITERATION** → Code → reaper:test-runner → (reaper:code-reviewer + reaper:security-auditor parallel) → Repeat until pass
-7. **Present completed work** → Comprehensive summary with quality attestation
-8. **Seek user feedback** → "What would you like me to adjust?"
-9. **Deploy reaper:branch-manager** → Only after user explicitly approves merge
-10. **Worktree cleanup** → Invoke `worktree-manager` skill for safe removal
+7. **Learning extraction** → If 2+ iterations occurred, surface recurring patterns as CLAUDE.md candidates (Section 3.3)
+8. **Present completed work** → Comprehensive summary with quality attestation + any CLAUDE.md suggestions
+9. **Seek user feedback** → "What would you like me to adjust?"
+10. **Deploy reaper:branch-manager** → Only after user explicitly approves merge
+11. **Worktree cleanup** → Invoke `worktree-manager` skill for safe removal
 
 ### TodoWrite Integration (CRITICAL)
 **Session Persistence Strategy:**

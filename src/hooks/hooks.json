@@ -10,6 +10,17 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -f .prettierrc ] || [ -f .prettierrc.json ] || [ -f .prettierrc.js ] || [ -f prettier.config.js ] || [ -f prettier.config.mjs ] || [ -f prettier.config.cjs ]; then npx prettier --write \"$CLAUDE_FILE_PATH\" 2>/dev/null; elif [ -f biome.json ] || [ -f biome.jsonc ]; then npx @biomejs/biome format --write \"$CLAUDE_FILE_PATH\" 2>/dev/null; elif [ -f .eslintrc ] || [ -f .eslintrc.json ] || [ -f .eslintrc.js ] || [ -f eslint.config.js ] || [ -f eslint.config.mjs ] || [ -f eslint.config.cjs ]; then npx eslint --fix \"$CLAUDE_FILE_PATH\" 2>/dev/null; fi; true"
+          }
+        ]
+      }
     ]
   }
 }

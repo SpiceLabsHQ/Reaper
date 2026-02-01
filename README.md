@@ -15,7 +15,7 @@ This is how we work: TDD-first, SOLID principles, worktree isolation, mandatory 
 | Component | What it does |
 |-----------|--------------|
 | **Agents** | Specialized workers for planning, development, quality, integration, ops |
-| **Commands** | `/reaper:flight-plan`, `/reaper:takeoff`, `/reaper:status-worktrees`, `/reaper:claude-sync` |
+| **Commands** | `/reaper:flight-plan`, `/reaper:takeoff`, `/reaper:ship`, `/reaper:status-worktrees`, `/reaper:claude-sync` |
 | **Skills** | Auto-activating utilities for commits, linting, worktrees |
 | **Strategies** | Complexity-aware workflows from quick fixes to multi-worktree epics |
 
@@ -194,6 +194,20 @@ Execute development work from a task ID or plan.
 
 Claude handles the full workflow: planning → implementation → quality gates → your review.
 
+### `/reaper:ship`
+
+Fast-path from worktree to pull request. Commits, pushes, and opens a PR in one step.
+
+```bash
+# Ship a specific worktree
+/reaper:ship ./trees/PROJ-123-work
+
+# Ship to a specific branch
+/reaper:ship ./trees/PROJ-123-work main
+```
+
+Generates conventional commit messages, extracts task IDs from worktree names, and creates a PR with a summary of changes. Use this for the "last mile" after quality gates have passed, or when working outside the full `/reaper:takeoff` pipeline.
+
 ### `/reaper:status-worktrees`
 
 Check parallel development status.
@@ -237,12 +251,31 @@ Claude gets picky so you don't have to be. Every task goes through mandatory val
 - Up to 3 iterations before escalating to you
 - No user intervention during iteration
 
-**4. User approval**
+**4. Self-learning**
+- When quality gates require 2+ iterations, Reaper identifies recurring patterns
+- Suggests CLAUDE.md entries to prevent the same class of error in future sessions
+- You review and approve — entries are never auto-applied
+
+**5. User approval**
 - Only after ALL gates pass
 - You review and explicitly approve: "commit", "merge", "ship it"
 - `reaper:branch-manager` handles git operations
 
 You never see half-finished work.
+
+---
+
+## Auto-Formatting Hook
+
+Reaper includes a PostToolUse hook that auto-formats code after every file write or edit. It detects your project's formatter automatically:
+
+| Formatter | Detection |
+|-----------|-----------|
+| **Prettier** | `.prettierrc`, `.prettierrc.json`, `prettier.config.js/mjs/cjs` |
+| **Biome** | `biome.json`, `biome.jsonc` |
+| **ESLint** | `.eslintrc*`, `eslint.config.js/mjs/cjs` |
+
+This eliminates formatting-related quality gate failures — code is formatted as it's written, not caught and fixed during iteration.
 
 ---
 

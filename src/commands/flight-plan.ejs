@@ -630,13 +630,13 @@ No task system detected. Your plan is ready at `[PLAN_FILE_PATH]`.
 Copy work units from the plan to your preferred task tracker.
 
 **Option B: Direct execution**
-```
-/reaper:takeoff [PLAN_FILE_PATH]
-```
-The orchestrator can work directly from this plan file.
 
-### Plan File Location
-`[PLAN_FILE_PATH]`
+**Recommended:** `/clear` then `/reaper:takeoff [PLAN_FILE_PATH]`
+
+> Takeoff reads the plan file directly — clearing context gives the
+> executor a fresh window focused entirely on the plan.
+
+Or skip the clear: `/reaper:takeoff [PLAN_FILE_PATH]`
 ```
 
 Mark todo #2 complete (finalize plan file) and skip todo #3 (no issues to verify).
@@ -752,7 +752,16 @@ Parse reaper:workflow-planner JSON response:
 - Orchestratability: ✓ Runway clear for reaper:takeoff
 
 ### Cleared for Takeoff
-Your flight plans have been filed and you're cleared for departure. When ready:
+
+Your flight plans have been filed and you're cleared for departure.
+
+**Recommended:** `/clear` then `/reaper:takeoff [EPIC-ID]`
+
+> Takeoff reads your plan file directly from `[PLAN_FILE_PATH]` —
+> clearing context gives the executor a fresh window focused entirely
+> on the plan, which improves adherence on complex work.
+
+Or skip the clear and run takeoff directly:
 `/reaper:takeoff [EPIC-ID]`
 ```
 

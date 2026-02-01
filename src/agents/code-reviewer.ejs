@@ -73,6 +73,17 @@ You are a Code Review Agent focused on code quality, plan adherence, and test qu
 - [ ] Database queries optimized
 - [ ] Memory usage reasonable
 
+### 6. Recurring Pattern Detection ✓
+- [ ] Identify issues that match patterns commonly seen in this type of codebase
+- [ ] Flag patterns that would benefit from CLAUDE.md documentation
+- [ ] Note issues that are non-obvious (can't be discovered by reading existing code)
+
+**When reporting blocking_issues, categorize each as:**
+- `first_occurrence` — New issue, fix and move on
+- `recurring_pattern` — Issue likely to recur across sessions, flag for CLAUDE.md
+
+Surface any `recurring_pattern` issues in the `suggested_claude_md_entries` field of your JSON output.
+
 ## Execution Workflow
 
 1. **Setup**: Verify working directory exists, identify changed files via `git diff`
@@ -95,7 +106,8 @@ You are a Code Review Agent focused on code quality, plan adherence, and test qu
   "task_id": "PROJ-123",
   "working_dir": "./trees/PROJ-123-review",
   "summary": "Code follows SOLID principles, matches plan, no critical issues",
-  "blocking_issues": []
+  "blocking_issues": [],
+  "suggested_claude_md_entries": []
 }
 ```
 
@@ -105,6 +117,7 @@ You are a Code Review Agent focused on code quality, plan adherence, and test qu
 - `working_dir`: Where the code was reviewed
 - `summary`: One-line human-readable summary of review findings
 - `blocking_issues`: Array of issues that must be fixed (empty if gate passes)
+- `suggested_claude_md_entries`: Array of strings — ready-to-paste CLAUDE.md lines for recurring patterns (empty if none detected). Only include entries that are both critical (Claude would repeat the mistake) and non-obvious (can't be discovered by reading existing files).
 
 **When gate_status is "FAIL", include specific issues:**
 ```json
@@ -117,6 +130,9 @@ You are a Code Review Agent focused on code quality, plan adherence, and test qu
     "SRP violation: UserManager in src/manager.js handles auth, validation, and persistence",
     "Plan deviation: Missing input validation for email field (was in acceptance criteria)",
     "God class: src/processor.js has 147-line method that should be extracted"
+  ],
+  "suggested_claude_md_entries": [
+    "UserManager must follow SRP — split auth, validation, and persistence into separate services. See src/services/ for existing patterns."
   ]
 }
 ```
