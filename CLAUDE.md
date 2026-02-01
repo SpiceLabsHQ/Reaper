@@ -152,7 +152,7 @@ Use EJS includes: `<%- include('partials/output-requirements', { isReviewAgent: 
 | Development | reaper:feature-developer, reaper:bug-fixer, reaper:refactoring-dev, reaper:branch-manager |
 | Quality | reaper:test-runner, reaper:code-reviewer, reaper:security-auditor, reaper:performance-engineer |
 | Ops | reaper:deployment-engineer, reaper:integration-engineer, reaper:incident-responder |
-| Meta | reaper:technical-writer, reaper:claude-agent-architect |
+| Meta | reaper:technical-writer, reaper:claude-agent-architect, reaper:ai-prompt-engineer |
 
 ### Agent Naming Convention
 
