@@ -269,7 +269,7 @@ Each model family has distinct prompting characteristics. Prompts that perform w
 - **Avoid system prompts entirely** — place all instructions in the user role
 - **Use zero-shot prompting** — few-shot examples degrade performance. The model mimics example patterns instead of reasoning
 - **Keep prompts minimal and direct** — simpler prompts produce better results
-- **Temperature**: Use 0.5-0.7 (0.6 sweet spot). High temperature fractures reasoning chains. Note: the official API ignores sampling parameters for R1; only `max_tokens` works
+- **Temperature**: The official DeepSeek API ignores sampling parameters for R1 (only `max_tokens` works). For self-hosted or third-party deployments where temperature is honored, use 0.5-0.7 (0.6 sweet spot) — high temperature fractures reasoning chains
 - **Force `<think>` tag if needed** — occasionally R1 skips its thinking phase, degrading output
 - **Use structured formatting** (XML/Markdown) to define tasks within the user message
 - **Negative instructions work**: Unlike most models, explicitly stating what to avoid can help R1
@@ -390,6 +390,11 @@ These are the most common prompt engineering mistakes. The `ai-prompt-engineer` 
 | Repeating same examples | Overfitting to specific patterns | Provide diverse examples |
 | Vague references in long conversations | Model loses track of context | Be specific with names, quotes, or re-state context |
 | Over-indexing on third-party frameworks | Generic tools often underperform custom solutions | Build essential components yourself first |
+| No grounding constraint | Model claims facts without verification | Add "read before answering" or "investigate before claiming" instructions |
+| Conflicting instructions | Contradictory rules in long prompts cause unpredictable behavior | Resolve with explicit decision-tree logic or priority ordering |
+| Context window overflow | Prompt too large for target model's max context | Compress, decompose, or switch to a model with larger context |
+| Hallucination-inducing pressure | Demanding specific answers the model cannot know forces fabrication | Add "if uncertain, say so" or remove false-precision requirements |
+| Prompt injection vulnerability | User input can override system-level instructions | Add input sanitization, instruction hierarchy, or delimiter boundaries |
 
 ---
 
