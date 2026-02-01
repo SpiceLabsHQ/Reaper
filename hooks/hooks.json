@@ -10,6 +10,17 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE=\"$CLAUDE_FILE_PATH\"; EXT=\"${FILE##*.}\"; case \"$EXT\" in php|blade.php) if [ -f vendor/bin/pint ]; then vendor/bin/pint \"$FILE\" 2>/dev/null; elif [ -f vendor/bin/php-cs-fixer ]; then vendor/bin/php-cs-fixer fix \"$FILE\" 2>/dev/null; elif command -v php-cs-fixer >/dev/null 2>&1; then php-cs-fixer fix \"$FILE\" 2>/dev/null; fi;; py) if command -v ruff >/dev/null 2>&1; then ruff format \"$FILE\" 2>/dev/null && ruff check --fix \"$FILE\" 2>/dev/null; elif command -v black >/dev/null 2>&1; then black \"$FILE\" 2>/dev/null; fi;; go) if command -v gofmt >/dev/null 2>&1; then gofmt -w \"$FILE\" 2>/dev/null; fi;; rs) if command -v rustfmt >/dev/null 2>&1; then rustfmt \"$FILE\" 2>/dev/null; fi;; rb) if command -v rubocop >/dev/null 2>&1; then rubocop -a \"$FILE\" 2>/dev/null; fi;; swift) if command -v swiftformat >/dev/null 2>&1; then swiftformat \"$FILE\" 2>/dev/null; fi;; kt|kts) if command -v ktlint >/dev/null 2>&1; then ktlint -F \"$FILE\" 2>/dev/null; fi;; dart) if command -v dart >/dev/null 2>&1; then dart format \"$FILE\" 2>/dev/null; fi;; *) if [ -f .prettierrc ] || [ -f .prettierrc.json ] || [ -f .prettierrc.js ] || [ -f prettier.config.js ] || [ -f prettier.config.mjs ] || [ -f prettier.config.cjs ]; then npx prettier --write \"$FILE\" 2>/dev/null; elif [ -f biome.json ] || [ -f biome.jsonc ]; then npx @biomejs/biome format --write \"$FILE\" 2>/dev/null; elif [ -f .eslintrc ] || [ -f .eslintrc.json ] || [ -f .eslintrc.js ] || [ -f eslint.config.js ] || [ -f eslint.config.mjs ] || [ -f eslint.config.cjs ]; then npx eslint --fix \"$FILE\" 2>/dev/null; fi;; esac; true"
+          }
+        ]
+      }
     ]
   }
 }
