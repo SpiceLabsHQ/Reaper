@@ -63,7 +63,7 @@ Use `bd list` to find issue IDs, or `bd create` to create one.
 - Run linting before every commit (enforced by husky)
 - Quality gates: reaper:test-runner → reaper:code-reviewer + reaper:security-auditor
 - Self-learning: recurring quality gate failures surface as CLAUDE.md update candidates
-- Auto-formatting: PostToolUse hook formats code on every write/edit (detects Prettier, Biome, ESLint)
+- Auto-formatting: PostToolUse hook formats code on every write/edit (detects Prettier, Biome, ESLint, Pint, PHP-CS-Fixer, Ruff, Black, gofmt, rustfmt, RuboCop, and more)
 
 ### Worktree Isolation
 
