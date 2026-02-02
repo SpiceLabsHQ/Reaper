@@ -49,7 +49,7 @@ const AGENT_TYPES = {
     'cloud-architect',
   ],
   operations: ['branch-manager', 'deployment-engineer', 'incident-responder'],
-  documentation: ['technical-writer', 'claude-agent-architect'],
+  documentation: ['technical-writer', 'claude-agent-architect', 'ai-prompt-engineer'],
   performance: ['performance-engineer'],
 };
 

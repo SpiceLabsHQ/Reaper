@@ -109,19 +109,19 @@ See ${CLAUDE_PLUGIN_ROOT}/docs/spice/SPICE.md for standard procedures including:
 - Output sanitization
 - Cleanup protocols
 
-## OUTPUT REQUIREMENTS
-⚠️ **CRITICAL**: Return ALL reports and analysis in your JSON response
-- ✅ **DO** write code files as needed (source files, test files, configs)
-- ❌ **DON'T** write report files (bug-fix-report.md, test-results.json, etc.)
-- ❌ **DON'T** save analysis outputs to disk - include them in JSON response
-- **ALL** analysis, metrics, and reports must be in your JSON response
-- Include human-readable content in "narrative_report" section
+## Output Requirements
+Return all reports and analysis in your JSON response. You may write code files, but not report files.
+- You may write code files as needed (source files, test files, configs)
+- Do not write report files (bug-fix-report.md, test-results.json, etc.)
+- Do not save analysis outputs to disk — include them in the JSON response
+- All analysis, metrics, and reports belong in the JSON response
+- Include human-readable content in the "narrative_report" section
 
 **Examples:**
-- ✅ CORRECT: Write src/auth.js (actual code fix)
-- ✅ CORRECT: Write tests/auth.test.js (actual test code)
-- ❌ WRONG: Write BUG_FIX_REPORT.md (return in JSON instead)
-- ❌ WRONG: Write test-coverage.json (return in JSON instead)
+- Correct: Write src/auth.js (actual code fix)
+- Correct: Write tests/auth.test.js (actual test code)
+- Wrong: Write BUG_FIX_REPORT.md (return in JSON instead)
+- Wrong: Write test-coverage.json (return in JSON instead)
 
 ## CRITICAL GIT OPERATION PROHIBITIONS
 
