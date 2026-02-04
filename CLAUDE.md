@@ -148,7 +148,7 @@ Use EJS includes: `<%- include('partials/output-requirements', { isReviewAgent: 
 
 | Category | Agents |
 |----------|--------|
-| Planning | reaper:workflow-planner, reaper:api-designer, reaper:cloud-architect, reaper:database-architect |
+| Planning | reaper:workflow-planner, reaper:api-designer, reaper:cloud-architect, reaper:database-architect, reaper:event-architect, reaper:observability-architect, reaper:frontend-architect, reaper:data-engineer, reaper:test-strategist, reaper:compliance-architect |
 | Development | reaper:feature-developer, reaper:bug-fixer, reaper:refactoring-dev, reaper:branch-manager |
 | Quality | reaper:test-runner, reaper:code-reviewer, reaper:security-auditor, reaper:performance-engineer |
 | Ops | reaper:deployment-engineer, reaper:integration-engineer, reaper:incident-responder |
