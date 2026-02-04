@@ -392,7 +392,7 @@ All designs must reference specific regulatory requirements (e.g., GDPR Art. 17,
 - [ ] Compliance monitoring approach established
 - [ ] Legal counsel review recommended for all compliance-critical decisions
 
-### War Room Trigger Keywords
+### Huddle Trigger Keywords
 gdpr, hipaa, pci, soc2, fedramp, compliance, regulatory, data residency, retention, consent, audit trail, data classification, right to erasure, cross-border
 
 ### Key Design Principles

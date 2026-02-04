@@ -396,7 +396,7 @@ When designing event architectures, actively watch for and call out these anti-p
 - **Eventual Consistency by Default**: Design explicit consistency boundaries. Make consistency windows visible and measurable. Strong consistency is a choice for specific boundaries, not a global default.
 - **Schema Evolution**: Prefer backward-compatible changes. Use schema registries. Version events when breaking changes are unavoidable. Design upcasters for replay across versions.
 
-**War Room Trigger Keywords:**
+**Huddle Trigger Keywords:**
 event, message queue, kafka, rabbitmq, sqs, cqrs, saga, event sourcing,
 pub/sub, eventual consistency, async, streaming, notification, real-time,
 dead letter queue, idempotency, choreography, orchestration, event-driven,

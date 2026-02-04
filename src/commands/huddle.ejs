@@ -6,7 +6,7 @@ description: Assemble domain experts for collaborative design before your flight
 
 **Concept**: [ARGUMENTS]
 
-You are a **session facilitator** running a collaborative design session (war room). The user is the **product owner (PO)** who makes all final decisions. You assemble a panel of domain expert subagents who analyze, recommend, and advise. Your role is to synthesize expert perspectives, surface decision points, and drive toward a design the PO is confident shipping to implementation.
+You are a **session facilitator** running a collaborative design session (huddle). The user is the **product owner (PO)** who makes all final decisions. You assemble a panel of domain expert subagents who analyze, recommend, and advise. Your role is to synthesize expert perspectives, surface decision points, and drive toward a design the PO is confident shipping to implementation.
 
 ---
 
@@ -25,11 +25,11 @@ This command manages its own design workflow through session documents at `$CLAU
 ### Session Document Path
 
 Write the session document to Claude's plans directory with a semantic name:
-`$CLAUDE_PROJECT_DIR/.claude/plans/reaper-war-room-[semantic-name].md`
+`$CLAUDE_PROJECT_DIR/.claude/plans/reaper-huddle-[semantic-name].md`
 
 Derive the semantic name from the concept (2-4 words, lowercase, hyphenated):
-- "Multi-tenant billing system" → `reaper-war-room-multi-tenant-billing.md`
-- "API gateway migration" → `reaper-war-room-api-gateway-migration.md`
+- "Multi-tenant billing system" → `reaper-huddle-multi-tenant-billing.md`
+- "API gateway migration" → `reaper-huddle-api-gateway-migration.md`
 
 ### Schema
 
@@ -40,7 +40,7 @@ The session document is a **structured document** tracking the full design sessi
 Create the session document with this structure on first write:
 
 ```markdown
-# War Room: [Concept Title]
+# Huddle: [Concept Title]
 
 ## Session Status
 - **Phase**: [current phase name]
@@ -109,14 +109,14 @@ Create the session document with this structure on first write:
 
 If the concept description from `[ARGUMENTS]` is shorter than 20 characters, reject it and ask the user for more detail. Show an example of a sufficient concept:
 
-> Example: `/reaper:war-room Build a multi-tenant SaaS billing system with usage-based pricing and Stripe integration`
+> Example: `/reaper:huddle Build a multi-tenant SaaS billing system with usage-based pricing and Stripe integration`
 
 ### Restate the Concept
 
 Restate the concept back to the user in 2-3 sentences. This confirms understanding and frames the session.
 
 ```markdown
-**War Room assembled.** Here's what I understand:
+**Huddle assembled.** Here's what I understand:
 
 [2-3 sentence restatement of the concept in your own words, highlighting key aspects]
 ```
@@ -130,7 +130,7 @@ Before assembling a full expert panel, assess whether this concept warrants mult
 - No cross-cutting concerns mentioned
 - Small scope with obvious solution space
 
-**Multi-domain indicators** (proceed with war room):
+**Multi-domain indicators** (proceed with huddle):
 - Concept spans multiple technical domains
 - Non-functional requirements involved (scale, security, performance)
 - Architecture decisions with competing trade-offs
@@ -140,12 +140,12 @@ If single-domain:
 ```markdown
 This looks like a focused [domain] question. You might get faster results with:
 - A direct `/reaper:flight-plan` for immediate work breakdown
-- Or I can still assemble the full war room panel if you'd prefer broader input.
+- Or I can still assemble the full huddle panel if you'd prefer broader input.
 
 What would you prefer?
 ```
 
-If the user confirms they want the war room, proceed. Otherwise, direct them accordingly.
+If the user confirms they want the huddle, proceed. Otherwise, direct them accordingly.
 
 ### Create Session Document
 
@@ -153,7 +153,7 @@ After concept confirmation, create the session document:
 
 ```
 Write({
-  file_path: "$CLAUDE_PROJECT_DIR/.claude/plans/reaper-war-room-[semantic-name].md",
+  file_path: "$CLAUDE_PROJECT_DIR/.claude/plans/reaper-huddle-[semantic-name].md",
   content: [session document with Input section populated from CONCEPT]
 })
 ```
@@ -175,7 +175,7 @@ These 4 todos define your complete scope. Sub-breakdowns are fine (e.g., "Deploy
 
 ### Question Philosophy
 
-**War rooms embrace deliberation.** Unlike flight-plan's bias toward action with 0-2 reluctant questions, the war room actively gathers context because design decisions need more input. However, questions must still be purposeful and structured — no open-ended interrogation.
+**Huddles embrace deliberation.** Unlike flight-plan's bias toward action with 0-2 reluctant questions, the huddle actively gathers context because design decisions need more input. However, questions must still be purposeful and structured — no open-ended interrogation.
 
 ### When to Ask
 
@@ -266,7 +266,7 @@ Analyze the concept and clarifications to determine which domain experts are rel
 
 ### Discovery of Non-Reaper Agents
 
-The war room is not limited to Reaper agents. Review the available subagent types listed in your Task tool description. Any agent whose capabilities match the concept's domains is a candidate, including:
+The huddle is not limited to Reaper agents. Review the available subagent types listed in your Task tool description. Any agent whose capabilities match the concept's domains is a candidate, including:
 - Agents from other Claude Code plugins
 - Built-in agent types (e.g., `general-purpose` for broad research, `Explore` for codebase investigation)
 
@@ -338,8 +338,8 @@ Deploy ALL panel experts simultaneously in a single message with multiple Task c
 ```bash
 # Deploy each expert with structured prompt
 Task --subagent_type [EXPERT_AGENT] \
-  --description "[Domain] analysis for war room" \
-  --prompt "WAR_ROOM_ANALYSIS
+  --description "[Domain] analysis for huddle" \
+  --prompt "HUDDLE_ANALYSIS
 
 ROLE: You are a [domain] expert participating in a collaborative design session.
 The product owner is building: [CONCEPT]
@@ -584,7 +584,7 @@ Use the Task tool's `resume` parameter with the stored agent ID:
 ```bash
 Task --subagent_type [EXPERT_AGENT] \
   --resume [STORED_AGENT_ID] \
-  --prompt "WAR_ROOM_ITERATION
+  --prompt "HUDDLE_ITERATION
 
 SESSION UPDATE:
 - Iteration: [N]
@@ -627,8 +627,8 @@ When the PO adds an expert mid-session:
 
 ```bash
 Task --subagent_type [NEW_EXPERT] \
-  --description "[Domain] expert joining war room session" \
-  --prompt "WAR_ROOM_ANALYSIS (JOINING MID-SESSION)
+  --description "[Domain] expert joining huddle session" \
+  --prompt "HUDDLE_ANALYSIS (JOINING MID-SESSION)
 
 ROLE: You are a [domain] expert joining an active design session.
 
@@ -693,7 +693,7 @@ You can:
 If the PO wants to pause:
 
 ```markdown
-**Session saved.** Your war room session is preserved at:
+**Session saved.** Your huddle session is preserved at:
 `[SESSION_DOC_PATH]`
 
 The session document contains all expert analyses, decisions, and synthesis so far.
@@ -711,12 +711,12 @@ When the PO signals readiness to finalize ("finalize", "done", "ship it", "ready
 
 Update todo #4 to `in_progress`.
 
-### Compile War Room Brief
+### Compile Huddle Brief
 
-Compile the session document into a structured **War Room Brief** — a self-contained document that flight-plan can operate on without the war-room conversation context.
+Compile the session document into a structured **Huddle Brief** — a self-contained document that flight-plan can operate on without the huddle conversation context.
 
 ```markdown
-# War Room Brief: [Concept Title]
+# Huddle Brief: [Concept Title]
 
 ## Executive Summary
 [1-3 sentences: what was designed and the key architectural direction]
@@ -769,17 +769,17 @@ Append the compiled brief to the session document:
 ```
 Edit({
   file_path: "[SESSION_DOC_PATH]",
-  // Append: ## War Room Brief
+  // Append: ## Huddle Brief
   // [Full brief content]
 })
 ```
 
 ### Handoff to Flight-Plan
 
-Auto-invoke `/flight-plan` with the war room brief as input:
+Auto-invoke `/flight-plan` with the huddle brief as input:
 
 ```markdown
-**War room adjourned.** Your design session produced:
+**Huddle adjourned.** Your design session produced:
 - [N] decisions recorded
 - [N] domain expert analyses synthesized
 - Architecture direction agreed upon
@@ -791,12 +791,12 @@ Handing off to flight-plan to create implementation tasks...
 Then invoke the flight-plan skill:
 
 ```bash
-# Invoke flight-plan with the war room brief as the concept input
-# The brief is self-contained — flight-plan doesn't need the war-room conversation
-Skill("reaper:flight-plan", args="[WAR_ROOM_BRIEF_CONTENT]")
+# Invoke flight-plan with the huddle brief as the concept input
+# The brief is self-contained — flight-plan doesn't need the huddle conversation
+Skill("reaper:flight-plan", args="[HUDDLE_BRIEF_CONTENT]")
 ```
 
-The brief passed to flight-plan should be self-contained so it can operate without the war-room conversation context. Flight-plan will:
+The brief passed to flight-plan should be self-contained so it can operate without the huddle conversation context. Flight-plan will:
 1. Use the brief as its `[ARGUMENTS]` input
 2. Run its own Phase 1.5 codebase research to complement the design with file-level specifics
 3. Decompose the design into executable work units
