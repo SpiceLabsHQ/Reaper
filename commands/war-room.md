@@ -254,6 +254,15 @@ Analyze the concept and clarifications to determine which domain experts are rel
 | Cloud Infra | `reaper:cloud-architect` | cloud, aws, gcp, azure, infrastructure, deploy, scale, kubernetes, docker, serverless, terraform, cdk, load balancer, cdn, region | Cloud architecture, IaC, cost optimization, scaling strategies, HA/DR |
 | Performance | `reaper:performance-engineer` | performance, latency, throughput, cache, bottleneck, optimize, profiling, load test, concurrent, response time, n+1 | Performance analysis, load testing, query optimization, caching strategies |
 | Security | `reaper:security-auditor` | security, auth, authentication, authorization, oauth, jwt, encryption, compliance, owasp, rbac, pci, gdpr, hipaa, secrets | Security architecture, authentication flows, compliance, vulnerability analysis |
+| Event-Driven | `reaper:event-architect` | event, message queue, kafka, rabbitmq, sqs, cqrs, saga, event sourcing, pub/sub, eventual consistency, async, streaming, notification, real-time | Event contracts, saga patterns, CQRS, message broker selection |
+| Observability | `reaper:observability-architect` | observability, monitoring, alerting, slo, sli, metrics, logging, tracing, datadog, grafana, prometheus, opentelemetry, dashboards, reliability | SLO/SLI design, instrumentation, alerting strategy, distributed tracing |
+| Frontend | `reaper:frontend-architect` | frontend, ui, react, vue, angular, svelte, nextjs, remix, component, state management, ssr, csr, spa, design system, responsive, bundle, a11y, wcag, pwa | Component architecture, rendering strategy, state management, a11y |
+| Data Engineering | `reaper:data-engineer` | etl, elt, pipeline, data warehouse, analytics, reporting, streaming, batch, airflow, dagster, dbt, spark, data lake, cdc, olap | Pipeline design, warehouse modeling, streaming vs batch, data quality |
+| Testing Strategy | `reaper:test-strategist` | testing strategy, test pyramid, contract testing, integration testing, e2e, chaos engineering, test data, qa architecture | Test architecture design, contract testing, chaos engineering |
+| Compliance | `reaper:compliance-architect` | gdpr, hipaa, pci, soc2, fedramp, compliance, regulatory, data residency, retention, consent, audit trail | Compliance architecture, data residency, retention policies |
+| Deployment | `reaper:deployment-engineer` | deploy, ci/cd, pipeline, release, blue-green, canary, rollback, zero downtime, environment, staging | CI/CD strategy, deployment patterns, release management |
+| Integration | `reaper:integration-engineer` | integration, third-party, webhook, oauth, stripe, external api, service connector | Third-party integration architecture, webhook design |
+| Resilience | `reaper:incident-responder` | resilience, failure mode, blast radius, circuit breaker, fallback, graceful degradation, disaster recovery, availability | Operational resilience, failure mode analysis, recovery planning |
 
 ### Discovery of Non-Reaper Agents
 
