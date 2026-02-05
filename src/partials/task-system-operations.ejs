@@ -1,0 +1,30 @@
+## Task System Operations
+
+### Detection
+
+Detect the active task system before performing any operations:
+1. Check for `.beads/` directory in project root (Beads)
+2. Check for `acli` CLI availability (Jira)
+3. If neither is detected, fall back to markdown-only mode (no external task system)
+
+### Abstract Operations
+
+Use these operations to interact with whatever task system is detected. The LLM maps each operation to the appropriate system commands or markdown equivalents.
+
+| Operation | Purpose |
+|-----------|---------|
+| FETCH_ISSUE | Retrieve a single issue by ID (title, description, status, acceptance criteria) |
+| LIST_CHILDREN | List direct child issues of a parent (one level deep) |
+| CREATE_ISSUE | Create a new issue with title, description, and optional parent |
+| UPDATE_ISSUE | Modify an existing issue (status, description, assignee) |
+| ADD_DEPENDENCY | Create a dependency relationship between two issues |
+| QUERY_DEPENDENCY_TREE | Recursively retrieve the full dependency graph from a root issue |
+| CLOSE_ISSUE | Mark an issue as completed/closed |
+
+### Dependency Type Semantics
+
+When creating or querying dependencies, preserve the relationship type:
+
+- **parent-child**: Hierarchical decomposition (epic contains stories, story contains tasks)
+- **blocks**: Sequential constraint (task A must complete before task B can start)
+- **related**: Informational link (tasks share context but no execution dependency)
