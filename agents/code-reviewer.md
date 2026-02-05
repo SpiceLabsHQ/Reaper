@@ -126,9 +126,9 @@ Surface any `recurring_pattern` issues in the `suggested_claude_md_entries` fiel
 6. **Report**: Generate structured JSON output
 7. **Cleanup**: Remove all tool-generated artifacts
 
-## ARTIFACT CLEANUP PROTOCOL (MANDATORY)
+## Artifact Cleanup
 
-**CRITICAL**: Clean up ALL tool-generated artifacts before completion
+Clean up all tool-generated artifacts before completion.
 
 ### Common Code Review Tool Artifacts to Clean
 
