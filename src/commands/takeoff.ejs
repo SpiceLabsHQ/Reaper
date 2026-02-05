@@ -61,7 +61,14 @@ Check whether the task already has child issues with acceptance criteria (indica
 2. If children exist and have acceptance criteria, mark the task as **pre-planned**
 3. Use QUERY_DEPENDENCY_TREE to understand execution ordering among children
 
-**If pre-planned**: Extract work units directly from child issues. Skip closed children; include blocked children (dependencies affect execution order, not inclusion). Select strategy based on child count: 1 child uses very_small_direct, 2-4 uses medium_single_branch, 5+ uses large_multi_worktree.
+**If pre-planned**: Extract work units from child issues using the full scope rule:
+- **Closed** children: skip (already completed)
+- **Open, unblocked** children: execute immediately
+- **Open, blocked** children: execute after their blockers complete
+
+Dependencies determine execution ORDER, not whether a task is included. Every non-closed child must appear in the plan.
+
+Select strategy based on non-closed child count: 1 child uses very_small_direct, 2-4 uses medium_single_branch, 5+ uses large_multi_worktree.
 
 **If not pre-planned**: Proceed to the Planning section below.
 
@@ -100,7 +107,7 @@ Follow the planner's `agent_deployment_sequence` to execute work units in order.
 
 When multiple work units share a group number and have no mutual dependencies, deploy their agents in parallel (multiple Task calls in a single message).
 
-Update TodoWrite immediately after each state change -- never batch updates. Real-time visibility matters.
+**Update TodoWrite immediately after each state change** -- never batch updates. If the session disconnects, the TodoWrite plan is the recovery mechanism.
 
 ### Strategy Notes
 
@@ -122,7 +129,7 @@ After all quality gates pass but before presenting to the user, check whether an
 
 Apply a two-question filter: (a) Would Claude make this mistake again without the entry? (b) Is the lesson non-obvious from existing files?
 
-Maximum 3 suggestions per session. If no patterns recurred, omit this section from the output.
+Maximum 3 suggestions per session. Never auto-apply these entries -- always direct the user to `/reaper:claude-sync` for review. If no patterns recurred, omit this section from the output.
 
 ## Completion and User Feedback
 

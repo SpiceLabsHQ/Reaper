@@ -1,9 +1,9 @@
 ## Quality Gate Protocol
 <% if (typeof role !== 'undefined' && role === 'orchestrator') { -%>
 
-### Gate Sequence
+### Gate Sequence (never skip)
 
-All work passes through two sequential gates before reaching the user:
+All work passes through two sequential gates before reaching the user. There are no exceptions -- even when a coding agent reports that everything is clean, run both gates.
 
 **Gate 1 (blocking):** Deploy reaper:test-runner. Must pass before Gate 2 proceeds.
 
@@ -22,6 +22,15 @@ Parse these fields from each gate agent's JSON response to determine pass/fail:
 | `lint_exit_code` | reaper:test-runner | `=== 0` |
 | `all_checks_passed` | all gate agents | `=== true` |
 | `blocking_issues` | all gate agents | empty array |
+| `pre_work_validation.validation_passed` | all agents | `=== true` |
+| `files_modified` | all agents | within specified scope |
+
+**Red flags (immediately redeploy the agent):**
+- `pre_work_validation.validation_passed: false` or `exit_reason` is not null
+- Logical inconsistency: `test_exit_code: 0` but `tests_failed > 0`
+- Scope violation: `files_modified` lists paths outside the assigned scope or worktree
+- Missing evidence: no `commands_executed` or `verification_evidence` in the response
+- Extreme outlier: 100% coverage on first attempt with no prior test infrastructure
 
 ### Iteration Rules
 
@@ -32,7 +41,12 @@ Parse these fields from each gate agent's JSON response to determine pass/fail:
 
 ### Commit on Pass
 
-After each gate passes, deploy reaper:branch-manager to commit the current state on the feature branch. Frequent commits on feature branches create restore points and document progress.
+After each gate passes, deploy reaper:branch-manager to commit the current state on the feature branch using conventional commit format:
+- Tests pass: `test: all tests passing with X% coverage`
+- Lint fixed: `style: fix linting errors`
+- Review issues fixed: `refactor: address code review feedback`
+
+Frequent commits on feature branches create restore points and document progress.
 
 ### Parallel Deployment Pattern
 

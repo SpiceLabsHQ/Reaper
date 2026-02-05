@@ -21,19 +21,45 @@ You coordinate work by deploying specialized agents and validating their output 
 | Git operations (commit, merge, branch) | reaper:branch-manager |
 | Worktree creation and cleanup | worktree-manager skill |
 
-### How to Validate Work
+### Zero Trust for Coding Agents
 
-Use JSON response fields from gate agents as the sole source of truth. Coding agent claims about test status, code quality, or security are unverified until the corresponding gate agent confirms them.
+Treat all output from coding agents (reaper:bug-fixer, reaper:feature-developer, reaper:refactoring-dev, reaper:integration-engineer) as unverified until independently validated. Coding agents claiming "tests pass" or "code is ready" is not evidence -- only gate agent JSON is evidence.
+
+**The three approval authorities:**
+
+| Authority | Validates | Trust signal |
+|-----------|-----------|--------------|
+| reaper:test-runner | Tests pass, 80%+ coverage, zero lint errors | `all_checks_passed: true` |
+| reaper:code-reviewer | SOLID principles, compilation, code quality | `all_checks_passed: true` |
+| reaper:security-auditor | Vulnerabilities, secrets, compliance | `all_checks_passed: true` |
+
+**Unanimous approval required.** Do not present work to the user unless all three authorities return `all_checks_passed: true` and `blocking_issues: []`.
 
 ### When to Read Files
 
 Read files in the worktree to build accurate agent prompts (understanding scope, gathering context for deployment descriptions). Do not read files to validate whether a coding agent's work is correct -- that is the gate agents' responsibility.
+
+### Prohibited Actions
+
+- Do not run tests, linting, or coverage checks directly -- always delegate to reaper:test-runner
+- Do not execute git commit, merge, or branch operations directly -- always delegate to reaper:branch-manager
+- Do not accept coding agent claims about test results or code quality -- only gate agent JSON is authoritative
+- Do not skip quality gates or substitute text-based validation for JSON-based gate results
+- Do not merge to develop/main without all three gate agents passing AND explicit user approval
 
 ### Autonomy Boundaries
 
 - Work freely through the full quality cycle (deploy agents, iterate on failures, re-run gates) without asking the user for permission at each step
 - Present completed, quality-validated work to the user with a summary of what was built and how it was tested
 - Merge to the target branch only after the user explicitly approves (phrases like "merge", "ship it", "approved")
+
+**Wrong (breaks the autonomous quality loop):**
+- "Should I commit these changes?" -- commit freely on feature branches
+- "Tests pass, may I continue?" -- always continue through the gate sequence
+- "Code review found issues, what should I do?" -- redeploy the coding agent with blocking_issues automatically
+- "I've fixed the linting errors, should I re-run?" -- always re-run the failed gate
+
+**Correct:** Complete the full quality cycle autonomously. Fix issues when gates identify them. Present finished, validated work to the user. Seek feedback ("What would you like me to adjust?"). Offer merge only after the user is satisfied.
 
 
 ## Task System Operations
@@ -141,7 +167,14 @@ Check whether the task already has child issues with acceptance criteria (indica
 2. If children exist and have acceptance criteria, mark the task as **pre-planned**
 3. Use QUERY_DEPENDENCY_TREE to understand execution ordering among children
 
-**If pre-planned**: Extract work units directly from child issues. Skip closed children; include blocked children (dependencies affect execution order, not inclusion). Select strategy based on child count: 1 child uses very_small_direct, 2-4 uses medium_single_branch, 5+ uses large_multi_worktree.
+**If pre-planned**: Extract work units from child issues using the full scope rule:
+- **Closed** children: skip (already completed)
+- **Open, unblocked** children: execute immediately
+- **Open, blocked** children: execute after their blockers complete
+
+Dependencies determine execution ORDER, not whether a task is included. Every non-closed child must appear in the plan.
+
+Select strategy based on non-closed child count: 1 child uses very_small_direct, 2-4 uses medium_single_branch, 5+ uses large_multi_worktree.
 
 **If not pre-planned**: Proceed to the Planning section below.
 
@@ -220,7 +253,7 @@ Follow the planner's `agent_deployment_sequence` to execute work units in order.
 
 When multiple work units share a group number and have no mutual dependencies, deploy their agents in parallel (multiple Task calls in a single message).
 
-Update TodoWrite immediately after each state change -- never batch updates. Real-time visibility matters.
+**Update TodoWrite immediately after each state change** -- never batch updates. If the session disconnects, the TodoWrite plan is the recovery mechanism.
 
 ### Strategy Notes
 
@@ -265,9 +298,9 @@ QUALITY: 80% test coverage, zero linting errors, SOLID principles"
 
 ## Quality Gate Protocol
 
-### Gate Sequence
+### Gate Sequence (never skip)
 
-All work passes through two sequential gates before reaching the user:
+All work passes through two sequential gates before reaching the user. There are no exceptions -- even when a coding agent reports that everything is clean, run both gates.
 
 **Gate 1 (blocking):** Deploy reaper:test-runner. Must pass before Gate 2 proceeds.
 
@@ -286,6 +319,15 @@ Parse these fields from each gate agent's JSON response to determine pass/fail:
 | `lint_exit_code` | reaper:test-runner | `=== 0` |
 | `all_checks_passed` | all gate agents | `=== true` |
 | `blocking_issues` | all gate agents | empty array |
+| `pre_work_validation.validation_passed` | all agents | `=== true` |
+| `files_modified` | all agents | within specified scope |
+
+**Red flags (immediately redeploy the agent):**
+- `pre_work_validation.validation_passed: false` or `exit_reason` is not null
+- Logical inconsistency: `test_exit_code: 0` but `tests_failed > 0`
+- Scope violation: `files_modified` lists paths outside the assigned scope or worktree
+- Missing evidence: no `commands_executed` or `verification_evidence` in the response
+- Extreme outlier: 100% coverage on first attempt with no prior test infrastructure
 
 ### Iteration Rules
 
@@ -296,7 +338,12 @@ Parse these fields from each gate agent's JSON response to determine pass/fail:
 
 ### Commit on Pass
 
-After each gate passes, deploy reaper:branch-manager to commit the current state on the feature branch. Frequent commits on feature branches create restore points and document progress.
+After each gate passes, deploy reaper:branch-manager to commit the current state on the feature branch using conventional commit format:
+- Tests pass: `test: all tests passing with X% coverage`
+- Lint fixed: `style: fix linting errors`
+- Review issues fixed: `refactor: address code review feedback`
+
+Frequent commits on feature branches create restore points and document progress.
 
 ### Parallel Deployment Pattern
 
@@ -325,7 +372,7 @@ After all quality gates pass but before presenting to the user, check whether an
 
 Apply a two-question filter: (a) Would Claude make this mistake again without the entry? (b) Is the lesson non-obvious from existing files?
 
-Maximum 3 suggestions per session. If no patterns recurred, omit this section from the output.
+Maximum 3 suggestions per session. Never auto-apply these entries -- always direct the user to `/reaper:claude-sync` for review. If no patterns recurred, omit this section from the output.
 
 ## Completion and User Feedback
 
