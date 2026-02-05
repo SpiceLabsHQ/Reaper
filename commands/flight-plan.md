@@ -2,42 +2,21 @@
 description: Chart work into flight-ready issues with dependencies mapped.
 ---
 
-## CRITICAL: Tool Prohibitions
-
-**DO NOT USE the `EnterPlanMode` tool.** This command IS the planning workflow. Using EnterPlanMode would:
-- Create a redundant planning layer
-- Conflict with this command's plan file workflow
-- Confuse the user with duplicate approval flows
-
-**FORBIDDEN TOOLS:**
-- `EnterPlanMode` - Never use. You are already in planning mode via this command.
-- `ExitPlanMode` - Never use. This command manages its own completion flow.
-
-If you feel tempted to call EnterPlanMode, remember: this command writes plans to `$CLAUDE_PROJECT_DIR/.claude/plans/` and manages user approval directly. That IS the plan mode.
+Do not use EnterPlanMode or ExitPlanMode tools. This command manages its own planning workflow and plan file output.
 
 ---
 
 ## Phase 0: Plan File Schema
 
-### Plan File Path
+## Plan File
 
-Write the plan to Claude's plans directory with a semantic name:
-`$CLAUDE_PROJECT_DIR/.claude/plans/reaper-[semantic-name].md`
+### Path Convention
 
-Derive the semantic name from the planning request:
-- "Add OAuth authentication" → `reaper-oauth-auth.md`
-- "Fix checkout flow bug" → `reaper-checkout-fix.md`
-- "Refactor user service" → `reaper-user-service-refactor.md`
+Write the plan to: `$CLAUDE_PROJECT_DIR/.claude/plans/reaper-[semantic-name].md`
 
-Keep names short (2-4 words, lowercase, hyphenated).
-
-This file will be the single source of truth for all planning context.
+Derive the semantic name from the planning request (2-4 words, lowercase, hyphenated).
 
 ### Schema
-
-The plan file is a **structured document** containing the implementation plan. Sections are ADDED or APPENDED, never rewritten wholesale.
-
-### Plan File Structure
 
 Create the plan file with this structure on first write:
 
@@ -48,33 +27,42 @@ Create the plan file with this structure on first write:
 [Original user request - IMMUTABLE after initial write]
 
 ## Research
-[Codebase research findings - progressively added from Phase 1.5]
+[Codebase research findings - progressively added]
+
+## Strategy
+[Selected strategy name, complexity score with breakdown, rationale for strategy choice]
 
 ## Work Units
-[Table and details - EDITABLE, refined based on feedback]
+| # | Title | Type | Hours | Parallel | Assignee | Blocked By |
+[Table of decomposed work units with details below]
 
 ## Dependencies
-[Mermaid diagram and critical path - EDITABLE]
+[Mermaid flowchart showing execution order and blocking relationships]
 
 ## Assumptions
-[List of assumptions made - EDITABLE, with strikethrough for corrected ones]
+[List of assumptions made during planning - with strikethrough for corrected ones]
+
+## Feedback Log
+[Append-only user corrections from refinement iterations - timestamped]
 ```
 
 ### Update Rules
 
-| Section | Update Type | When |
+| Section | Update Type | Rule |
 |---------|-------------|------|
 | Input | IMMUTABLE | Never modified after initial write |
-| Research | APPEND | New findings added, old retained |
-| Work Units | EDIT | Modified based on feedback |
-| Dependencies | EDIT | Modified based on feedback |
-| Assumptions | EDIT | Strikethrough corrected, add new |
+| Research | APPEND | New findings added below existing content |
+| Strategy | EDIT | Modified when strategy changes based on feedback |
+| Work Units | EDIT | Modified based on feedback, use strikethrough for history |
+| Dependencies | EDIT | Modified when work unit structure changes |
+| Assumptions | EDIT | Strikethrough corrected assumptions, add new ones |
+| Feedback Log | APPEND | Each entry timestamped, never delete previous entries |
 
-### Update Type Definitions
-
+**Update type definitions:**
 - **IMMUTABLE**: Write once, never change. Preserves original context.
 - **APPEND**: Add new content below existing. Never delete previous entries.
 - **EDIT**: Modify in place. For corrections, use ~~strikethrough~~ to show history.
+
 
 ---
 
@@ -90,77 +78,59 @@ Generate an execution plan with epic/issue structure for autonomous execution. A
 
 ### Detect Input Type
 
-```bash
-INPUT="[ARGUMENTS]"
+## Task System Operations
 
-# Jira epic: PROJ-123
-if echo "$INPUT" | grep -qE '^[A-Z]+-[0-9]+$'; then
-    TASK_SYSTEM="jira"
-    EPIC_DETAILS=$(acli jira workitem view "$INPUT" --fields summary,description)
-    # Verify no existing children
-    [ -n "$(acli jira workitem search --jql "parent = $INPUT" --fields key)" ] && exit 1
+### Detection
 
-# Beads epic: repo-a3f
-elif echo "$INPUT" | grep -qE '^[a-z0-9]+-[a-f0-9]{3,}$'; then
-    TASK_SYSTEM="beads"
-    EPIC_DETAILS=$(bd show "$INPUT")
-    # Verify no existing children
-    [ -n "$(bd dep tree "$INPUT" --reverse 2>/dev/null | grep -v "^$INPUT")" ] && exit 1
+Detect the active task system before performing any operations:
+1. Check for `.beads/` directory in project root (Beads)
+2. Check for `acli` CLI availability (Jira)
+3. If neither is detected, fall back to markdown-only mode (no external task system)
 
-# New description
-else
-    # Check for available task systems
-    if [ -d .beads ]; then
-        TASK_SYSTEM="beads"
-    elif command -v acli &>/dev/null && acli jira projects list &>/dev/null 2>&1; then
-        TASK_SYSTEM="jira"
-    else
-        TASK_SYSTEM="markdown_only"
-    fi
-    PLANNING_REQUEST="$INPUT"
-fi
-```
+### Abstract Operations
+
+Use these operations to interact with whatever task system is detected. The LLM maps each operation to the appropriate system commands or markdown equivalents.
+
+| Operation | Purpose |
+|-----------|---------|
+| FETCH_ISSUE | Retrieve a single issue by ID (title, description, status, acceptance criteria) |
+| LIST_CHILDREN | List direct child issues of a parent (one level deep) |
+| CREATE_ISSUE | Create a new issue with title, description, and optional parent |
+| UPDATE_ISSUE | Modify an existing issue (status, description, assignee) |
+| ADD_DEPENDENCY | Create a dependency relationship between two issues |
+| QUERY_DEPENDENCY_TREE | Recursively retrieve the full dependency graph from a root issue |
+| CLOSE_ISSUE | Mark an issue as completed/closed |
+
+### Dependency Type Semantics
+
+When creating or querying dependencies, preserve the relationship type:
+
+- **parent-child**: Hierarchical decomposition (epic contains stories, story contains tasks)
+- **blocks**: Sequential constraint (task A must complete before task B can start)
+- **related**: Informational link (tasks share context but no execution dependency)
+
+
+Classify the input (ARGUMENTS) as one of:
+- **Existing epic ID** (e.g., `PROJ-123` or `repo-a3f`): Use FETCH_ISSUE to retrieve epic details. Validate the epic has no existing children via LIST_CHILDREN -- if children exist, stop and report the conflict.
+- **New description**: Detect the available task system using the detection heuristics above. Store the description as the planning request.
 
 ### Markdown-Only Mode Detection
 
-When `TASK_SYSTEM` is `markdown_only`:
-
-```markdown
-**Note:** No task system detected (Beads directory not found, Jira CLI not configured).
-
-Your plan file will be the primary deliverable. You can:
-- Copy work units to your task tracker manually
-- Use the plan file directly with `/reaper:takeoff`
-```
-
-Update the behavioral contract todo #2 to reflect markdown mode:
-```
-{ content: "Finalize plan file as deliverable (no task system)", status: "pending" }
-```
+When no task system is detected, inform the user the plan file will be the primary deliverable. Update behavioral contract todo #2 to: "Finalize plan file as deliverable (no task system)".
 
 ### Validation
 - **Existing epic:** Must have no children (empty)
 - **New description:** Minimum 20 characters
 - **Ambiguous system:** Ask user preference if both available
 
-### Behavioral Contract (MANDATORY)
+### Behavioral Contract
 
-After detecting task system, write these core todos:
+After detecting task system, write three core todos via TodoWrite:
+1. "Show plan for user approval" (in_progress)
+2. "Create issues in [Beads|Jira|Markdown]" (pending) -- dynamic system name
+3. "Launch reaper:workflow-planner subagent to verify issues" (pending)
 
-```
-TodoWrite([
-  { content: "Show plan for user approval", status: "in_progress" },
-  { content: "Create issues in [Beads|Jira|Markdown]", status: "pending" },
-  { content: "Launch reaper:workflow-planner subagent to verify issues", status: "pending" }
-])
-```
-
-**Rules:**
-- Dynamic system name in todo #2 based on detection
-- Sub-breakdowns allowed (e.g., "Create epic", "Create 5 child issues")
-- **FORBIDDEN:** Any todo mentioning worktrees, implementation, coding, testing, deploying
-
-These 3 core todos define your complete scope. When all complete, STOP.
+Sub-breakdowns are allowed. No todo should mention worktrees, implementation, coding, testing, or deploying. These 3 todos define your complete scope -- when all complete, STOP.
 
 ---
 
@@ -258,7 +228,7 @@ The research summary directly informs Phase 2 decomposition:
 
 ### Question Philosophy
 
-**CRITICAL: Bias toward action, not interrogation.**
+**Bias toward action, not interrogation.**
 
 - Generate a first-pass plan immediately based on available context
 - Only ask clarifying questions if input is **truly ambiguous** (rare)
@@ -280,17 +250,7 @@ Ask upfront ONLY if:
 
 ### Question Format (When Necessary)
 
-If you must ask (rare), use this format:
-
-```
-I'll create a plan for [brief restatement]. One quick clarification:
-
-[Single critical question]?
-
-Or I can proceed assuming [reasonable default].
-```
-
-Always offer the "proceed with assumptions" escape hatch. Never present more than 2 questions.
+If you must ask (rare): briefly restate the plan, ask the question, and offer a "proceed with assumptions" escape hatch. Never present more than 2 questions.
 
 ### Work Analysis
 
@@ -331,89 +291,19 @@ Mark units as `Assignee: user` when they require:
 
 ## Phase 3: Write Initial Plan to File
 
-**Goal: Create the plan file as the single source of truth.**
+Use the Write tool to create the plan file at the path from Phase 0, following its schema. Populate each section:
 
-Use the Write tool to create the plan file at `$CLAUDE_PROJECT_DIR/.claude/plans/reaper-[semantic-name].md` following the schema from Phase 0.
-
-### Write the Plan File
-
-```
-Write({
-  file_path: "$CLAUDE_PROJECT_DIR/.claude/plans/reaper-[semantic-name].md",
-  content: `# Plan: [Epic Title]
-
-## Input
-[Original user request - verbatim from ARGUMENTS]
-
-## Research
-
-### Affected Files
-[list from Phase 1.5 Explore agents]
-
-### Architecture Context
-[patterns and boundaries discovered]
-
-### Dependencies
-[internal and external dependencies]
-
-### Planning Implications
-[key insights affecting work decomposition]
-
-## Work Units
-
-| # | Title | Type | Hours | Parallel | Assignee | Blocked By |
-|---|-------|------|-------|----------|----------|------------|
-[work units from Phase 2 analysis]
-
-### Unit Details
-
-#### Unit 1: [Title]
-- **Description:** [what needs to be done]
-- **Acceptance Criteria:**
-  - [ ] [criterion 1]
-  - [ ] [criterion 2]
-- **Estimated Files:** [file list]
-
-[repeat for each unit]
-
-## Dependencies
-
-\`\`\`mermaid
-flowchart TD
-    Epic --> Unit1 & Unit2
-    Unit1 & Unit2 --> Unit3
-\`\`\`
-
-### Critical Path
-[sequence of blocking units]
-
-### Parallel Opportunities
-[groups that can execute concurrently]
-
-## Assumptions
-- [assumption 1 - user can correct in feedback]
-- [assumption 2]
-`
-})
-```
+- **Input**: Original user request verbatim from ARGUMENTS
+- **Research**: Findings from Phase 1.5 Explore agents (affected files, architecture context, dependencies, planning implications)
+- **Strategy**: Leave as placeholder -- will be populated during execution by workflow-planner
+- **Work Units**: Table from Phase 2 analysis, followed by detailed Unit sections (each with Description, Acceptance Criteria, Estimated Files)
+- **Dependencies**: Mermaid flowchart showing execution order, critical path, and parallel opportunities
+- **Assumptions**: Planning assumptions the user can correct in feedback
+- **Feedback Log**: Empty on first write -- populated during Phase 4 refinement
 
 ### After Writing the Plan
 
-Tell the user:
-
-```markdown
-I've created the plan at `[PLAN_FILE_PATH]`.
-
-**Summary:**
-- [Epic title/goal in 1-2 sentences]
-- [X] work units identified
-- [Y]% parallelizable
-- Critical path: [brief description]
-
-**Ready to create these issues?**
-
-Reply "go" to create as shown, or just tell me what to change.
-```
+Present a summary to the user: plan file path, epic title/goal, number of work units, parallelization percentage, and critical path. Ask: "Reply 'go' to create as shown, or just tell me what to change."
 
 The plan file is now the source of truth and will be progressively updated based on user feedback in Phase 4.
 
@@ -432,22 +322,8 @@ Parse response type:
 
 When user provides feedback:
 
-1. **Apply changes** to appropriate sections following update rules:
-   - For Work Units changes: Edit the Work Units section
-   - For dependency changes: Edit the Dependencies section
-   - For assumption corrections: Use ~~strikethrough~~ on old, add new
-
-2. **Confirm to user:**
-```markdown
-Updated the plan at `[PLAN_FILE_PATH]`.
-
-**Changes made:**
-- [summary of changes]
-
-**Ready to create these issues?**
-
-Reply "go" to create as shown, or just tell me what to change.
-```
+1. **Apply changes** to appropriate sections following the update rules below
+2. **Confirm to user** with summary of changes and re-prompt for approval
 
 ### Update Rules Reference
 
@@ -455,39 +331,18 @@ Reply "go" to create as shown, or just tell me what to change.
 |---------|-------------|--------------|
 | Input | IMMUTABLE | Never modify |
 | Research | APPEND | Add below existing content |
+| Strategy | EDIT | Modify when strategy changes based on feedback |
 | Work Units | EDIT | Replace section content |
 | Dependencies | EDIT | Replace section content |
 | Assumptions | EDIT | Strikethrough old + add new |
+| Feedback Log | APPEND | Each entry timestamped, never delete previous |
 
 ### Refinement Guidelines
 
-- Keep cycles fast - use targeted edits, not full rewrites
-- Track corrected assumptions with strikethrough (e.g., ~~old assumption~~ → new assumption)
+- Keep cycles fast -- use targeted edits, not full rewrites
+- Track corrected assumptions with strikethrough
 - After major feedback, may re-run targeted Explore agents
-
-### Example Edit Sequence
-
-```
-User: "Unit 3 should come before unit 2, and add a migration task"
-
-Agent actions:
-1. Edit Work Units table (swap order, add migration row)
-2. Edit Dependencies section (update mermaid diagram)
-
-Agent response:
-"Updated the plan at `$CLAUDE_PROJECT_DIR/.claude/plans/reaper-unit-reorder.md`.
-
-**Changes made:**
-- Swapped Unit 2 and Unit 3 execution order
-- Added Unit 4: Database migration task
-- Updated dependency diagram
-
-**Ready to create these issues?**
-
-Reply "go" to create as shown, or just tell me what to change."
-```
-
-The flow should feel like a conversation, not an interview.
+- The flow should feel like a conversation, not an interview
 
 ---
 
@@ -495,21 +350,28 @@ The flow should feel like a conversation, not an interview.
 
 Update todo #2 to `in_progress`.
 
-> **⚠️ ID Generation:** Task IDs (e.g., `repo-a3f`, `PROJ-123`) are **automatically generated** by Beads/Jira upon issue creation. Never specify IDs manually - always capture the returned ID into a variable for use in subsequent commands.
+### Issue Creation Sequence
 
-### Beads (Primary Reference)
+For each work unit in the approved plan, use abstract CRUD operations from the detected task system:
 
-```bash
-# Create or update epic
-if [ "$EXISTING_EPIC" = true ]; then
-    bd update "$EPIC_ID" --description "[refined description]"
-else
-    EPIC_ID=$(bd create "[Epic Title]" -t epic -p 1)
-fi
+1. **Epic (create or update)**:
+   - If an existing epic was provided as input: UPDATE_ISSUE to refine its description
+   - Otherwise: CREATE_ISSUE with type=epic, title from plan, description from plan Input section
 
-# Create child issues with parent relationship and TDD-structured description
-ISSUE_ID=$(bd create "[Title]" -t task -p 2 --parent "$EPIC_ID" \
-    --description "## Objective
+2. **Child issues** (one per work unit):
+   - CREATE_ISSUE with title, parent=EPIC_ID, and the TDD-structured description below
+   - For user intervention tasks: set assignee=user
+
+3. **Dependencies** (from plan's dependency graph):
+   - ADD_DEPENDENCY with type=blocks for execution order constraints (A must complete before B starts)
+   - Use parent-child relationships for hierarchy only (epic contains tasks)
+
+### TDD-Structured Issue Description Template
+
+Each child issue description must follow this structure:
+
+```
+## Objective
 [What needs to be done]
 
 ## TDD Approach
@@ -524,45 +386,10 @@ Follow Red-Green-Blue cycle:
 - [ ] Code coverage meets threshold
 
 ## Scope
-Files: [estimated files from plan]")
-
-# For user intervention tasks
-bd create "[Manual QA]" -t task --parent "$EPIC_ID" --assignee user
-
-# Add blocker dependencies (execution order only, not hierarchy)
-bd dep add "$BLOCKED_ID" "$BLOCKER_ID" --type blocks
+Files: [estimated files from plan]
 ```
 
-**Relationship Types:**
-- `--parent`: Hierarchical organization (epic → story → task)
-- `--type blocks`: Execution order (A must complete before B starts)
-
-### Jira Adaptation
-
-```bash
-# Create with parent and TDD-structured description
-acli jira workitem create --project KEY --type Story --parent "$EPIC_KEY" \
-    --summary "[Title]" \
-    --description "h2. Objective
-[What needs to be done]
-
-h2. TDD Approach
-Follow Red-Green-Blue cycle:
-# RED: Write failing tests that define expected behavior
-# GREEN: Implement minimal code to pass tests
-# BLUE: Refactor while keeping tests green
-
-h2. Acceptance Criteria
-* [criterion from plan]
-* All tests pass
-* Code coverage meets threshold
-
-h2. Scope
-Files: [estimated files from plan]"
-
-# Assign to user
-acli jira workitem create ... --assignee user@example.com
-```
+> **ID Generation:** Task IDs are automatically generated by the task system upon creation. Never specify IDs manually -- capture the returned ID for use in subsequent operations.
 
 ### Markdown Fallback (No Task System)
 
@@ -649,22 +476,9 @@ Mark todo #2 complete (finalize plan file) and skip todo #3 (no issues to verify
 
 Update todo #3 to `in_progress`.
 
-### Why Fork? Session Context Inheritance
-
-The verification subagent is invoked as a **forked subagent**, meaning it inherits full parent session context:
-
-| Benefit | Description |
-|---------|-------------|
-| **Conversation History** | All prior user requirements, clarifications, and feedback |
-| **Research Results** | Phase 1.5 Explore agent findings (files, architecture, dependencies) |
-| **Cached File Reads** | Any files already read during planning are accessible |
-| **Refinement Context** | Phase 4 iterations and user corrections |
-
-This allows a **minimal prompt** - the planner can reference "the original request" or "research findings" without re-explaining everything.
-
 ### Deploy Forked reaper:workflow-planner for Verification
 
-After creating issues, launch reaper:workflow-planner as a forked subagent:
+The verification subagent is forked (inherits full parent session context: conversation history, research results, cached file reads, refinement context). This allows a minimal prompt.
 
 ```bash
 # Fork pattern: subagent inherits full parent session context
@@ -683,11 +497,9 @@ You have full access to this session's context:
 
 Verify the created issues meet orchestratability criteria. Do NOT create new issues.
 
-VERIFICATION QUERIES:
-- Beads: bd dep tree $EPIC_ID (full hierarchy)
-- Beads: bd show <id> (each child issue details)
-- Jira: acli jira workitem search --jql 'parent = $EPIC_ID'
-- Jira: acli jira workitem view <id> (each child issue details)
+VERIFICATION QUERIES (use abstract operations from the detected task system):
+- QUERY_DEPENDENCY_TREE from EPIC_ID (full hierarchy)
+- FETCH_ISSUE for each child issue (details and acceptance criteria)
 
 VERIFICATION CRITERIA:
 
@@ -712,12 +524,8 @@ VERIFICATION CRITERIA:
    - Parallel opportunities documented
    - Scope boundaries clear
 
-AUTO-FIX PROTOCOL (MANDATORY):
-For each failing check, update directly:
-- Beads: bd update <id> --description 'updated'
-- Jira: acli jira workitem update <id> --description 'updated'
-
-Fixes: Add missing acceptance criteria, cross-references, file scope. Remove inappropriate blockers.
+AUTO-FIX PROTOCOL:
+For each failing check, use UPDATE_ISSUE to fix directly. Add missing acceptance criteria, cross-references, file scope. Remove inappropriate blockers.
 
 Max 2 fix iterations.
 
@@ -735,61 +543,19 @@ Parse reaper:workflow-planner JSON response:
 
 ### Confirmation Output
 
-```markdown
-## Flight Plan Filed ✓
-
-### Epic: [EPIC-ID] - [Title]
-
-### Issues Created & Verified
-| ID | Title | Type | Status | Blocked By |
-|----|-------|------|--------|------------|
-| [ID-1] | [Title] | Story | ✓ Verified | - |
-
-### Pre-Flight Checks
-- Detail Sufficiency: ✓ All issues have acceptance criteria
-- Cross-Issue Awareness: ✓ Related issues reference each other
-- Relationship Appropriateness: ✓ No unnecessary blockers
-- Orchestratability: ✓ Runway clear for reaper:takeoff
-
-### Cleared for Takeoff
-
-Your flight plans have been filed and you're cleared for departure.
-
-**Recommended:** `/clear` then `/reaper:takeoff [EPIC-ID]`
-
-> Takeoff reads your plan file directly from `[PLAN_FILE_PATH]` —
-> clearing context gives the executor a fresh window focused entirely
-> on the plan, which improves adherence on complex work.
-
-Or skip the clear and run takeoff directly:
-`/reaper:takeoff [EPIC-ID]`
-```
+After successful verification, present:
+- Epic ID and title
+- Table of created issues with verification status
+- Pre-flight check summary (detail sufficiency, cross-issue awareness, relationship appropriateness, orchestratability)
+- Recommended next step: `/clear` then `/reaper:takeoff [EPIC-ID]` (clearing context gives the executor a fresh window)
 
 Mark todo #3 complete.
 
 ---
 
-## Implementation Guard
+## Scope Boundary
 
-**This is a PLANNING command, not an IMPLEMENTATION command.**
-
-### Scope Boundary
-
-Your scope ends when issues are created and verified. You must NOT:
-- Start implementing the plan
-- Create worktrees
-- Write application code
-- Suggest "let's begin coding"
-
-### Hard Stop Rule
-
-If you find yourself:
-- Thinking about code structure
-- Considering file creation (except plan file and issues)
-- Planning test implementations
-- Designing architecture details
-
-**STOP IMMEDIATELY.** Your job is done. The user will invoke `/reaper:takeoff` when ready.
+This is a planning command. Your scope ends when issues are created and verified. Do not create worktrees, write application code, or suggest implementation. The user will invoke `/reaper:takeoff` when ready.
 
 ---
 

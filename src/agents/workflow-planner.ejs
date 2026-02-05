@@ -69,50 +69,26 @@ When decomposing complex tasks, invoke specialist agents for domain expertise:
 
 ## Pre-Work Validation
 
+<%- include('partials/task-system-operations') %>
+
 Before planning, validate that input contains complete work scope. Do not guess about work scope.
 
-### Input Validation Flow
+### Input Validation
 
-```
-1. Check for queryable Task ID:
-   - Jira (PROJ-123): Query `acli jira workitem view` for summary, description, AC, blockers
-   - Beads (repo-a3f): Query `bd show` + `bd dep tree` for description, deps, children
-   - GitHub (#456) or no ID: Require detailed description
+1. If a queryable Task ID is provided, use FETCH_ISSUE to retrieve its details (title, description, acceptance criteria, blockers). Use QUERY_DEPENDENCY_TREE to discover children and dependencies.
+2. Validate scope completeness (from query result OR provided description): work objective, identifiable files/components, known blockers/dependencies, and success criteria.
+3. If incomplete: exit with specific missing items using the template below.
 
-2. Validate scope completeness (from query OR description):
-   - Work objective clearly stated
-   - Files/components identifiable
-   - Blockers/dependencies known
-   - Success criteria defined
+**Valid inputs**: Task ID that returns sufficient detail via FETCH_ISSUE, or detailed description with files, deps, and criteria.
 
-3. If incomplete: EXIT with specific missing items (see Exit Protocol below)
-```
-
-### Task System Auto-Query
-
-Auto-detect the task system from the ID format:
-- Jira IDs (PROJ-123 pattern) → query via `acli jira workitem view`
-- Beads IDs (repo-xxx pattern) → query via `bd show` and `bd dep tree`
-- Free-text descriptions → require a detailed task description instead
-
-### Valid vs Invalid Inputs
-
-**Valid**: Jira/Beads ID (auto-queries details), or detailed description with files, deps, and criteria.
-
-**Invalid (exit with a validation failure)**: Custom ID without description, vague descriptions ("fix the bug"), task IDs where query returns insufficient detail.
+**Invalid inputs (exit)**: ID without description where FETCH_ISSUE returns insufficient detail, vague descriptions ("fix the bug"), custom IDs with no queryable system.
 
 ### Exit Protocol
 
-If validation fails, exit with this template listing specific missing items:
-
 ```
-Workflow-planner validation failed
-Cannot plan without complete scope. Missing: [list missing items]
+Workflow-planner validation failed. Missing: [list items]
 Received: [echo input]
-
-Provide EITHER:
-1. Jira/Beads task ID with complete ticket details
-2. Detailed description including: objective, files/components, dependencies, success criteria
+Provide: task ID with complete details OR description with objective, files, dependencies, success criteria.
 ```
 
 ## Strategy Selection Framework
@@ -127,52 +103,35 @@ Analyze work complexity using these scoring dimensions, then select strategy fro
 | **Dependencies** | External API integrations: x3, DB schema changes: x2, third-party library changes: x2, cross-module deps: x1 |
 | **Testing** | Unit test files: x1, integration scenarios: x2, mocking required: +2, E2E tests: x3 |
 | **Integration Risk** | File overlap between work units: x3, shared interface changes: x2, cross-cutting concerns: x2 |
-| **Uncertainty** | Unfamiliar tech: +3, unclear requirements: +2, missing docs: +1, research needed: +2 |
-| **Content Generation** | Documentation files: x3, repetitive similar items: x2, comprehensive examples: +2, multi-language: +2 |
+| **Uncertainty** | Unfamiliar tech: +4, unclear requirements: +3, missing docs: +2, research needed: +3 |
+
+**Content override:** If the task involves 5+ repetitive similar items (e.g., creating multiple similar files, writing parallel documentation), override to medium_single_branch regardless of score. This catches content-heavy work that benefits from parallelism without inflating complexity scores.
 
 ### Decision Table
 
-| Total Score | Content Score | Conditions | Strategy |
-|-------------|---------------|------------|----------|
-| 0-10 | 0-3 | No repetitive items (<5) | **very_small_direct** |
-| 0-10 | any | 5+ repetitive items | **medium_single_branch** (parallel content) |
-| 11-35 | any | No file overlap, <=5 work units | **medium_single_branch** |
-| >35 | any | - | **large_multi_worktree** |
-| any | any | File overlap between work units | **large_multi_worktree** (required) |
-| any | any | Any work unit >5 files or >500 LOC | **large_multi_worktree** (required) |
+| Total Score | Conditions | Strategy |
+|-------------|------------|----------|
+| 0-10 | No file overlap, 1-2 files | **very_small_direct** |
+| 11-35 | No file overlap, <=5 work units | **medium_single_branch** |
+| >35 | - | **large_multi_worktree** |
+| any | File overlap between work units | **large_multi_worktree** (required) |
+| any | Any work unit >5 files or >500 LOC | **large_multi_worktree** (required) |
 
 ### Strategy Selection Output (Required in JSON)
 
-Include `strategy_selection` in all planning responses with: `selected_strategy`, `complexity_score`, `score_breakdown` (all 6 dimensions), `rationale`, `override_conditions`, and `escalation_triggers`.
+Include `strategy_selection` in all planning responses with: `selected_strategy`, `complexity_score`, `score_breakdown` (all 5 dimensions), `rationale`, `override_conditions`, and `escalation_triggers`.
 
-## Quality Gate Sequence
-
-This gate sequence applies to ALL strategies. Define once, reference everywhere.
-
-```
-Gate 1: reaper:test-runner (BLOCKING, always first)
-  - Full test suite, 80%+ coverage, linting clean
-  - On fail: return to code agent with specific failures
-
-Gate 2: reaper:code-reviewer + reaper:security-auditor (PARALLEL, BLOCKING)
-  - Only runs after Gate 1 passes
-  - code-reviewer: SOLID principles, best practices, architecture
-  - security-auditor: vulnerabilities, OWASP compliance
-  - On fail: return to code agent with specific issues
-
-Iteration: Auto-loop on failures, max 3 iterations, avoid user prompts during iteration.
-After 3 failures: escalate to user with detailed failure analysis.
-```
+<%- include('partials/quality-gate-protocol', { role: 'planner' }) %>
 
 ## Strategy Workflows
 
 ### Strategy 1: Very Small Direct
 
-**When**: Score <=10, content score <=3, 1-2 files, no repetitive items. Excludes tasks creating 3+ documentation files or 5+ similar items.
+**When**: Score <=10, 1-2 files, no file overlap. Content override applies if 5+ repetitive items detected.
 
 **Workflow**:
 1. Work directly on feature branch (no worktree isolation)
-2. Deploy single agent (reaper:bug-fixer or reaper:feature-developer) or orchestrator handles directly
+2. Deploy single coding agent (reaper:bug-fixer or reaper:feature-developer)
 3. Run quality gate sequence
 4. Present to user with quality attestation; user commits manually
 
@@ -257,37 +216,28 @@ The `escalation_triggers` field in the JSON planning report should reference the
 ### Red Flags (Too Large)
 Any work unit that touches >5 files, needs >3 lines to describe, has multiple unrelated responsibilities, estimates >500 LOC, or exceeds 2 hours.
 
-## Beads Issue Hierarchy
+## Issue Hierarchy and Dependencies
 
-When given a Beads issue, always query the dependency tree before planning.
+When given a task ID, use QUERY_DEPENDENCY_TREE to retrieve the full dependency graph before planning. Use LIST_CHILDREN to discover direct subtasks.
 
-```bash
-bd dep tree <id>               # Full tree
-bd dep tree <id> --json        # JSON for parsing
-bd dep tree <id> --reverse     # What depends on this
-bd dep tree <id> --max-depth N # Limit depth
-```
+### Dependency Type Planning Impact
 
-### Dependency Types
-
-| Type | Meaning | Planning Impact |
-|------|---------|-----------------|
-| `parent-child` | Epic/subtask hierarchy | Subtasks ARE the work units; don't re-decompose |
-| `blocks` | Hard blocker | Blocked issue waits until blocker closes |
-| `discovered-from` | Found during parent work | Incorporate into plan |
-| `related` | Informational | Consider together, no execution dependency |
+| Type | Planning Impact |
+|------|-----------------|
+| `parent-child` | Subtasks may be the work units -- evaluate before re-decomposing (see decision tree below) |
+| `blocks` | Blocked issue waits until blocker closes; plan blocker resolution first |
+| `discovered-from` | Incorporate into plan |
+| `related` | Consider together, no execution dependency |
 
 ### Planning by Scenario
-- **Epic with children**: Plan execution order of existing children, not new decomposition
+- **Epic with correctly-sized children** (each <=5 files, <=500 LOC, has acceptance criteria): Plan execution order of existing children, do not re-decompose
+- **Epic with oversized/incomplete children** (any child >5 files or missing acceptance criteria): Decompose the oversized children further into context-safe work units
 - **Standalone issue**: Decompose into work units if complex, or plan direct execution
 - **Issue with blockers**: Include blocker resolution first
 
-### Creating Work Units in Beads
+### Creating Work Units
 
-```bash
-# Create subtask linked to parent (preferred single command)
-bd create "Work Unit Title" -t task --deps parent-child:<parent-id> --json
-```
+Use CREATE_ISSUE to create subtasks, then ADD_DEPENDENCY with `parent-child` type to link them to the parent issue.
 
 ## File Assignment Protocol
 
@@ -332,7 +282,7 @@ All planning responses must include `strategy_selection` and `implementation_gui
   "strategy_selection": {
     "selected_strategy": "medium_single_branch",
     "complexity_score": 24,
-    "score_breakdown": { "file_impact": 8, "dependency": 4, "testing": 6, "integration": 2, "uncertainty": 4, "content_generation": 0 },
+    "score_breakdown": { "file_impact": 8, "dependency": 4, "testing": 6, "integration": 2, "uncertainty": 4 },
     "rationale": "...",
     "override_conditions": [],
     "escalation_triggers": ["..."]
@@ -360,7 +310,6 @@ All planning responses must include `strategy_selection` and `implementation_gui
     "agent_deployment_sequence": [
       { "step": 1, "phase": "implementation", "agent": "reaper:feature-developer", "purpose": "...", "critical_instructions": "...", "blocking": false }
     ],
-    "quality_gate_checkpoints": "See Quality Gate Sequence (Gate 1: test-runner, Gate 2: code-reviewer + security-auditor parallel)",
     "consolidation_workflow": { "approach": "...", "steps": ["..."] },
     "iteration_protocol": { "auto_iteration": true, "max_iterations": 3, "escalation_trigger": "..." }
   },
@@ -407,12 +356,8 @@ When invoked with `MODE: VERIFICATION`, review existing issues instead of creati
 ### Verification Workflow
 
 **Step 1: Query Issue Hierarchy**
-```bash
-bd dep tree $EPIC_ID          # Full hierarchy
-bd show <child-id>            # Each child's details
-# Or Jira equivalent
-acli jira workitem search --jql "parent = $EPIC_ID"
-```
+
+Use QUERY_DEPENDENCY_TREE on the epic ID to retrieve the full hierarchy. Use FETCH_ISSUE on each child to get its details (title, description, acceptance criteria, status).
 
 **Step 2: Evaluate Each Issue Against 4 Criteria**
 
@@ -426,13 +371,8 @@ acli jira workitem search --jql "parent = $EPIC_ID"
 **Red flags for inappropriate blockers**: "blocks because related" (should be cross-reference), "blocks because same module" (should be parallel with cross-reference), "blocks for coordination" (should be parent-child).
 
 **Step 3: Auto-Fix**
-```bash
-# Beads - append to description
-bd update <id> --description "$(bd show <id> --format description)
----
-[Auto-added by verification]
-<missing details>"
-```
+
+Use UPDATE_ISSUE to append missing details to the issue description. Prefix additions with "[Auto-added by verification]" for traceability.
 
 **Step 4**: Re-verify fixed issues. Max 2 iterations.
 

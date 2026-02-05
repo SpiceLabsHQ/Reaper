@@ -1,0 +1,60 @@
+## Quality Gate Protocol
+<% if (typeof role !== 'undefined' && role === 'orchestrator') { -%>
+
+### Gate Sequence
+
+All work passes through two sequential gates before reaching the user:
+
+**Gate 1 (blocking):** Deploy reaper:test-runner. Must pass before Gate 2 proceeds.
+
+**Gate 2 (parallel):** Deploy reaper:code-reviewer and reaper:security-auditor simultaneously in a single message. Both must pass.
+
+After all gates pass, present completed work to the user and seek feedback.
+
+### JSON Validation Keys
+
+Parse these fields from each gate agent's JSON response to determine pass/fail:
+
+| Key | Source | Pass Condition |
+|-----|--------|----------------|
+| `test_exit_code` | reaper:test-runner | `=== 0` |
+| `coverage_percentage` | reaper:test-runner | `>= 80` |
+| `lint_exit_code` | reaper:test-runner | `=== 0` |
+| `all_checks_passed` | all gate agents | `=== true` |
+| `blocking_issues` | all gate agents | empty array |
+
+### Iteration Rules
+
+- On any gate failure, redeploy the coding agent with `blocking_issues` from the failed gate
+- After the coding agent addresses issues, re-run the failed gate (not all gates)
+- Maximum 3 iterations per gate before escalating to the user
+- Work autonomously through iterations without asking the user for guidance
+
+### Commit on Pass
+
+After each gate passes, deploy reaper:branch-manager to commit the current state on the feature branch. Frequent commits on feature branches create restore points and document progress.
+
+### Parallel Deployment Pattern
+
+After Gate 1 passes, deploy Gate 2 agents in a single message with two Task calls:
+```
+Task --subagent_type reaper:code-reviewer --prompt "..."
+Task --subagent_type reaper:security-auditor --prompt "..."
+```
+
+If either fails, combine `blocking_issues` from both before redeploying the coding agent.
+
+### Information Handoff
+
+- **Coding agent to reaper:test-runner**: Pass `narrative_report.summary` for test scope context, plus TEST_COMMAND and LINT_COMMAND from project config
+- **reaper:test-runner to reaper:code-reviewer**: Pass full test results JSON (test_exit_code, coverage_percentage, lint_exit_code, test_metrics)
+- **reaper:test-runner to reaper:security-auditor**: Pass plan context only (security-auditor does not need test results)
+<% } else { -%>
+
+Quality gates validate all work before it reaches the user:
+
+1. **reaper:test-runner** (blocking) -- tests, coverage, linting
+2. **reaper:code-reviewer + reaper:security-auditor** (parallel, blocking) -- code quality and security
+
+Auto-iteration on failure, maximum 3 attempts per gate. The takeoff skill owns gate execution and iteration.
+<% } -%>

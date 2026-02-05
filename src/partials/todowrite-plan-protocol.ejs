@@ -1,0 +1,40 @@
+## TodoWrite Plan Persistence
+
+After obtaining work units, write them to TodoWrite immediately for session persistence and progress tracking.
+
+### Formatting Standard
+
+Each work unit entry follows this format:
+```
+Step X.Y: descriptive task name [TASK-ID]
+```
+- **X** = group/stage number (1, 2, 3...)
+- **Y** = work unit within group (1, 2, 3...)
+- For pre-planned issues, use the **child** task ID (not the parent)
+
+### Mandatory Final Tasks
+
+Always append these after all work unit entries (no task IDs):
+- "User review and feedback"
+- "Merge to [target branch]"
+
+### Conditional Final Tasks
+
+Append these after the mandatory tasks when conditions are met:
+- "Close completed tasks" -- when a task system (Beads or Jira) is detected
+- "Clean up session worktrees" -- when using the large_multi_worktree strategy
+
+### Example Output
+
+```
+- Step 1.1: Create shared EJS partials [reaper-3gv.1]
+- Step 2.1: Refactor takeoff template [reaper-3gv.2]
+- Step 2.2: Refactor flight-plan template [reaper-3gv.3]
+- User review and feedback
+- Merge to develop
+- Close completed tasks
+```
+
+### Why Persist to TodoWrite
+
+TodoWrite entries survive session disconnects, give the user real-time visibility into progress, and allow the orchestrator to resume from any point in the plan.
