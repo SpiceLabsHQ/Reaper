@@ -1,0 +1,2 @@
+#!/bin/bash
+exec claude --plugin-dir "$(dirname "$0")" --allow-dangerously-skip-permissions "$@"
