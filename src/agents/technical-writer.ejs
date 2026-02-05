@@ -163,98 +163,56 @@ When the orchestrator mentions these topics, this agent should be included in co
 
 ## Required JSON output structure
 
-Return a single JSON object with all information. Do not write separate report files.
+**Return a focused JSON object. Do not write separate report files.**
 
 ```json
 {
-  "agent_metadata": {
-    "agent_type": "technical-writer",
-    "agent_version": "1.0.0",
-    "execution_id": "<string: unique identifier>",
-    "task_id": "<string: task ID>",
-    "worktree_path": "<string: ./trees/TASK-ID-docs>",
-    "timestamp": "<string: ISO-8601>"
-  },
-  "narrative_report": {
-    "summary": "<string: one-line summary of documentation generation>",
-    "details": "<string: multi-line report covering documentation type, files created, diagrams generated, verification status, documentation debt, and quality metrics>",
-    "recommendations": "<string: next steps for documentation coverage>"
-  },
-  "truthfulness_assessment": {
-    "verified_examples": "<number: count of verified examples>",
-    "total_examples": "<number: total examples>",
-    "verification_rate": "<number: percentage>",
-    "unverified_areas": ["<string: area description>"],
-    "documentation_debt": [
-      {
-        "area": "<string: area name>",
-        "severity": "<string: high|medium|low>",
-        "description": "<string: what is missing>",
-        "estimated_effort": "<string: time estimate>"
-      }
-    ]
-  },
-  "coverage_analysis": {
-    "api_endpoints": {
-      "total": "<number>",
-      "documented": "<number>",
-      "coverage_percentage": "<number>",
-      "missing_areas": ["<string>"]
-    },
-    "integration_points": {
-      "total": "<number>",
-      "documented": "<number>",
-      "coverage_percentage": "<number>",
-      "missing_areas": ["<string>"]
-    },
-    "component_interactions": {
-      "total": "<number>",
-      "documented": "<number>",
-      "coverage_percentage": "<number>",
-      "missing_areas": ["<string>"]
+  "gate_status": "PASS",
+  "task_id": "PROJ-123",
+  "working_dir": "./trees/PROJ-123-docs",
+  "summary": "Generated API reference and architecture docs from verified code analysis",
+  "blocking_issues": [],
+  "generated_documentation": [
+    {
+      "file": "docs/API.md",
+      "description": "REST API endpoint reference with request/response examples"
     }
-  },
-  "quality_metrics": {
-    "accuracy_score": "<number: 1-10>",
-    "completeness_score": "<number: 1-10>",
-    "clarity_score": "<number: 1-10>",
-    "overall_quality": "<number: 1-10>",
-    "improvement_areas": ["<string>"]
-  },
-  "generated_documentation": {
-    "files_created": "<number>",
-    "files_updated": "<number>",
-    "total_pages": "<number>",
-    "word_count": "<number>",
-    "code_examples": "<number>",
-    "verified_examples": "<number>",
-    "diagrams_created": "<number>"
-  },
-  "validation_results": {
-    "code_examples_tested": "<number>",
-    "links_verified": "<number>",
-    "installation_tested": "<boolean>",
-    "api_examples_validated": "<number>",
-    "integration_flows_verified": "<number>",
-    "validation_failures": [
-      {
-        "type": "<string: failure type>",
-        "description": "<string: what failed>",
-        "recommendation": "<string: how to fix>"
-      }
-    ]
-  },
-  "validation_status": {
-    "all_checks_passed": "<boolean>",
-    "blocking_issues": ["<string>"],
-    "warnings": ["<string>"],
-    "ready_for_merge": "<boolean>",
-    "requires_iteration": "<boolean>"
-  },
-  "files_modified": ["<string: file paths>"],
-  "artifacts_cleaned": ["<string: cleaned artifact paths>"]
+  ],
+  "files_modified": ["docs/API.md", "docs/architecture.md"]
 }
 ```
+
+**Field definitions:**
+- `gate_status`: "PASS", "FAIL", or "PARTIAL" -- orchestrator uses this for quality gate decisions
+- `task_id`: The task identifier provided in your prompt
+- `working_dir`: Where the documentation was generated
+- `summary`: One-line human-readable summary of documentation work completed
+- `blocking_issues`: Array of issues preventing completion (empty if gate passes)
+- `generated_documentation`: Array of objects describing each generated doc (file path and description)
+- `files_modified`: Array of all file paths created or modified
+
+**When gate_status is "FAIL", include specific issues:**
+```json
+{
+  "gate_status": "FAIL",
+  "task_id": "PROJ-123",
+  "working_dir": "./trees/PROJ-123-docs",
+  "summary": "Could not generate API docs -- source code has no route definitions",
+  "blocking_issues": [
+    "No API route definitions found in src/ -- cannot generate endpoint documentation",
+    "Existing README.md references deprecated modules that no longer exist"
+  ],
+  "generated_documentation": [],
+  "files_modified": []
+}
+```
+
+**Do NOT include:**
+- Metadata like timestamps, versions, execution IDs
+- Numeric scores or quality ratings (accuracy_score, completeness_score, etc.)
+- Word counts, page counts, or document size metrics
+- Coverage percentages or verification rate calculations
+- Nested metric objects that encourage fabrication
 
 </output_format>
 

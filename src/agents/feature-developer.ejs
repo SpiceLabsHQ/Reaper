@@ -93,7 +93,7 @@ Run only your tests (not the full suite). Verify 80%+ coverage on the applicatio
 
 ## Required JSON Output
 
-Return this structure. The orchestrator verifies all claims via quality gates -- do not self-report metrics.
+Return this structure. The orchestrator verifies all claims via quality gates.
 
 ```json
 {
@@ -111,4 +111,4 @@ Return this structure. The orchestrator verifies all claims via quality gates --
 - `files_modified`: Files you created or changed
 - `unfinished`: Blockers preventing completion (empty if done)
 
-Do not include test results, coverage numbers, quality assessments, gate status, or metadata. Those are verified independently by test-runner, code-reviewer, and security-auditor.
+<%- include('partials/no-self-reporting') %>

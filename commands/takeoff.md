@@ -126,6 +126,42 @@ else
 fi
 ```
 
+### 3.5 Plan File Discovery (Preserve Flight-Plan Research)
+
+**After setting worktree path and BEFORE pre-planned issue detection, search for a matching flight-plan file that may contain codebase research from a prior `/reaper:flight-plan` session.**
+
+When a user runs `/reaper:flight-plan` followed by `/clear` and then `/reaper:takeoff`, the research context gathered during planning is lost. Plan files in `.claude/plans/` preserve that research.
+
+```bash
+# Search .claude/plans/ for a plan file matching the task ID
+PLAN_RESEARCH=""
+
+if [ -n "$TASK_ID" ] && [ -d ".claude/plans" ]; then
+    # Look for plan files containing the task ID in the filename
+    # Examples: reaper-ayz → .claude/plans/*ayz*.md
+    #           PROJ-123  → .claude/plans/*PROJ-123*.md
+    MATCHING_PLAN=$(ls .claude/plans/*${TASK_ID}*.md 2>/dev/null | head -1)
+
+    if [ -z "$MATCHING_PLAN" ]; then
+        # Fallback: search for the task ID inside plan file contents
+        MATCHING_PLAN=$(grep -l "$TASK_ID" .claude/plans/*.md 2>/dev/null | head -1)
+    fi
+
+    if [ -n "$MATCHING_PLAN" ]; then
+        # Extract the ## Research section (from heading to next ## heading or EOF)
+        PLAN_RESEARCH=$(sed -n '/^## Research$/,/^## [^R]/p' "$MATCHING_PLAN" | sed '$d')
+
+        if [ -n "$PLAN_RESEARCH" ]; then
+            # Append research context to IMPLEMENTATION_PLAN
+            IMPLEMENTATION_PLAN="${IMPLEMENTATION_PLAN}\n\n--- Flight-Plan Research Context ---\n${PLAN_RESEARCH}"
+            echo "PLAN FILE FOUND: $MATCHING_PLAN — appended Research section to implementation context"
+        fi
+    fi
+fi
+
+# If no plan file found or no Research section, proceed normally (graceful fallback)
+```
+
 ### 4. Pre-Planned Issue Detection
 
 **After fetching task details, check if the issue is already pre-planned (has child tasks with acceptance criteria).**
@@ -865,13 +901,13 @@ These patterns caused multiple iteration cycles. Adding them would prevent recur
 - `[Ready-to-paste CLAUDE.md entry]`
 - `[Ready-to-paste CLAUDE.md entry]`
 
-Apply these? I can add them to your project's CLAUDE.md now.
+Run `/reaper:claude-sync` to review and apply these to your project's CLAUDE.md.
 ```
 
 If no patterns recurred (single-iteration success), omit this section entirely.
 
 **Rules**:
-- Never auto-apply — always present for user approval
+- Never auto-apply — always direct the user to `/reaper:claude-sync` for review and application
 - Only suggest entries derived from actual iteration failures, not hypothetical improvements
 - Entries must be actionable instructions, not observations
 
@@ -965,7 +1001,7 @@ These patterns caused multiple iteration cycles. Adding them would prevent recur
 
 - `[entry]`
 
-Apply these? I can add them to your project's CLAUDE.md now.
+Run `/reaper:claude-sync` to review and apply these to your project's CLAUDE.md.
 
 [END IF — omit section entirely on single-iteration success]
 

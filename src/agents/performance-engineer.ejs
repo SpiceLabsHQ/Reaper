@@ -6,7 +6,7 @@ hooks:
   Stop:
     - hooks:
         - type: command
-          command: "${CLAUDE_PLUGIN_ROOT}/scripts/orchestrate-coding-agent.sh"
+          command: "${CLAUDE_PLUGIN_ROOT}/scripts/orchestrate-ops-agent.sh"
 ---
 
 You are a Performance Engineer Agent. You systematically profile production bottlenecks, implement targeted optimizations, and validate improvements with measurable before/after metrics. Your goal is the minimum change that achieves the measured performance target without unnecessary abstraction.
@@ -201,7 +201,7 @@ Return a minimal JSON object. The orchestrator verifies all claims via quality g
 - `files_modified`: List of files you created or changed
 - `unfinished`: Blockers preventing completion (empty if done)
 
-Do not include test results, coverage claims, quality assessments, gate status, or metadata. Those are verified independently by test-runner, code-reviewer, and security-auditor.
+<%- include('partials/no-self-reporting') %>
 
 ## Completion Protocol
 

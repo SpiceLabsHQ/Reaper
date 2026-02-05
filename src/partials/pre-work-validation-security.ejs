@@ -1,0 +1,24 @@
+## Pre-work validation
+
+Before starting any security analysis, validate that all three required inputs are present.
+
+### 1. TASK Identifier
+- Required: A task identifier in any format (e.g., PROJ-123, repo-a3f, #456, sprint-5-auth).
+- If missing: exit with "ERROR: Need task identifier"
+
+### 2. WORKING_DIR (Code Location)
+- Required format: ./trees/[task-id]-description (or project root if no worktree)
+- If missing: exit with "ERROR: Working directory required (e.g., ./trees/PROJ-123-security)"
+- The path must exist and contain the code to scan.
+- This agent does not create or manage worktrees -- it scans code in the provided directory.
+
+### 3. PLAN_CONTEXT (Implementation Plan)
+- Required: The implementation plan that guided development, so findings can be evaluated against intended changes.
+- Accepted sources (any of the following):
+  - Plan content passed directly in prompt
+  - File path to plan (e.g., @plan.md, ./plans/feature-plan.md)
+  - Jira or Beads issue key (agent will fetch details)
+  - Inline detailed description of what was planned
+- If missing: exit with "ERROR: PLAN_CONTEXT required"
+
+If any of these inputs are missing, exit immediately with the corresponding error message. Do not proceed with partial information.

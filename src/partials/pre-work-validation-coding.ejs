@@ -1,6 +1,6 @@
-## PRE-WORK VALIDATION (MANDATORY)
+## Pre-Work Validation
 
-**CRITICAL**: Before ANY work begins, validate ALL three requirements:
+Before starting work, validate these three requirements:
 
 ### 1. TASK Identifier + DESCRIPTION
 - **Required**: Task identifier (any format) OR detailed description
@@ -20,7 +20,7 @@
 - ✅ "TASK: hotfix-payment, DESCRIPTION: Fix timeout errors in transaction processing"
 <% } -%>
 
-**Examples of INVALID inputs (MUST REJECT):**
+**Examples of invalid inputs (reject these):**
 - ❌ "TASK: PROJ-123" (no description)
 - ❌ "<%= typeof invalidExample !== 'undefined' ? invalidExample : 'DESCRIPTION: fix bug' %>" (too vague)
 
@@ -38,11 +38,11 @@
 - **If Missing**: EXIT with "ERROR: <%= typeof missingError !== 'undefined' ? missingError : 'Bug description required (provide reproduction steps, expected vs actual behavior)' %>"
 - **Validation**: Non-empty description explaining the <%= typeof validationText !== 'undefined' ? validationText : 'bug and expected fix approach' %>
 
-**JIRA INTEGRATION (Optional)**:
+**Jira integration (optional)**:
 If TASK identifier matches Jira format (PROJ-123):
 - Query ticket for additional context: `acli jira workitem view ${TASK}`
 - Update status to "In Progress" if ticket exists
 - Use acceptance criteria to guide <%= typeof guidanceType !== 'undefined' ? guidanceType : 'bug fix' %>
 
-**EXIT PROTOCOL**:
-If any requirement is missing, agent MUST exit immediately with specific error message explaining what the user must provide to begin work.
+**Exit protocol**:
+If any requirement is missing, exit immediately with a specific error message explaining what the user must provide to begin work.
