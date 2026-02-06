@@ -30,9 +30,9 @@ Builders. These agents write production code and tests in isolated worktrees usi
 | `reaper:refactoring-dev` | Improves existing code structure while preserving functionality, targeting simplicity over abstraction |
 | `reaper:branch-manager` | Git operations, worktree setup and teardown, safe merges, and repository maintenance with safety protocols |
 
-## Quality (4 agents)
+## Quality (5 agents)
 
-Gatekeepers. These agents validate code after implementation. They run automatically as quality gates -- you do not need to invoke them.
+Gatekeepers. These agents validate code and infrastructure after implementation. They run automatically as quality gates -- you do not need to invoke them.
 
 | Agent | Purpose |
 |-------|---------|
@@ -40,6 +40,7 @@ Gatekeepers. These agents validate code after implementation. They run automatic
 | `reaper:code-reviewer` | Reviews code for SOLID principles, plan adherence, best practices, and test quality (does not re-run tests) |
 | `reaper:security-auditor` | Vulnerability detection with Trivy, Semgrep, and TruffleHog -- OWASP compliance and secrets scanning |
 | `reaper:performance-engineer` | Profiles bottlenecks, implements targeted optimizations, and validates improvements with before/after metrics |
+| `reaper:validation-runner` | Non-code validation: Terraform, OpenAPI specs, Helm charts, Docker builds, schema checks, and migration dry-runs |
 
 ## Ops (3 agents)
 
@@ -51,23 +52,15 @@ Operators. These agents handle deployment, integration, and incident response fo
 | `reaper:integration-engineer` | Third-party service integration, API clients, webhook handlers, and event-driven system connectivity |
 | `reaper:incident-responder` | Production incident diagnosis, log analysis, root cause investigation, and coordinated emergency remediation |
 
-## Meta (3 agents)
+## Craft (3 agents)
 
-Toolsmiths. These agents improve Reaper itself -- its documentation, agent design, and prompt quality.
+Shapers. These agents refine documentation, agent design, and prompt quality for any project -- not just Reaper.
 
 | Agent | Purpose |
 |-------|---------|
 | `reaper:technical-writer` | Generates technical documentation from codebases with verification and accuracy standards |
 | `reaper:claude-agent-architect` | Designs, creates, and refactors agents -- structure, format compliance, and design quality control |
 | `reaper:ai-prompt-engineer` | Prompt optimization, anti-pattern detection, token reduction, and model-specific tuning across LLM families |
-
-## Validation (1 agent)
-
-Validators for non-code artifacts. Runs the same gate contract as test-runner but for infrastructure and configuration.
-
-| Agent | Purpose |
-|-------|---------|
-| `reaper:validation-runner` | Non-code validation: Terraform, OpenAPI specs, Helm charts, Docker builds, schema checks, and migration dry-runs |
 
 ## How agents are dispatched
 
@@ -83,6 +76,6 @@ The dispatch layer matches task characteristics to agent capabilities. A bug rep
 
 ---
 
-**Total: 25 agents** across 6 categories.
+**Total: 25 agents** across 5 categories.
 
 [Back to README](../README.md)
