@@ -119,8 +119,24 @@ skills/          # GENERATED
 hooks/           # GENERATED
 
 scripts/         # Build tooling
-docs/spice/      # Development standards documentation
+docs/            # User-facing documentation (agents, commands, workflow, quality gates, auto-formatting)
+docs/spice/      # Development standards documentation (internal)
 ```
+
+### Documentation Maintenance
+
+User-facing docs (`README.md` and `docs/*.md`) must stay in sync with the codebase. When changes affect any of the following, update the corresponding doc:
+
+| Change | Update |
+|--------|--------|
+| Agent added/removed/renamed | `docs/agents.md` and README agent count |
+| Command behavior or flags changed | `docs/commands.md` |
+| Quality gate pipeline modified | `docs/quality-gates.md` |
+| Formatter added/removed in hook | `docs/auto-formatting.md` |
+| Workflow or strategy logic changed | `docs/workflow.md` |
+| Coverage threshold or key feature changed | `README.md` "Under the Hood" section |
+
+Run `/reaper:claude-sync` to detect undocumented changes.
 
 ## Template Build System
 
