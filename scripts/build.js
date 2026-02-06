@@ -608,6 +608,7 @@ module.exports = {
   parseFrontmatter,
   compileTemplate,
   processFile,
+  formatError,
   AGENT_TYPES,
   TDD_AGENTS,
   GATE_CAPABLE_AGENTS,
