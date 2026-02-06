@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository. This project CLAUDE.md takes precedence over global instructions for all Reaper-specific behavior. For general development standards, defer to `docs/spice/CLAUDE-IMPORT.md`.
 
 ## What is Reaper?
 
@@ -12,15 +12,24 @@ Check your available tools to determine your role:
 - **Has "Task" tool** → Main agent (supervisor). Delegate to subagents. Never implement directly.
 - **No "Task" tool** → Subagent (worker). Complete your assigned task using TDD.
 
-### Recommended Workflow
+## Safety Rules
+
+- Always work in `./trees/` worktrees — never work directly in the root directory
+- Always request explicit user approval before merging to `main`
+- Always let hooks run to completion — never skip them (`--no-verify`, `HUSKY=0`)
+- Always use real task IDs from `bd list` and report actual test results — never fabricate either
+- Always edit source templates in `src/` — never edit generated files directly
+- Always read source files before modifying them — verify paths exist before referencing them
+
+### Recommended Workflow (Main Agent / Human)
 
 1. **Plan first**: `/reaper:flight-plan <detailed-description>` — Create execution plan with work breakdown
 2. **Review & approve** — Claude presents the plan for your approval
 3. **Issues created** — Claude creates issues in Beads/Jira (or markdown fallback)
 4. **Clear context**: `/clear` — Fresh context for execution (recommended)
-5. **Execute**: `/reaper:takeoff <TASK-ID>` — Watch her fly!
+5. **Execute**: `/reaper:takeoff <TASK-ID>` — Executes the task plan autonomously
 
-### Key Commands
+### Key Commands (Main Agent / Human)
 
 ```bash
 # Plan your work (start here)
@@ -62,6 +71,7 @@ Use `bd list` to find issue IDs, or `bd create` to create one.
 - All tests run in worktrees (`./trees/`), never in root
 - Run linting before every commit (enforced by husky)
 - Quality gates: reaper:test-runner → reaper:code-reviewer + reaper:security-auditor
+- Prompt quality gate: always run `reaper:ai-prompt-engineer` after modifying agents, skills, commands, hooks, or partials (see Workflow for Editing Agents/Skills step 4)
 - Self-learning: recurring quality gate failures surface as CLAUDE.md update candidates
 - Auto-formatting: PostToolUse hook formats code on every write/edit (detects Prettier, Biome, ESLint, Pint, PHP-CS-Fixer, Ruff, Black, gofmt, rustfmt, RuboCop, and more)
 
@@ -90,9 +100,9 @@ src/             # SOURCE TEMPLATES - Edit files here
   hooks/         # Hook templates
   partials/      # Shared EJS partials
 
-agents/          # GENERATED - Do not edit directly
-skills/          # GENERATED - Do not edit directly
-hooks/           # GENERATED - Do not edit directly
+agents/          # GENERATED
+skills/          # GENERATED
+hooks/           # GENERATED
 
 scripts/         # Build tooling
 docs/spice/      # Development standards documentation
@@ -125,7 +135,8 @@ npm run build:watch  # Watch mode for development
 1. **Edit the source template** in `src/` (e.g., `src/agents/bug-fixer.ejs`)
 2. **Run build**: `npm run build`
 3. **Verify output** in project root (e.g., `agents/bug-fixer.md`)
-4. **Commit both** source and generated files
+4. **Run prompt review**: Always run `reaper:ai-prompt-engineer` as a quality gate after modifying any agent, skill, command, hook, or partial template. This agent audits prompts for anti-patterns, token waste, and model-specific best practices.
+5. **Commit both** source and generated files
 
 The pre-commit hook automatically runs the build and stages generated files.
 
@@ -142,7 +153,22 @@ Common sections are extracted into `src/partials/*.ejs`:
 - `tdd-testing-protocol.ejs` - TDD methodology
 - `artifact-cleanup-coding.ejs` - Cleanup protocols
 
-Use EJS includes: `<%- include('partials/output-requirements', { isReviewAgent: true }) %>`
+Use EJS includes: `<%- include('partials/output-requirements', { isReviewAgent: true }) %>`. Parameters vary by partial — check the partial source for available options.
+
+## Beads Issue Tracking
+
+This project uses Beads for lightweight git-based issue tracking:
+
+```bash
+bd list                    # List all issues
+bd show reaper-xxx         # View issue details
+bd create "Title"          # Create new issue
+bd update reaper-xxx --status "In Progress"
+bd close reaper-xxx        # Mark complete
+bd sync                    # Sync with git remote
+```
+
+## Reference
 
 ### Agent Categories
 
@@ -167,24 +193,3 @@ Task --subagent_type workflow-planner
 ```
 
 This prefix is required because Reaper is a Claude Code plugin, and plugin agents must be namespaced.
-
-## Beads Issue Tracking
-
-This project uses Beads for lightweight git-based issue tracking:
-
-```bash
-bd list                    # List all issues
-bd show reaper-xxx         # View issue details
-bd create "Title"          # Create new issue
-bd update reaper-xxx --status "In Progress"
-bd close reaper-xxx        # Mark complete
-bd sync                    # Sync with git remote
-```
-
-## Safety Rules
-
-- Never work directly in root directory—use `./trees/` worktrees
-- Never merge to `main` without explicit user permission
-- Never skip hooks (`--no-verify`, `HUSKY=0`)
-- Never fabricate task IDs or test results
-- Never edit generated files directly—edit `src/` templates instead
