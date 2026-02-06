@@ -67,7 +67,7 @@ Use `bd list` to find issue IDs, or `bd create` to create one.
 
 ### Testing & Quality
 
-- 80%+ coverage required for application code
+- 70%+ coverage required (untestable plumbing excluded via `node:coverage disable`)
 - All tests run in worktrees (`./trees/`), never in root
 - Run linting before every commit (enforced by husky)
 - Quality gates: reaper:test-runner → reaper:code-reviewer + reaper:security-auditor

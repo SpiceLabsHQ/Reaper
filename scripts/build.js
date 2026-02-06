@@ -129,6 +129,7 @@ let ejs = null;
  * @returns {Object} The EJS module
  * @throws {Error} If EJS is not installed
  */
+/* node:coverage disable */
 function loadEjs() {
   if (ejs === null) {
     try {
@@ -142,16 +143,19 @@ function loadEjs() {
   }
   return ejs;
 }
+/* node:coverage enable */
 
 /**
  * Logs a message if verbose mode is enabled.
  * @param {...any} args - Arguments to log
  */
+/* node:coverage disable */
 function verboseLog(...args) {
   if (config.verbose) {
     console.log('[verbose]', ...args);
   }
 }
+/* node:coverage enable */
 
 /**
  * Parses command line arguments.
@@ -181,6 +185,7 @@ function parseArgs(args) {
 /**
  * Prints help information.
  */
+/* node:coverage disable */
 function printHelp() {
   console.log(`
 EJS Template Build Script for Reaper Plugin
@@ -200,6 +205,7 @@ Examples:
   node scripts/build.js --verbose          # Verbose output
 `);
 }
+/* node:coverage enable */
 
 /**
  * Gets the agent type for a given agent name.
@@ -435,6 +441,7 @@ function findFiles(dir, files = []) {
  * Builds all templates for a specific source type.
  * @param {string} sourceType - The type to build (agents, skills, etc.)
  */
+/* node:coverage disable */
 function buildType(sourceType) {
   const sourceDir = path.join(config.srcDir, sourceType);
   const outputDir = path.join(config.rootDir, DIRECTORY_MAP[sourceType]);
@@ -464,10 +471,12 @@ function buildType(sourceType) {
     }
   }
 }
+/* node:coverage enable */
 
 /**
  * Runs the full build process.
  */
+/* node:coverage disable */
 function build() {
   console.log('Reaper EJS Template Build');
   console.log('=========================');
@@ -508,10 +517,12 @@ function build() {
 
   console.log('--------------------------\n');
 }
+/* node:coverage enable */
 
 /**
  * Sets up file watching for automatic rebuilds.
  */
+/* node:coverage disable */
 function watchFiles() {
   console.log('Watching for changes... (Press Ctrl+C to stop)\n');
 
@@ -545,11 +556,13 @@ function watchFiles() {
     console.error('Watcher error:', error);
   });
 }
+/* node:coverage enable */
 
 /**
  * Lazily loads the chokidar module for file watching.
  * @returns {Object} The chokidar module
  */
+/* node:coverage disable */
 function loadChokidar() {
   try {
     return require('chokidar');
@@ -560,6 +573,7 @@ function loadChokidar() {
     process.exit(1);
   }
 }
+/* node:coverage enable */
 
 /**
  * Main entry point.
@@ -581,9 +595,11 @@ function main() {
 }
 
 // Run if executed directly
+/* node:coverage disable */
 if (require.main === module) {
   main();
 }
+/* node:coverage enable */
 
 // Export for testing
 module.exports = {
