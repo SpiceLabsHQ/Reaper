@@ -59,16 +59,31 @@ Check whether the task already has child issues with acceptance criteria (indica
 
 1. Use LIST_CHILDREN to get direct children of the task
 2. If children exist and have acceptance criteria, mark the task as **pre-planned**
-3. Use QUERY_DEPENDENCY_TREE to understand execution ordering among children
+3. Use QUERY_DEPENDENCY_TREE to retrieve the full hierarchy from the root task
 
-**If pre-planned**: Extract work units from child issues using the full scope rule:
-- **Closed** children: skip (already completed)
-- **Open, unblocked** children: execute immediately
-- **Open, blocked** children: execute after their blockers complete
+### Full Tree Scope
 
-Dependencies determine execution ORDER, not whether a task is included. Every non-closed child must appear in the plan.
+Takeoff always executes the **entire descendant tree** of the given task. If a parent issue is passed, every non-closed descendant at every level must be completed before the task is considered done.
 
-Select strategy based on non-closed child count: 1 child uses very_small_direct, 2-4 uses medium_single_branch, 5+ uses large_multi_worktree.
+### Tree Flattening
+
+After retrieving children, determine whether any child itself has children (check via LIST_CHILDREN on each direct child, or inspect the QUERY_DEPENDENCY_TREE result):
+
+- **Depth 1 (all children are leaf tasks)**: Use children directly as work units.
+- **Depth > 1 (children have their own children)**: Flatten to leaf-level work units. Intermediate nodes (phases, stories, epics) become **grouping labels** for organizing work, not work units themselves. Only leaf-level issues -- those with no children of their own -- are executable work units.
+
+When flattening, preserve the grouping structure for TodoWrite: use the intermediate node's title as the group label and assign its leaf descendants sequential step numbers within that group (e.g., "Phase 1: Backend" becomes the group heading for steps 1.1, 1.2, 1.3).
+
+### Work Unit Extraction
+
+**If pre-planned**: Extract leaf-level work units using the full scope rule:
+- **Closed** leaves: skip (already completed)
+- **Open, unblocked** leaves: execute immediately
+- **Open, blocked** leaves: execute after their blockers complete
+
+Dependencies determine execution ORDER, not whether a task is included. Every non-closed leaf must appear in the plan.
+
+Select strategy based on the count of non-closed **leaf-level** work units: 1 uses very_small_direct, 2-4 uses medium_single_branch, 5+ uses large_multi_worktree.
 
 **If not pre-planned**: Proceed to the Planning section below.
 
