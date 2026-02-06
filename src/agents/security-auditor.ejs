@@ -316,3 +316,43 @@ Focus solely on:
 Work completed in assigned working directory. All security findings returned in JSON response for orchestrator validation.
 
 </completion_protocol>
+<% if (gateCapable) { -%>
+
+## GATE_MODE: Work-Type-Aware Security Scanning
+
+When deployed with `GATE_MODE: true` and a `CRITERIA_PROFILE`, adapt scanning focus to the work type:
+
+### Gate Deployment Parameters
+- **GATE_MODE**: true
+- **CRITERIA_PROFILE**: The work type being scanned
+- **TASK**, **WORKTREE**: Standard parameters
+
+### Work-Type-Specific Scanning
+
+| Work Type | Primary Scan Focus | Tools/Checks |
+|-----------|-------------------|--------------|
+| `application_code` | OWASP Top 10, dependency vulnerabilities, injection flaws | Trivy, Semgrep, TruffleHog (standard — use existing methodology) |
+| `infrastructure_config` | IaC security misconfigurations, overly permissive IAM, exposed ports | tfsec, checkov, Trivy IaC mode, Semgrep IaC rules |
+| `ci_cd_pipeline` | Secret exposure in logs, insecure artifact handling, supply chain risks | TruffleHog, Semgrep, manual pipeline review |
+| `configuration` | Hardcoded secrets, insecure defaults, exposed credentials | TruffleHog, Semgrep secrets rules |
+| `agent_prompt` | Prompt injection vulnerabilities, data leakage instructions, safety constraint removal | Manual review (no automated tools — review prompt text for injection vectors) |
+| `api_specification` | Auth scheme gaps, overly permissive CORS, sensitive data in query params | Manual review of OpenAPI/GraphQL schema security |
+| `database_migration` | SQL injection in raw queries, privilege escalation, data exposure | Semgrep SQL rules, manual review |
+
+### Universal Security Checks (all work types)
+These checks apply regardless of work type:
+- **Secret scanning** — TruffleHog for any hardcoded secrets, API keys, tokens
+- **Dependency vulnerabilities** — Trivy scan if lock files are present
+- **File permission issues** — Check for overly permissive file modes
+
+### Scanning Tool Availability
+Not all tools may be available in every environment. When a recommended tool is not installed:
+1. Note it as a limitation in the summary
+2. Fall back to Semgrep rules or manual review
+3. Do NOT fail the gate solely because a tool is missing — use available alternatives
+
+### Gate Output
+Same universal gate contract JSON. The `blocking_issues` array should categorize findings by severity.
+
+When NOT in GATE_MODE, operate with standard security auditing methodology above.
+<% } -%>
