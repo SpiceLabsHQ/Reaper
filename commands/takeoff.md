@@ -303,7 +303,8 @@ WORKTREE: $WORKTREE_PATH
 DESCRIPTION: [detailed requirements from plan or task system]
 SCOPE: [exact file/module boundaries]
 RESTRICTION: [what NOT to touch]
-QUALITY: [coverage target, lint requirements, methodology]"
+QUALITY: [coverage target, lint requirements, methodology]
+GATE_EXPECTATIONS: [gates that will review this work, from the selected profile]"
 ```
 
 **Example:**
@@ -315,7 +316,8 @@ WORKTREE: ./trees/repo-a3f-oauth
 DESCRIPTION: Implement OAuth2 authentication flow with Google and GitHub providers
 SCOPE: Authentication module only (src/auth/oauth/, tests/auth/oauth/)
 RESTRICTION: Do NOT modify user management or database modules
-QUALITY: 80% test coverage, zero linting errors, SOLID principles"
+QUALITY: 80% test coverage, zero linting errors, SOLID principles
+GATE_EXPECTATIONS: test-runner (80% coverage), code-reviewer (SOLID), security-auditor (OWASP)"
 ```
 
 **Requirements for every deployment:**
@@ -323,7 +325,10 @@ QUALITY: 80% test coverage, zero linting errors, SOLID principles"
 - DESCRIPTION must be detailed and substantial (from plan, task system, or user input)
 - SCOPE must specify exact file or module boundaries
 - RESTRICTION must specify what NOT to modify (keeps agents focused on scope)
+- GATE_EXPECTATIONS should list the gate agents that will review the work, helping the coding agent anticipate quality requirements
 - Keep each work package to a maximum of 5 files, 500 LOC, and 2 hours of estimated work
+
+**Populating GATE_EXPECTATIONS:** After determining the gate profile (see Dynamic Gate Selection), list each gate agent and its primary check. This primes the coding agent to write code that will pass review on the first attempt.
 
 
 ## Quality Gate Protocol

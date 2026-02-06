@@ -292,6 +292,10 @@ When given a task ID, use QUERY_DEPENDENCY_TREE to retrieve the full dependency 
 
 Use CREATE_ISSUE to create subtasks, then ADD_DEPENDENCY with `parent-child` type to link them to the parent issue.
 
+### Work Type Classification
+
+For each work unit, classify its `work_type` based on the `assigned_files` using the same detection patterns defined in the Gate Profiles section above. The `work_type` must be one of: `application_code`, `infrastructure_config`, `database_migration`, `api_specification`, `agent_prompt`, `documentation`, `ci_cd_pipeline`, `test_code`, `configuration`. If files span multiple work types, use the dominant type (the one with the most files). If uncertain, default to `application_code`.
+
 ## File Assignment Protocol
 
 Assign exclusive files per work unit when paths are known:
@@ -299,6 +303,7 @@ Assign exclusive files per work unit when paths are known:
 ```json
 {
   "id": "WORK-001",
+  "work_type": "application_code",
   "assigned_files": ["src/auth/LoginForm.js", "tests/auth/LoginForm.test.js"],
   "file_ownership": "exclusive"
 }
@@ -344,6 +349,7 @@ All planning responses must include `strategy_selection` and `implementation_gui
     "work_units": [
       {
         "id": "WORK-001", "title": "...", "group": 1,
+        "work_type": "application_code",
         "prerequisites": [], "assigned_files": ["..."],
         "file_ownership": "exclusive", "parallelizable": true,
         "size_metrics": { "estimated_files": 2, "estimated_loc": 150, "complexity": "low" },
@@ -416,7 +422,7 @@ Use QUERY_DEPENDENCY_TREE on the epic ID to retrieve the full hierarchy. Use FET
 
 | Criterion | Pass | Fail | Auto-Fix |
 |-----------|------|------|----------|
-| **Detail Sufficiency**: Can agent work autonomously? | Clear objective, identifiable files, acceptance criteria, bounded size | Vague objective, no file hints, no AC, unbounded | Add missing details |
+| **Detail Sufficiency**: Can agent work autonomously? | Clear objective, identifiable files, acceptance criteria, bounded size, `work_type` set | Vague objective, no file hints, no AC, unbounded, missing `work_type` | Add missing details (including `work_type` classified from assigned files) |
 | **Cross-Issue Awareness**: Do related issues reference each other? | Same-module issues linked, file overlap documented, scope boundaries clear | No cross-references, overlap not mentioned | Add cross-references |
 | **Relationship Appropriateness**: Are deps structured for parallel execution? | parent-child for hierarchy, blocks only for execution order, no unnecessary blockers or cycles | Flat with blockers, "blocks because related", circular deps | Remove inappropriate blockers, convert to cross-references |
 | **Orchestratability**: Can takeoff execute without human guidance? | Determinable execution order, visible parallel groups, identifiable critical path, clear scope boundaries | Ambiguous deps, everything serial, open-ended scope | Add execution hints |
