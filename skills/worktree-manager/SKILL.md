@@ -36,7 +36,7 @@ All scripts are located in `${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/script
 | `worktree-create.sh` | `<task-id> <description> [--base-branch <branch>]` |
 | `worktree-list.sh` | `[--json] [--verbose]` |
 | `worktree-status.sh` | `<worktree-path>` |
-| `worktree-cleanup.sh` | `<worktree-path> --keep-branch\|--delete-branch [--force] [--dry-run]` |
+| `worktree-cleanup.sh` | `<worktree-path> --keep-branch\|--delete-branch [--force] [--dry-run] [--timeout <sec>] [--network-timeout <sec>] [--skip-lock-check]` |
 
 ### Safe Worktree Removal
 
@@ -102,4 +102,19 @@ cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-m
 ### Force remove (emergency, with uncommitted changes)
 ```bash
 cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-auth-feature --delete-branch --force
+```
+
+### Custom timeout for large worktrees (monorepos, heavy node_modules)
+```bash
+cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-auth-feature --delete-branch --timeout 300
+```
+
+### Skip lock detection for CI/headless environments
+```bash
+cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-auth-feature --delete-branch --skip-lock-check
+```
+
+### Custom network timeout for slow remotes
+```bash
+cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-auth-feature --delete-branch --network-timeout 60
 ```
