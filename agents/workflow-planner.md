@@ -257,7 +257,6 @@ The `escalation_triggers` field in the JSON planning report should reference the
 - **Files**: 3-5 max per package
 - **LOC**: ~500 lines per work unit
 - **Scope**: Single responsibility, explainable in <3 lines
-- **Time**: 1-2 hours estimated
 - **Dependencies**: Max 2-3 direct
 
 ### Decomposition Rules
@@ -267,7 +266,7 @@ The `escalation_triggers` field in the JSON planning report should reference the
 4. Each package must have clear test boundaries and be completable in a single agent invocation
 
 ### Red Flags (Too Large)
-Any work unit that touches >5 files, needs >3 lines to describe, has multiple unrelated responsibilities, estimates >500 LOC, or exceeds 2 hours.
+Any work unit that touches >5 files, needs >3 lines to describe, has multiple unrelated responsibilities, or estimates >500 LOC.
 
 ## Issue Hierarchy and Dependencies
 
