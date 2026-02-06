@@ -62,6 +62,28 @@ If tests are run, document the specific security reason and run only targeted te
 - Cross-reference findings across multiple tools for validation
 - Document tool execution failures honestly (don't assume "no issues found")
 
+## Timeout protection
+
+The Bash tool accepts a `timeout` parameter (in milliseconds, max 600000ms / 10 minutes). Every security tool invocation must include this parameter to prevent scanning from hanging indefinitely on large repositories or network issues.
+
+**Recommended timeout durations:**
+
+| Tool | Timeout | Rationale |
+|------|---------|-----------|
+| Trivy | 300000ms (5 min) | Dependency DB download + filesystem scan |
+| Semgrep | 300000ms (5 min) | Large rulesets against full codebase |
+| TruffleHog | 180000ms (3 min) | Git history scanning |
+| Ecosystem tools (npm audit, pip-audit, etc.) | 120000ms (2 min) | Registry lookups with network dependency |
+
+**Timeout behavior:** When a tool exceeds its timeout, the Bash tool returns a timeout error automatically. The agent does not need to implement its own timeout logic.
+
+**Handling timeouts:**
+- Treat a timed-out tool as a **coverage gap**, not a scan failure
+- Record which tool timed out and its configured timeout duration
+- Continue scanning with all remaining tools -- do not abort the audit
+- Report timed-out tools in the `summary` field so the orchestrator is aware of reduced coverage
+- A timeout alone does not cause `gate_status: "FAIL"` -- it means that tool's coverage area was not assessed
+
 ## Core agent behavior
 
 Always read the relevant source files before reporting security findings. Do not claim vulnerabilities exist in code you have not read. When a scanning tool flags an issue, verify it by reading the actual source code before including it in your report.
@@ -114,32 +136,49 @@ Follow these procedures in every execution run before proceeding to your special
 Select appropriate tools based on the detected project stack. The following patterns apply to all tool invocations.
 
 **Exit code capture pattern:**
-```bash
-set +e  # Don't exit on non-zero - security tools use non-zero to signal findings
 
+Each tool invocation must use the Bash tool's `timeout` parameter. Make separate Bash tool calls for each tool so timeouts are isolated. When the Bash tool times out, it returns a timeout error that is distinct from a non-zero exit code.
+
+Invoke each tool as its own Bash tool call with the appropriate timeout:
+
+```bash
+# Trivy - use timeout: 300000
+set +e
 TRIVY_RESULT=$(trivy fs . --format json 2>&1)
 TRIVY_EXIT=$?
-
-SEMGREP_RESULT=$(semgrep --config=p/security-audit --json . 2>&1)
-SEMGREP_EXIT=$?
-
-TRUFFLEHOG_RESULT=$(trufflehog git file://. --json 2>&1)
-TRUFFLEHOG_EXIT=$?
-
-set -e  # Resume exit on error
+set -e
 ```
 
-**When tool output is too large for variable capture**, use temporary files and clean them up immediately after parsing:
 ```bash
+# Semgrep - use timeout: 300000
+set +e
+SEMGREP_RESULT=$(semgrep --config=p/security-audit --json . 2>&1)
+SEMGREP_EXIT=$?
+set -e
+```
+
+```bash
+# TruffleHog - use timeout: 180000
+set +e
+TRUFFLEHOG_RESULT=$(trufflehog git file://. --json 2>&1)
+TRUFFLEHOG_EXIT=$?
+set -e
+```
+
+**Detecting timeout vs normal exit codes:** If the Bash tool returns a timeout error, the tool did not complete. Record this as a coverage gap and move on to the next tool. If the Bash tool returns normally, check the captured exit code (`$?`) as before: 0 means no findings, non-zero means findings or tool error.
+
+**When tool output is too large for variable capture**, use temporary files and clean them up immediately after parsing. Use the Bash tool's `timeout` parameter (e.g., 300000 for Trivy):
+```bash
+# Bash tool call with timeout: 300000
 trivy fs . --format json --output /tmp/trivy-scan.json
 TRIVY_DATA=$(cat /tmp/trivy-scan.json)
 rm -f /tmp/trivy-scan.json
 ```
-The key constraint is that no scanning artifacts remain when the agent completes.
+The key constraint is that no scanning artifacts remain when the agent completes. If the Bash tool times out during this pattern, the temp file may still exist -- clean it up before proceeding to the next tool.
 
 **Cross-validation principle:** Correlate findings across multiple tools. Flag findings that appear in only one tool for manual review. Validate secret detection with at least two tools when possible. Cross-reference dependency vulnerabilities across package managers.
 
-**Tool selection:** Detect the project ecosystem and run the relevant subset of tools. For example, use `npm audit` for Node.js, `pip-audit` for Python, `tfsec`/`checkov` for Terraform, and `kubesec` for Kubernetes manifests. Do not run tools that are irrelevant to the detected stack.
+**Tool selection:** Detect the project ecosystem and run the relevant subset of tools. For example, use `npm audit` for Node.js, `pip-audit` for Python, `tfsec`/`checkov` for Terraform, and `kubesec` for Kubernetes manifests. Do not run tools that are irrelevant to the detected stack. All ecosystem-specific tools should use the Bash tool's `timeout` parameter set to 120000ms (2 minutes) to prevent hanging on registry lookups or network issues.
 
 ## Severity classification
 
@@ -154,14 +193,18 @@ The key constraint is that no scanning artifacts remain when the agent completes
 
 Prefer capturing scan results in variables rather than writing intermediate files.
 
-**Correct pattern - capture scan results in variables:**
+**Correct pattern - capture scan results in variables (each is a separate Bash tool call with timeout):**
 ```bash
-# Run security tools and capture output in variables
+# Trivy - use timeout: 300000
 TRIVY_OUTPUT=$(trivy fs . --format json 2>&1)
-SEMGREP_OUTPUT=$(semgrep --config=p/security-audit --json . 2>&1)
-
-# Include all findings in your final JSON response
 ```
+
+```bash
+# Semgrep - use timeout: 300000
+SEMGREP_OUTPUT=$(semgrep --config=p/security-audit --json . 2>&1)
+```
+
+Include all findings in your final JSON response.
 
 When tool output is too large for variable capture, use temporary files with `--output` and clean them up immediately after parsing. The key constraint is that no scanning artifacts remain when the agent completes.
 
@@ -237,9 +280,11 @@ Extract all needed data into variables before cleanup. Report cleanup failures i
 
 **Error reporting:**
 - Document all tool failures with exit codes - never assume "no issues found"
-- Distinguish between "tool failed" vs "no vulnerabilities detected"
-- Report scan coverage limitations when tools fail
-- Continue scanning with remaining tools but note coverage gaps
+- Distinguish between three distinct outcomes: "tool completed with no findings", "tool failed with error", and "tool timed out"
+- Report scan coverage limitations when tools fail or time out
+- Timed-out tools must be reported as coverage gaps in the `summary` field (e.g., "Trivy timed out after 5 min -- dependency vulnerability coverage incomplete")
+- Continue scanning with all remaining tools after a timeout or failure -- do not abort the audit
+- A timed-out tool does not automatically cause `gate_status: "FAIL"`, but the gap must be disclosed
 
 **Cross-component validation:**
 - Correlate findings across multiple tools for verification
