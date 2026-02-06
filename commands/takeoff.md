@@ -172,16 +172,31 @@ Check whether the task already has child issues with acceptance criteria (indica
 
 1. Use LIST_CHILDREN to get direct children of the task
 2. If children exist and have acceptance criteria, mark the task as **pre-planned**
-3. Use QUERY_DEPENDENCY_TREE to understand execution ordering among children
+3. Use QUERY_DEPENDENCY_TREE to retrieve the full hierarchy from the root task
 
-**If pre-planned**: Extract work units from child issues using the full scope rule:
-- **Closed** children: skip (already completed)
-- **Open, unblocked** children: execute immediately
-- **Open, blocked** children: execute after their blockers complete
+### Full Tree Scope
 
-Dependencies determine execution ORDER, not whether a task is included. Every non-closed child must appear in the plan.
+Takeoff always executes the **entire descendant tree** of the given task. If a parent issue is passed, every non-closed descendant at every level must be completed before the task is considered done.
 
-Select strategy based on non-closed child count: 1 child uses very_small_direct, 2-4 uses medium_single_branch, 5+ uses large_multi_worktree.
+### Tree Flattening
+
+After retrieving children, determine whether any child itself has children (check via LIST_CHILDREN on each direct child, or inspect the QUERY_DEPENDENCY_TREE result):
+
+- **Depth 1 (all children are leaf tasks)**: Use children directly as work units.
+- **Depth > 1 (children have their own children)**: Flatten to leaf-level work units. Intermediate nodes (phases, stories, epics) become **grouping labels** for organizing work, not work units themselves. Only leaf-level issues -- those with no children of their own -- are executable work units.
+
+When flattening, preserve the grouping structure for TodoWrite: use the intermediate node's title as the group label and assign its leaf descendants sequential step numbers within that group (e.g., "Phase 1: Backend" becomes the group heading for steps 1.1, 1.2, 1.3).
+
+### Work Unit Extraction
+
+**If pre-planned**: Extract leaf-level work units using the full scope rule:
+- **Closed** leaves: skip (already completed)
+- **Open, unblocked** leaves: execute immediately
+- **Open, blocked** leaves: execute after their blockers complete
+
+Dependencies determine execution ORDER, not whether a task is included. Every non-closed leaf must appear in the plan.
+
+Select strategy based on the count of non-closed **leaf-level** work units: 1 uses very_small_direct, 2-4 uses medium_single_branch, 5+ uses large_multi_worktree.
 
 **If not pre-planned**: Proceed to the Planning section below.
 
@@ -244,6 +259,21 @@ Append these after the mandatory tasks when conditions are met:
 - Close completed tasks
 ```
 
+### Re-Read Protocol
+
+After marking any entry as completed via TodoWrite, immediately use **TaskList** to re-read all entries. This confirms the update was applied and identifies the next pending entry. Do not rely on memory for TodoWrite state -- always re-read after writes.
+
+### Dependency Chain
+
+After creating all TodoWrite entries, set up blockedBy relationships for the final tasks:
+
+- "User review and feedback" is blockedBy every work unit entry (all Step X.Y tasks)
+- "Merge to [target branch]" is blockedBy "User review and feedback"
+- "Close completed tasks" is blockedBy "Merge to [target branch]"
+- "Clean up session worktrees" is blockedBy "Merge to [target branch]"
+
+"Close completed tasks" and "Clean up session worktrees" are siblings -- both blocked by Merge, not by each other -- so they run in parallel after merge completes.
+
 ### Why Persist to TodoWrite
 
 TodoWrite entries survive session disconnects, give the user real-time visibility into progress, and allow the orchestrator to resume from any point in the plan.
@@ -253,25 +283,27 @@ TodoWrite entries survive session disconnects, give the user real-time visibilit
 
 Execute ALL work units from the plan. Do not present work to the user or proceed to the Completion section until every work unit in the TodoWrite plan is marked completed.
 
-### Per-Unit Cycle
+### Per-Unit Cycle -- REPEAT until all units done
 
-For each work unit in the plan:
+For each work unit in the plan, repeat this cycle:
 
 1. Update TodoWrite to mark the unit as in_progress
 2. Deploy the specified coding agent using the deployment template below
-3. Run quality gates on the completed work
+3. Run quality gates on the completed work (see Dynamic Gate Selection and Quality Gate Protocol below)
 4. Update TodoWrite to mark the unit as completed
 5. If this is a pre-planned child issue, use CLOSE_ISSUE to close it in the task system
+6. **Announce progress and loop back**: "Completed [X] of [N] work units. Next: [unit name]." -- then return to step 1 for the next unit
 
-After completing a work unit's gate cycle, announce progress:
-"Completed [X] of [N] work units. Next: [unit name]." (or "All [N] work units completed." if finished)
+This cycle repeats for every work unit. The Completion section is only reachable after the final unit passes its gates.
 
 ### Continuation Rule
 
-After completing a work unit and its gates, check TodoWrite for remaining work:
-- If any work unit entries remain pending or in_progress, proceed to the next one
-- Only move to Completion and User Feedback when ALL work unit entries show completed status
-- Never proceed to "Touchdown" while TodoWrite still has pending work unit entries
+After completing a work unit and its gates:
+
+1. Use **TaskList** to read all TodoWrite entries (do not rely on memory -- re-read the actual state)
+2. Count entries with status "pending" or "in_progress", excluding "User review", "Merge", "Close", and "Clean up" entries
+3. If count > 0, announce "N work units remain" and proceed to the next pending entry
+4. Only move to Completion and User Feedback when count === 0
 
 When multiple work units share a group number and have no mutual dependencies, deploy their agents in parallel (multiple Task calls in a single message).
 
@@ -349,6 +381,8 @@ GATE_EXPECTATIONS: test-runner (80% coverage), code-reviewer (SOLID), security-a
 - Keep each work package to a maximum of 5 files, 500 LOC, and 2 hours of estimated work
 
 **Populating GATE_EXPECTATIONS:** After determining the gate profile (see Dynamic Gate Selection), list each gate agent and its primary check. This primes the coding agent to write code that will pass review on the first attempt.
+
+**After the agent returns:** Run quality gates on the completed work. Once all gates pass, check TodoWrite for the next pending work unit and continue the Per-Unit Cycle.
 
 
 ## Quality Gate Protocol
@@ -485,6 +519,14 @@ If either fails, combine `blocking_issues` from both before redeploying the codi
 - **reaper:test-runner to reaper:security-auditor**: Pass plan context only (security-auditor does not need test results)
 
 
+### LOOP CHECKPOINT: Return to Per-Unit Cycle
+
+After the gates pass for the current work unit, check TodoWrite for remaining units:
+- **Pending units remain** --> return to Per-Unit Cycle step 1 for the next unit
+- **All units completed** --> proceed to Learning Extraction below
+
+Do not fall through to Completion while TodoWrite has pending work units.
+
 ## Learning Extraction
 
 After all quality gates pass but before presenting to the user, check whether any gate required 2 or more iterations. If so:
@@ -497,14 +539,25 @@ Apply a two-question filter: (a) Would Claude make this mistake again without th
 
 Maximum 3 suggestions per session. Never auto-apply these entries -- always direct the user to `/reaper:claude-sync` for review. If no patterns recurred, omit this section from the output.
 
+---
+
+### STOP -- Verify Before Completion
+
+Do not read past this point without performing the verification steps below. This is a mandatory checkpoint.
+
+1. **Re-read**: Use **TaskList** to read all TodoWrite entries right now
+2. **Count**: Count entries with status "pending" or "in_progress", excluding "User review", "Merge", "Close", and "Clean up" entries
+3. **Decide**:
+   - If count > 0: State "N work units remain -- returning to Per-Unit Cycle" and go back to Strategy Execution
+   - If count === 0: Proceed to Completion below
+
+---
+
 ## Completion and User Feedback
 
-**Trigger condition:** ALL of the following must be true before presenting work:
-1. Every work unit entry in TodoWrite is marked "completed"
-2. All quality gates for the final unit have passed
-3. No TodoWrite entries remain in pending or in_progress state (excluding "User review" and "Merge" entries)
+**Trigger condition (verified by the STOP checkpoint above):** The TaskList re-read confirmed zero pending or in_progress work unit entries. All quality gates for the final unit have passed.
 
-If any condition fails, return to Strategy Execution and process remaining work units.
+If you did not perform the STOP checkpoint above, go back and do it now.
 
 When these conditions are met, present completed work:
 
@@ -556,11 +609,15 @@ After a successful merge, invoke the `worktree-manager` skill to safely remove t
 3. Detect pre-planned structure or deploy reaper:workflow-planner
 4. Validate work package sizes
 5. Write plan to TodoWrite
-6. Execute work units in loop (check TodoWrite after each, continue until all completed)
-7. Classify files and select gate profile (see Dynamic Gate Selection)
-8. Run selected quality gates through the profile sequence
-9. Auto-iterate on failures (differential retry limits per agent)
-9a. Check TodoWrite — if pending work units remain, loop back to step 6
+
+**Per-unit loop (repeat for EACH work unit):**
+
+>  **6. Deploy coding agent** for the current work unit
+>  **7. Classify files and select gate profile** (Dynamic Gate Selection)
+>  **8. Run quality gates** through the profile sequence
+>  **9. Auto-iterate** on gate failures (differential retry limits)
+>  **--> Check TodoWrite: pending units remain? Loop to step 6**
+
 10. Extract learning patterns from multi-iteration gates
 11. Present completed work to user
 12. Merge on explicit user approval

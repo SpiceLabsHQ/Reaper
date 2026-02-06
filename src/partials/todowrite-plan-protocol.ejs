@@ -35,6 +35,21 @@ Append these after the mandatory tasks when conditions are met:
 - Close completed tasks
 ```
 
+### Re-Read Protocol
+
+After marking any entry as completed via TodoWrite, immediately use **TaskList** to re-read all entries. This confirms the update was applied and identifies the next pending entry. Do not rely on memory for TodoWrite state -- always re-read after writes.
+
+### Dependency Chain
+
+After creating all TodoWrite entries, set up blockedBy relationships for the final tasks:
+
+- "User review and feedback" is blockedBy every work unit entry (all Step X.Y tasks)
+- "Merge to [target branch]" is blockedBy "User review and feedback"
+- "Close completed tasks" is blockedBy "Merge to [target branch]"
+- "Clean up session worktrees" is blockedBy "Merge to [target branch]"
+
+"Close completed tasks" and "Clean up session worktrees" are siblings -- both blocked by Merge, not by each other -- so they run in parallel after merge completes.
+
 ### Why Persist to TodoWrite
 
 TodoWrite entries survive session disconnects, give the user real-time visibility into progress, and allow the orchestrator to resume from any point in the plan.
