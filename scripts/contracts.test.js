@@ -1,12 +1,13 @@
 /**
- * @fileoverview Structural contract tests for generated output files.
+ * @fileoverview Structural and semantic contract tests for generated output files.
  *
  * Validates that all files produced by the EJS build system satisfy the
  * contracts Claude Code requires: valid YAML frontmatter, no EJS residue,
- * no template-variable leaks, and correct hooks.json schema.
+ * no template-variable leaks, correct hooks.json schema, and semantic
+ * invariants per agent category (e.g., coding agents contain TDD protocol).
  *
  * Runs post-build, consuming files from disk. Does not import the build
- * system or modify any files.
+ * system or modify any files (imports only classification constants).
  *
  * @example
  * node --test scripts/contracts.test.js
@@ -16,6 +17,11 @@ const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
+const {
+  AGENT_TYPES,
+  TDD_AGENTS,
+  GATE_CAPABLE_AGENTS,
+} = require('./build');
 
 // ---------------------------------------------------------------------------
 // Paths — resolved relative to this file's parent (scripts/) then up to root
@@ -383,4 +389,126 @@ describe('Contract: hooks.json structure', () => {
       }
     }
   });
+});
+
+// ---------------------------------------------------------------------------
+// Semantic contract helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Checks whether markdown content contains a level-2 heading matching a
+ * regex pattern. Searches only outside fenced code blocks to avoid
+ * false positives from code examples.
+ * @param {string} content - Full markdown content
+ * @param {RegExp} pattern - Pattern to match against heading text
+ * @returns {boolean}
+ */
+function hasSection(content, pattern) {
+  const prose = stripCodeBlocks(content);
+  const headings = prose.match(/^## .+$/gm) || [];
+  return headings.some((h) => pattern.test(h));
+}
+
+/**
+ * Resolves the generated agent file path from agent name.
+ * @param {string} agentName - Agent name (e.g. 'bug-fixer')
+ * @returns {string} Absolute path to the generated agent .md file
+ */
+function agentFilePath(agentName) {
+  return path.join(AGENTS_DIR, `${agentName}.md`);
+}
+
+// ---------------------------------------------------------------------------
+// Semantic contract definitions (data-driven)
+// ---------------------------------------------------------------------------
+
+/**
+ * Maps category keys to required section patterns.
+ * Each entry produces a describe block asserting section presence.
+ */
+const SEMANTIC_CONTRACTS = {
+  coding: {
+    label: 'coding agents',
+    agents: () => AGENT_TYPES.coding,
+    sections: [
+      { pattern: /TDD/, label: 'TDD protocol section' },
+      { pattern: /GIT OPERATION PROHIBITIONS/i, label: 'git prohibitions section' },
+    ],
+  },
+  review: {
+    label: 'review agents',
+    agents: () => AGENT_TYPES.review,
+    sections: [
+      { pattern: /Output Requirements/i, label: 'output requirements section' },
+      { pattern: /Required JSON/i, label: 'required JSON schema section' },
+    ],
+  },
+  gateCapable: {
+    label: 'gate-capable agents',
+    agents: () => GATE_CAPABLE_AGENTS,
+    sections: [
+      { pattern: /GATE_MODE/, label: 'GATE_MODE section' },
+    ],
+  },
+  planning: {
+    label: 'planning agents',
+    agents: () => AGENT_TYPES.planning,
+    sections: [
+      { pattern: /^## Scope/, label: 'scope boundary section' },
+    ],
+  },
+};
+
+/**
+ * Registers a describe block from a SEMANTIC_CONTRACTS entry.
+ * Generates one test per agent per required section.
+ * @param {string} key - Key into SEMANTIC_CONTRACTS
+ */
+function registerSemanticSuite(key) {
+  const contract = SEMANTIC_CONTRACTS[key];
+  describe(`Contract: ${contract.label} have required sections`, () => {
+    const agents = contract.agents();
+    assert.ok(
+      agents.length > 0,
+      `Expected at least one ${contract.label} agent`
+    );
+
+    for (const agentName of agents) {
+      for (const { pattern, label } of contract.sections) {
+        it(`${agentName} contains ${label}`, () => {
+          const filePath = agentFilePath(agentName);
+          assert.ok(fs.existsSync(filePath), `${agentName}.md not found`);
+          const content = fs.readFileSync(filePath, 'utf8');
+          assert.ok(
+            hasSection(content, pattern),
+            `${agentName}.md is missing required ${label}`
+          );
+        });
+      }
+    }
+  });
+}
+
+// Register all semantic contract suites
+registerSemanticSuite('coding');
+registerSemanticSuite('review');
+registerSemanticSuite('gateCapable');
+registerSemanticSuite('planning');
+
+// ---------------------------------------------------------------------------
+// Contract: TDD agents are a subset of coding agents
+// ---------------------------------------------------------------------------
+
+describe('Contract: TDD agents are classified as coding agents', () => {
+  const codingAgents = AGENT_TYPES.coding;
+  assert.ok(TDD_AGENTS.length > 0, 'Expected at least one TDD agent');
+
+  for (const agentName of TDD_AGENTS) {
+    it(`${agentName} is in AGENT_TYPES.coding`, () => {
+      assert.ok(
+        codingAgents.includes(agentName),
+        `${agentName} is in TDD_AGENTS but not in AGENT_TYPES.coding`
+      );
+    });
+  }
 });

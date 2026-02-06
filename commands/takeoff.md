@@ -315,6 +315,15 @@ When multiple work units share a group number and have no mutual dependencies, d
 - **medium_single_branch**: Multiple agents work sequentially or in parallel on the same branch. Ensure file assignments do not overlap for parallel work.
 - **large_multi_worktree**: Each agent gets its own worktree. Use the worktree-manager skill to create isolated worktrees. Deploy reaper:branch-manager to merge completed worktrees.
 
+### Context Hygiene for Long Sessions
+
+Sessions with 6 or more work units accumulate context that degrades orchestrator decision quality. Apply these practices:
+
+1. **Rely on worktree isolation** -- The `large_multi_worktree` strategy keeps each agent's context fresh by design. Do not carry agent implementation details forward between units.
+2. **Summarize, do not accumulate** -- After each unit's gates pass, retain only the one-line summary (task name, pass/fail, files touched). Discard full agent output and gate JSON.
+3. **TodoWrite is the source of truth** -- If progress state is uncertain after many iterations, re-read TodoWrite rather than reconstructing state from memory. The plan persists; your recall of early units does not.
+4. **Front-load complex units** -- When ordering permits, schedule the hardest work units first while orchestrator context is cleanest.
+
 ## Dynamic Gate Selection
 
 After a coding agent completes work, determine the appropriate quality gates:
