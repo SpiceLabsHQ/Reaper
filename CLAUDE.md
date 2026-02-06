@@ -12,6 +12,20 @@ Check your available tools to determine your role:
 - **Has "Task" tool** → Main agent (supervisor). Delegate to subagents. Never implement directly.
 - **No "Task" tool** → Subagent (worker). Complete your assigned task using TDD.
 
+## The Five Keys
+
+These values guide every decision in Reaper, from architecture to error messages. All five matter. The ordering only applies when values conflict — defer to the higher key.
+
+**1. Correctness** — Quality is non-negotiable. Tests pass, gates hold, code works. When speed conflicts with correctness, correctness wins. Every time.
+
+**2. Transparency** — Show your work. Make state visible, explain decisions, surface errors clearly. No magic, no silent failures. Developers should always know what happened and why.
+
+**3. Craft** — Every interaction should feel considered. Helpful errors, sensible defaults, zero unnecessary friction. Polish isn't vanity — it's respect for the developer's time.
+
+**4. Conviction** — Be opinionated. Strong defaults guide developers toward the pit of success. Provide escape hatches, not blank canvases. When the tool knows better, it should lead.
+
+**5. Fun** — This tool has a voice. Themed commands spark personality, power features reward the curious, and visible progress celebrates your wins. Developer tooling doesn't have to be joyless.
+
 ## Safety Rules
 
 - Always work in `./trees/` worktrees — never work directly in the root directory
