@@ -6,7 +6,8 @@
   "scripts": {
     "build": "node scripts/build.js",
     "build:watch": "node scripts/build.js --watch",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test 'scripts/**/*.test.js'",
+    "test:coverage": "node --test --experimental-test-coverage 'scripts/**/*.test.js'",
     "prepare": "husky",
     "release": "commit-and-tag-version",
     "release:dry-run": "commit-and-tag-version --dry-run"

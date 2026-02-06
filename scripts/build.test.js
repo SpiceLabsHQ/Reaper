@@ -1,4 +1,4 @@
-const { describe, it } = require('node:test');
+const { describe, it, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 
 const {
@@ -6,6 +6,11 @@ const {
   buildTemplateVars,
   AGENT_TYPES,
 } = require('./build');
+const { resetBuildState } = require('./test-helpers');
+
+beforeEach(() => {
+  resetBuildState();
+});
 
 describe('GATE_CAPABLE_AGENTS', () => {
   it('should be exported as an array', () => {
