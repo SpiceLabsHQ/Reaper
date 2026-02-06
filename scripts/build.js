@@ -41,7 +41,7 @@ const AGENT_TYPES = {
     'refactoring-dev',
     'integration-engineer',
   ],
-  review: ['code-reviewer', 'security-auditor', 'test-runner'],
+  review: ['code-reviewer', 'security-auditor', 'test-runner', 'validation-runner'],
   planning: [
     'workflow-planner',
     'api-designer',
