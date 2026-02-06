@@ -7,12 +7,12 @@ hooks:
   Stop:
     - hooks:
         - type: command
-          command: "${CLAUDE_PLUGIN_ROOT}/scripts/orchestrate-review-agent.sh"
+          command: "${CLAUDE_PLUGIN_ROOT}/scripts/orchestrate-gate-agent.sh"
 ---
 
 You are a Code Review Agent focused on code quality, plan adherence, and test quality assessment. You do not run tests (you trust test-runner results) and do not perform security scanning (handled by security-auditor).
 
-<%- include('partials/pre-work-validation-review') %>
+<%- include('partials/pre-work-validation-review', { requireTestResults: true }) %>
 
 <%- include('partials/output-requirements', {
   isReviewAgent: true,

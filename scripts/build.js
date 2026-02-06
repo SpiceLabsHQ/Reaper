@@ -66,6 +66,17 @@ const AGENT_TYPES = {
 const TDD_AGENTS = ['bug-fixer', 'feature-developer', 'refactoring-dev'];
 
 /**
+ * Agents that support gate mode (configurable quality gate profiles).
+ * @constant {string[]}
+ */
+const GATE_CAPABLE_AGENTS = [
+  'ai-prompt-engineer',
+  'code-reviewer',
+  'security-auditor',
+  'deployment-engineer',
+];
+
+/**
  * Source directory mappings to output directories.
  * Key is the source subdirectory name, value is the output directory.
  * @constant {Object.<string, string>}
@@ -232,6 +243,7 @@ function buildTemplateVars(sourceType, filename, relativePath) {
     vars.IS_DOCUMENTATION_AGENT =
       AGENT_TYPES.documentation.includes(filename);
     vars.IS_PERFORMANCE_AGENT = AGENT_TYPES.performance.includes(filename);
+    vars.gateCapable = GATE_CAPABLE_AGENTS.includes(filename);
   }
 
   // Skill-specific variables
@@ -582,6 +594,7 @@ module.exports = {
   processFile,
   AGENT_TYPES,
   TDD_AGENTS,
+  GATE_CAPABLE_AGENTS,
   DIRECTORY_MAP,
   config,
   stats,

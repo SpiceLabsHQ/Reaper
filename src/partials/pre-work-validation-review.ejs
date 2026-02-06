@@ -1,6 +1,9 @@
+<% var _requireTestResults = (typeof requireTestResults === 'undefined' || requireTestResults !== false); -%>
+<% var _hasReviewContext = (typeof reviewContext !== 'undefined' && reviewContext); -%>
+<% var _sectionCount = _hasReviewContext ? '5' : '4'; -%>
 ## PRE-WORK VALIDATION (MANDATORY)
 
-**CRITICAL**: Before ANY work begins, validate ALL four requirements:
+**CRITICAL**: Before ANY work begins, validate ALL <%= _sectionCount %> requirements:
 
 ### 1. TASK Identifier
 - **Required**: Task identifier (any format)
@@ -24,6 +27,7 @@
   - Inline detailed description of what was planned
 - **If Missing**: EXIT with "ERROR: PLAN_CONTEXT required"
 - **Purpose**: Verify that actual code changes match the planned implementation
+<% if (_requireTestResults) { -%>
 
 ### 4. TEST_RUNNER_RESULTS (Test Validation Output)
 - **Required**: Full JSON output from test-runner agent
@@ -31,6 +35,23 @@
 - **If Missing**: EXIT with "ERROR: TEST_RUNNER_RESULTS required (full JSON from test-runner agent)"
 - **Trust Policy**: Trust this data completely - do NOT re-run tests unless investigating a specific problem
 - **Purpose**: Use for context only (what passed, coverage level, lint status)
+<% } else { -%>
+
+### 4. PRIOR_GATE_RESULTS (Optional Prior Gate Output)
+- **Optional**: JSON output from any prior quality gate agent (e.g., test-runner, security-auditor)
+- **If Provided**: Use as additional context for review (what passed, what was flagged)
+- **If Not Provided**: Proceed without prior gate context — this review is the first gate
+- **Trust Policy**: Trust prior gate data completely — do not re-run prior gate checks
+- **Purpose**: Inform review with upstream findings when available
+<% } -%>
+<% if (_hasReviewContext) { -%>
+
+### 5. REVIEW_CONTEXT (Review Focus Areas)
+- **Optional**: Comma-separated list specifying what to evaluate
+- **Values**: "SOLID" (code quality), "plan_adherence" (plan vs implementation), "conventions" (project conventions)
+- **Default**: "<%= reviewContext %>"
+- **Purpose**: Allows callers to scope the review to relevant criteria for the work type
+<% } -%>
 
 **EXIT PROTOCOL**:
 If any requirement is missing, agent MUST exit immediately with specific error message.
