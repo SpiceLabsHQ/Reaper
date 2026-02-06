@@ -12,6 +12,20 @@ Check your available tools to determine your role:
 - **Has "Task" tool** → Main agent (supervisor). Delegate to subagents. Never implement directly.
 - **No "Task" tool** → Subagent (worker). Complete your assigned task using TDD.
 
+## The Five Keys
+
+These values guide every decision in Reaper, from architecture to error messages. All five matter. The ordering only applies when values conflict — defer to the higher key.
+
+**1. Correctness** — Quality is non-negotiable. Tests pass, gates hold, code works. When speed conflicts with correctness, correctness wins. Every time.
+
+**2. Transparency** — Show your work. Make state visible, explain decisions, surface errors clearly. No magic, no silent failures. Developers should always know what happened and why.
+
+**3. Craft** — Every interaction should feel considered. Helpful errors, sensible defaults, zero unnecessary friction. Polish isn't vanity — it's respect for the developer's time.
+
+**4. Conviction** — Be opinionated. Strong defaults guide developers toward the pit of success. Provide escape hatches, not blank canvases. When the tool knows better, it should lead.
+
+**5. Fun** — This tool has a voice. Themed commands spark personality, power features reward the curious, and visible progress celebrates your wins. Developer tooling doesn't have to be joyless.
+
 ## Safety Rules
 
 - Always work in `./trees/` worktrees — never work directly in the root directory
@@ -105,8 +119,24 @@ skills/          # GENERATED
 hooks/           # GENERATED
 
 scripts/         # Build tooling
-docs/spice/      # Development standards documentation
+docs/            # User-facing documentation (agents, commands, workflow, quality gates, auto-formatting)
+docs/spice/      # Development standards documentation (internal)
 ```
+
+### Documentation Maintenance
+
+User-facing docs (`README.md` and `docs/*.md`) must stay in sync with the codebase. When changes affect any of the following, update the corresponding doc:
+
+| Change | Update |
+|--------|--------|
+| Agent added/removed/renamed | `docs/agents.md` and README agent count |
+| Command behavior or flags changed | `docs/commands.md` |
+| Quality gate pipeline modified | `docs/quality-gates.md` |
+| Formatter added/removed in hook | `docs/auto-formatting.md` |
+| Workflow or strategy logic changed | `docs/workflow.md` |
+| Coverage threshold or key feature changed | `README.md` "Under the Hood" section |
+
+Run `/reaper:claude-sync` to detect undocumented changes.
 
 ## Template Build System
 
@@ -176,9 +206,9 @@ bd sync                    # Sync with git remote
 |----------|--------|
 | Planning | reaper:workflow-planner, reaper:api-designer, reaper:cloud-architect, reaper:database-architect, reaper:event-architect, reaper:observability-architect, reaper:frontend-architect, reaper:data-engineer, reaper:test-strategist, reaper:compliance-architect |
 | Development | reaper:feature-developer, reaper:bug-fixer, reaper:refactoring-dev, reaper:branch-manager |
-| Quality | reaper:test-runner, reaper:code-reviewer, reaper:security-auditor, reaper:performance-engineer |
+| Quality | reaper:test-runner, reaper:code-reviewer, reaper:security-auditor, reaper:performance-engineer, reaper:validation-runner |
 | Ops | reaper:deployment-engineer, reaper:integration-engineer, reaper:incident-responder |
-| Meta | reaper:technical-writer, reaper:claude-agent-architect, reaper:ai-prompt-engineer |
+| Craft | reaper:technical-writer, reaper:claude-agent-architect, reaper:ai-prompt-engineer |
 
 ### Agent Naming Convention
 
