@@ -97,6 +97,8 @@ Here's who I'm pulling in:
 
 Deploy all panel experts. Each receives the forum-mode initial analysis prompt (see Subagent Prompt Templates below). Deploy in parallel for swarm mode, or remaining panel after scout for scout mode.
 
+**Deploy all panel experts using parallel Task tool calls in a single response.** Do not wait for one expert to return before deploying the next — issue all Task calls together so experts run concurrently.
+
 Capture each agent's ID for later resume/fresh decisions.
 
 ---
@@ -125,6 +127,8 @@ Present each expert's position with their nameplate:
 
 After all positions are in, the facilitator identifies tensions and agreements across the positions. No PO interaction yet — the facilitator synthesizes what they see:
 
+**Grounding rule**: Base your synthesis exclusively on the expert positions delivered above. Reference specific claims from each expert. Do not invent tensions or agreements not evident in the expert output.
+
 ```
 Interesting. So DATABASE ARCHITECT and API DESIGNER agree on [X], but SECURITY AUDITOR is pulling in a different direction on [Y]. Let me get them talking.
 ```
@@ -144,6 +148,8 @@ The facilitator identifies conflicting positions from OPEN and routes them direc
 ```
 DATABASE ARCHITECT, SECURITY AUDITOR — you two are saying different things about [topic]. Hash it out.
 ```
+
+When constructing debate prompts, quote the relevant sentences from the expert's position directly rather than paraphrasing. This prevents misrepresenting their argument.
 
 Deploy the conflicting experts with the adversarial debate prompt (see Subagent Prompt Templates). Each response is 3-5 sentences, direct, addressed to the other expert by name.
 
@@ -187,9 +193,11 @@ Use horizontal rules (`---`) to visually separate each clash exchange, as shown 
 
 ### First PO Interaction
 
-This is where the PO enters the conversation for the first time. Present genuine decision points — not pre-resolved answers.
+CONVERGE is the structured interaction point — this is where you present decisions, trade-offs, and questions to the PO.
 
 ### Synthesis
+
+**Grounding rule**: Base your synthesis exclusively on the expert positions delivered above. Reference specific claims from each expert. Do not invent tensions or agreements not evident in the expert output.
 
 Synthesize the huddle into:
 
@@ -221,7 +229,7 @@ AskUserQuestion({
 
 ### PO Can Intervene at Any Time
 
-The PO can jump in at any phase — the facilitator never pauses between rounds for check-ins. But CONVERGE is the designed interaction point.
+If the PO sends a message during an earlier phase, acknowledge their input and incorporate it — but do not pause between phases for check-ins or approval gates. CONVERGE is the designed structured interaction point.
 
 ### After PO Decisions
 
@@ -453,7 +461,7 @@ Task --subagent_type [EXPERT_AGENT] \
 
 [OTHER_EXPERT_TITLE] said: [their position on the contested point]
 
-You disagree. Respond directly to [OTHER_EXPERT_TITLE] by name.
+Respond directly to [OTHER_EXPERT_TITLE] by name.
 
 RULES:
 - 3-5 sentences. No filler.
