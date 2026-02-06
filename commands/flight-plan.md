@@ -125,12 +125,17 @@ When no task system is detected, inform the user the plan file will be the prima
 
 ### Behavioral Contract
 
-After detecting task system, write three core todos via TodoWrite:
-1. "Show plan for user approval" (in_progress)
-2. "Create issues in [Beads|Jira|Markdown]" (pending) -- dynamic system name
-3. "Launch reaper:workflow-planner subagent to verify issues" (pending)
+After detecting task system, create three core tasks via TaskCreate with blocking dependencies:
 
-Sub-breakdowns are allowed. No todo should mention worktrees, implementation, coding, testing, or deploying. These 3 todos define your complete scope -- when all complete, STOP.
+1. **TaskCreate**: "Show plan for user approval" → set `in_progress`
+2. **TaskCreate**: "Create issues in [Beads|Jira|Markdown]" (dynamic system name)
+3. **TaskCreate**: "Launch reaper:workflow-planner subagent to verify issues"
+
+Then establish blockers via TaskUpdate:
+- Task #2 `addBlockedBy: [#1]` — cannot create issues until plan is approved
+- Task #3 `addBlockedBy: [#2]` — cannot verify issues until they exist
+
+Sub-breakdowns are allowed. No task should mention worktrees, implementation, coding, testing, or deploying. These 3 tasks define your complete scope -- when all complete, STOP.
 
 ---
 
@@ -303,7 +308,14 @@ Use the Write tool to create the plan file at the path from Phase 0, following i
 
 ### After Writing the Plan
 
-Present a summary to the user: plan file path, epic title/goal, number of work units, parallelization percentage, and critical path.
+Present a **flight briefing** to the user that summarizes the plan before asking for approval. Include:
+
+1. **Plan file path** (link to the plan for full details)
+2. **Epic title and goal** (one-liner)
+3. **Work units summary** — for each unit: number, title, type, estimated hours, and whether it runs in parallel
+4. **Critical path** — which units are sequential blockers
+5. **Parallelization** — percentage of work that can run concurrently
+6. **Key assumptions** — list assumptions the user might want to correct
 
 Then prompt for approval using AskUserQuestion. Select the variant based on `TASK_SYSTEM` detected in Phase 1:
 
@@ -312,11 +324,11 @@ Then prompt for approval using AskUserQuestion. Select the variant based on `TAS
 ```json
 {
   "questions": [{
-    "question": "Plan has N work units (M% parallelizable). Create issues in [Beads|Jira]?",
-    "header": "Plan Review",
+    "question": "Flight plan filed: N work units, M% parallelizable. Ready for issue creation in [Beads|Jira]?",
+    "header": "Flight Plan",
     "options": [
-      {"label": "Go", "description": "Create issues as shown in the plan"},
-      {"label": "Cancel", "description": "Abort planning — no issues created"}
+      {"label": "Cleared for takeoff", "description": "Create all issues and dependencies in [Beads|Jira] as shown in the plan above"},
+      {"label": "Revise flight plan", "description": "Circle back to the hangar — request changes to work units, scope, or dependencies before creating issues"}
     ],
     "multiSelect": false
   }]
@@ -328,18 +340,18 @@ Then prompt for approval using AskUserQuestion. Select the variant based on `TAS
 ```json
 {
   "questions": [{
-    "question": "Plan has N work units (M% parallelizable). Finalize plan file?",
-    "header": "Plan Review",
+    "question": "Flight plan filed: N work units, M% parallelizable. Finalize the plan file as your deliverable?",
+    "header": "Flight Plan",
     "options": [
-      {"label": "Go", "description": "Finalize plan file as deliverable"},
-      {"label": "Cancel", "description": "Abort planning"}
+      {"label": "Cleared for takeoff", "description": "Lock in the plan file as the final deliverable — ready for manual task creation or direct /reaper:takeoff execution"},
+      {"label": "Revise flight plan", "description": "Circle back to the hangar — request changes to work units, scope, or dependencies before finalizing"}
     ],
     "multiSelect": false
   }]
 }
 ```
 
-Replace `N` with the work unit count and `M` with the parallelization percentage. AskUserQuestion automatically includes an "Other" option that lets the user type freeform feedback — see Phase 4 for response handling.
+Replace `N` with the work unit count and `M` with the parallelization percentage. AskUserQuestion automatically includes an "Other" option that lets the user type freeform feedback (use it to request changes) — see Phase 4 for response handling.
 
 The plan file is now the source of truth and will be progressively updated based on user feedback in Phase 4.
 
@@ -353,8 +365,8 @@ Map the user's AskUserQuestion selection:
 
 | Selection | Action |
 |-----------|--------|
-| **Go** | Proceed to Phase 5 |
-| **Cancel** | Acknowledge and stop |
+| **Cleared for takeoff** | Proceed to Phase 5 |
+| **Revise flight plan** | Ask the user what they want to change, then apply feedback and re-prompt (same as "Other" path) |
 | **Other** (freeform text) | Treat as feedback — update plan file and re-prompt |
 
 ### Refinement Using Edit Tool
