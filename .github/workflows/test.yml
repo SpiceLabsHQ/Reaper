@@ -1,0 +1,36 @@
+name: Tests
+
+on:
+  push:
+    branches: [develop, beads-sync]
+  pull_request:
+    branches: [develop, beads-sync]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: node --test scripts/build.test.js scripts/commitlint.test.js
+
+      - name: Build templates
+        run: npm run build
+
+      - name: Run contract tests
+        run: node --test scripts/contracts.test.js
+
+      - name: Run all tests with coverage
+        run: npm run test:coverage

@@ -1,5 +1,12 @@
+# Run unit tests (excludes contract tests — those run post-build)
+node --test scripts/build.test.js scripts/commitlint.test.js
+
 # Build templates and stage output
 npm run build
+
+# Run contract tests on generated output
+node --test scripts/contracts.test.js
+
 git add agents/ skills/ hooks/
 
 # Beads pre-commit: flush pending changes to JSONL
