@@ -253,18 +253,18 @@ TodoWrite entries survive session disconnects, give the user real-time visibilit
 
 Execute ALL work units from the plan. Do not present work to the user or proceed to the Completion section until every work unit in the TodoWrite plan is marked completed.
 
-### Per-Unit Cycle
+### Per-Unit Cycle -- REPEAT until all units done
 
-For each work unit in the plan:
+For each work unit in the plan, repeat this cycle:
 
 1. Update TodoWrite to mark the unit as in_progress
 2. Deploy the specified coding agent using the deployment template below
-3. Run quality gates on the completed work
+3. Run quality gates on the completed work (see Dynamic Gate Selection and Quality Gate Protocol below)
 4. Update TodoWrite to mark the unit as completed
 5. If this is a pre-planned child issue, use CLOSE_ISSUE to close it in the task system
+6. **Announce progress and loop back**: "Completed [X] of [N] work units. Next: [unit name]." -- then return to step 1 for the next unit
 
-After completing a work unit's gate cycle, announce progress:
-"Completed [X] of [N] work units. Next: [unit name]." (or "All [N] work units completed." if finished)
+This cycle repeats for every work unit. The Completion section is only reachable after the final unit passes its gates.
 
 ### Continuation Rule
 
@@ -349,6 +349,8 @@ GATE_EXPECTATIONS: test-runner (80% coverage), code-reviewer (SOLID), security-a
 - Keep each work package to a maximum of 5 files, 500 LOC, and 2 hours of estimated work
 
 **Populating GATE_EXPECTATIONS:** After determining the gate profile (see Dynamic Gate Selection), list each gate agent and its primary check. This primes the coding agent to write code that will pass review on the first attempt.
+
+**After the agent returns:** Run quality gates on the completed work. Once all gates pass, check TodoWrite for the next pending work unit and continue the Per-Unit Cycle.
 
 
 ## Quality Gate Protocol
@@ -485,6 +487,14 @@ If either fails, combine `blocking_issues` from both before redeploying the codi
 - **reaper:test-runner to reaper:security-auditor**: Pass plan context only (security-auditor does not need test results)
 
 
+### LOOP CHECKPOINT: Return to Per-Unit Cycle
+
+After the gates pass for the current work unit, check TodoWrite for remaining units:
+- **Pending units remain** --> return to Per-Unit Cycle step 1 for the next unit
+- **All units completed** --> proceed to Learning Extraction below
+
+Do not fall through to Completion while TodoWrite has pending work units.
+
 ## Learning Extraction
 
 After all quality gates pass but before presenting to the user, check whether any gate required 2 or more iterations. If so:
@@ -556,11 +566,15 @@ After a successful merge, invoke the `worktree-manager` skill to safely remove t
 3. Detect pre-planned structure or deploy reaper:workflow-planner
 4. Validate work package sizes
 5. Write plan to TodoWrite
-6. Execute work units in loop (check TodoWrite after each, continue until all completed)
-7. Classify files and select gate profile (see Dynamic Gate Selection)
-8. Run selected quality gates through the profile sequence
-9. Auto-iterate on failures (differential retry limits per agent)
-9a. Check TodoWrite — if pending work units remain, loop back to step 6
+
+**Per-unit loop (repeat for EACH work unit):**
+
+>  **6. Deploy coding agent** for the current work unit
+>  **7. Classify files and select gate profile** (Dynamic Gate Selection)
+>  **8. Run quality gates** through the profile sequence
+>  **9. Auto-iterate** on gate failures (differential retry limits)
+>  **--> Check TodoWrite: pending units remain? Loop to step 6**
+
 10. Extract learning patterns from multi-iteration gates
 11. Present completed work to user
 12. Merge on explicit user approval
