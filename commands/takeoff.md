@@ -298,13 +298,81 @@ QUALITY: 80% test coverage, zero linting errors, SOLID principles"
 
 ## Quality Gate Protocol
 
+### Gate Profile System
+
+Not all work types need the same quality gates. Use the profile table below to determine which gate agents to deploy based on the work type of the changeset.
+
+#### Gate Profile Lookup Table
+
+| Work Type | Gate 1 (blocking) | Gate 2 (parallel) | Notes |
+|-----------|-------------------|-------------------|-------|
+| `application_code` | reaper:test-runner | reaper:code-reviewer, reaper:security-auditor | Default for source code -- full gate sequence |
+| `infrastructure_config` | reaper:validation-runner | reaper:security-auditor | Terraform, Kubernetes, Docker, Helm |
+| `database_migration` | reaper:validation-runner | reaper:code-reviewer | Schema changes, migration files |
+| `api_specification` | reaper:validation-runner | reaper:code-reviewer | OpenAPI, GraphQL schema definitions |
+| `agent_prompt` | -- | reaper:ai-prompt-engineer, reaper:code-reviewer | No Gate 1 -- Gate 2 runs immediately |
+| `documentation` | -- | reaper:code-reviewer | No Gate 1 -- Gate 2 runs immediately |
+| `ci_cd_pipeline` | reaper:validation-runner | reaper:security-auditor, reaper:deployment-engineer | CI/CD pipeline configurations |
+| `test_code` | reaper:test-runner | reaper:code-reviewer | Test files themselves |
+| `configuration` | reaper:validation-runner | reaper:security-auditor | Application config files |
+
+For work types with no Gate 1 (`agent_prompt`, `documentation`), skip directly to Gate 2.
+
+#### Work Type Detection Patterns
+
+Determine the work type from the files in the changeset using these patterns:
+
+| Pattern | Work Type |
+|---------|-----------|
+| `src/`, `lib/`, `app/` + code extensions (.ts, .js, .py, .go, .rs, .java, .rb, .php, .cs, .kt, .swift) | `application_code` |
+| `terraform/`, `k8s/`, `kubernetes/`, `docker/`, `helm/` + .tf, .yaml, .yml, Dockerfile, docker-compose.* | `infrastructure_config` |
+| `migrations/`, `db/`, `schema/` + .sql, .prisma | `database_migration` |
+| `openapi.`, `swagger.`, `schema.graphql`, `*.openapi.*` | `api_specification` |
+| `agents/`, `prompts/`, `src/agents/`, `src/prompts/` + .md, .ejs, .txt (in prompt dirs) | `agent_prompt` |
+| `docs/`, `*.md` (at root), `README*`, `CHANGELOG*` | `documentation` |
+| `.github/workflows/`, `.gitlab-ci*`, `Jenkinsfile`, `.circleci/` | `ci_cd_pipeline` |
+| `tests/`, `test/`, `__tests__/`, `spec/`, `*_test.*`, `*.test.*`, `*.spec.*` | `test_code` |
+| `.env*`, `config/`, `*.config.*`, `*.json` (config files) | `configuration` |
+
+If no pattern matches, default to `application_code`.
+
+#### Union Semantics for Mixed Changesets
+
+When a changeset spans multiple work types, compute the union of all matching profiles:
+
+1. Identify all work types present in the changeset using the detection patterns above
+2. Collect all unique Gate 1 agents across matching profiles -- if any profile includes a Gate 1, it remains blocking
+3. Collect all unique Gate 2 agents across matching profiles (deduplicated)
+4. Deploy the union set through the standard gate sequence
+
+**Example:** A changeset touching `src/auth.ts` (application_code) and `terraform/main.tf` (infrastructure_config) produces:
+- Gate 1: reaper:test-runner + reaper:validation-runner (both blocking, run in parallel)
+- Gate 2: reaper:code-reviewer + reaper:security-auditor (union of both profiles)
+
+#### Differential Retry Limits
+
+Each gate agent has its own iteration limit before escalating to the user:
+
+| Gate Agent | Max Iterations | Rationale |
+|------------|---------------|-----------|
+| reaper:test-runner | 3 | Most likely to need iteration (test failures, coverage gaps) |
+| reaper:code-reviewer | 2 | Review feedback is typically addressed in fewer cycles |
+| reaper:validation-runner | 1 | Validation either passes or has fundamental issues |
+| reaper:security-auditor | 1 | Security issues require careful one-pass remediation |
+| reaper:ai-prompt-engineer | 1 | Prompt quality review is typically one-pass |
+| reaper:deployment-engineer | 1 | Pipeline validation is typically one-pass |
+
 ### Gate Sequence (never skip)
 
 All work passes through two sequential gates before reaching the user. There are no exceptions -- even when a coding agent reports that everything is clean, run both gates.
 
+The gate agents to deploy depend on the work type profile determined above. The `application_code` profile (the default) uses:
+
 **Gate 1 (blocking):** Deploy reaper:test-runner. Must pass before Gate 2 proceeds.
 
 **Gate 2 (parallel):** Deploy reaper:code-reviewer and reaper:security-auditor simultaneously in a single message. Both must pass.
+
+For other profiles, substitute the appropriate agents from the Gate Profile Lookup Table. For work types with no Gate 1, proceed directly to Gate 2.
 
 After all gates pass, present completed work to the user and seek feedback.
 
@@ -333,7 +401,7 @@ Parse these fields from each gate agent's JSON response to determine pass/fail:
 
 - On any gate failure, redeploy the coding agent with `blocking_issues` from the failed gate
 - After the coding agent addresses issues, re-run the failed gate (not all gates)
-- Maximum 3 iterations per gate before escalating to the user
+- Apply differential retry limits per agent (see table above) before escalating to the user
 - Work autonomously through iterations without asking the user for guidance
 
 ### Commit on Pass

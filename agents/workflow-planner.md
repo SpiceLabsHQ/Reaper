@@ -153,12 +153,27 @@ Include `strategy_selection` in all planning responses with: `selected_strategy`
 
 ## Quality Gate Protocol
 
-Quality gates validate all work before it reaches the user:
+### Gate Profiles
 
-1. **reaper:test-runner** (blocking) -- tests, coverage, linting
-2. **reaper:code-reviewer + reaper:security-auditor** (parallel, blocking) -- code quality and security
+Quality gates are work-type-aware. The orchestrator selects gate agents based on the type of work in the changeset:
 
-Auto-iteration on failure, maximum 3 attempts per gate. The takeoff skill owns gate execution and iteration.
+| Work Type | Gate 1 (blocking) | Gate 2 (parallel) |
+|-----------|-------------------|-------------------|
+| `application_code` | test-runner | code-reviewer, security-auditor |
+| `infrastructure_config` | validation-runner | security-auditor |
+| `database_migration` | validation-runner | code-reviewer |
+| `api_specification` | validation-runner | code-reviewer |
+| `agent_prompt` | -- | ai-prompt-engineer, code-reviewer |
+| `documentation` | -- | code-reviewer |
+| `ci_cd_pipeline` | validation-runner | security-auditor, deployment-engineer |
+| `test_code` | test-runner | code-reviewer |
+| `configuration` | validation-runner | security-auditor |
+
+**Work type detection** uses directory paths and file extensions (e.g., `src/` + `.ts` = `application_code`, `terraform/` + `.tf` = `infrastructure_config`). Mixed changesets use the union of all matching profiles.
+
+**Default profile:** `application_code` -- reaper:test-runner (Gate 1) then reaper:code-reviewer + reaper:security-auditor (Gate 2).
+
+Auto-iteration on failure with per-agent retry limits (test-runner: 3, code-reviewer: 2, all others: 1). The takeoff skill owns gate execution and iteration.
 
 
 ## Strategy Workflows
