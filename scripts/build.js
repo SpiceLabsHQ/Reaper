@@ -603,6 +603,7 @@ if (require.main === module) {
 
 // Export for testing
 module.exports = {
+  parseArgs,
   getAgentType,
   buildTemplateVars,
   parseFrontmatter,

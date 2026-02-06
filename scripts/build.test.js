@@ -2,11 +2,13 @@ const { describe, it, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 
 const {
+  parseArgs,
   GATE_CAPABLE_AGENTS,
   buildTemplateVars,
   AGENT_TYPES,
+  config,
 } = require('./build');
-const { resetBuildState } = require('./test-helpers');
+const { resetBuildState, stubProcessExit } = require('./test-helpers');
 
 beforeEach(() => {
   resetBuildState();
@@ -100,5 +102,100 @@ describe('buildTemplateVars gateCapable', () => {
       undefined,
       'Hooks should not have gateCapable property'
     );
+  });
+});
+
+describe('parseArgs', () => {
+  it('should set config.type to agents for --type=agents', () => {
+    parseArgs(['--type=agents']);
+    assert.strictEqual(config.type, 'agents');
+  });
+
+  it('should set config.type to skills for --type=skills', () => {
+    parseArgs(['--type=skills']);
+    assert.strictEqual(config.type, 'skills');
+  });
+
+  it('should set config.type to hooks for --type=hooks', () => {
+    parseArgs(['--type=hooks']);
+    assert.strictEqual(config.type, 'hooks');
+  });
+
+  it('should set config.type to commands for --type=commands', () => {
+    parseArgs(['--type=commands']);
+    assert.strictEqual(config.type, 'commands');
+  });
+
+  it('should call process.exit(1) for an invalid --type value', () => {
+    const restore = stubProcessExit();
+    try {
+      parseArgs(['--type=bogus']);
+      assert.fail('Expected process.exit to be called');
+    } catch (err) {
+      assert.strictEqual(err.name, 'ProcessExitError');
+      assert.strictEqual(err.code, 1);
+    } finally {
+      restore();
+    }
+  });
+
+  it('should call process.exit(0) for --help', () => {
+    const restore = stubProcessExit();
+    try {
+      parseArgs(['--help']);
+      assert.fail('Expected process.exit to be called');
+    } catch (err) {
+      assert.strictEqual(err.name, 'ProcessExitError');
+      assert.strictEqual(err.code, 0);
+    } finally {
+      restore();
+    }
+  });
+
+  it('should call process.exit(0) for -h shorthand', () => {
+    const restore = stubProcessExit();
+    try {
+      parseArgs(['-h']);
+      assert.fail('Expected process.exit to be called');
+    } catch (err) {
+      assert.strictEqual(err.name, 'ProcessExitError');
+      assert.strictEqual(err.code, 0);
+    } finally {
+      restore();
+    }
+  });
+
+  it('should set config.verbose to true for --verbose', () => {
+    parseArgs(['--verbose']);
+    assert.strictEqual(config.verbose, true);
+  });
+
+  it('should set config.verbose to true for -v shorthand', () => {
+    parseArgs(['-v']);
+    assert.strictEqual(config.verbose, true);
+  });
+
+  it('should set config.watch to true for --watch', () => {
+    parseArgs(['--watch']);
+    assert.strictEqual(config.watch, true);
+  });
+
+  it('should set config.watch to true for -w shorthand', () => {
+    parseArgs(['-w']);
+    assert.strictEqual(config.watch, true);
+  });
+
+  it('should handle multiple arguments combined', () => {
+    parseArgs(['--verbose', '--type=agents', '--watch']);
+    assert.strictEqual(config.verbose, true);
+    assert.strictEqual(config.type, 'agents');
+    assert.strictEqual(config.watch, true);
+  });
+
+  it('should leave config at defaults when no args are provided', () => {
+    parseArgs([]);
+    assert.strictEqual(config.watch, false);
+    assert.strictEqual(config.type, null);
+    assert.strictEqual(config.verbose, false);
   });
 });
