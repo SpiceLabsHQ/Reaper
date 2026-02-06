@@ -39,7 +39,12 @@ Other work types use different gate agents -- consult the Gate Profile Lookup Ta
 
 ### When to Read Files
 
-Read files in the worktree to build accurate agent prompts (understanding scope, gathering context for deployment descriptions). Do not read files to validate whether a coding agent's work is correct -- that is the gate agents' responsibility.
+Read files only for these specific purposes:
+- **Plan files**: Read `.claude/plans/` files for pre-existing research and work units
+- **Config files**: Read `package.json`, `tsconfig.json`, or equivalent to determine test/lint commands
+- **Scope verification**: Read a directory listing (not file contents) to confirm file paths exist before writing a deployment prompt
+
+Do not read source code files to understand implementation details -- that is the coding agent's job. Do not read files to validate whether a coding agent's work is correct -- that is the gate agents' responsibility. When a plan file contains a Research section, pass it to coding agents as their codebase context.
 
 ### Prohibited Actions
 
@@ -246,12 +251,27 @@ TodoWrite entries survive session disconnects, give the user real-time visibilit
 
 ## Strategy Execution
 
-Follow the planner's `agent_deployment_sequence` to execute work units in order. For each work unit:
+Execute ALL work units from the plan. Do not present work to the user or proceed to the Completion section until every work unit in the TodoWrite plan is marked completed.
+
+### Per-Unit Cycle
+
+For each work unit in the plan:
 
 1. Update TodoWrite to mark the unit as in_progress
 2. Deploy the specified coding agent using the deployment template below
 3. Run quality gates on the completed work
 4. Update TodoWrite to mark the unit as completed
+5. If this is a pre-planned child issue, use CLOSE_ISSUE to close it in the task system
+
+After completing a work unit's gate cycle, announce progress:
+"Completed [X] of [N] work units. Next: [unit name]." (or "All [N] work units completed." if finished)
+
+### Continuation Rule
+
+After completing a work unit and its gates, check TodoWrite for remaining work:
+- If any work unit entries remain pending or in_progress, proceed to the next one
+- Only move to Completion and User Feedback when ALL work unit entries show completed status
+- Never proceed to "Touchdown" while TodoWrite still has pending work unit entries
 
 When multiple work units share a group number and have no mutual dependencies, deploy their agents in parallel (multiple Task calls in a single message).
 
@@ -479,7 +499,14 @@ Maximum 3 suggestions per session. Never auto-apply these entries -- always dire
 
 ## Completion and User Feedback
 
-When all quality gates pass, present completed work:
+**Trigger condition:** ALL of the following must be true before presenting work:
+1. Every work unit entry in TodoWrite is marked "completed"
+2. All quality gates for the final unit have passed
+3. No TodoWrite entries remain in pending or in_progress state (excluding "User review" and "Merge" entries)
+
+If any condition fails, return to Strategy Execution and process remaining work units.
+
+When these conditions are met, present completed work:
 
 ```markdown
 ## Touchdown! Ready for Inspection
@@ -529,10 +556,11 @@ After a successful merge, invoke the `worktree-manager` skill to safely remove t
 3. Detect pre-planned structure or deploy reaper:workflow-planner
 4. Validate work package sizes
 5. Write plan to TodoWrite
-6. Execute work units with coding agents
+6. Execute work units in loop (check TodoWrite after each, continue until all completed)
 7. Classify files and select gate profile (see Dynamic Gate Selection)
 8. Run selected quality gates through the profile sequence
 9. Auto-iterate on failures (differential retry limits per agent)
+9a. Check TodoWrite — if pending work units remain, loop back to step 6
 10. Extract learning patterns from multi-iteration gates
 11. Present completed work to user
 12. Merge on explicit user approval

@@ -31,7 +31,12 @@ Other work types use different gate agents -- consult the Gate Profile Lookup Ta
 
 ### When to Read Files
 
-Read files in the worktree to build accurate agent prompts (understanding scope, gathering context for deployment descriptions). Do not read files to validate whether a coding agent's work is correct -- that is the gate agents' responsibility.
+Read files only for these specific purposes:
+- **Plan files**: Read `.claude/plans/` files for pre-existing research and work units
+- **Config files**: Read `package.json`, `tsconfig.json`, or equivalent to determine test/lint commands
+- **Scope verification**: Read a directory listing (not file contents) to confirm file paths exist before writing a deployment prompt
+
+Do not read source code files to understand implementation details -- that is the coding agent's job. Do not read files to validate whether a coding agent's work is correct -- that is the gate agents' responsibility. When a plan file contains a Research section, pass it to coding agents as their codebase context.
 
 ### Prohibited Actions
 
