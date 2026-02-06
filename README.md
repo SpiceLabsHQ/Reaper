@@ -168,7 +168,7 @@ Want to contribute back? Open an issue, show us what you have got. If it fits ho
 - TDD first (Red-Green-Refactor)
 - SOLID principles
 - Conventional commits with task reference
-- 80%+ test coverage
+- 70%+ test coverage
 
 Full standards: [docs/spice/SPICE.md](docs/spice/SPICE.md)
 
