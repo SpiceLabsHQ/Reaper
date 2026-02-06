@@ -303,7 +303,43 @@ Use the Write tool to create the plan file at the path from Phase 0, following i
 
 ### After Writing the Plan
 
-Present a summary to the user: plan file path, epic title/goal, number of work units, parallelization percentage, and critical path. Ask: "Reply 'go' to create as shown, or just tell me what to change."
+Present a summary to the user: plan file path, epic title/goal, number of work units, parallelization percentage, and critical path.
+
+Then prompt for approval using AskUserQuestion. Select the variant based on `TASK_SYSTEM` detected in Phase 1:
+
+**If TASK_SYSTEM is Beads or Jira:**
+
+```json
+{
+  "questions": [{
+    "question": "Plan has N work units (M% parallelizable). Create issues in [Beads|Jira]?",
+    "header": "Plan Review",
+    "options": [
+      {"label": "Go", "description": "Create issues as shown in the plan"},
+      {"label": "Cancel", "description": "Abort planning — no issues created"}
+    ],
+    "multiSelect": false
+  }]
+}
+```
+
+**If TASK_SYSTEM is markdown_only:**
+
+```json
+{
+  "questions": [{
+    "question": "Plan has N work units (M% parallelizable). Finalize plan file?",
+    "header": "Plan Review",
+    "options": [
+      {"label": "Go", "description": "Finalize plan file as deliverable"},
+      {"label": "Cancel", "description": "Abort planning"}
+    ],
+    "multiSelect": false
+  }]
+}
+```
+
+Replace `N` with the work unit count and `M` with the parallelization percentage. AskUserQuestion automatically includes an "Other" option that lets the user type freeform feedback — see Phase 4 for response handling.
 
 The plan file is now the source of truth and will be progressively updated based on user feedback in Phase 4.
 
@@ -311,19 +347,22 @@ The plan file is now the source of truth and will be progressively updated based
 
 ## Phase 4: Iterative Refinement (Plan File Updates)
 
-### Handling User Feedback
+### Handling AskUserQuestion Responses
 
-Parse response type:
-- **Approve:** "yes", "looks good", "go ahead", "approved", "create", "lgtm", "go" → Proceed to Phase 5
-- **Cancel:** "cancel", "no", "stop", "abort" → Acknowledge and stop
-- **Feedback:** Any other response → Update plan file and re-prompt
+Map the user's AskUserQuestion selection:
+
+| Selection | Action |
+|-----------|--------|
+| **Go** | Proceed to Phase 5 |
+| **Cancel** | Acknowledge and stop |
+| **Other** (freeform text) | Treat as feedback — update plan file and re-prompt |
 
 ### Refinement Using Edit Tool
 
-When user provides feedback:
+When the user selects "Other" and provides feedback:
 
 1. **Apply changes** to appropriate sections following the update rules below
-2. **Confirm to user** with summary of changes and re-prompt for approval
+2. **Summarize changes** to the user, then call AskUserQuestion again with the same structure as Phase 3. Update `N` (work unit count) and `M` (parallelization percentage) in the question text if work units changed. Use the task-system or markdown-only variant matching the detected `TASK_SYSTEM`.
 
 ### Update Rules Reference
 
