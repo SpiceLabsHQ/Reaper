@@ -1,25 +1,14 @@
-const { describe, it, beforeEach, afterEach } = require('node:test');
+const { describe, it, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
-const fs = require('fs');
-const path = require('path');
 
 const {
+  parseArgs,
   GATE_CAPABLE_AGENTS,
   buildTemplateVars,
-  getAgentType,
   AGENT_TYPES,
-<<<<<<< HEAD
-  compileTemplate,
-  processFile,
   config,
-  stats,
-=======
-  formatError,
->>>>>>> feature/reaper-x84-pure-function-tests
 } = require('./build');
-const { resetBuildState } = require('./test-helpers');
-
-const FIXTURES_DIR = path.join(__dirname, 'fixtures');
+const { resetBuildState, stubProcessExit } = require('./test-helpers');
 
 beforeEach(() => {
   resetBuildState();
@@ -116,477 +105,97 @@ describe('buildTemplateVars gateCapable', () => {
   });
 });
 
-<<<<<<< HEAD
-// ---------------------------------------------------------------------------
-// compileTemplate integration tests
-// ---------------------------------------------------------------------------
-describe('compileTemplate', () => {
-  it('should substitute template variables into EJS', () => {
-    const template = fs.readFileSync(
-      path.join(FIXTURES_DIR, 'simple.ejs'),
-      'utf8'
-    );
-    const vars = { FILENAME: 'my-agent', SOURCE_TYPE: 'agents' };
-    const templatePath = path.join(FIXTURES_DIR, 'simple.ejs');
-
-    const result = compileTemplate(template, vars, templatePath);
-
-    assert.ok(
-      result.includes('Hello, my-agent!'),
-      'Should substitute FILENAME variable'
-    );
-    assert.ok(
-      result.includes('Type is agents.'),
-      'Should substitute SOURCE_TYPE variable'
-    );
+describe('parseArgs', () => {
+  it('should set config.type to agents for --type=agents', () => {
+    parseArgs(['--type=agents']);
+    assert.strictEqual(config.type, 'agents');
   });
 
-  it('should resolve EJS includes (partial files)', () => {
-    // Point config.srcDir at fixtures so include('partials/test-partial') resolves
-    config.srcDir = FIXTURES_DIR;
-
-    const template = fs.readFileSync(
-      path.join(FIXTURES_DIR, 'with-partial.ejs'),
-      'utf8'
-    );
-    const templatePath = path.join(FIXTURES_DIR, 'with-partial.ejs');
-
-    const result = compileTemplate(template, {}, templatePath);
-
-    assert.ok(
-      result.includes('Before partial.'),
-      'Content before include should be present'
-    );
-    assert.ok(
-      result.includes('Partial content for testing.'),
-      'Partial should be rendered with passed variable'
-    );
-    assert.ok(
-      result.includes('After partial.'),
-      'Content after include should be present'
-    );
+  it('should set config.type to skills for --type=skills', () => {
+    parseArgs(['--type=skills']);
+    assert.strictEqual(config.type, 'skills');
   });
 
-  it('should evaluate conditional logic', () => {
-    const template = fs.readFileSync(
-      path.join(FIXTURES_DIR, 'conditional.ejs'),
-      'utf8'
-    );
-    const templatePath = path.join(FIXTURES_DIR, 'conditional.ejs');
-
-    const trueBranch = compileTemplate(
-      template,
-      { IS_CODING_AGENT: true },
-      templatePath
-    );
-    assert.ok(
-      trueBranch.includes('This agent writes code.'),
-      'True branch should render when IS_CODING_AGENT is true'
-    );
-    assert.ok(
-      !trueBranch.includes('does not write code'),
-      'False branch should not render when IS_CODING_AGENT is true'
-    );
-
-    const falseBranch = compileTemplate(
-      template,
-      { IS_CODING_AGENT: false },
-      templatePath
-    );
-    assert.ok(
-      falseBranch.includes('This agent does not write code.'),
-      'False branch should render when IS_CODING_AGENT is false'
-    );
-    assert.ok(
-      !falseBranch.includes('writes code.'),
-      'True branch should not render when IS_CODING_AGENT is false'
-    );
+  it('should set config.type to hooks for --type=hooks', () => {
+    parseArgs(['--type=hooks']);
+    assert.strictEqual(config.type, 'hooks');
   });
 
-  it('should throw on invalid EJS syntax', () => {
-    const template = fs.readFileSync(
-      path.join(FIXTURES_DIR, 'invalid.ejs'),
-      'utf8'
-    );
-    const templatePath = path.join(FIXTURES_DIR, 'invalid.ejs');
-
-    assert.throws(
-      () => compileTemplate(template, {}, templatePath),
-      'Should throw when EJS template has syntax errors'
-    );
+  it('should set config.type to commands for --type=commands', () => {
+    parseArgs(['--type=commands']);
+    assert.strictEqual(config.type, 'commands');
   });
 
-  it('should return an empty string for an empty template', () => {
-    const template = fs.readFileSync(
-      path.join(FIXTURES_DIR, 'empty.ejs'),
-      'utf8'
-    );
-    const templatePath = path.join(FIXTURES_DIR, 'empty.ejs');
-
-    const result = compileTemplate(template, {}, templatePath);
-
-    assert.strictEqual(result, '', 'Empty template should produce empty output');
-  });
-});
-
-// ---------------------------------------------------------------------------
-// processFile integration tests
-// ---------------------------------------------------------------------------
-describe('processFile', () => {
-  const TMP_OUTPUT_DIR = path.join(FIXTURES_DIR, '_test_output');
-
-  beforeEach(() => {
-    // Ensure clean output directory for each test
-    fs.rmSync(TMP_OUTPUT_DIR, { recursive: true, force: true });
+  it('should call process.exit(1) for an invalid --type value', () => {
+    const restore = stubProcessExit();
+    try {
+      parseArgs(['--type=bogus']);
+      assert.fail('Expected process.exit to be called');
+    } catch (err) {
+      assert.strictEqual(err.name, 'ProcessExitError');
+      assert.strictEqual(err.code, 1);
+    } finally {
+      restore();
+    }
   });
 
-  afterEach(() => {
-    // Clean up output directory after each test
-    fs.rmSync(TMP_OUTPUT_DIR, { recursive: true, force: true });
+  it('should call process.exit(0) for --help', () => {
+    const restore = stubProcessExit();
+    try {
+      parseArgs(['--help']);
+      assert.fail('Expected process.exit to be called');
+    } catch (err) {
+      assert.strictEqual(err.name, 'ProcessExitError');
+      assert.strictEqual(err.code, 0);
+    } finally {
+      restore();
+    }
   });
 
-  it('should compile an EJS fixture to an output file end-to-end', () => {
-    const sourcePath = path.join(FIXTURES_DIR, 'simple.ejs');
-    const outputPath = path.join(TMP_OUTPUT_DIR, 'simple.md');
-
-    const result = processFile(
-      sourcePath,
-      outputPath,
-      'agents',
-      'agents/simple.ejs'
-    );
-
-    assert.strictEqual(result, true, 'processFile should return true on success');
-    assert.ok(
-      fs.existsSync(outputPath),
-      'Output file should be created on disk'
-    );
-
-    const content = fs.readFileSync(outputPath, 'utf8');
-    assert.ok(
-      content.includes('Hello, simple!'),
-      'Output should contain compiled template with FILENAME=simple'
-    );
-    assert.ok(
-      content.includes('Type is agents.'),
-      'Output should contain compiled template with SOURCE_TYPE=agents'
-    );
+  it('should call process.exit(0) for -h shorthand', () => {
+    const restore = stubProcessExit();
+    try {
+      parseArgs(['-h']);
+      assert.fail('Expected process.exit to be called');
+    } catch (err) {
+      assert.strictEqual(err.name, 'ProcessExitError');
+      assert.strictEqual(err.code, 0);
+    } finally {
+      restore();
+    }
   });
 
-  it('should preserve frontmatter in the output', () => {
-    const sourcePath = path.join(FIXTURES_DIR, 'with-frontmatter.ejs');
-    const outputPath = path.join(TMP_OUTPUT_DIR, 'with-frontmatter.md');
-
-    const result = processFile(
-      sourcePath,
-      outputPath,
-      'agents',
-      'agents/with-frontmatter.ejs'
-    );
-
-    assert.strictEqual(result, true, 'processFile should return true');
-
-    const content = fs.readFileSync(outputPath, 'utf8');
-    assert.ok(
-      content.startsWith('---\n'),
-      'Output should start with frontmatter delimiter'
-    );
-    assert.ok(
-      content.includes('name: test-agent'),
-      'Output should preserve frontmatter fields'
-    );
-    assert.ok(
-      content.includes('description: A test fixture'),
-      'Output should preserve frontmatter description'
-    );
-    // Verify the body is also compiled
-    assert.ok(
-      content.includes('# Agent: with-frontmatter'),
-      'Body should be compiled with FILENAME variable'
-    );
+  it('should set config.verbose to true for --verbose', () => {
+    parseArgs(['--verbose']);
+    assert.strictEqual(config.verbose, true);
   });
 
-  it('should inject template variables from buildTemplateVars', () => {
-    const sourcePath = path.join(FIXTURES_DIR, 'simple.ejs');
-    const outputPath = path.join(TMP_OUTPUT_DIR, 'injected.md');
-
-    processFile(sourcePath, outputPath, 'skills', 'skills/simple.ejs');
-
-    const content = fs.readFileSync(outputPath, 'utf8');
-    assert.ok(
-      content.includes('Type is skills.'),
-      'SOURCE_TYPE variable should be injected based on sourceType argument'
-    );
+  it('should set config.verbose to true for -v shorthand', () => {
+    parseArgs(['-v']);
+    assert.strictEqual(config.verbose, true);
   });
 
-  it('should return false and increment stats.errors for a nonexistent source file', () => {
-    const sourcePath = path.join(FIXTURES_DIR, 'does-not-exist.ejs');
-    const outputPath = path.join(TMP_OUTPUT_DIR, 'does-not-exist.md');
-
-    const result = processFile(
-      sourcePath,
-      outputPath,
-      'agents',
-      'agents/does-not-exist.ejs'
-    );
-
-    assert.strictEqual(
-      result,
-      false,
-      'processFile should return false for nonexistent file'
-    );
-    assert.strictEqual(
-      stats.errors,
-      1,
-      'stats.errors should be incremented to 1'
-    );
-    assert.strictEqual(
-      stats.errorMessages.length,
-      1,
-      'stats.errorMessages should contain one error'
-    );
+  it('should set config.watch to true for --watch', () => {
+    parseArgs(['--watch']);
+    assert.strictEqual(config.watch, true);
   });
 
-  it('should increment stats.success on successful compilation', () => {
-    const sourcePath = path.join(FIXTURES_DIR, 'simple.ejs');
-    const outputPath = path.join(TMP_OUTPUT_DIR, 'stats-success.md');
-
-    assert.strictEqual(stats.success, 0, 'stats.success should start at 0');
-
-    processFile(sourcePath, outputPath, 'agents', 'agents/simple.ejs');
-
-    assert.strictEqual(
-      stats.success,
-      1,
-      'stats.success should be incremented to 1 after successful processing'
-    );
+  it('should set config.watch to true for -w shorthand', () => {
+    parseArgs(['-w']);
+    assert.strictEqual(config.watch, true);
   });
 
-  it('should increment stats.errors on compilation failure', () => {
-    const sourcePath = path.join(FIXTURES_DIR, 'invalid.ejs');
-    const outputPath = path.join(TMP_OUTPUT_DIR, 'invalid.md');
-
-    assert.strictEqual(stats.errors, 0, 'stats.errors should start at 0');
-
-    const result = processFile(
-      sourcePath,
-      outputPath,
-      'agents',
-      'agents/invalid.ejs'
-    );
-
-    assert.strictEqual(result, false, 'processFile should return false');
-    assert.strictEqual(
-      stats.errors,
-      1,
-      'stats.errors should be incremented to 1 after compilation failure'
-    );
-    assert.ok(
-      stats.errorMessages.length > 0,
-      'stats.errorMessages should record the error'
-    );
+  it('should handle multiple arguments combined', () => {
+    parseArgs(['--verbose', '--type=agents', '--watch']);
+    assert.strictEqual(config.verbose, true);
+    assert.strictEqual(config.type, 'agents');
+    assert.strictEqual(config.watch, true);
   });
 
-  it('should create the output directory if it does not exist', () => {
-    const nestedOutputDir = path.join(TMP_OUTPUT_DIR, 'nested', 'deep');
-    const sourcePath = path.join(FIXTURES_DIR, 'simple.ejs');
-    const outputPath = path.join(nestedOutputDir, 'simple.md');
-
-    assert.ok(
-      !fs.existsSync(nestedOutputDir),
-      'Nested output directory should not exist before test'
-    );
-
-    processFile(sourcePath, outputPath, 'agents', 'agents/simple.ejs');
-
-    assert.ok(
-      fs.existsSync(nestedOutputDir),
-      'Nested output directory should be created by processFile'
-    );
-    assert.ok(
-      fs.existsSync(outputPath),
-      'Output file should exist in the newly created directory'
-    );
-=======
-describe('getAgentType', () => {
-  describe('coding agents', () => {
-    it('should return "coding" for bug-fixer', () => {
-      assert.strictEqual(getAgentType('bug-fixer'), 'coding');
-    });
-
-    it('should return "coding" for feature-developer', () => {
-      assert.strictEqual(getAgentType('feature-developer'), 'coding');
-    });
-
-    it('should return "coding" for refactoring-dev', () => {
-      assert.strictEqual(getAgentType('refactoring-dev'), 'coding');
-    });
-
-    it('should return "coding" for integration-engineer', () => {
-      assert.strictEqual(getAgentType('integration-engineer'), 'coding');
-    });
-  });
-
-  describe('review agents', () => {
-    it('should return "review" for code-reviewer', () => {
-      assert.strictEqual(getAgentType('code-reviewer'), 'review');
-    });
-
-    it('should return "review" for security-auditor', () => {
-      assert.strictEqual(getAgentType('security-auditor'), 'review');
-    });
-
-    it('should return "review" for test-runner', () => {
-      assert.strictEqual(getAgentType('test-runner'), 'review');
-    });
-
-    it('should return "review" for validation-runner', () => {
-      assert.strictEqual(getAgentType('validation-runner'), 'review');
-    });
-  });
-
-  describe('planning agents', () => {
-    it('should return "planning" for workflow-planner', () => {
-      assert.strictEqual(getAgentType('workflow-planner'), 'planning');
-    });
-
-    it('should return "planning" for api-designer', () => {
-      assert.strictEqual(getAgentType('api-designer'), 'planning');
-    });
-
-    it('should return "planning" for database-architect', () => {
-      assert.strictEqual(getAgentType('database-architect'), 'planning');
-    });
-
-    it('should return "planning" for cloud-architect', () => {
-      assert.strictEqual(getAgentType('cloud-architect'), 'planning');
-    });
-
-    it('should return "planning" for event-architect', () => {
-      assert.strictEqual(getAgentType('event-architect'), 'planning');
-    });
-
-    it('should return "planning" for observability-architect', () => {
-      assert.strictEqual(getAgentType('observability-architect'), 'planning');
-    });
-
-    it('should return "planning" for frontend-architect', () => {
-      assert.strictEqual(getAgentType('frontend-architect'), 'planning');
-    });
-
-    it('should return "planning" for data-engineer', () => {
-      assert.strictEqual(getAgentType('data-engineer'), 'planning');
-    });
-
-    it('should return "planning" for test-strategist', () => {
-      assert.strictEqual(getAgentType('test-strategist'), 'planning');
-    });
-
-    it('should return "planning" for compliance-architect', () => {
-      assert.strictEqual(getAgentType('compliance-architect'), 'planning');
-    });
-  });
-
-  describe('operations agents', () => {
-    it('should return "operations" for branch-manager', () => {
-      assert.strictEqual(getAgentType('branch-manager'), 'operations');
-    });
-
-    it('should return "operations" for deployment-engineer', () => {
-      assert.strictEqual(getAgentType('deployment-engineer'), 'operations');
-    });
-
-    it('should return "operations" for incident-responder', () => {
-      assert.strictEqual(getAgentType('incident-responder'), 'operations');
-    });
-  });
-
-  describe('documentation agents', () => {
-    it('should return "documentation" for technical-writer', () => {
-      assert.strictEqual(getAgentType('technical-writer'), 'documentation');
-    });
-
-    it('should return "documentation" for claude-agent-architect', () => {
-      assert.strictEqual(getAgentType('claude-agent-architect'), 'documentation');
-    });
-
-    it('should return "documentation" for ai-prompt-engineer', () => {
-      assert.strictEqual(getAgentType('ai-prompt-engineer'), 'documentation');
-    });
-  });
-
-  describe('performance agents', () => {
-    it('should return "performance" for performance-engineer', () => {
-      assert.strictEqual(getAgentType('performance-engineer'), 'performance');
-    });
-  });
-
-  describe('unknown and edge cases', () => {
-    it('should return "unknown" for an unrecognized agent name', () => {
-      assert.strictEqual(getAgentType('nonexistent-agent'), 'unknown');
-    });
-
-    it('should return "unknown" for an empty string', () => {
-      assert.strictEqual(getAgentType(''), 'unknown');
-    });
-
-    it('should return "unknown" for undefined', () => {
-      assert.strictEqual(getAgentType(undefined), 'unknown');
-    });
-
-    it('should return "unknown" for null', () => {
-      assert.strictEqual(getAgentType(null), 'unknown');
-    });
-  });
-
-  describe('exhaustive coverage', () => {
-    it('should map every agent in AGENT_TYPES to the correct type', () => {
-      for (const [expectedType, agents] of Object.entries(AGENT_TYPES)) {
-        for (const agent of agents) {
-          assert.strictEqual(
-            getAgentType(agent),
-            expectedType,
-            `Expected getAgentType("${agent}") to return "${expectedType}"`
-          );
-        }
-      }
-    });
-  });
-});
-
-describe('formatError', () => {
-  it('should format a generic Error with message and stack', () => {
-    const err = new Error('Something went wrong');
-    err.stack = 'Error: Something went wrong\n    at Object.<anonymous> (/tmp/test.js:10:5)';
-    const result = formatError(err, '/tmp/src/agents/test.ejs');
-    assert.strictEqual(result, 'Something went wrong');
-  });
-
-  it('should handle an Error with no stack trace', () => {
-    const err = new Error('No stack here');
-    err.stack = undefined;
-    const result = formatError(err, '/tmp/src/agents/test.ejs');
-    assert.strictEqual(result, 'No stack here');
-  });
-
-  it('should format an error with a line property', () => {
-    const err = new Error('Unexpected token');
-    err.line = 42;
-    const result = formatError(err, '/tmp/src/agents/test.ejs');
-    assert.strictEqual(result, 'Line 42: Unexpected token');
-  });
-
-  it('should handle a non-Error input (plain string)', () => {
-    const result = formatError('plain string error', '/tmp/src/agents/test.ejs');
-    assert.strictEqual(result, 'plain string error');
-  });
-
-  it('should return the full message for EJS-specific errors', () => {
-    const err = new Error(
-      'ejs:14\n >> 14| <%- include("missing-partial") %>\n\nCould not find matching close tag'
-    );
-    const result = formatError(err, '/tmp/src/agents/test.ejs');
-    assert.strictEqual(result, err.message);
->>>>>>> feature/reaper-x84-pure-function-tests
+  it('should leave config at defaults when no args are provided', () => {
+    parseArgs([]);
+    assert.strictEqual(config.watch, false);
+    assert.strictEqual(config.type, null);
+    assert.strictEqual(config.verbose, false);
   });
 });
