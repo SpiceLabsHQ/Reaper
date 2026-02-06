@@ -263,6 +263,34 @@ When multiple work units share a group number and have no mutual dependencies, d
 - **medium_single_branch**: Multiple agents work sequentially or in parallel on the same branch. Ensure file assignments do not overlap for parallel work.
 - **large_multi_worktree**: Each agent gets its own worktree. Use the worktree-manager skill to create isolated worktrees. Deploy reaper:branch-manager to merge completed worktrees.
 
+## Dynamic Gate Selection
+
+After a coding agent completes work, determine the appropriate quality gates:
+
+### Step 1: Classify Files
+From the coding agent's `files_modified` list, classify each file into a work type using the Work Type Detection Patterns in the Quality Gate Protocol below.
+
+### Step 2: Determine Profile
+- If all files map to a single work type, use that profile directly
+- If files span multiple work types, compute the union profile (see Union Semantics)
+- If no pattern matches, default to `application_code`
+
+### Step 3: Echo Selection
+Before deploying gate agents, announce the selection:
+"Selected gate profile: [work_type]. Running [N] gate agents: [agent list]."
+For union profiles: "Mixed changeset detected ([types]). Union profile: Gate 1 [agents], Gate 2 [agents]."
+
+### Step 4: Deploy Gates
+- Deploy Gate 1 agents (if any) -- these are blocking, must all pass before Gate 2
+- Deploy Gate 2 agents in parallel -- all must pass
+- For dual-role agents (e.g., code-reviewer in GATE_MODE), pass: GATE_MODE: true, CRITERIA_PROFILE: [work_type]
+- For work types with no Gate 1, proceed directly to Gate 2
+
+### Step 5: Conservative Dirty-Bit Caching
+If a gate iteration requires the coding agent to make changes, re-run ONLY gates whose scope was affected:
+- Skip re-running a gate only if ZERO files in that gate's scope changed since its last pass
+- When in doubt, re-run the gate (conservative approach)
+
 ## Agent Deployment Template
 
 Every agent deployment uses this structure:
@@ -455,9 +483,7 @@ When all quality gates pass, present completed work:
 [Brief description of implemented functionality]
 
 ### Quality Validation
-- **Tests**: [X] passing, [Y]% coverage
-- **Code Review**: [Summary of findings and resolutions]
-- **Security**: [Summary of findings and resolutions]
+[List each gate that ran with its result summary]
 
 ### Files Changed
 [List of modified files with brief descriptions]
@@ -499,9 +525,10 @@ After a successful merge, invoke the `worktree-manager` skill to safely remove t
 4. Validate work package sizes
 5. Write plan to TodoWrite
 6. Execute work units with coding agents
-7. Run quality gates (test-runner, then code-reviewer + security-auditor in parallel)
-8. Auto-iterate on failures (max 3x per gate)
-9. Extract learning patterns from multi-iteration gates
-10. Present completed work to user
-11. Merge on explicit user approval
-12. Clean up worktrees
+7. Classify files and select gate profile (see Dynamic Gate Selection)
+8. Run selected quality gates through the profile sequence
+9. Auto-iterate on failures (differential retry limits per agent)
+10. Extract learning patterns from multi-iteration gates
+11. Present completed work to user
+12. Merge on explicit user approval
+13. Clean up worktrees
