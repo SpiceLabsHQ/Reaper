@@ -115,10 +115,12 @@ This cycle repeats for every work unit. The Completion section is only reachable
 
 ### Continuation Rule
 
-After completing a work unit and its gates, check TodoWrite for remaining work:
-- If any work unit entries remain pending or in_progress, proceed to the next one
-- Only move to Completion and User Feedback when ALL work unit entries show completed status
-- Never proceed to "Touchdown" while TodoWrite still has pending work unit entries
+After completing a work unit and its gates:
+
+1. Use **TaskList** to read all TodoWrite entries (do not rely on memory -- re-read the actual state)
+2. Count entries with status "pending" or "in_progress", excluding "User review", "Merge", "Close", and "Clean up" entries
+3. If count > 0, announce "N work units remain" and proceed to the next pending entry
+4. Only move to Completion and User Feedback when count === 0
 
 When multiple work units share a group number and have no mutual dependencies, deploy their agents in parallel (multiple Task calls in a single message).
 
@@ -182,14 +184,25 @@ Apply a two-question filter: (a) Would Claude make this mistake again without th
 
 Maximum 3 suggestions per session. Never auto-apply these entries -- always direct the user to `/reaper:claude-sync` for review. If no patterns recurred, omit this section from the output.
 
+---
+
+### STOP -- Verify Before Completion
+
+Do not read past this point without performing the verification steps below. This is a mandatory checkpoint.
+
+1. **Re-read**: Use **TaskList** to read all TodoWrite entries right now
+2. **Count**: Count entries with status "pending" or "in_progress", excluding "User review", "Merge", "Close", and "Clean up" entries
+3. **Decide**:
+   - If count > 0: State "N work units remain -- returning to Per-Unit Cycle" and go back to Strategy Execution
+   - If count === 0: Proceed to Completion below
+
+---
+
 ## Completion and User Feedback
 
-**Trigger condition:** ALL of the following must be true before presenting work:
-1. Every work unit entry in TodoWrite is marked "completed"
-2. All quality gates for the final unit have passed
-3. No TodoWrite entries remain in pending or in_progress state (excluding "User review" and "Merge" entries)
+**Trigger condition (verified by the STOP checkpoint above):** The TaskList re-read confirmed zero pending or in_progress work unit entries. All quality gates for the final unit have passed.
 
-If any condition fails, return to Strategy Execution and process remaining work units.
+If you did not perform the STOP checkpoint above, go back and do it now.
 
 When these conditions are met, present completed work:
 
