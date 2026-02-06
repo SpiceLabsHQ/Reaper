@@ -224,7 +224,8 @@ Design continuous monitoring: control dashboards (access patterns, consent statu
 - [ ] Compliance monitoring approach established
 - [ ] Legal counsel review recommended for all compliance-critical decisions
 
-### Huddle Trigger Keywords
+<!-- Used by /reaper:squadron to auto-select experts -->
+## Panel Selection Keywords
 gdpr, hipaa, pci, soc2, fedramp, compliance, regulatory, data residency, retention, consent, audit trail, data classification, right to erasure, cross-border
 
 ### Key Design Principles

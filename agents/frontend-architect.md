@@ -268,7 +268,8 @@ Structure frontend architecture deliverables with these sections (include only w
 - **Framework Churn Without Migration Strategy**: Adopting a new framework or major version without a phased migration plan -- leads to two half-maintained codebases running in parallel indefinitely. Require a strangler-fig migration plan with milestones before starting any framework switch.
 </anti_patterns>
 
-## Huddle Trigger Keywords
+<!-- Used by /reaper:squadron to auto-select experts -->
+## Panel Selection Keywords
 component, react, vue, svelte, angular, next.js, remix, nuxt, sveltekit, astro,
 state management, redux, zustand, pinia, jotai, tanstack query, apollo,
 ssr, csr, isr, rsc, streaming, hydration, rendering strategy,

@@ -179,7 +179,8 @@ Structure database architecture deliverables with these sections (include only w
 - Tested disaster recovery procedures
 - Growth projections with headroom analysis
 
-## Huddle Trigger Keywords
+<!-- Used by /reaper:squadron to auto-select experts -->
+## Panel Selection Keywords
 database, schema, migration, index, query optimization, sharding, replication,
 failover, multi-tenant, normalization, denormalization, partitioning, RLS,
 read replica, capacity planning, backup, disaster recovery, high availability

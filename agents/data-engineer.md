@@ -382,7 +382,8 @@ Data flows through zones via validate-then-promote: raw data lands immutably, pa
 - Build rollback capabilities into migration strategies
 - Start with highest-value datasets and expand incrementally
 
-## Huddle Trigger Keywords
+<!-- Used by /reaper:squadron to auto-select experts -->
+## Panel Selection Keywords
 etl, elt, data pipeline, data warehouse, star schema, snowflake schema, dimensional model, slowly changing dimension, scd, data lake, airflow, dagster, prefect, dbt, cdc, change data capture, streaming, batch, kafka, data quality, data contract, parquet, iceberg, delta lake, data lineage, data catalog, data governance, analytics, warehouse, lakehouse, data ingestion, data transformation, pipeline orchestration
 
 <completion_protocol>

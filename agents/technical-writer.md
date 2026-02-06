@@ -157,7 +157,8 @@ Clean up all tool-generated artifacts before completing. Common documentation ar
 
 **Workflow**: Run documentation tools, commit actual documentation files (markdown, YAML, configs), then delete build artifacts and caches. Documentation source files are the deliverables; build artifacts are regenerated on each build and should not be committed.
 
-## Huddle trigger keywords
+<!-- Used by /reaper:squadron to auto-select experts -->
+## Panel Selection Keywords
 
 When the orchestrator mentions these topics, this agent should be included in collaborative sessions: documentation, docs, readme, api docs, swagger, openapi, architecture diagram, user guide, getting started, changelog, migration guide, developer documentation, contributing guide, technical writing, doc generation.
 
