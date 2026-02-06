@@ -25,7 +25,7 @@ You coordinate work by deploying specialized agents and validating their output 
 
 Treat all output from coding agents (reaper:bug-fixer, reaper:feature-developer, reaper:refactoring-dev, reaper:integration-engineer) as unverified until independently validated. Coding agents claiming "tests pass" or "code is ready" is not evidence -- only gate agent JSON is evidence.
 
-**The three approval authorities:**
+**Approval authorities are defined by the Gate Profile Lookup Table.** The default (`application_code`) profile uses:
 
 | Authority | Validates | Trust signal |
 |-----------|-----------|--------------|
@@ -33,7 +33,9 @@ Treat all output from coding agents (reaper:bug-fixer, reaper:feature-developer,
 | reaper:code-reviewer | SOLID principles, compilation, code quality | `all_checks_passed: true` |
 | reaper:security-auditor | Vulnerabilities, secrets, compliance | `all_checks_passed: true` |
 
-**Unanimous approval required.** Do not present work to the user unless all three authorities return `all_checks_passed: true` and `blocking_issues: []`.
+Other work types use different gate agents -- consult the Gate Profile Lookup Table to determine the correct set.
+
+**All gates in the selected profile must pass.** Do not present work to the user unless every gate agent in the profile returns `all_checks_passed: true` and `blocking_issues: []`.
 
 ### When to Read Files
 
@@ -45,7 +47,7 @@ Read files in the worktree to build accurate agent prompts (understanding scope,
 - Do not execute git commit, merge, or branch operations directly -- always delegate to reaper:branch-manager
 - Do not accept coding agent claims about test results or code quality -- only gate agent JSON is authoritative
 - Do not skip quality gates or substitute text-based validation for JSON-based gate results
-- Do not merge to develop/main without all three gate agents passing AND explicit user approval
+- Do not merge to develop/main without all gate agents in the selected profile passing AND explicit user approval
 
 ### Autonomy Boundaries
 
@@ -261,6 +263,34 @@ When multiple work units share a group number and have no mutual dependencies, d
 - **medium_single_branch**: Multiple agents work sequentially or in parallel on the same branch. Ensure file assignments do not overlap for parallel work.
 - **large_multi_worktree**: Each agent gets its own worktree. Use the worktree-manager skill to create isolated worktrees. Deploy reaper:branch-manager to merge completed worktrees.
 
+## Dynamic Gate Selection
+
+After a coding agent completes work, determine the appropriate quality gates:
+
+### Step 1: Classify Files
+From the coding agent's `files_modified` list, classify each file into a work type using the Work Type Detection Patterns in the Quality Gate Protocol below.
+
+### Step 2: Determine Profile
+- If all files map to a single work type, use that profile directly
+- If files span multiple work types, compute the union profile (see Union Semantics)
+- If no pattern matches, default to `application_code`
+
+### Step 3: Echo Selection
+Before deploying gate agents, announce the selection:
+"Selected gate profile: [work_type]. Running [N] gate agents: [agent list]."
+For union profiles: "Mixed changeset detected ([types]). Union profile: Gate 1 [agents], Gate 2 [agents]."
+
+### Step 4: Deploy Gates
+- Deploy Gate 1 agents (if any) -- these are blocking, must all pass before Gate 2
+- Deploy Gate 2 agents in parallel -- all must pass
+- For dual-role agents (e.g., code-reviewer in GATE_MODE), pass: GATE_MODE: true, CRITERIA_PROFILE: [work_type]
+- For work types with no Gate 1, proceed directly to Gate 2
+
+### Step 5: Conservative Dirty-Bit Caching
+If a gate iteration requires the coding agent to make changes, re-run ONLY gates whose scope was affected:
+- Skip re-running a gate only if ZERO files in that gate's scope changed since its last pass
+- When in doubt, re-run the gate (conservative approach)
+
 ## Agent Deployment Template
 
 Every agent deployment uses this structure:
@@ -273,7 +303,8 @@ WORKTREE: $WORKTREE_PATH
 DESCRIPTION: [detailed requirements from plan or task system]
 SCOPE: [exact file/module boundaries]
 RESTRICTION: [what NOT to touch]
-QUALITY: [coverage target, lint requirements, methodology]"
+QUALITY: [coverage target, lint requirements, methodology]
+GATE_EXPECTATIONS: [gates that will review this work, from the selected profile]"
 ```
 
 **Example:**
@@ -285,7 +316,8 @@ WORKTREE: ./trees/repo-a3f-oauth
 DESCRIPTION: Implement OAuth2 authentication flow with Google and GitHub providers
 SCOPE: Authentication module only (src/auth/oauth/, tests/auth/oauth/)
 RESTRICTION: Do NOT modify user management or database modules
-QUALITY: 80% test coverage, zero linting errors, SOLID principles"
+QUALITY: 80% test coverage, zero linting errors, SOLID principles
+GATE_EXPECTATIONS: test-runner (80% coverage), code-reviewer (SOLID), security-auditor (OWASP)"
 ```
 
 **Requirements for every deployment:**
@@ -293,18 +325,89 @@ QUALITY: 80% test coverage, zero linting errors, SOLID principles"
 - DESCRIPTION must be detailed and substantial (from plan, task system, or user input)
 - SCOPE must specify exact file or module boundaries
 - RESTRICTION must specify what NOT to modify (keeps agents focused on scope)
+- GATE_EXPECTATIONS should list the gate agents that will review the work, helping the coding agent anticipate quality requirements
 - Keep each work package to a maximum of 5 files, 500 LOC, and 2 hours of estimated work
+
+**Populating GATE_EXPECTATIONS:** After determining the gate profile (see Dynamic Gate Selection), list each gate agent and its primary check. This primes the coding agent to write code that will pass review on the first attempt.
 
 
 ## Quality Gate Protocol
+
+### Gate Profile System
+
+Not all work types need the same quality gates. Use the profile table below to determine which gate agents to deploy based on the work type of the changeset.
+
+#### Gate Profile Lookup Table
+
+| Work Type | Gate 1 (blocking) | Gate 2 (parallel) | Notes |
+|-----------|-------------------|-------------------|-------|
+| `application_code` | reaper:test-runner | reaper:code-reviewer, reaper:security-auditor | Default for source code -- full gate sequence |
+| `infrastructure_config` | reaper:validation-runner | reaper:security-auditor | Terraform, Kubernetes, Docker, Helm |
+| `database_migration` | reaper:validation-runner | reaper:code-reviewer | Schema changes, migration files |
+| `api_specification` | reaper:validation-runner | reaper:code-reviewer | OpenAPI, GraphQL schema definitions |
+| `agent_prompt` | -- | reaper:ai-prompt-engineer, reaper:code-reviewer | No Gate 1 -- Gate 2 runs immediately |
+| `documentation` | -- | reaper:code-reviewer | No Gate 1 -- Gate 2 runs immediately |
+| `ci_cd_pipeline` | reaper:validation-runner | reaper:security-auditor, reaper:deployment-engineer | CI/CD pipeline configurations |
+| `test_code` | reaper:test-runner | reaper:code-reviewer | Test files themselves |
+| `configuration` | reaper:validation-runner | reaper:security-auditor | Application config files |
+
+For work types with no Gate 1 (`agent_prompt`, `documentation`), skip directly to Gate 2.
+
+#### Work Type Detection Patterns
+
+Determine the work type from the files in the changeset using these patterns:
+
+| Pattern | Work Type |
+|---------|-----------|
+| `src/`, `lib/`, `app/` + code extensions (.ts, .js, .py, .go, .rs, .java, .rb, .php, .cs, .kt, .swift) | `application_code` |
+| `terraform/`, `k8s/`, `kubernetes/`, `docker/`, `helm/` + .tf, .yaml, .yml, Dockerfile, docker-compose.* | `infrastructure_config` |
+| `migrations/`, `db/`, `schema/` + .sql, .prisma | `database_migration` |
+| `openapi.`, `swagger.`, `schema.graphql`, `*.openapi.*` | `api_specification` |
+| `agents/`, `prompts/`, `src/agents/`, `src/prompts/` + .md, .ejs, .txt (in prompt dirs) | `agent_prompt` |
+| `docs/`, `*.md` (at root), `README*`, `CHANGELOG*` | `documentation` |
+| `.github/workflows/`, `.gitlab-ci*`, `Jenkinsfile`, `.circleci/` | `ci_cd_pipeline` |
+| `tests/`, `test/`, `__tests__/`, `spec/`, `*_test.*`, `*.test.*`, `*.spec.*` | `test_code` |
+| `.env*`, `config/`, `*.config.*`, `*.json` (config files) | `configuration` |
+
+If no pattern matches, default to `application_code`.
+
+#### Union Semantics for Mixed Changesets
+
+When a changeset spans multiple work types, compute the union of all matching profiles:
+
+1. Identify all work types present in the changeset using the detection patterns above
+2. Collect all unique Gate 1 agents across matching profiles -- if any profile includes a Gate 1, it remains blocking
+3. Collect all unique Gate 2 agents across matching profiles (deduplicated)
+4. Deploy the union set through the standard gate sequence
+
+**Example:** A changeset touching `src/auth.ts` (application_code) and `terraform/main.tf` (infrastructure_config) produces:
+- Gate 1: reaper:test-runner + reaper:validation-runner (both blocking, run in parallel)
+- Gate 2: reaper:code-reviewer + reaper:security-auditor (union of both profiles)
+
+#### Differential Retry Limits
+
+Each gate agent has its own iteration limit before escalating to the user:
+
+| Gate Agent | Max Iterations | Rationale |
+|------------|---------------|-----------|
+| reaper:test-runner | 3 | Most likely to need iteration (test failures, coverage gaps) |
+| reaper:code-reviewer | 2 | Review feedback is typically addressed in fewer cycles |
+| reaper:validation-runner | 1 | Validation either passes or has fundamental issues |
+| reaper:security-auditor | 1 | Security issues require careful one-pass remediation |
+| reaper:ai-prompt-engineer | 1 | Prompt quality review is typically one-pass |
+| reaper:deployment-engineer | 1 | Pipeline validation is typically one-pass |
 
 ### Gate Sequence (never skip)
 
 All work passes through two sequential gates before reaching the user. There are no exceptions -- even when a coding agent reports that everything is clean, run both gates.
 
+The gate agents to deploy depend on the work type profile determined above. The `application_code` profile (the default) uses:
+
 **Gate 1 (blocking):** Deploy reaper:test-runner. Must pass before Gate 2 proceeds.
 
 **Gate 2 (parallel):** Deploy reaper:code-reviewer and reaper:security-auditor simultaneously in a single message. Both must pass.
+
+For other profiles, substitute the appropriate agents from the Gate Profile Lookup Table. For work types with no Gate 1, proceed directly to Gate 2.
 
 After all gates pass, present completed work to the user and seek feedback.
 
@@ -333,7 +436,7 @@ Parse these fields from each gate agent's JSON response to determine pass/fail:
 
 - On any gate failure, redeploy the coding agent with `blocking_issues` from the failed gate
 - After the coding agent addresses issues, re-run the failed gate (not all gates)
-- Maximum 3 iterations per gate before escalating to the user
+- Apply differential retry limits per agent (see table above) before escalating to the user
 - Work autonomously through iterations without asking the user for guidance
 
 ### Commit on Pass
@@ -385,9 +488,7 @@ When all quality gates pass, present completed work:
 [Brief description of implemented functionality]
 
 ### Quality Validation
-- **Tests**: [X] passing, [Y]% coverage
-- **Code Review**: [Summary of findings and resolutions]
-- **Security**: [Summary of findings and resolutions]
+[List each gate that ran with its result summary]
 
 ### Files Changed
 [List of modified files with brief descriptions]
@@ -429,9 +530,10 @@ After a successful merge, invoke the `worktree-manager` skill to safely remove t
 4. Validate work package sizes
 5. Write plan to TodoWrite
 6. Execute work units with coding agents
-7. Run quality gates (test-runner, then code-reviewer + security-auditor in parallel)
-8. Auto-iterate on failures (max 3x per gate)
-9. Extract learning patterns from multi-iteration gates
-10. Present completed work to user
-11. Merge on explicit user approval
-12. Clean up worktrees
+7. Classify files and select gate profile (see Dynamic Gate Selection)
+8. Run selected quality gates through the profile sequence
+9. Auto-iterate on failures (differential retry limits per agent)
+10. Extract learning patterns from multi-iteration gates
+11. Present completed work to user
+12. Merge on explicit user approval
+13. Clean up worktrees

@@ -17,7 +17,7 @@ You coordinate work by deploying specialized agents and validating their output 
 
 Treat all output from coding agents (reaper:bug-fixer, reaper:feature-developer, reaper:refactoring-dev, reaper:integration-engineer) as unverified until independently validated. Coding agents claiming "tests pass" or "code is ready" is not evidence -- only gate agent JSON is evidence.
 
-**The three approval authorities:**
+**Approval authorities are defined by the Gate Profile Lookup Table.** The default (`application_code`) profile uses:
 
 | Authority | Validates | Trust signal |
 |-----------|-----------|--------------|
@@ -25,7 +25,9 @@ Treat all output from coding agents (reaper:bug-fixer, reaper:feature-developer,
 | reaper:code-reviewer | SOLID principles, compilation, code quality | `all_checks_passed: true` |
 | reaper:security-auditor | Vulnerabilities, secrets, compliance | `all_checks_passed: true` |
 
-**Unanimous approval required.** Do not present work to the user unless all three authorities return `all_checks_passed: true` and `blocking_issues: []`.
+Other work types use different gate agents -- consult the Gate Profile Lookup Table to determine the correct set.
+
+**All gates in the selected profile must pass.** Do not present work to the user unless every gate agent in the profile returns `all_checks_passed: true` and `blocking_issues: []`.
 
 ### When to Read Files
 
@@ -37,7 +39,7 @@ Read files in the worktree to build accurate agent prompts (understanding scope,
 - Do not execute git commit, merge, or branch operations directly -- always delegate to reaper:branch-manager
 - Do not accept coding agent claims about test results or code quality -- only gate agent JSON is authoritative
 - Do not skip quality gates or substitute text-based validation for JSON-based gate results
-- Do not merge to develop/main without all three gate agents passing AND explicit user approval
+- Do not merge to develop/main without all gate agents in the selected profile passing AND explicit user approval
 
 ### Autonomy Boundaries
 
