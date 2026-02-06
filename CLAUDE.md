@@ -26,6 +26,13 @@ These values guide every decision in Reaper, from architecture to error messages
 
 **5. Fun** — This tool has a voice. Themed commands spark personality, power features reward the curious, and visible progress celebrates your wins. Developer tooling doesn't have to be joyless.
 
+### Where Voice Applies
+
+The Five Keys — especially Fun — apply differently depending on the audience:
+
+- **User-facing commands and skills** (flight-plan, takeoff, ship, status-worktrees, claude-sync): Voice, personality, and themed language are encouraged. These are the developer's interface with Reaper.
+- **Agent prompts** (system prompts for coding, review, and planning agents): Must remain clinical, precise technical specifications. No themed language, personality, or humor. Agent prompts are machine-consumed instructions where ambiguity degrades output quality.
+
 ## Safety Rules
 
 - Always work in `./trees/` worktrees — never work directly in the root directory
@@ -110,13 +117,15 @@ git worktree remove ./trees/TASK-ID
 ```
 src/             # SOURCE TEMPLATES - Edit files here
   agents/        # Agent EJS templates
-  skills/        # Skill EJS templates (including user-invocable orchestration skills)
+  commands/      # Orchestration command EJS templates (flight-plan, takeoff, ship, etc.)
+  skills/        # Skill EJS templates (worktree-manager)
   hooks/         # Hook templates
   partials/      # Shared EJS partials
 
-agents/          # GENERATED
-skills/          # GENERATED
-hooks/           # GENERATED
+agents/          # GENERATED from src/agents/
+commands/        # GENERATED from src/commands/
+skills/          # GENERATED from src/skills/ (worktree-manager)
+hooks/           # GENERATED from src/hooks/
 
 scripts/         # Build tooling
 docs/            # User-facing documentation (agents, commands, workflow, quality gates, auto-formatting)
@@ -147,9 +156,11 @@ Run `/reaper:claude-sync` to detect undocumented changes.
 | Location | Type | Action |
 |----------|------|--------|
 | `src/agents/*.ejs` | Source | ✅ Edit these |
+| `src/commands/*.ejs` | Source | ✅ Edit these |
 | `src/skills/**/*.ejs` | Source | ✅ Edit these |
 | `src/partials/*.ejs` | Source | ✅ Edit these (shared content) |
 | `agents/*.md` | Generated | ❌ Never edit - changes will be overwritten |
+| `commands/*.md` | Generated | ❌ Never edit - changes will be overwritten |
 | `skills/**/*.md` | Generated | ❌ Never edit - changes will be overwritten |
 | `hooks/hooks.json` | Generated | ❌ Never edit - changes will be overwritten |
 
@@ -170,9 +181,9 @@ npm run build:watch  # Watch mode for development
 
 The pre-commit hook automatically runs the build and stages generated files.
 
-### User-Invocable Skills
+### User-Invocable Commands
 
-Orchestration skills (flight-plan, takeoff, ship, status-worktrees, claude-sync) are user-invocable via `/reaper:*` syntax. They are defined in `src/skills/orchestration/` with `user-invocable: true` in their frontmatter.
+Orchestration commands (flight-plan, takeoff, ship, squadron, status-worktrees, claude-sync) are user-invocable via `/reaper:*` syntax. They are defined in `src/commands/` with `user-invocable: true` in their frontmatter.
 
 ### Partials (Shared Content)
 
