@@ -36,6 +36,7 @@ FORCE=false
 DRY_RUN=false
 KEEP_BRANCH=false
 DELETE_BRANCH=false
+SKIP_LOCK_CHECK=false
 
 usage() {
     cat << EOF
@@ -47,10 +48,21 @@ Arguments:
   worktree-path    Path to the worktree to remove (e.g., ./trees/PROJ-123-auth)
 
 Options:
-  --keep-branch    Remove worktree but keep the associated branch
-  --delete-branch  Remove worktree AND delete the associated branch (local and remote)
-  --force          Skip safety checks (uncommitted changes warning)
-  --dry-run        Show what would happen without making changes
+  --keep-branch      Remove worktree but keep the associated branch
+  --delete-branch    Remove worktree AND delete the associated branch (local and remote)
+  --force            Skip safety checks (uncommitted changes warning, lock check)
+  --dry-run          Show what would happen without making changes
+  --skip-lock-check  Skip pre-removal lock and open file handle detection
+                     (useful for CI/headless environments)
+  --timeout <sec>    Worktree removal timeout in seconds (default: 120, minimum: 10)
+                     Large worktrees with node_modules or .venv can take minutes to
+                     remove. The 120s default accommodates typical JS/Python projects.
+                     Overrides WORKTREE_REMOVE_TIMEOUT environment variable.
+  --network-timeout <sec>
+                     Network operation timeout in seconds (default: 30, minimum: 10)
+                     Used for git push/fetch during remote branch deletion. The 30s
+                     default handles typical GitHub/GitLab round-trips.
+                     Overrides NETWORK_TIMEOUT environment variable.
 
 Branch Disposition (REQUIRED for non-protected branches):
   You MUST specify either --keep-branch or --delete-branch when removing a worktree
@@ -82,6 +94,15 @@ Examples:
 
   # Force removal even with uncommitted changes
   $(basename "$0") ./trees/PROJ-123-auth --delete-branch --force
+
+  # Skip lock detection (CI/headless environments)
+  $(basename "$0") ./trees/PROJ-123-auth --delete-branch --skip-lock-check
+
+  # Custom timeout for large worktrees (e.g., monorepos with heavy node_modules)
+  $(basename "$0") ./trees/PROJ-123-auth --delete-branch --timeout 300
+
+  # Custom network timeout for slow remotes
+  $(basename "$0") ./trees/PROJ-123-auth --delete-branch --network-timeout 60
 EOF
 }
 
@@ -99,6 +120,20 @@ log_warn() {
 
 log_error() {
     echo -e "${RED}[ERROR]${NC} $1" >&2
+}
+
+# Validate a timeout value is a positive integer >= 10
+# Usage: validate_timeout <flag_name> <value>
+# Returns: 0 if valid, exits with code 1 if invalid
+validate_timeout() {
+    local flag_name="$1"
+    local value="$2"
+
+    # Must be a positive integer (digits only) and at least 10
+    if ! [[ "$value" =~ ^[0-9]+$ ]] || [[ "$value" -lt 10 ]]; then
+        log_error "Invalid timeout value for $flag_name: '$value' (must be a positive integer >= 10)"
+        exit 1
+    fi
 }
 
 # Portable timeout function
@@ -168,7 +203,7 @@ OPERATION: ${operation}
 
 REMEDIATION_STEPS:
 1. RETRY_WITH_LONGER_TIMEOUT:
-   WORKTREE_REMOVE_TIMEOUT=300 worktree-cleanup.sh ${worktree_path} --delete-branch
+   worktree-cleanup.sh ${worktree_path} --delete-branch --timeout 300
 
 2. PRE_DELETE_LARGE_DIRECTORIES:
    rm -rf ${worktree_path}/node_modules
@@ -180,6 +215,120 @@ REMEDIATION_STEPS:
    git worktree prune
 === END AI REMEDIATION GUIDE ===
 EOF
+}
+
+# Output AI Remediation Guide for worktree lock errors
+# Usage: output_lock_remediation <worktree_path> <lock_file> <lock_reason> <worktree_name>
+output_lock_remediation() {
+    local worktree_path="$1"
+    local lock_file="$2"
+    local lock_reason="$3"
+    local worktree_name="$4"
+
+    cat << EOF
+
+=== AI REMEDIATION GUIDE ===
+ERROR_CODE: WORKTREE_LOCKED
+WORKTREE_PATH: ${worktree_path}
+LOCK_FILE: ${lock_file}
+LOCK_REASON: ${lock_reason}
+
+REMEDIATION:
+1. UNLOCK_WORKTREE:
+   git worktree unlock ${worktree_name}
+
+2. FORCE_REMOVAL:
+   $(basename "$0") ${worktree_path} --delete-branch --force
+
+3. SKIP_LOCK_CHECK:
+   $(basename "$0") ${worktree_path} --delete-branch --skip-lock-check
+=== END AI REMEDIATION GUIDE ===
+EOF
+}
+
+# Check for worktree lock file before removal
+# Usage: check_worktree_lock <abs_worktree_path> <project_root>
+# Returns: 0 if not locked or lock check skipped, 1 if locked (exits script)
+check_worktree_lock() {
+    local abs_worktree_path="$1"
+    local project_root="$2"
+
+    # Extract worktree name from path (last path component)
+    local worktree_name
+    worktree_name=$(basename "$abs_worktree_path")
+
+    # Determine the git dir that contains worktree metadata
+    local git_dir
+    git_dir=$(git -C "$project_root" rev-parse --git-dir 2>/dev/null)
+    if [[ -z "$git_dir" ]]; then
+        # Cannot determine git dir, skip lock check
+        return 0
+    fi
+
+    # Resolve git_dir to absolute path if relative
+    if [[ "$git_dir" != /* ]]; then
+        git_dir="$project_root/$git_dir"
+    fi
+
+    local lock_file="$git_dir/worktrees/$worktree_name/locked"
+
+    if [[ -f "$lock_file" ]]; then
+        local lock_reason
+        lock_reason=$(tr -d '\n' < "$lock_file" 2>/dev/null)
+        if [[ -z "$lock_reason" ]]; then
+            lock_reason="(no reason provided)"
+        fi
+
+        if [[ "$FORCE" == true ]]; then
+            log_warn "Worktree is locked (bypassing due to --force): $lock_reason"
+            return 0
+        fi
+
+        log_error "Worktree is locked and cannot be removed"
+        output_lock_remediation "$abs_worktree_path" "$lock_file" "$lock_reason" "$worktree_name"
+        exit 1
+    fi
+
+    return 0
+}
+
+# Check for open file handles in the worktree directory
+# Usage: check_open_file_handles <abs_worktree_path>
+# Returns: 0 always (warnings only, never blocks removal)
+check_open_file_handles() {
+    local abs_worktree_path="$1"
+
+    # Support test override to simulate missing lsof
+    if [[ "${__WORKTREE_CLEANUP_TEST_NO_LSOF:-}" == "1" ]]; then
+        return 0
+    fi
+
+    # Check if lsof is available
+    if ! command -v lsof >/dev/null 2>&1; then
+        return 0
+    fi
+
+    # Run lsof to detect open file handles in the worktree directory
+    local lsof_output
+    lsof_output=$(lsof +D "$abs_worktree_path" 2>/dev/null) || true
+
+    if [[ -n "$lsof_output" ]]; then
+        # Extract process info (PID and command name)
+        local process_list
+        process_list=$(echo "$lsof_output" | tail -n +2 | awk '{print $1 " (PID: " $2 ")"}' | sort -u)
+
+        log_warn "Open file handles detected in worktree directory"
+        echo ""
+        echo "WARNING_CODE: OPEN_FILE_HANDLES"
+        echo "WORKTREE_PATH: $abs_worktree_path"
+        echo "PROCESSES:"
+        echo "$process_list"
+        echo ""
+        log_warn "Open file handles may cause removal to fail or hang"
+        log_warn "Consider closing the above processes before proceeding"
+    fi
+
+    return 0
 }
 
 # Check if a branch is protected
@@ -291,6 +440,28 @@ parse_args() {
             --delete-branch)
                 DELETE_BRANCH=true
                 shift
+                ;;
+            --skip-lock-check)
+                SKIP_LOCK_CHECK=true
+                shift
+                ;;
+            --timeout)
+                if [[ $# -lt 2 ]]; then
+                    log_error "--timeout requires a value (e.g., --timeout 120)"
+                    exit 1
+                fi
+                validate_timeout "--timeout" "$2"
+                WORKTREE_REMOVE_TIMEOUT="$2"
+                shift 2
+                ;;
+            --network-timeout)
+                if [[ $# -lt 2 ]]; then
+                    log_error "--network-timeout requires a value (e.g., --network-timeout 30)"
+                    exit 1
+                fi
+                validate_timeout "--network-timeout" "$2"
+                NETWORK_TIMEOUT="$2"
+                shift 2
                 ;;
             -*)
                 log_error "Unknown option: $1"
@@ -415,6 +586,13 @@ main() {
         fi
     fi
 
+    # PRE-REMOVAL LOCK DETECTION
+    # Check for conditions that commonly cause worktree removal hangs
+    if [[ "$SKIP_LOCK_CHECK" == false ]]; then
+        check_worktree_lock "$abs_worktree_path" "$project_root"
+        check_open_file_handles "$abs_worktree_path"
+    fi
+
     # DRY RUN: Show what would happen
     if [[ "$DRY_RUN" == true ]]; then
         echo ""
@@ -425,7 +603,7 @@ main() {
         local step=1
         echo "  $step. Change to project root: $project_root"
         ((step++))
-        echo "  $step. Remove worktree: $abs_worktree_path"
+        echo "  $step. Remove worktree: $abs_worktree_path (timeout: ${WORKTREE_REMOVE_TIMEOUT}s)"
         ((step++))
 
         if [[ -n "$branch" ]]; then
