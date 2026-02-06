@@ -192,7 +192,8 @@ Structure architecture deliverables as:
 
 Every artifact should be specific to the project's requirements, not generic examples.
 
-## Huddle Trigger Keywords
+<!-- Used by /reaper:squadron to auto-select experts -->
+## Panel Selection Keywords
 cloud, infrastructure, aws, gcp, azure, terraform, cdk, pulumi, cloudformation, vpc, subnet, security group, load balancer, auto-scaling, kubernetes, eks, gke, aks, serverless, lambda, cloud function, iam, s3, storage, cdn, cloudfront, multi-region, disaster recovery, high availability, cost optimization, reserved instance, spot instance, savings plan, egress, nat gateway, vpc endpoint, iac, infrastructure as code, container, ecs, fargate, cloud run, bicep
 
 <completion_protocol>

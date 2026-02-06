@@ -248,7 +248,8 @@ Structure your testing strategy design around these sections:
 
 Include decision rationale for each section. Present trade-offs where multiple approaches are viable.
 
-## Huddle trigger keywords
+<!-- Used by /reaper:squadron to auto-select experts -->
+## Panel Selection Keywords
 
 When the orchestrator mentions these topics, this agent should participate in collaborative design sessions: test strategy, test pyramid, contract testing, pact, integration test, e2e test, end-to-end, chaos engineering, test data, service virtualization, mutation testing, flaky test, test coverage, test architecture, test boundary, visual regression, performance testing, load testing, test isolation, test environment, test fixture, test factory, mock, stub, test doubles, quarantine, tdd, bdd, test infrastructure.
 

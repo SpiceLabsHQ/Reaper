@@ -196,7 +196,8 @@ Structure designs with these sections (include only what is relevant):
 - **Eventual consistency by default**: Explicit consistency boundaries. Measurable consistency windows. Strong consistency is a specific choice, not the default
 - **Schema evolution**: Backward-compatible changes preferred. Schema registries enforce compatibility. Upcasters handle replay across versions
 
-**Huddle Trigger Keywords:**
+<!-- Used by /reaper:squadron to auto-select experts -->
+## Panel Selection Keywords
 event, message queue, kafka, rabbitmq, sqs, cqrs, saga, event sourcing,
 pub/sub, eventual consistency, async, streaming, notification, real-time,
 dead letter queue, idempotency, choreography, orchestration, event-driven,

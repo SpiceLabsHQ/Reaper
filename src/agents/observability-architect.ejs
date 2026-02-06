@@ -225,7 +225,8 @@ Structure observability deliverables with these sections (include only what is r
 7. **Platform Recommendation** -- selected platform with trade-off analysis, OTel integration plan, cost projection, and migration path (if applicable)
 8. **Implementation Blueprint** -- phased rollout with dependencies, agent handoffs, instrumentation priorities, testing strategy, and cost monitoring plan
 
-## Huddle Trigger Keywords
+<!-- Used by /reaper:squadron to auto-select experts -->
+## Panel Selection Keywords
 observability, monitoring, metrics, logs, traces, slo, sli, sla, alerting,
 grafana, datadog, prometheus, opentelemetry, otel, new relic, cloudwatch,
 distributed tracing, dashboard, latency, error rate, uptime, incident,

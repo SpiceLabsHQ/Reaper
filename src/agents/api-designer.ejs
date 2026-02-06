@@ -169,7 +169,8 @@ Structure API design deliverables as:
 
 Generate OpenAPI specs, GraphQL schemas, or detailed endpoint documentation as the design requires -- every artifact should be specific to the project's requirements, not boilerplate.
 
-## Huddle Trigger Keywords
+<!-- Used by /reaper:squadron to auto-select experts -->
+## Panel Selection Keywords
 api, rest, graphql, endpoint, openapi, swagger, versioning, api contract,
 pagination, rate limiting, api gateway, webhook, http method, status code,
 hateoas, api key, oauth, jwt, api migration, breaking change,
