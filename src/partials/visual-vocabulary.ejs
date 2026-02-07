@@ -1,0 +1,113 @@
+## Visual Vocabulary
+
+> **Opt-out**: If the project's CLAUDE.md contains the line `Reaper: disable ASCII art`, emit plain text status labels only. No gauge bars, no box-drawing, no card templates. Use the `functional` context behavior regardless of the `context` parameter.
+
+> **Rendering constraint**: One line, one direction, no column alignment. Every visual element must be renderable in a single horizontal pass. No multi-line box-drawing that requires vertical alignment across columns.
+
+### Gauge States
+
+Four semantic states expressed as fixed-width 10-block bars. Use these consistently across all commands to communicate work status.
+
+<% if (context === 'functional') { -%>
+Status labels (plain text, no visual ornament):
+
+- **LANDED** -- complete, healthy
+- **IN FLIGHT** -- work in progress
+- **GROUNDED** -- waiting, not started
+- **FAULT** -- failed, needs attention
+<% } else { -%>
+```
+  ██████████  LANDED       complete, healthy
+  ██████░░░░  IN FLIGHT    work in progress
+  ░░░░░░░░░░  GROUNDED     waiting, not started
+  ░░░░!!░░░░  FAULT        failed, needs attention
+```
+
+Gauge usage rules:
+- Always use exactly 10 blocks per bar (full-width = 10 filled, empty = 10 unfilled).
+- `!!` in the FAULT bar replaces two blocks at the center to signal breakage.
+- Pair each bar with its label and a short gloss on the same line.
+<% } -%>
+<% if (context === 'takeoff') { -%>
+
+### Preflight Card
+
+Render before work begins. Shows the mission parameters the command will execute against.
+
+```
+  PREFLIGHT
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Task:       [TASK-ID]
+  Branch:     [branch-name]
+  Worktree:   [worktree-path]
+  Units:      [N work units planned]
+  Strategy:   [execution strategy]
+  ░░░░░░░░░░  GROUNDED
+```
+
+### Gate Panel
+
+Render after each quality gate completes. Shows gate results inline.
+
+```
+  GATE RESULTS
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  test-runner       ██████████  LANDED
+  code-reviewer     ██████░░░░  IN FLIGHT
+  security-auditor  ░░░░░░░░░░  GROUNDED
+```
+
+Gate panel rules:
+- One row per gate agent.
+- Gate name left-aligned, gauge bar right of name, state label after bar.
+- Update rows as gates complete -- replace GROUNDED with LANDED or FAULT.
+<% } else if (context === 'ship') { -%>
+
+### Departure Card
+
+Render when the ship command begins. Shows what is being shipped.
+
+```
+  DEPARTURE
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Worktree:   [worktree-path]
+  Branch:     [branch-name]
+  Commits:    [N commits to ship]
+  Target:     [target branch or PR]
+  ██████░░░░  IN FLIGHT
+```
+
+### Landing Card
+
+Render when the ship command completes. Shows the result of the PR or merge.
+
+```
+  LANDING
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  PR:         [PR-URL or merge result]
+  Status:     [merged / opened / failed]
+  ██████████  LANDED
+```
+<% } else if (context === 'status-worktrees') { -%>
+
+### Fleet Dashboard
+
+Render as a multi-row status overview. One row per worktree.
+
+```
+  FLEET STATUS
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  trees/TASK-001-auth       ██████████  LANDED
+  trees/TASK-002-billing    ██████░░░░  IN FLIGHT
+  trees/TASK-003-notifs     ░░░░░░░░░░  GROUNDED
+  trees/TASK-004-search     ░░░░!!░░░░  FAULT
+```
+
+Fleet dashboard rules:
+- One row per worktree. Path left-aligned, gauge bar and state right.
+- Sort: FAULT first, then IN FLIGHT, then GROUNDED, then LANDED.
+- If no worktrees exist, show a single line: `No active worktrees.`
+<% } else if (context === 'squadron') { -%>
+
+Squadron has its own visual vocabulary (mission cards, scorecards, tension diagrams, consensus markers) defined in the squadron command. This partial provides only the gauge states above for reuse. Do not duplicate squadron-specific visual elements here.
+<% } -%>
