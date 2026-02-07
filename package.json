@@ -7,7 +7,7 @@
     "build": "node scripts/build.js",
     "build:watch": "node scripts/build.js --watch",
     "test": "node --test scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js scripts/visual-vocabulary.test.js scripts/contracts.test.js",
-    "test:coverage": "node --test --experimental-test-coverage scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js scripts/visual-vocabulary.test.js scripts/contracts.test.js",
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-lines=70 --test-coverage-branches=70 --test-coverage-functions=70 scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js scripts/visual-vocabulary.test.js scripts/contracts.test.js",
     "prepare": "husky",
     "release": "commit-and-tag-version",
     "release:dry-run": "commit-and-tag-version --dry-run"

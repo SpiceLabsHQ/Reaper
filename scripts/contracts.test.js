@@ -515,6 +515,163 @@ describe('Contract: TDD agents are classified as coding agents', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Contract: command frontmatter
+// ---------------------------------------------------------------------------
+
+/**
+ * All user-invocable commands that produce generated .md files.
+ */
+const ALL_COMMANDS = [
+  'ship',
+  'takeoff',
+  'status-worktrees',
+  'flight-plan',
+  'squadron',
+  'claude-sync',
+];
+
+/**
+ * Resolves the generated command file path from command name.
+ * @param {string} commandName - Command name (e.g. 'ship')
+ * @returns {string} Absolute path to the generated command .md file
+ */
+function commandFilePath(commandName) {
+  return path.join(COMMANDS_DIR, `${commandName}.md`);
+}
+
+describe('Contract: command frontmatter', () => {
+  assert.ok(
+    ALL_COMMANDS.length > 0,
+    'Expected at least one command .md file in commands/'
+  );
+
+  for (const commandName of ALL_COMMANDS) {
+    const filePath = commandFilePath(commandName);
+    const relative = `commands/${commandName}.md`;
+
+    it(`${relative} has valid YAML frontmatter`, () => {
+      assert.ok(fs.existsSync(filePath), `${relative} not found`);
+      const content = fs.readFileSync(filePath, 'utf8');
+      const fm = extractFrontmatter(content);
+      assert.ok(
+        fm !== null,
+        `${relative} is missing YAML frontmatter (--- delimiters)`
+      );
+    });
+
+    it(`${relative} frontmatter contains "description" field`, () => {
+      assert.ok(fs.existsSync(filePath), `${relative} not found`);
+      const content = fs.readFileSync(filePath, 'utf8');
+      const fm = extractFrontmatter(content);
+      assert.ok(fm !== null, `${relative} is missing frontmatter`);
+      assert.ok(
+        frontmatterHasField(fm, 'description'),
+        `${relative} frontmatter is missing required "description" field`
+      );
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Semantic contract definitions for commands (data-driven)
+// ---------------------------------------------------------------------------
+
+/**
+ * Maps command names to required section patterns.
+ * Each entry produces a describe block asserting section presence.
+ * Follows the same data-driven pattern as SEMANTIC_CONTRACTS for agents.
+ */
+const COMMAND_SEMANTIC_CONTRACTS = {
+  ship: {
+    label: 'ship command',
+    commands: () => ['ship'],
+    sections: [
+      { pattern: /Scope Boundary/i, label: 'scope boundary section' },
+      { pattern: /Error Handling/i, label: 'error handling section' },
+    ],
+  },
+  takeoff: {
+    label: 'takeoff command',
+    commands: () => ['takeoff'],
+    sections: [
+      { pattern: /Orchestrator Role/i, label: 'orchestrator role section' },
+      { pattern: /Quality Gate/i, label: 'quality gate section' },
+    ],
+  },
+  'status-worktrees': {
+    label: 'status-worktrees command',
+    commands: () => ['status-worktrees'],
+    sections: [
+      { pattern: /Instructions/i, label: 'instructions section' },
+      { pattern: /Example Output/i, label: 'example output section' },
+    ],
+  },
+  'flight-plan': {
+    label: 'flight-plan command',
+    commands: () => ['flight-plan'],
+    sections: [
+      { pattern: /Plan File/i, label: 'plan file section' },
+      { pattern: /Scope Boundary/i, label: 'scope boundary section' },
+    ],
+  },
+  squadron: {
+    label: 'squadron command',
+    commands: () => ['squadron'],
+    sections: [
+      { pattern: /PHASE 1/i, label: 'phase 1 section' },
+      { pattern: /Error Handling/i, label: 'error handling section' },
+    ],
+  },
+  'claude-sync': {
+    label: 'claude-sync command',
+    commands: () => ['claude-sync'],
+    sections: [
+      { pattern: /Pre-Flight Validation/i, label: 'pre-flight validation section' },
+      { pattern: /Important Notes/i, label: 'important notes section' },
+    ],
+  },
+};
+
+/**
+ * Registers a describe block from a COMMAND_SEMANTIC_CONTRACTS entry.
+ * Generates one test per command per required section.
+ * Mirrors registerSemanticSuite but resolves paths from COMMANDS_DIR.
+ * @param {string} key - Key into COMMAND_SEMANTIC_CONTRACTS
+ */
+function registerCommandSemanticSuite(key) {
+  const contract = COMMAND_SEMANTIC_CONTRACTS[key];
+  describe(`Contract: ${contract.label} has required sections`, () => {
+    const commands = contract.commands();
+    assert.ok(
+      commands.length > 0,
+      `Expected at least one ${contract.label} command`
+    );
+
+    for (const commandName of commands) {
+      for (const { pattern, label } of contract.sections) {
+        it(`${commandName} contains ${label}`, () => {
+          const filePath = commandFilePath(commandName);
+          assert.ok(fs.existsSync(filePath), `${commandName}.md not found`);
+          const content = fs.readFileSync(filePath, 'utf8');
+          assert.ok(
+            hasSection(content, pattern),
+            `${commandName}.md is missing required ${label}`
+          );
+        });
+      }
+    }
+  });
+}
+
+// Register all command semantic contract suites
+registerCommandSemanticSuite('ship');
+registerCommandSemanticSuite('takeoff');
+registerCommandSemanticSuite('status-worktrees');
+registerCommandSemanticSuite('flight-plan');
+registerCommandSemanticSuite('squadron');
+registerCommandSemanticSuite('claude-sync');
+
+// ---------------------------------------------------------------------------
 // Contract: Visual vocabulary gauge states in generated command files
 // ---------------------------------------------------------------------------
 
