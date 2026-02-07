@@ -422,7 +422,13 @@ function findFiles(dir, files = []) {
     return files;
   }
 
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  let entries;
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true });
+  } catch (err) {
+    console.error(`  [ERROR] Failed to read directory ${dir}: ${err.message}`);
+    return files;
+  }
 
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name);
@@ -441,7 +447,6 @@ function findFiles(dir, files = []) {
  * Builds all templates for a specific source type.
  * @param {string} sourceType - The type to build (agents, skills, etc.)
  */
-/* node:coverage disable */
 function buildType(sourceType) {
   const sourceDir = path.join(config.srcDir, sourceType);
   const outputDir = path.join(config.rootDir, DIRECTORY_MAP[sourceType]);
@@ -471,12 +476,10 @@ function buildType(sourceType) {
     }
   }
 }
-/* node:coverage enable */
 
 /**
  * Runs the full build process.
  */
-/* node:coverage disable */
 function build() {
   console.log('Reaper EJS Template Build');
   console.log('=========================');
@@ -517,7 +520,6 @@ function build() {
 
   console.log('--------------------------\n');
 }
-/* node:coverage enable */
 
 /**
  * Sets up file watching for automatic rebuilds.
@@ -579,11 +581,16 @@ function loadChokidar() {
  * Main entry point.
  */
 function main() {
-  // Parse command line arguments
-  parseArgs(process.argv.slice(2));
+  try {
+    // Parse command line arguments
+    parseArgs(process.argv.slice(2));
 
-  // Run initial build
-  build();
+    // Run initial build
+    build();
+  } catch (err) {
+    console.error(`Fatal error: ${err.message}`);
+    process.exit(1);
+  }
 
   // Start watching if requested
   if (config.watch) {
@@ -610,6 +617,11 @@ module.exports = {
   compileTemplate,
   processFile,
   formatError,
+  copyFile,
+  findFiles,
+  buildType,
+  build,
+  main,
   AGENT_TYPES,
   TDD_AGENTS,
   GATE_CAPABLE_AGENTS,

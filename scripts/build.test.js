@@ -12,6 +12,11 @@ const {
   formatError,
   compileTemplate,
   processFile,
+  copyFile,
+  findFiles,
+  buildType,
+  build,
+  main,
   AGENT_TYPES,
   TDD_AGENTS,
   config,
@@ -1346,5 +1351,475 @@ describe('parseArgs', () => {
     assert.strictEqual(config.watch, false);
     assert.strictEqual(config.type, null);
     assert.strictEqual(config.verbose, false);
+  });
+});
+
+// ===========================================================================
+// findFiles — error handling and edge cases
+// ===========================================================================
+
+describe('findFiles', () => {
+  it('should return an empty array for a nonexistent directory', () => {
+    const result = findFiles('/tmp/reaper-test-nonexistent-dir-12345');
+    assert.deepStrictEqual(result, []);
+  });
+
+  it('should find files in an existing directory', () => {
+    const result = findFiles(FIXTURES_DIR);
+    assert.ok(Array.isArray(result), 'Should return an array');
+    assert.ok(result.length > 0, 'Should find files in fixtures directory');
+    assert.ok(
+      result.some((f) => f.endsWith('.ejs')),
+      'Should find .ejs files in fixtures'
+    );
+  });
+
+  it('should recursively find files in subdirectories', () => {
+    const result = findFiles(FIXTURES_DIR);
+    assert.ok(
+      result.some((f) => f.includes('partials')),
+      'Should find files in partials subdirectory'
+    );
+  });
+
+  it('should accumulate into a provided array', () => {
+    const existing = ['/fake/path/existing.txt'];
+    const result = findFiles(FIXTURES_DIR, existing);
+    assert.strictEqual(result, existing, 'Should return the same array reference');
+    assert.ok(result.length > 1, 'Should have added files to the existing array');
+    assert.strictEqual(result[0], '/fake/path/existing.txt', 'Should preserve existing entries');
+  });
+
+  it('should handle readdirSync errors gracefully by returning accumulated files', () => {
+    // Mock readdirSync to throw a permission error
+    const originalReaddirSync = fs.readdirSync;
+    fs.readdirSync = () => {
+      const err = new Error('EACCES: permission denied');
+      err.code = 'EACCES';
+      throw err;
+    };
+
+    try {
+      // existsSync returns true for FIXTURES_DIR, so readdirSync will be called and throw
+      const result = findFiles(FIXTURES_DIR);
+      // After fix: should return empty array (accumulated so far) instead of throwing
+      assert.deepStrictEqual(result, []);
+    } finally {
+      fs.readdirSync = originalReaddirSync;
+    }
+  });
+
+  it('should log an error message when readdirSync fails', () => {
+    const originalReaddirSync = fs.readdirSync;
+    const originalConsoleError = console.error;
+    const errors = [];
+
+    fs.readdirSync = () => {
+      const err = new Error('EACCES: permission denied');
+      err.code = 'EACCES';
+      throw err;
+    };
+    console.error = (...args) => errors.push(args.join(' '));
+
+    try {
+      findFiles(FIXTURES_DIR);
+      assert.ok(
+        errors.some((msg) => msg.includes('EACCES')),
+        'Should log the permission error'
+      );
+    } finally {
+      fs.readdirSync = originalReaddirSync;
+      console.error = originalConsoleError;
+    }
+  });
+});
+
+// ===========================================================================
+// copyFile — error handling (catch block)
+// ===========================================================================
+
+describe('copyFile', () => {
+  const TMP_OUTPUT_DIR = path.join(FIXTURES_DIR, '_test_copy_output');
+
+  beforeEach(() => {
+    fs.rmSync(TMP_OUTPUT_DIR, { recursive: true, force: true });
+  });
+
+  afterEach(() => {
+    fs.rmSync(TMP_OUTPUT_DIR, { recursive: true, force: true });
+  });
+
+  it('should successfully copy a file to the output directory', () => {
+    const sourcePath = path.join(FIXTURES_DIR, 'simple.ejs');
+    const outputPath = path.join(TMP_OUTPUT_DIR, 'simple.ejs');
+
+    const result = copyFile(sourcePath, outputPath, 'agents/simple.ejs');
+
+    assert.strictEqual(result, true, 'copyFile should return true on success');
+    assert.ok(fs.existsSync(outputPath), 'Output file should exist');
+    assert.strictEqual(stats.success, 1, 'stats.success should be incremented');
+  });
+
+  it('should return false and increment errors when copyFileSync throws', () => {
+    // Use a source path that does not exist to force copyFileSync to fail
+    const sourcePath = path.join(FIXTURES_DIR, 'absolutely-does-not-exist.xyz');
+    const outputPath = path.join(TMP_OUTPUT_DIR, 'output.xyz');
+
+    const result = copyFile(sourcePath, outputPath, 'test/nonexistent.xyz');
+
+    assert.strictEqual(result, false, 'copyFile should return false on error');
+    assert.strictEqual(stats.errors, 1, 'stats.errors should be incremented');
+    assert.strictEqual(stats.errorMessages.length, 1, 'Should have one error message');
+    assert.ok(
+      stats.errorMessages[0].includes('nonexistent.xyz'),
+      'Error message should include the relative path'
+    );
+  });
+
+  it('should log the error to console.error when copyFileSync fails', () => {
+    const originalConsoleError = console.error;
+    const errors = [];
+    console.error = (...args) => errors.push(args.join(' '));
+
+    const sourcePath = path.join(FIXTURES_DIR, 'absolutely-does-not-exist.xyz');
+    const outputPath = path.join(TMP_OUTPUT_DIR, 'output.xyz');
+
+    try {
+      copyFile(sourcePath, outputPath, 'test/nonexistent.xyz');
+      assert.ok(
+        errors.some((msg) => msg.includes('[ERROR]')),
+        'Should log [ERROR] to console.error'
+      );
+    } finally {
+      console.error = originalConsoleError;
+    }
+  });
+
+  it('should create the output directory if it does not exist', () => {
+    const sourcePath = path.join(FIXTURES_DIR, 'simple.ejs');
+    const nestedOutput = path.join(TMP_OUTPUT_DIR, 'deep', 'nested', 'simple.ejs');
+
+    const result = copyFile(sourcePath, nestedOutput, 'test/simple.ejs');
+
+    assert.strictEqual(result, true, 'copyFile should succeed');
+    assert.ok(fs.existsSync(nestedOutput), 'Nested output file should exist');
+  });
+});
+
+// ===========================================================================
+// buildType — integration tests
+// ===========================================================================
+
+describe('buildType', () => {
+  const TMP_OUTPUT_DIR = path.join(FIXTURES_DIR, '_test_buildtype_output');
+  let originalSrcDir;
+  let originalRootDir;
+
+  beforeEach(() => {
+    resetBuildState();
+    fs.rmSync(TMP_OUTPUT_DIR, { recursive: true, force: true });
+    fs.mkdirSync(TMP_OUTPUT_DIR, { recursive: true });
+
+    // Save originals
+    originalSrcDir = config.srcDir;
+    originalRootDir = config.rootDir;
+  });
+
+  afterEach(() => {
+    fs.rmSync(TMP_OUTPUT_DIR, { recursive: true, force: true });
+    config.srcDir = originalSrcDir;
+    config.rootDir = originalRootDir;
+  });
+
+  it('should silently skip when source directory does not exist', () => {
+    config.srcDir = '/tmp/reaper-test-nonexistent-src-dir';
+    config.rootDir = TMP_OUTPUT_DIR;
+
+    // Should not throw
+    buildType('agents');
+
+    assert.strictEqual(stats.success, 0, 'No files should be processed');
+    assert.strictEqual(stats.errors, 0, 'No errors should occur');
+  });
+
+  it('should process EJS files and produce output', () => {
+    // Create a minimal src structure
+    const srcAgentsDir = path.join(TMP_OUTPUT_DIR, 'src', 'agents');
+    const outputAgentsDir = path.join(TMP_OUTPUT_DIR, 'out', 'agents');
+    fs.mkdirSync(srcAgentsDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(srcAgentsDir, 'test-agent.ejs'),
+      'Hello <%= FILENAME %>'
+    );
+
+    config.srcDir = path.join(TMP_OUTPUT_DIR, 'src');
+    config.rootDir = path.join(TMP_OUTPUT_DIR, 'out');
+
+    buildType('agents');
+
+    assert.strictEqual(stats.success, 1, 'One file should be processed successfully');
+    assert.ok(
+      fs.existsSync(path.join(outputAgentsDir, 'test-agent.md')),
+      'Output .md file should be created'
+    );
+  });
+
+  it('should copy non-EJS files without compiling', () => {
+    const srcAgentsDir = path.join(TMP_OUTPUT_DIR, 'src', 'agents');
+    const outputAgentsDir = path.join(TMP_OUTPUT_DIR, 'out', 'agents');
+    fs.mkdirSync(srcAgentsDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(srcAgentsDir, 'readme.txt'),
+      'Plain text file'
+    );
+
+    config.srcDir = path.join(TMP_OUTPUT_DIR, 'src');
+    config.rootDir = path.join(TMP_OUTPUT_DIR, 'out');
+
+    buildType('agents');
+
+    assert.strictEqual(stats.success, 1, 'One file should be copied successfully');
+    assert.ok(
+      fs.existsSync(path.join(outputAgentsDir, 'readme.txt')),
+      'Non-EJS file should be copied'
+    );
+    const content = fs.readFileSync(path.join(outputAgentsDir, 'readme.txt'), 'utf8');
+    assert.strictEqual(content, 'Plain text file', 'Content should be identical');
+  });
+});
+
+// ===========================================================================
+// build — integration tests
+// ===========================================================================
+
+describe('build', () => {
+  const TMP_OUTPUT_DIR = path.join(FIXTURES_DIR, '_test_build_output');
+  let originalSrcDir;
+  let originalRootDir;
+
+  beforeEach(() => {
+    resetBuildState();
+    fs.rmSync(TMP_OUTPUT_DIR, { recursive: true, force: true });
+    fs.mkdirSync(TMP_OUTPUT_DIR, { recursive: true });
+
+    originalSrcDir = config.srcDir;
+    originalRootDir = config.rootDir;
+  });
+
+  afterEach(() => {
+    fs.rmSync(TMP_OUTPUT_DIR, { recursive: true, force: true });
+    config.srcDir = originalSrcDir;
+    config.rootDir = originalRootDir;
+  });
+
+  it('should reset stats before building', () => {
+    stats.success = 99;
+    stats.errors = 42;
+    stats.errorMessages = ['old error'];
+
+    config.srcDir = '/tmp/reaper-test-nonexistent-src';
+
+    build();
+
+    assert.strictEqual(stats.success, 0, 'stats.success should be reset');
+    assert.strictEqual(stats.errors, 0, 'stats.errors should be reset');
+    assert.deepStrictEqual(stats.errorMessages, [], 'errorMessages should be reset');
+  });
+
+  it('should handle missing src directory gracefully', () => {
+    config.srcDir = '/tmp/reaper-test-nonexistent-src-dir';
+
+    // Should not throw
+    build();
+
+    assert.strictEqual(stats.success, 0);
+    assert.strictEqual(stats.errors, 0);
+  });
+
+  it('should build only the specified type when config.type is set', () => {
+    const srcAgentsDir = path.join(TMP_OUTPUT_DIR, 'src', 'agents');
+    const srcSkillsDir = path.join(TMP_OUTPUT_DIR, 'src', 'skills');
+    fs.mkdirSync(srcAgentsDir, { recursive: true });
+    fs.mkdirSync(srcSkillsDir, { recursive: true });
+    fs.writeFileSync(path.join(srcAgentsDir, 'a.ejs'), 'Agent: <%= FILENAME %>');
+    fs.writeFileSync(path.join(srcSkillsDir, 's.ejs'), 'Skill: <%= FILENAME %>');
+
+    config.srcDir = path.join(TMP_OUTPUT_DIR, 'src');
+    config.rootDir = path.join(TMP_OUTPUT_DIR, 'out');
+    config.type = 'agents';
+
+    build();
+
+    assert.strictEqual(stats.success, 1, 'Only one type should be built');
+    assert.ok(
+      fs.existsSync(path.join(TMP_OUTPUT_DIR, 'out', 'agents', 'a.md')),
+      'Agent file should be built'
+    );
+    assert.ok(
+      !fs.existsSync(path.join(TMP_OUTPUT_DIR, 'out', 'skills', 's.md')),
+      'Skills file should NOT be built when config.type=agents'
+    );
+  });
+
+  it('should build all types when config.type is null', () => {
+    const srcAgentsDir = path.join(TMP_OUTPUT_DIR, 'src', 'agents');
+    const srcSkillsDir = path.join(TMP_OUTPUT_DIR, 'src', 'skills');
+    fs.mkdirSync(srcAgentsDir, { recursive: true });
+    fs.mkdirSync(srcSkillsDir, { recursive: true });
+    fs.writeFileSync(path.join(srcAgentsDir, 'a.ejs'), 'Agent: <%= FILENAME %>');
+    fs.writeFileSync(path.join(srcSkillsDir, 's.ejs'), 'Skill: <%= FILENAME %>');
+
+    config.srcDir = path.join(TMP_OUTPUT_DIR, 'src');
+    config.rootDir = path.join(TMP_OUTPUT_DIR, 'out');
+    config.type = null;
+
+    build();
+
+    assert.strictEqual(stats.success, 2, 'Both types should be built');
+  });
+
+  it('should track errors in stats when template compilation fails', () => {
+    const srcAgentsDir = path.join(TMP_OUTPUT_DIR, 'src', 'agents');
+    fs.mkdirSync(srcAgentsDir, { recursive: true });
+    fs.writeFileSync(path.join(srcAgentsDir, 'bad.ejs'), '<%= UNDEFINED_FUNC() %>');
+
+    config.srcDir = path.join(TMP_OUTPUT_DIR, 'src');
+    config.rootDir = path.join(TMP_OUTPUT_DIR, 'out');
+    config.type = 'agents';
+
+    build();
+
+    assert.strictEqual(stats.errors, 1, 'Should record the compilation error');
+    assert.ok(stats.errorMessages.length > 0, 'Should have error messages');
+  });
+});
+
+// ===========================================================================
+// main — error handling
+// ===========================================================================
+
+describe('main', () => {
+  let originalSrcDir;
+  let originalRootDir;
+  let originalArgv;
+  const TMP_OUTPUT_DIR = path.join(FIXTURES_DIR, '_test_main_output');
+
+  beforeEach(() => {
+    resetBuildState();
+    fs.rmSync(TMP_OUTPUT_DIR, { recursive: true, force: true });
+    originalSrcDir = config.srcDir;
+    originalRootDir = config.rootDir;
+    originalArgv = process.argv;
+  });
+
+  afterEach(() => {
+    fs.rmSync(TMP_OUTPUT_DIR, { recursive: true, force: true });
+    config.srcDir = originalSrcDir;
+    config.rootDir = originalRootDir;
+    process.argv = originalArgv;
+  });
+
+  it('should call process.exit(0) when build succeeds with no errors', () => {
+    config.srcDir = '/tmp/reaper-test-nonexistent-src';
+    process.argv = ['node', 'build.js'];
+
+    const restore = stubProcessExit();
+    try {
+      main();
+      assert.fail('Expected process.exit to be called');
+    } catch (err) {
+      assert.strictEqual(err.name, 'ProcessExitError');
+      assert.strictEqual(err.code, 0, 'Should exit with code 0 on success');
+    } finally {
+      restore();
+    }
+  });
+
+  it('should call process.exit(1) when build has errors', () => {
+    const srcAgentsDir = path.join(TMP_OUTPUT_DIR, 'src', 'agents');
+    fs.mkdirSync(srcAgentsDir, { recursive: true });
+    fs.writeFileSync(path.join(srcAgentsDir, 'bad.ejs'), '<%= UNDEFINED_FUNC() %>');
+
+    config.srcDir = path.join(TMP_OUTPUT_DIR, 'src');
+    config.rootDir = path.join(TMP_OUTPUT_DIR, 'out');
+    process.argv = ['node', 'build.js'];
+
+    const restore = stubProcessExit();
+    try {
+      main();
+      assert.fail('Expected process.exit to be called');
+    } catch (err) {
+      assert.strictEqual(err.name, 'ProcessExitError');
+      assert.strictEqual(err.code, 1, 'Should exit with code 1 on build errors');
+    } finally {
+      restore();
+    }
+  });
+
+  it('should handle unexpected errors in build gracefully', () => {
+    // Mock fs.existsSync to throw an unexpected error during build
+    const originalExistsSync = fs.existsSync;
+    let callCount = 0;
+    fs.existsSync = (p) => {
+      callCount++;
+      // Let the first call through (config.srcDir check in build()),
+      // then throw on second call
+      if (callCount === 1) {
+        return true; // src dir "exists"
+      }
+      throw new Error('Unexpected filesystem failure');
+    };
+
+    process.argv = ['node', 'build.js'];
+
+    const restore = stubProcessExit();
+    try {
+      main();
+      assert.fail('Expected an error');
+    } catch (err) {
+      // After fix: main() should catch and exit(1) instead of propagating
+      // Before fix: this will be the raw Error, not a ProcessExitError
+      assert.strictEqual(
+        err.name,
+        'ProcessExitError',
+        'main() should catch unexpected errors and call process.exit(1)'
+      );
+      assert.strictEqual(err.code, 1);
+    } finally {
+      fs.existsSync = originalExistsSync;
+      restore();
+    }
+  });
+
+  it('should log the unexpected error message before exiting', () => {
+    const originalExistsSync = fs.existsSync;
+    const originalConsoleError = console.error;
+    const errors = [];
+
+    let callCount = 0;
+    fs.existsSync = (p) => {
+      callCount++;
+      if (callCount === 1) return true;
+      throw new Error('Catastrophic filesystem failure');
+    };
+    console.error = (...args) => errors.push(args.join(' '));
+
+    process.argv = ['node', 'build.js'];
+
+    const restore = stubProcessExit();
+    try {
+      main();
+    } catch (_err) {
+      // Expected
+    } finally {
+      fs.existsSync = originalExistsSync;
+      console.error = originalConsoleError;
+      restore();
+    }
+
+    assert.ok(
+      errors.some((msg) => msg.includes('Catastrophic filesystem failure')),
+      'Should log the unexpected error message'
+    );
   });
 });

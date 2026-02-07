@@ -264,6 +264,17 @@ These entries are never applied automatically. Run `/reaper:claude-sync` to revi
 | `/reaper:claude-sync` | Analyzes commits since CLAUDE.md was last modified. Surfaces changes that should be documented for LLM context. |
 | `/reaper:squadron` | Assembles domain expert agents for collaborative design discussions. Use before flight-plan when the architecture decision itself is what matters. |
 
+### Squadron and the Explore-First Principle
+
+Squadron uses an **explore-first architecture**: Explore agents always run before domain experts. The Explore agents gather codebase facts -- existing implementations, architecture patterns, integration points -- so that expert agents receive pre-compiled context and spend their context windows on analysis rather than file reads.
+
+The scope of exploration scales with concept breadth:
+
+- **Narrow concepts (1--2 domains)**: A single Explore agent runs focused search queries targeting the relevant areas.
+- **Broad concepts (3+ domains)**: Multiple Explore agents deploy in parallel, each scoped to a different domain.
+
+After exploration completes, the compiled findings are injected into every expert's prompt as codebase context. Experts then deliver independent positions, the facilitator routes disagreements through structured clash cycles, and unresolved tensions surface as decision points for you. The full squadron workflow is documented in [commands.md](commands.md#reapersquadron).
+
 ---
 
 [Back to README](../README.md)

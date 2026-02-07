@@ -66,6 +66,47 @@ The hook uses a two-tier detection strategy:
 
 A file is never formatted twice. The first matching formatter wins.
 
+## Formatter Allowlist
+
+By default, the hook runs any formatter it detects. If you want to restrict which formatters are allowed to execute, add an allowlist to your project's `CLAUDE.md`:
+
+```
+Reaper: formatter-allowlist prettier,ruff
+```
+
+When an allowlist is configured, only the named formatters will run. All others are silently skipped. Formatter names are the short identifiers used in the table above: `pint`, `php-cs-fixer`, `ruff`, `black`, `gofmt`, `rustfmt`, `rubocop`, `swiftformat`, `ktlint`, `dart`, `prettier`, `biome`, `eslint`.
+
+If no `Reaper: formatter-allowlist` line is present in `CLAUDE.md`, the hook runs all detected formatters as before. This is fully backwards compatible.
+
+### Example allowlist configurations
+
+Allow only Prettier and Ruff:
+```
+Reaper: formatter-allowlist prettier,ruff
+```
+
+Allow only Pint (Laravel PHP):
+```
+Reaper: formatter-allowlist pint
+```
+
+## Execution Logging
+
+The hook runs silently by default. If you want visibility into which formatters execute and on which files, enable logging by adding this line to your project's `CLAUDE.md`:
+
+```
+Reaper: formatter-log
+```
+
+When enabled, each formatter execution produces a log line on stderr:
+
+```
+[reaper:fmt] prettier src/components/App.tsx
+[reaper:fmt] ruff src/utils/parser.py
+```
+
+The log shows the formatter name and the file path. This is useful for debugging formatter detection or verifying that your allowlist is working as expected. Logging does not affect formatter behavior -- the hook still suppresses formatter output and exits cleanly.
+
 ## What This Means for You
 
 **No setup required.** The hook uses your project's existing formatters. If you have Prettier configured, it uses Prettier. If you have Ruff installed, it uses Ruff. There is nothing to configure in Reaper.
@@ -77,6 +118,8 @@ A file is never formatted twice. The first matching formatter wins.
 **Quality gate savings.** Without auto-formatting, a code reviewer or linter would flag formatting issues, sending work back to the code agent for a fix-and-rerun cycle. The hook eliminates this class of failure entirely.
 
 **Safe to ignore.** If no formatter is installed for a given file type, nothing happens. No errors, no warnings, no interruptions.
+
+**Configurable when needed.** Use the allowlist to restrict formatters or enable logging for visibility. Both features are opt-in and configured through your project's `CLAUDE.md`, following the same pattern as other Reaper opt-in settings.
 
 ---
 

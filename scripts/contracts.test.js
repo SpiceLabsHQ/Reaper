@@ -393,6 +393,88 @@ describe('Contract: hooks.json structure', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Contract 10: PostToolUse hook contains formatter allowlist mechanism
+// ---------------------------------------------------------------------------
+
+describe('Contract: PostToolUse hook formatter allowlist and logging', () => {
+  /**
+   * Helper to extract the PostToolUse Write|Edit hook command string.
+   * @returns {string} The command string from the PostToolUse hook
+   */
+  function getPostToolUseCommand() {
+    const parsed = JSON.parse(fs.readFileSync(HOOKS_FILE, 'utf8'));
+    const postToolUse = parsed.hooks.PostToolUse;
+    assert.ok(
+      Array.isArray(postToolUse) && postToolUse.length > 0,
+      'hooks.json must have PostToolUse entries'
+    );
+    const writeEditEntry = postToolUse.find((e) => e.matcher === 'Write|Edit');
+    assert.ok(
+      writeEditEntry,
+      'PostToolUse must have a Write|Edit matcher entry'
+    );
+    assert.ok(
+      writeEditEntry.hooks.length > 0,
+      'PostToolUse Write|Edit entry must have at least one hook'
+    );
+    return writeEditEntry.hooks[0].command;
+  }
+
+  it('reads allowlist from CLAUDE.md using "Reaper: formatter-allowlist" pattern', () => {
+    const cmd = getPostToolUseCommand();
+    assert.ok(
+      cmd.includes('Reaper: formatter-allowlist'),
+      'PostToolUse command must check for "Reaper: formatter-allowlist" in CLAUDE.md'
+    );
+  });
+
+  it('reads CLAUDE.md file to detect allowlist configuration', () => {
+    const cmd = getPostToolUseCommand();
+    assert.ok(
+      cmd.includes('CLAUDE.md'),
+      'PostToolUse command must reference CLAUDE.md for configuration'
+    );
+  });
+
+  it('supports formatter execution logging via "Reaper: formatter-log" pattern', () => {
+    const cmd = getPostToolUseCommand();
+    assert.ok(
+      cmd.includes('Reaper: formatter-log'),
+      'PostToolUse command must check for "Reaper: formatter-log" in CLAUDE.md'
+    );
+  });
+
+  it('preserves backwards compatibility with trailing true', () => {
+    const cmd = getPostToolUseCommand();
+    assert.ok(
+      cmd.trimEnd().endsWith('true'),
+      'PostToolUse command must end with "true" for safe exit (backwards compatible)'
+    );
+  });
+
+  it('filters formatters against allowlist when configured', () => {
+    const cmd = getPostToolUseCommand();
+    // The command must contain logic that checks a formatter name against the
+    // allowlist variable before execution. Look for the pattern of checking
+    // if the allowlist is set and whether a formatter name is in it.
+    assert.ok(
+      cmd.includes('REAPER_ALLOWLIST'),
+      'PostToolUse command must use a REAPER_ALLOWLIST variable for allowlist checking'
+    );
+  });
+
+  it('logs formatter name and file path when logging is enabled', () => {
+    const cmd = getPostToolUseCommand();
+    // When logging is enabled, the command must output which formatter ran
+    // and which file was formatted.
+    assert.ok(
+      cmd.includes('REAPER_LOG'),
+      'PostToolUse command must use a REAPER_LOG variable for logging control'
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Semantic contract helpers
 // ---------------------------------------------------------------------------
 
