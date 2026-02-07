@@ -103,9 +103,8 @@ Use these operations to interact with whatever task system is detected. The LLM 
 
 ### Dependency Type Semantics
 
-When creating or querying dependencies, preserve the relationship type:
+ADD_DEPENDENCY creates execution constraints and informational links between issues. It does NOT establish hierarchy -- use CREATE_ISSUE with the `parent` parameter for parent-child relationships.
 
-- **parent-child**: Hierarchical decomposition (epic contains stories, story contains tasks)
 - **blocks**: Sequential constraint (task A must complete before task B can start)
 - **related**: Informational link (tasks share context but no execution dependency)
 
@@ -415,7 +414,7 @@ For each work unit in the approved plan, use abstract CRUD operations from the d
 
 3. **Dependencies** (from plan's dependency graph):
    - ADD_DEPENDENCY with type=blocks for execution order constraints (A must complete before B starts)
-   - Use parent-child relationships for hierarchy only (epic contains tasks)
+   - ADD_DEPENDENCY with type=related for informational links between issues that share context but have no execution order constraint
 
 ### TDD-Structured Issue Description Template
 
