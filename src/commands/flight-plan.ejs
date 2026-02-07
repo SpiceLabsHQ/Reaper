@@ -331,7 +331,7 @@ For each work unit in the approved plan, use abstract CRUD operations from the d
 
 3. **Dependencies** (from plan's dependency graph):
    - ADD_DEPENDENCY with type=blocks for execution order constraints (A must complete before B starts)
-   - Use parent-child relationships for hierarchy only (epic contains tasks)
+   - ADD_DEPENDENCY with type=related for informational links between issues that share context but have no execution order constraint
 
 ### TDD-Structured Issue Description Template
 

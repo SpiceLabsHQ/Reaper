@@ -236,7 +236,7 @@ When given a task ID, use QUERY_DEPENDENCY_TREE to retrieve the full dependency 
 
 ### Creating Work Units
 
-Use CREATE_ISSUE to create subtasks, then ADD_DEPENDENCY with `parent-child` type to link them to the parent issue.
+Use CREATE_ISSUE with `parent=PARENT_ID` to create subtasks with hierarchy in a single step. Do not use ADD_DEPENDENCY for hierarchy -- ADD_DEPENDENCY is only for `blocks` (execution order) and `related` (informational links).
 
 ### Work Type Classification
 
