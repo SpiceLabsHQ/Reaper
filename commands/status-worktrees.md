@@ -8,7 +8,7 @@ Check the status of git worktrees and parallel development progress
 
 ## Variables
 
-- `TASK_ID`: Filter by task ID (optional, e.g., PROJ-123, reaper-42)
+- `TASK_ID`: Filter by task ID (optional, e.g., PROJ-123, reaper-a3f)
 - `VERBOSE`: Show detailed status including uncommitted changes (true/false, default: false)
 
 ## Visual Vocabulary
@@ -58,10 +58,10 @@ Display comprehensive status information about worktrees using the fleet dashboa
 
 ### Pre-status Validation:
 ```bash
-# If TASK_ID provided, validate format (JIRA: PROJ-123, Beads: reaper-42)
+# If TASK_ID provided, validate format (JIRA: PROJ-123, Beads: reaper-a3f)
 if [ -n "${TASK_ID}" ]; then
-  if [[ ! "${TASK_ID}" =~ ^[A-Za-z]+-[0-9]+$ ]]; then
-    echo "ERROR: Invalid TASK_ID format. Expected: PROJ-123 or reaper-42"
+  if [[ ! "${TASK_ID}" =~ ^[A-Za-z]+-[a-z0-9]+$ ]]; then
+    echo "ERROR: Invalid TASK_ID format. Expected: PROJ-123 or reaper-a3f"
     exit 1
   fi
 fi
@@ -272,7 +272,7 @@ if [ -n "${TASK_ID}" ]; then
   echo ""
   echo "  Task: ${TASK_ID}"
   echo "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  if [[ "${TASK_ID}" =~ ^[a-z]+-[0-9]+$ ]] && command -v bd >/dev/null; then
+  if [[ "${TASK_ID}" =~ ^[a-z]+-[a-z0-9]+$ ]] && command -v bd >/dev/null; then
     bd show "${TASK_ID}" || echo "Could not fetch Beads details"
   elif command -v acli >/dev/null; then
     acli jira workitem view "${TASK_ID}" --fields summary,status,assignee --format table || {
@@ -291,8 +291,8 @@ check_worktree_status() {
   local worktree_path="$1"
   local worktree_name=$(basename "$worktree_path")
 
-  # Extract task ID from worktree name (JIRA: PROJ-123, Beads: reaper-42)
-  local task_id=$(echo "$worktree_name" | grep -oE '^[A-Za-z]+-[0-9]+')
+  # Extract task ID from worktree name (JIRA: PROJ-123, Beads: reaper-a3f)
+  local task_id=$(echo "$worktree_name" | grep -oE '^[A-Za-z]+-[a-z0-9]+')
 
   if [ -d "$worktree_path" ]; then
     echo ""
@@ -421,7 +421,7 @@ fi
 /status-worktrees PROJ-123 true
 
 # Quick status check for task
-/status-worktrees reaper-42 false
+/status-worktrees reaper-a3f false
 ```
 
 ## Example Output

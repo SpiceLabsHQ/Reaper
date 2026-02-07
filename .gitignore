@@ -22,6 +22,9 @@ Thumbs.db
 # Claude Code local files
 .claude/plans/
 
+# Claude dev launcher (local-only, ships --allow-dangerously-skip-permissions)
+claude-dev
+
 # Local-only files (user-specific overrides)
 *.local.*
 *.local
