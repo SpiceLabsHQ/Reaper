@@ -216,16 +216,18 @@ Analyze the concept and select experts using the keyword table below. The facili
 
 **Coverage invariant**: Every topic area in the concept must have at least 3 agents who can speak to it. If a topic area has fewer than 3 relevant agents from auto-selection, add the closest-match agents to meet the minimum.
 
-### Scout-Then-Swarm Decision
+### Explore-First Architecture
 
-Before deploying, assess concept breadth:
+Always deploy Explore agents before domain experts. Explore agents gather codebase facts so experts spend their context windows on analysis, not file reads.
 
-- **Narrow concept (1-2 domains)**: Deploy a single **scout** agent first. The scout investigates the codebase and concept, then the facilitator uses the scout's findings to deploy the full panel with richer context.
-- **Broad concept (3+ domains)**: Deploy the full panel in parallel immediately (swarm).
+Assess concept breadth to determine Explore scope:
 
-For scout mode, deploy using the Scout Prompt template (see Subagent Prompt Templates below).
+- **Narrow concept (1-2 domains)**: Deploy a single Explore agent with focused search queries targeting the relevant domain areas.
+- **Broad concept (3+ domains)**: Deploy multiple Explore agents in parallel, each with domain-specific search queries covering different aspects of the concept.
 
-After the scout returns, deploy the remaining panel with the scout's findings as additional context.
+Deploy Explore agents using the Explore Prompt template (see Subagent Prompt Templates below).
+
+After Explore agents return, compile their findings into a CODEBASE CONTEXT block. Deploy all domain experts with this context injected into their prompts.
 
 ### Panel Announcement
 
@@ -242,7 +244,7 @@ Announce the panel as a formatted roster in a code block. Each expert gets a sin
   All experts briefed. Expecting positions shortly.
 ```
 
-[If scout mode]: After the roster, add in facilitator plain text: "[SCOUT EXPERT] already scouted the terrain. Here's what they found: [compressed scout findings]"
+After the roster, add in facilitator plain text: "Codebase recon complete. Here's what the Explore agents found: [compressed Explore findings organized by domain relevance]"
 
 ### Opening Mission Card
 
@@ -262,7 +264,7 @@ Output the opening mission card after the panel announcement, just before deploy
 
 ### Deploy Experts
 
-Deploy all panel experts. Each receives the forum-mode initial analysis prompt (see Subagent Prompt Templates below). Deploy in parallel for swarm mode, or remaining panel after scout for scout mode.
+Deploy all panel experts after Explore agents have returned. Each receives the forum-mode initial analysis prompt with CODEBASE CONTEXT from the Explore findings (see Subagent Prompt Templates below).
 
 **Deploy all panel experts using parallel Task tool calls in a single response.** Do not wait for one expert to return before deploying the next — issue all Task calls together so experts run concurrently.
 
@@ -519,7 +521,7 @@ When re-engaging experts after PO decisions:
 | Scenario | Action | Rationale |
 |----------|--------|-----------|
 | Refinement based on PO decision | **Resume** (use stored agent ID) | Expert builds on their prior analysis |
-| Codebase investigation needed | **Resume** | Expert retains file context |
+| New codebase context needed | **Deploy Explore agent**, then **Resume** expert with updated context | Experts analyze context, Explore agents gather it |
 | PO challenges expert's position | **Fresh** (new agent, no resume) | Avoids anchoring to prior stance |
 | Direction change | **Fresh** for ALL experts | Prior analysis no longer the foundation |
 | Cycle 3+ for same expert | **Fresh** | Context window getting stale |
@@ -703,7 +705,9 @@ Task --subagent_type [EXPERT_AGENT] \
 You are **[CAPITALIZED JOB TITLE]** in a design squadron.
 
 CONCEPT: [concept]
-[If scout findings exist]: SCOUT REPORT: [compressed scout findings]
+
+CODEBASE CONTEXT:
+[Explore findings organized by relevance to this expert's domain. Include relevant files, patterns, architecture decisions, and integration points discovered by Explore agents.]
 
 OTHER EXPERTS ON THIS PANEL: [list with their domains]
 
@@ -713,7 +717,7 @@ Deliver your independent position on this concept from your [domain] expertise.
 
 RULES:
 - Lead with your strongest opinion. Be direct.
-- If the concept involves an existing codebase, investigate relevant files first.
+- Use the CODEBASE CONTEXT provided — do not investigate files yourself.
 - Flag tensions you see with other domains on the panel.
 
 FORMAT:
@@ -748,26 +752,84 @@ RULES:
 - If they changed your mind on something, say so. If not, sharpen your position."
 ```
 
-### Scout Prompt
+### Explore Prompt (Single — Narrow Concepts)
 
-Used in PHASE 1 — INTAKE for narrow concepts:
+Used in PHASE 1 — INTAKE for narrow concepts (1-2 domains):
 
 ```bash
-Task --subagent_type [MOST_RELEVANT_EXPERT] \
-  --description "Scout analysis for squadron" \
-  --prompt "SQUADRON_SCOUT
+Task --subagent_type Explore \
+  --description "Codebase recon for squadron on [concept]" \
+  --prompt "Investigate the codebase for a design squadron working on: [CONCEPT]
 
-You are the advance scout for a design squadron on: [CONCEPT]
+Search for:
+1. Existing implementations related to [concept keywords]
+2. Current architecture patterns and tech stack choices
+3. Relevant configuration, dependencies, and integration points
+4. Test patterns and coverage in related areas
 
-Investigate the codebase and concept. Your job is to map the territory so the full panel can hit the ground running.
+Deliver a structured report:
+## Existing Code
+[What exists today — relevant files, patterns, tech stack choices]
 
-DELIVERABLES (300 words max):
-1. What exists today — relevant files, patterns, tech stack choices already made
-2. The 2-3 biggest design tensions you see
-3. What each domain expert should focus on
+## Architecture Patterns
+[Current patterns that constrain or inform the design]
 
-Be direct. No filler."
+## Integration Points
+[Where this concept touches existing systems]
+
+Be thorough but concise. Focus on facts, not opinions."
 ```
+
+### Explore Prompt (Multiple — Broad Concepts)
+
+Used in PHASE 1 — INTAKE for broad concepts (3+ domains). Deploy multiple Explore agents in parallel, each focused on a domain area:
+
+```bash
+# Deploy multiple Explore agents in parallel for broad concepts
+Task --subagent_type Explore \
+  --description "[Domain A] codebase recon for squadron on [concept]" \
+  --prompt "Investigate [Domain A] aspects of the codebase for a design squadron working on: [CONCEPT]
+
+Search for:
+1. [Domain A]-specific implementations, patterns, and configurations
+2. Dependencies and integration points relevant to [Domain A]
+3. Test coverage and patterns in [Domain A] areas
+
+Deliver a structured report:
+## Existing Code ([Domain A])
+[What exists today]
+
+## Architecture Patterns
+[Current patterns relevant to this domain]
+
+## Integration Points
+[Where this domain touches other systems]
+
+Be thorough but concise. Focus on facts, not opinions."
+
+Task --subagent_type Explore \
+  --description "[Domain B] codebase recon for squadron on [concept]" \
+  --prompt "Investigate [Domain B] aspects of the codebase for a design squadron working on: [CONCEPT]
+
+Search for:
+1. [Domain B]-specific implementations, patterns, and configurations
+2. Dependencies and integration points relevant to [Domain B]
+3. Test coverage and patterns in [Domain B] areas
+
+Deliver a structured report:
+## Existing Code ([Domain B])
+[What exists today]
+
+## Architecture Patterns
+[Current patterns relevant to this domain]
+
+## Integration Points
+[Where this domain touches other systems]
+
+Be thorough but concise. Focus on facts, not opinions."
+```
+
+Deploy one Explore agent per major domain area identified in the concept. Compile all Explore reports into a single CODEBASE CONTEXT block before deploying domain experts.
 
 ### Late-Join Prompt
 
@@ -788,9 +850,17 @@ SESSION SUMMARY:
 - Open tensions: [list]
 - Key risks: [list]
 
+CODEBASE CONTEXT:
+[Explore findings organized by relevance to this expert's domain. Include relevant files, patterns, architecture decisions, and integration points discovered by Explore agents.]
+
 Deliver your [domain] perspective. Focus on what the existing panel may have missed.
 
 300 WORDS MAX. This is a socratic forum, not a whitepaper.
+
+RULES:
+- Lead with your strongest opinion. Be direct.
+- Use the CODEBASE CONTEXT provided — do not investigate files yourself.
+- Flag tensions you see with other domains on the panel.
 
 FORMAT:
 ## [YOUR DOMAIN] Position
