@@ -161,6 +161,36 @@ Command reference: [docs/commands.md](docs/commands.md)
 
 ---
 
+## Is This For You?
+
+Reaper is for developers who ship features, not snippets. If you are building production systems, solving architectural problems, or running a team that needs consistent quality -- this is your tool.
+
+If you need Claude to fix a typo or bang out a quick script, you do not need an air traffic controller. Just talk to Claude directly.
+
+### The token conversation
+
+Reaper's subagent architecture spins up focused agents for each phase of work. Each agent boots with its own context -- that costs tokens upfront. For a small bug fix, that overhead is not worth it. For a real work package -- a feature with tests, review, and security audit -- focused agents produce better results *and* avoid the context bloat that tanks quality in long single-agent sessions.
+
+More tokens per task. Fewer tasks that need to be redone. That is the tradeoff.
+
+### Claude Code Max recommended
+
+Reaper is built for [Claude Code Max](https://www.anthropic.com/pricing) subscribers. The orchestration patterns -- multiple agents, quality gate loops, retry cycles -- consume tokens at a pace that Max handles comfortably.
+
+Our team has never hit a usage limit while using this tool. Your mileage may vary.
+
+**Pro plan users**: Reaper works, but your usage limits will feel it. A single `/reaper:takeoff` on a medium-complexity task can consume a meaningful chunk of your daily quota. You will get the most out of it by being deliberate about which tasks justify the orchestration overhead.
+
+### What you get that raw Claude Code does not
+
+- **Auditability** -- Every piece of code passes through documented quality gates. You can show the receipt.
+- **Consistency** -- TDD, SOLID principles, and security audit on every task. Not just when someone remembers.
+- **Steerability** -- You approve the plan. You approve the output. You control the process. It is not a black box.
+
+This is not always the most token-efficient way to write code. It is the most *reliable* way to get code that is ready for production.
+
+---
+
 ## Contributing
 
 Fork it. Make it weird. We are into it.
