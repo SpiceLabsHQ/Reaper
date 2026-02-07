@@ -101,6 +101,61 @@ When creating or querying dependencies, preserve the relationship type:
 - **related**: Informational link (tasks share context but no execution dependency)
 
 
+## Visual Vocabulary
+
+> **Opt-out**: If the project's CLAUDE.md contains the line `Reaper: disable ASCII art`, emit plain text status labels only. No gauge bars, no box-drawing, no card templates. Use the `functional` context behavior regardless of the `context` parameter.
+
+> **Rendering constraint**: One line, one direction, no column alignment. Every visual element must be renderable in a single horizontal pass. No multi-line box-drawing that requires vertical alignment across columns.
+
+### Gauge States
+
+Four semantic states expressed as fixed-width 10-block bars. Use these consistently across all commands to communicate work status.
+
+```
+  ██████████  LANDED       complete, healthy
+  ██████░░░░  IN FLIGHT    work in progress
+  ░░░░░░░░░░  GROUNDED     waiting, not started
+  ░░░░!!░░░░  FAULT        failed, needs attention
+```
+
+Gauge usage rules:
+- Always use exactly 10 blocks per bar (full-width = 10 filled, empty = 10 unfilled).
+- `!!` in the FAULT bar replaces two blocks at the center to signal breakage.
+- Pair each bar with its label and a short gloss on the same line.
+
+### Preflight Card
+
+Render before work begins. Shows the mission parameters the command will execute against.
+
+```
+  PREFLIGHT
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Task:       [TASK-ID]
+  Branch:     [branch-name]
+  Worktree:   [worktree-path]
+  Units:      [N work units planned]
+  Strategy:   [execution strategy]
+  ░░░░░░░░░░  GROUNDED
+```
+
+### Gate Panel
+
+Render after each quality gate completes. Shows gate results inline.
+
+```
+  GATE RESULTS
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  test-runner       ██████████  LANDED
+  code-reviewer     ██████░░░░  IN FLIGHT
+  security-auditor  ░░░░░░░░░░  GROUNDED
+```
+
+Gate panel rules:
+- One row per gate agent.
+- Gate name left-aligned, gauge bar right of name, state label after bar.
+- Update rows as gates complete -- replace GROUNDED with LANDED or FAULT.
+
+
 ## Input Processing
 
 ### Parse User Input
@@ -279,6 +334,19 @@ After creating all TodoWrite entries, set up blockedBy relationships for the fin
 TodoWrite entries survive session disconnects, give the user real-time visibility into progress, and allow the orchestrator to resume from any point in the plan.
 
 
+## Preflight Announcement
+
+After writing the plan to TodoWrite and before executing the first work unit, render a **Preflight Card** to the user. This gives the developer a clear snapshot of what is about to happen.
+
+Use the Preflight Card template from the Visual Vocabulary above. Populate it with:
+- **Task**: the resolved task ID
+- **Branch**: the feature branch name (or "TBD" if not yet created)
+- **Worktree**: the resolved WORKTREE_PATH
+- **Units**: count of non-closed work units from the plan
+- **Strategy**: the selected execution strategy (very_small_direct, medium_single_branch, or large_multi_worktree)
+
+The card ends with the `GROUNDED` gauge, indicating work has not yet started.
+
 ## Strategy Execution
 
 Execute ALL work units from the plan. Do not present work to the user or proceed to the Completion section until every work unit in the TodoWrite plan is marked completed.
@@ -290,9 +358,10 @@ For each work unit in the plan, repeat this cycle:
 1. Update TodoWrite to mark the unit as in_progress
 2. Deploy the specified coding agent using the deployment template below
 3. Run quality gates on the completed work (see Dynamic Gate Selection and Quality Gate Protocol below)
-4. Update TodoWrite to mark the unit as completed
-5. If this is a pre-planned child issue, use CLOSE_ISSUE to close it in the task system
-6. **Announce progress and loop back**: "Completed [X] of [N] work units. Next: [unit name]." -- then return to step 1 for the next unit
+4. **Render Gate Panel**: After all gates for the current unit resolve, render a Gate Panel (from Visual Vocabulary) showing each gate agent with its gauge state -- `LANDED` for passed, `FAULT` for failed. Include key metrics inline (e.g., test count, coverage percentage, issue count).
+5. Update TodoWrite to mark the unit as completed
+6. If this is a pre-planned child issue, use CLOSE_ISSUE to close it in the task system
+7. **Announce progress and loop back**: "Completed [X] of [N] work units. Next: [unit name]." -- then return to step 1 for the next unit
 
 This cycle repeats for every work unit. The Completion section is only reachable after the final unit passes its gates.
 
@@ -337,7 +406,7 @@ From the coding agent's `files_modified` list, classify each file into a work ty
 - If no pattern matches, default to `application_code`
 
 ### Step 3: Echo Selection
-Before deploying gate agents, announce the selection:
+Before deploying gate agents, announce the selection and render an initial Gate Panel with all gates in `GROUNDED` state:
 "Selected gate profile: [work_type]. Running [N] gate agents: [agent list]."
 For union profiles: "Mixed changeset detected ([types]). Union profile: Gate 1 [agents], Gate 2 [agents]."
 
@@ -568,16 +637,24 @@ Do not read past this point without performing the verification steps below. Thi
 
 If you did not perform the STOP checkpoint above, go back and do it now.
 
-When these conditions are met, present completed work:
+When these conditions are met, present a **Touchdown Card** followed by a work summary. Use the gauge vocabulary from the Visual Vocabulary section.
+
+```
+  TOUCHDOWN
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Task:       [TASK-ID]
+  Branch:     [branch-name]
+  Units:      [N of N completed]
+  ██████████  LANDED
+```
+
+Then render a final **Gate Panel** showing the cumulative result of all gates across all work units. Each gate row should show `LANDED` with its aggregate metrics (total tests passed, overall coverage, total issues found).
+
+After the cards, present the work summary in this format:
 
 ```markdown
-## Touchdown! Ready for Inspection
-
 ### What Was Built
 [Brief description of implemented functionality]
-
-### Quality Validation
-[List each gate that ran with its result summary]
 
 ### Files Changed
 [List of modified files with brief descriptions]
