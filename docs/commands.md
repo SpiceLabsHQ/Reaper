@@ -155,7 +155,7 @@ A concept description (minimum 20 characters) describing the design question or 
 ### What happens
 
 1. **Panel selection.** Reaper analyzes the concept against a keyword table spanning 14 domains (API design, database, cloud infrastructure, security, event-driven architecture, frontend, observability, and more). Every topic area gets at least 3 expert agents who can speak to it.
-2. **Scout-then-swarm decision.** Narrow concepts (1--2 domains) send a single scout agent first to map the codebase and surface tensions. Broad concepts (3+ domains) deploy the full panel in parallel.
+2. **Explore-first recon.** Before deploying domain experts, Reaper sends Explore agents to gather codebase facts. Narrow concepts (1--2 domains) get a single focused Explore agent; broad concepts (3+ domains) get parallel Explore agents scoped per domain. Experts receive the compiled findings so they spend their context windows on analysis, not file reads.
 3. **Open phase.** Each expert delivers an independent 300-word position: their take, key decisions, tensions with other panelists, domain-specific risks.
 4. **Clash phase.** The facilitator routes disagreements directly to the conflicting experts. They respond to each other by name in 3--5 sentence exchanges. Up to 2 clash cycles.
 5. **Converge phase.** The facilitator synthesizes the debate as a narrative for you -- who said what, where the panel locked in, where it split. Unresolved tensions become decision points presented with concrete options.
