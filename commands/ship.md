@@ -6,6 +6,55 @@ description: Fast-path from worktree to PR — commit, push, open.
 
 **Task**: [ARGUMENTS]
 
+## Visual Vocabulary
+
+> **Opt-out**: If the project's CLAUDE.md contains the line `Reaper: disable ASCII art`, emit plain text status labels only. No gauge bars, no box-drawing, no card templates. Use the `functional` context behavior regardless of the `context` parameter.
+
+> **Rendering constraint**: One line, one direction, no column alignment. Every visual element must be renderable in a single horizontal pass. No multi-line box-drawing that requires vertical alignment across columns.
+
+### Gauge States
+
+Four semantic states expressed as fixed-width 10-block bars. Use these consistently across all commands to communicate work status.
+
+```
+  ██████████  LANDED       complete, healthy
+  ██████░░░░  IN FLIGHT    work in progress
+  ░░░░░░░░░░  GROUNDED     waiting, not started
+  ░░░░!!░░░░  FAULT        failed, needs attention
+```
+
+Gauge usage rules:
+- Always use exactly 10 blocks per bar (full-width = 10 filled, empty = 10 unfilled).
+- `!!` in the FAULT bar replaces two blocks at the center to signal breakage.
+- Pair each bar with its label and a short gloss on the same line.
+
+### Departure Card
+
+Render when the ship command begins. Shows what is being shipped.
+
+```
+  DEPARTURE
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Worktree:   [worktree-path]
+  Branch:     [branch-name]
+  Commits:    [N commits to ship]
+  Target:     [target branch or PR]
+  ██████░░░░  IN FLIGHT
+```
+
+### Landing Card
+
+Render when the ship command completes. Shows the result of the PR or merge.
+
+```
+  LANDING
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  PR:         [PR-URL or merge result]
+  Status:     [merged / opened / failed]
+  ██████████  LANDED
+```
+
+
 ## 1. Determine Worktree Context
 
 Resolve the worktree using this priority order:
@@ -65,6 +114,22 @@ REMOTE_URL=$(git -C "$WORKTREE_PATH" remote get-url origin 2>/dev/null)
 - There are either uncommitted changes to commit OR existing unpushed commits to push
 
 If nothing to commit and nothing to push, report "Already shipped" and stop.
+
+### Departure Card
+
+After validation passes, render a **Departure Card** using the template from the Visual Vocabulary. Populate it with values gathered so far:
+
+```
+  DEPARTURE
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Worktree:   $WORKTREE_PATH
+  Branch:     $BRANCH
+  Commits:    [uncommitted changes + unpushed commits count]
+  Target:     $TARGET_BRANCH
+  ██████░░░░  IN FLIGHT
+```
+
+This card is compact and factual. No narration, no flair -- just flight data.
 
 ## 3. Identify Task and Repo Host
 
@@ -233,22 +298,36 @@ glab mr create \
 
 **Unknown/Unsupported host**: Push succeeds, output the remote URL and suggest creating the PR manually.
 
-## 7. Output
+## 7. Output — Landing Card
 
-```markdown
-## Shipped!
+When all steps complete, render a **Landing Card** using the template from the Visual Vocabulary. Include pipeline step gauges for each operation performed.
 
-**PR**: [URL]
-**Host**: GitHub | Bitbucket | GitLab
-**Branch**: $BRANCH → $TARGET_BRANCH
-**Commits**: [count] commits, [files] files changed
-**Task**: $TASK_ID (if found)
-
-### What's Next
-- Review the PR at [URL]
-- `/reaper:status-worktrees` to check other in-flight work
-- Worktree cleanup happens after merge
 ```
+  LANDED ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Flight: $TASK_ID      PR: #[number]
+  Branch: $BRANCH → $TARGET_BRANCH
+  Cargo:  [N] commits, [N] files
+
+  Commit  ██████████  LANDED
+  Push    ██████████  LANDED
+  PR      ██████████  LANDED
+```
+
+Landing card rules:
+- **Flight** shows the task ID (or worktree name if no task ID). **PR** shows the PR number or URL.
+- **Branch** shows source arrow target (e.g., `feature/oauth-refresh → develop`).
+- **Cargo** shows total commit count and files changed across those commits.
+- **Pipeline gauges** show one row per step actually performed. If a commit was skipped (nothing to commit), omit the Commit row. Use FAULT state if any step failed.
+- If PR creation was skipped (unknown host), replace the PR gauge row with `PR      ░░░░░░░░░░  GROUNDED  (manual)` and include the push URL instead.
+
+After the card, append two actionable follow-up lines:
+
+```
+Review the PR → [URL]
+Check fleet   → /reaper:status-worktrees
+```
+
+This output is compact and transactional. No narration, no headings, no filler text.
 
 ## Scope Boundary
 
