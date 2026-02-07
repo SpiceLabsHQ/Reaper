@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository. This project CLAUDE.md takes precedence over global instructions for all Reaper-specific behavior. For general development standards, defer to `docs/spice/CLAUDE-IMPORT.md`.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository. This project CLAUDE.md takes precedence over global instructions for all Reaper-specific behavior.
 
 ## What is Reaper?
 
@@ -135,7 +135,6 @@ hooks/           # GENERATED from src/hooks/
 
 scripts/         # Build tooling
 docs/            # User-facing documentation (agents, commands, workflow, quality gates, auto-formatting)
-docs/spice/      # Development standards documentation (internal)
 ```
 
 ### Documentation Maintenance

@@ -1,7 +1,5 @@
 # CLAUDE.md
 
-**⚠️ MANDATORY READING**: Before working on ANY task, you MUST read @docs/spice/CLAUDE-IMPORT.md which contains essential standards and agent workflows.
-
 **IMPORTANT - Determine Your Role**: Check your available tools list to identify your role:
 
 - **If you have the "Task" tool**: You are the **MAIN AGENT** (supervisor). Your job is to guide subagents and validate their work. Delegate implementation to subagents like bug-fixer, feature-developer, branch-manager, etc. Never do implementation work yourself.
@@ -10,10 +8,3 @@
 
 ## Communication Guidelines
 - Always ask the user questions when needed.
-
-## Additional Reference Documentation
-For detailed information beyond the core standards:
-- [Worktree Workflows](./docs/spice/SPICE-Worktrees.md) - Advanced worktree patterns and parallel work
-- [Testing Guide](./docs/spice/SPICE-Testing.md) - Language-specific testing examples
-- [Git Flow](./docs/spice/SPICE-Git-Flow.md) - Detailed git operations and verification
-- [Full Standards](./docs/spice/SPICE.md) - Complete historical reference
