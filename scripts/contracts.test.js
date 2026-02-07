@@ -29,6 +29,7 @@ const {
 
 const ROOT = path.resolve(__dirname, '..');
 const AGENTS_DIR = path.join(ROOT, 'agents');
+const COMMANDS_DIR = path.join(ROOT, 'commands');
 const SKILLS_DIR = path.join(ROOT, 'skills');
 const HOOKS_FILE = path.join(ROOT, 'hooks', 'hooks.json');
 
@@ -511,4 +512,108 @@ describe('Contract: TDD agents are classified as coding agents', () => {
       );
     });
   }
+});
+
+// ---------------------------------------------------------------------------
+// Contract: Visual vocabulary gauge states in generated command files
+// ---------------------------------------------------------------------------
+
+/**
+ * Command files that include the visual-vocabulary partial.
+ * Each must contain the four gauge state labels in their generated output.
+ */
+const VISUAL_VOCAB_COMMANDS = ['takeoff', 'ship', 'status-worktrees', 'squadron'];
+
+/**
+ * The four canonical gauge state labels from the visual-vocabulary partial.
+ */
+const GAUGE_STATES = ['LANDED', 'IN FLIGHT', 'GROUNDED', 'FAULT'];
+
+describe('Contract: command files contain visual vocabulary gauge states', () => {
+  assert.ok(
+    VISUAL_VOCAB_COMMANDS.length > 0,
+    'Expected at least one command with visual vocabulary'
+  );
+
+  for (const commandName of VISUAL_VOCAB_COMMANDS) {
+    const filePath = path.join(COMMANDS_DIR, `${commandName}.md`);
+    const relative = `commands/${commandName}.md`;
+
+    it(`${relative} exists`, () => {
+      assert.ok(
+        fs.existsSync(filePath),
+        `${relative} not found at ${filePath}`
+      );
+    });
+
+    for (const state of GAUGE_STATES) {
+      it(`${relative} contains gauge state "${state}"`, () => {
+        const content = fs.readFileSync(filePath, 'utf8');
+        assert.ok(
+          content.includes(state),
+          `${relative} is missing gauge state "${state}" from visual vocabulary`
+        );
+      });
+    }
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Contract: CLAUDE.md disable preamble in generated command files
+// ---------------------------------------------------------------------------
+
+describe('Contract: command files contain disable preamble', () => {
+  for (const commandName of VISUAL_VOCAB_COMMANDS) {
+    const filePath = path.join(COMMANDS_DIR, `${commandName}.md`);
+    const relative = `commands/${commandName}.md`;
+
+    it(`${relative} contains "Reaper: disable ASCII art" opt-out text`, () => {
+      assert.ok(
+        fs.existsSync(filePath),
+        `${relative} not found at ${filePath}`
+      );
+      const content = fs.readFileSync(filePath, 'utf8');
+      assert.ok(
+        content.includes('Reaper: disable ASCII art'),
+        `${relative} is missing the CLAUDE.md disable preamble ("Reaper: disable ASCII art")`
+      );
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Contract: status-worktrees contains fleet dashboard elements
+// ---------------------------------------------------------------------------
+
+describe('Contract: status-worktrees contains fleet dashboard elements', () => {
+  const filePath = path.join(COMMANDS_DIR, 'status-worktrees.md');
+  const relative = 'commands/status-worktrees.md';
+
+  it(`${relative} exists`, () => {
+    assert.ok(
+      fs.existsSync(filePath),
+      `${relative} not found at ${filePath}`
+    );
+  });
+
+  it(`${relative} contains fleet dashboard reference`, () => {
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /[Ff]leet/i.test(content),
+      `${relative} is missing fleet dashboard reference`
+    );
+  });
+
+  it(`${relative} contains gauge bar rendering`, () => {
+    const content = fs.readFileSync(filePath, 'utf8');
+    // The status-worktrees command renders gauge bars using block characters
+    assert.ok(
+      content.includes('██'),
+      `${relative} is missing gauge bar block characters`
+    );
+    assert.ok(
+      content.includes('░░'),
+      `${relative} is missing gauge bar empty block characters`
+    );
+  });
 });
