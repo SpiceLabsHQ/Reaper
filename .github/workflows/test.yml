@@ -24,7 +24,7 @@ jobs:
         run: npm ci
 
       - name: Run unit tests
-        run: node --test scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js
+        run: node --test scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js scripts/visual-vocabulary.test.js
 
       - name: Build templates
         run: npm run build
@@ -33,4 +33,4 @@ jobs:
         run: node --test scripts/contracts.test.js
 
       - name: Run all tests with coverage
-        run: node --test --experimental-test-coverage --test-coverage-lines=70 --test-coverage-branches=70 --test-coverage-functions=70 scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js scripts/contracts.test.js
+        run: node --test --experimental-test-coverage --test-coverage-lines=70 --test-coverage-branches=70 --test-coverage-functions=70 scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js scripts/visual-vocabulary.test.js scripts/contracts.test.js

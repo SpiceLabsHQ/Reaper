@@ -379,7 +379,7 @@ When multiple work units share a group number and have no mutual dependencies, d
 
 ### Strategy Notes
 
-- **very_small_direct**: Deploy a single coding agent. No worktree isolation needed. Quality gates still apply.
+- **very_small_direct**: Deploy a single coding agent in the session worktree. Quality gates still apply.
 - **medium_single_branch**: Multiple agents work sequentially or in parallel on the same branch. Ensure file assignments do not overlap for parallel work.
 - **large_multi_worktree**: Each agent gets its own worktree. Use the worktree-manager skill to create isolated worktrees. Deploy reaper:branch-manager to merge completed worktrees.
 

@@ -426,7 +426,8 @@ Return a minimal JSON object. The orchestrator verifies all claims via quality g
 - `files_modified`: List of files you created or changed
 - `unfinished`: Blockers preventing completion (empty if done)
 
-Do not include test results, coverage claims, quality assessments, gate status, or metadata. Those are verified independently by test-runner, code-reviewer, and security-auditor.
+Do not include test results, coverage numbers, quality assessments, gate status, or metadata. Those are verified independently by test-runner, code-reviewer, and security-auditor.
+
 
 ## GATE_MODE: Deployment Configuration Gate
 

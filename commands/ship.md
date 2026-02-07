@@ -176,8 +176,6 @@ elif echo "$REMOTE_URL" | grep -qiE 'bitbucket\.org|bitbucket\.'; then
     REPO_HOST="bitbucket"
 elif echo "$REMOTE_URL" | grep -qiE 'gitlab\.com|gitlab\.'; then
     REPO_HOST="gitlab"
-elif echo "$REMOTE_URL" | grep -qiE 'dev\.azure\.com|visualstudio\.com'; then
-    REPO_HOST="azure"
 else
     REPO_HOST="unknown"
 fi
@@ -188,7 +186,26 @@ fi
 If uncommitted changes exist:
 
 1. **Analyze the diff** to understand what changed
-2. **Stage changes**: `git -C $WORKTREE_PATH add -A`
+2. **Pre-stage safety scan**: Before staging, check for sensitive files in the working tree:
+   ```bash
+   # Scan for sensitive file patterns
+   SENSITIVE_PATTERNS='.env* *.pem *.key node_modules/ *.sqlite *.db'
+   SENSITIVE_FOUND=$(git -C "$WORKTREE_PATH" status --porcelain | awk '{print $2}' | grep -E '(\.env|\.pem$|\.key$|node_modules/|\.sqlite$|\.db$)' || true)
+
+   if [ -n "$SENSITIVE_FOUND" ]; then
+       echo "WARNING: Sensitive files detected in working tree:"
+       echo "$SENSITIVE_FOUND"
+   fi
+   ```
+   If sensitive files are found, warn the user and exclude them from staging:
+   ```bash
+   # Stage everything, then unstage sensitive matches
+   git -C "$WORKTREE_PATH" add -A
+   echo "$SENSITIVE_FOUND" | while read -r FILE; do
+       git -C "$WORKTREE_PATH" reset HEAD -- "$FILE" 2>/dev/null || true
+   done
+   ```
+   If no sensitive files are found, stage normally: `git -C "$WORKTREE_PATH" add -A`
 3. **Generate conventional commit message** from the diff:
    - Determine type: `feat`, `fix`, `refactor`, `test`, `docs`, `style`, `chore`
    - Extract scope from affected files
@@ -300,25 +317,21 @@ glab mr create \
 
 ## 7. Output — Landing Card
 
-When all steps complete, render a **Landing Card** using the template from the Visual Vocabulary. Include pipeline step gauges for each operation performed.
+When all steps complete, render a **Landing Card** using the template from the Visual Vocabulary. Populate it with the actual PR URL and outcome status:
 
 ```
-  LANDED ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Flight: $TASK_ID      PR: #[number]
-  Branch: $BRANCH → $TARGET_BRANCH
-  Cargo:  [N] commits, [N] files
-
-  Commit  ██████████  LANDED
-  Push    ██████████  LANDED
-  PR      ██████████  LANDED
+  LANDING
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  PR:         [PR-URL or merge result]
+  Status:     [merged / opened / failed]
+  ██████████  LANDED
 ```
 
 Landing card rules:
-- **Flight** shows the task ID (or worktree name if no task ID). **PR** shows the PR number or URL.
-- **Branch** shows source arrow target (e.g., `feature/oauth-refresh → develop`).
-- **Cargo** shows total commit count and files changed across those commits.
-- **Pipeline gauges** show one row per step actually performed. If a commit was skipped (nothing to commit), omit the Commit row. Use FAULT state if any step failed.
-- If PR creation was skipped (unknown host), replace the PR gauge row with `PR      ░░░░░░░░░░  TAXIING  (manual)` and include the push URL instead.
+- **PR** shows the PR URL returned by the host CLI, or the push URL if PR creation was skipped.
+- **Status** shows `opened` when a PR was created, `merged` if auto-merged, or `failed` if PR creation failed.
+- Use the FAULT gauge state (`░░░░!!░░░░  FAULT`) instead of LANDED if any step failed.
+- If PR creation was skipped (unknown host), set Status to `manual` and PR to the remote push URL.
 
 After the card, append two actionable follow-up lines:
 

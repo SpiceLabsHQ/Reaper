@@ -35,7 +35,7 @@ These values guide every decision in Reaper, from architecture to error messages
 
 The Five Keys — especially Fun — apply differently depending on the audience:
 
-- **User-facing commands and skills** (flight-plan, takeoff, ship, status-worktrees, claude-sync): Voice, personality, and themed language are encouraged. These are the developer's interface with Reaper.
+- **User-facing commands and skills** (flight-plan, takeoff, ship, squadron, status-worktrees, claude-sync): Voice, personality, and themed language are encouraged. These are the developer's interface with Reaper.
 - **Agent prompts** (system prompts for coding, review, and planning agents): Must remain clinical, precise technical specifications. No themed language, personality, or humor. Agent prompts are machine-consumed instructions where ambiguity degrades output quality.
 
 ## Agent Selection Matrix (Main Agents Only)
@@ -90,6 +90,9 @@ The user, and only the user, may override any of these rules explicitly.
 
 # Fast-path: commit, push, and open PR from a worktree
 /reaper:ship <worktree-path>
+
+# Assemble domain experts for collaborative design
+/reaper:squadron <design-question>
 
 # Check worktree status
 /reaper:status-worktrees
@@ -247,11 +250,24 @@ Orchestration commands (flight-plan, takeoff, ship, squadron, status-worktrees, 
 
 Common sections are extracted into `src/partials/*.ejs`:
 - `pre-work-validation-coding.ejs` - Validation for coding agents
+- `pre-work-validation-review.ejs` - Validation for review agents
+- `pre-work-validation-security.ejs` - Validation for security auditor
 - `output-requirements.ejs` - JSON output requirements (parameterized)
 - `git-prohibitions.ejs` - Git operation restrictions
 - `tdd-testing-protocol.ejs` - TDD methodology
-- `artifact-cleanup-coding.ejs` - Cleanup protocols
-- `visual-vocabulary.ejs` - Gauge states and card templates for user-facing commands (parameterized by context: takeoff, ship, status-worktrees, squadron, functional). Respects `Reaper: disable ASCII art` opt-out in target project's CLAUDE.md.
+- `artifact-cleanup-coding.ejs` - Cleanup protocols for coding agents
+- `artifact-cleanup-review.ejs` - Cleanup protocols for review agents
+- `visual-vocabulary.ejs` - Gauge states and card templates (parameterized by context: takeoff, ship, status-worktrees, squadron, functional). Respects `Reaper: disable ASCII art` opt-out in target project's CLAUDE.md.
+- `no-self-reporting.ejs` - Prevents agents from self-reporting status
+- `plan-file-schema.ejs` - Plan file format and sections
+- `todowrite-plan-protocol.ejs` - TodoWrite plan persistence protocol
+- `task-system-operations.ejs` - Task system abstract operations
+- `agent-deployment-template.ejs` - Agent deployment template structure
+- `orchestrator-role-boundary.ejs` - Orchestrator role and delegation rules
+- `quality-gate-protocol.ejs` - Quality gate profile system and sequence
+- `directory-exclusions.ejs` - Standard directory exclusion patterns
+- `file-conflict-detection.ejs` - Parallel work file conflict detection
+- `no-commits-policy.ejs` - Coding agents never commit policy
 
 Use EJS includes: `<%- include('partials/output-requirements', { isReviewAgent: true }) %>`. Parameters vary by partial — check the partial source for available options.
 

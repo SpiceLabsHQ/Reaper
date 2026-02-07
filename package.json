@@ -6,8 +6,8 @@
   "scripts": {
     "build": "node scripts/build.js",
     "build:watch": "node scripts/build.js --watch",
-    "test": "node --test scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js scripts/contracts.test.js",
-    "test:coverage": "node --test --experimental-test-coverage scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js scripts/contracts.test.js",
+    "test": "node --test scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js scripts/visual-vocabulary.test.js scripts/contracts.test.js",
+    "test:coverage": "node --test --experimental-test-coverage scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js scripts/visual-vocabulary.test.js scripts/contracts.test.js",
     "prepare": "husky",
     "release": "commit-and-tag-version",
     "release:dry-run": "commit-and-tag-version --dry-run"
@@ -18,7 +18,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "commonjs",
   "bugs": {
     "url": "https://github.com/SpiceLabsHQ/Reaper/issues"
