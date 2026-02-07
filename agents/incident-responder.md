@@ -384,3 +384,4 @@ Return a minimal JSON object. The orchestrator verifies all claims via quality g
 - `unfinished`: Describe any incomplete work, or null if done
 
 Do not include test results, coverage numbers, quality assessments, gate status, or metadata. Those are verified independently by test-runner, code-reviewer, and security-auditor.
+

@@ -252,7 +252,6 @@ Common sections are extracted into `src/partials/*.ejs`:
 - `pre-work-validation-coding.ejs` - Validation for coding agents
 - `pre-work-validation-review.ejs` - Validation for review agents
 - `pre-work-validation-security.ejs` - Validation for security auditor
-- `pre-work-validation-planning.ejs` - Validation for planning agents
 - `output-requirements.ejs` - JSON output requirements (parameterized)
 - `git-prohibitions.ejs` - Git operation restrictions
 - `tdd-testing-protocol.ejs` - TDD methodology

@@ -38,7 +38,6 @@ reaper/
 │   │   ├── output-requirements.ejs
 │   │   ├── plan-file-schema.ejs
 │   │   ├── pre-work-validation-coding.ejs
-│   │   ├── pre-work-validation-planning.ejs
 │   │   ├── pre-work-validation-review.ejs
 │   │   ├── pre-work-validation-security.ejs
 │   │   ├── quality-gate-protocol.ejs
@@ -63,7 +62,6 @@ reaper/
 |---------|---------|-------------|
 | `pre-work-validation-coding.ejs` | bug-fixer, feature-developer, refactoring-dev, integration-engineer | Validates TASK, WORKTREE_PATH, DESCRIPTION |
 | `pre-work-validation-review.ejs` | code-reviewer, security-auditor, test-runner | Validates TASK, WORKING_DIR, PLAN_CONTEXT |
-| `pre-work-validation-planning.ejs` | workflow-planner, api-designer, database-architect, cloud-architect | Validates task scope completeness |
 
 ### Standard Protocol Partials
 

@@ -34,5 +34,10 @@ claude-dev
 *.temp
 *.log
 
+# Secrets and credentials
+.env*
+*.pem
+*.key
+
 # Worktrees directory (ephemeral development branches)
 trees/

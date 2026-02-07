@@ -10,7 +10,6 @@ src/
 ├── partials/              # Reusable template fragments
 │   ├── pre-work-validation-coding.ejs    # Validation for coding agents
 │   ├── pre-work-validation-review.ejs    # Validation for review agents
-│   ├── pre-work-validation-planning.ejs  # Validation for planning agents
 │   ├── directory-exclusions.ejs          # Standard directory exclusions
 │   ├── output-requirements.ejs           # JSON output requirements
 │   ├── git-prohibitions.ejs              # Git operation prohibitions
@@ -30,7 +29,6 @@ src/
 |---------|------------|---------|
 | `pre-work-validation-coding.ejs` | Coding agents | Validates TASK, WORKTREE_PATH, DESCRIPTION |
 | `pre-work-validation-review.ejs` | Review agents | Validates TASK, WORKING_DIR, PLAN_CONTEXT, TEST_RUNNER_RESULTS |
-| `pre-work-validation-planning.ejs` | Planning agents | Validates complete work scope with Jira/Beads queries |
 
 ### Common Sections
 
