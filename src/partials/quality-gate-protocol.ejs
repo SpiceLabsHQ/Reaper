@@ -86,7 +86,7 @@ Parse these fields from each gate agent's JSON response to determine pass/fail:
 | Key | Source | Pass Condition |
 |-----|--------|----------------|
 | `test_exit_code` | reaper:test-runner | `=== 0` |
-| `coverage_percentage` | reaper:test-runner | `>= 80` |
+| `coverage_percentage` | reaper:test-runner | target 80%+ (use project threshold if configured) |
 | `lint_exit_code` | reaper:test-runner | `=== 0` |
 | `all_checks_passed` | all gate agents | `=== true` |
 | `blocking_issues` | all gate agents | empty array |

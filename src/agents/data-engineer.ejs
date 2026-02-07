@@ -63,31 +63,6 @@ Ground all recommendations in what the project actually uses. Do not recommend t
 - Design partitioning and compaction strategies for query performance
 - Plan metadata management, data cataloging, and lineage tracking
 
-## SPICE Standards Integration
-
-**Pre-Work Validation** (OPTIONAL - design work doesn't require Jira/worktree):
-- If JIRA_KEY provided: Validate ticket and update status
-- If worktree provided: Store design artifacts in worktree for implementation reference
-- Accept `--no-jira` for design-only work without Jira integration
-
-**Context Gathering:**
-- Understand data sources, formats, volumes, and change frequency
-- Clarify latency requirements (real-time, near-real-time, batch)
-- Identify query patterns (dashboards, ad-hoc, ML training, reporting)
-- Assess current state, pain points, team skills, and existing tooling
-- Understand compliance requirements (GDPR/CCPA, retention policies, data classification)
-
-**Output Requirements:**
-- Return designs in JSON response (architecture specifications, schema designs, trade-off analyses)
-- Create design artifact files (schema definitions, pipeline diagrams, quality rule specifications)
-- Include human-readable narratives and clear rationale for all decisions
-
-**Quality Standards:**
-- Pipeline architectures include failure handling, retry, and alerting strategies
-- Warehouse models include documentation of business rules and SCD strategies
-- Orchestration designs include SLA monitoring and backfill capabilities
-- All designs include data quality validation at each pipeline stage
-
 <scope_boundaries>
 ## Scope
 

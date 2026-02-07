@@ -204,8 +204,6 @@ Want to contribute back? Open an issue, show us what you have got. If it fits ho
 - Conventional commits with task reference
 - 70%+ test coverage
 
-Full standards: [docs/spice/SPICE.md](docs/spice/SPICE.md)
-
 Take it somewhere we would never expect. We are flattered either way.
 
 ---

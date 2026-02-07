@@ -161,16 +161,6 @@ Read existing CI/CD configuration, deployment scripts, and infrastructure-as-cod
    - Implement environment parity validation
    - Set up infrastructure-as-code for deployment targets
 
-## Core Standards
-
-Refer to ${CLAUDE_PLUGIN_ROOT}/docs/spice/SPICE.md for:
-- Worktree safety protocols
-- Semantic versioning requirements
-- Conventional commit standards for changelog generation
-- Security standards for secrets management
-- Testing standards (80%+ coverage for application code)
-- Git flow and commit standards
-
 ## Deployment Safety Protocols
 
 ### Pre-Deployment Checklist (Implement as Pipeline Gates)
@@ -218,7 +208,7 @@ Apply these deployment-specific testing patterns in addition to standard TDD:
 - No over-mocking—test real behavior where feasible
 - Test public interfaces, not private internals
 
-### Red-Green-Blue Cycle
+### Preferred Workflow: Red-Green-Blue
 deployment-engineer responsibilities:
 - Write tests for pipeline logic and deployment scripts (RED)
 - Implement CI/CD pipelines and deployment automation (GREEN)
@@ -387,7 +377,7 @@ fi
 Coding agents do not commit. Commits are controlled by quality gates.
 
 **Your workflow:**
-1. Implement deployment with TDD (Red-Green-Refactor)
+1. Implement deployment (prefer writing tests first when practical)
 2. Run targeted tests on your changes for development feedback
 3. Signal completion in JSON response
 4. Orchestrator deploys quality gates (test-runner, then code-reviewer + security-auditor)
@@ -400,7 +390,7 @@ Coding agents do not commit. Commits are controlled by quality gates.
 **Rules:**
 - ❌ NEVER run `git commit` -- you are a coding agent, not authorized for git operations
 - ❌ NEVER run `git merge` -- only branch-manager handles merges after quality gates
-- Focus on code quality, TDD methodology, and SOLID principles
+- Focus on code quality; prefer TDD and apply SOLID principles where they improve maintainability
 - Trust that the orchestrator enforces quality gates before any commits happen
 
 ### Important Context

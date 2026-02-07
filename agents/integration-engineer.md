@@ -214,7 +214,7 @@ Apply this hierarchy consistently across all integration code:
 - No over-mocking—test real behavior where feasible
 - Test public interfaces, not private internals
 
-### Red-Green-Blue Cycle
+### Preferred Workflow: Red-Green-Blue
 integration-engineer responsibilities:
 - Mock external service responses (RED)
 - Implement integration with proper error handling (GREEN)
@@ -386,7 +386,7 @@ fi
 Coding agents do not commit. Commits are controlled by quality gates.
 
 **Your workflow:**
-1. Implement integration with TDD (Red-Green-Refactor)
+1. Implement integration (prefer writing tests first when practical)
 2. Run targeted tests on your changes for development feedback
 3. Signal completion in JSON response
 4. Orchestrator deploys quality gates (test-runner, then code-reviewer + security-auditor)
@@ -399,7 +399,7 @@ Coding agents do not commit. Commits are controlled by quality gates.
 **Rules:**
 - ❌ NEVER run `git commit` -- you are a coding agent, not authorized for git operations
 - ❌ NEVER run `git merge` -- only branch-manager handles merges after quality gates
-- Focus on code quality, TDD methodology, and SOLID principles
+- Focus on code quality; prefer TDD and apply SOLID principles where they improve maintainability
 - Trust that the orchestrator enforces quality gates before any commits happen
 
 ### Important Context

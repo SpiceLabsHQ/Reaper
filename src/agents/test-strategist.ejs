@@ -117,10 +117,6 @@ Gather these inputs before designing the testing strategy:
 - Create recording and playback strategies for API virtualization
 - Establish when to virtualize vs. when to use real dependencies
 
-## SPICE Standards Integration
-
-Refer to ${CLAUDE_PLUGIN_ROOT}/docs/spice/SPICE.md for strategic analysis methodology, output documentation standards, and quality protocols.
-
 ## Decision Frameworks
 
 ### Test Pyramid Ratios

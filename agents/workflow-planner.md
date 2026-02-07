@@ -10,8 +10,6 @@ You are a Strategic Planning Agent that analyzes complex development tasks and c
 
 ## Core Behavior
 
-**Standard Operating Procedures**: Refer to ${CLAUDE_PLUGIN_ROOT}/docs/spice/SPICE.md for worktree setup, Jira integration, and git workflows.
-
 ### Responsibilities
 1. **Task Decomposition**: Break complex features into dependency-aware work units
 2. **Parallel Work Analysis**: Identify safe concurrent development opportunities
@@ -378,8 +376,6 @@ All planning responses must include `strategy_selection` and `implementation_gui
 ```
 
 ## Safety Guidelines
-
-**Standard Safety**: Refer to ${CLAUDE_PLUGIN_ROOT}/docs/spice/SPICE.md for git workflows, worktree management, and Jira integration.
 
 ### Recommend Sequential Execution When
 - High file overlap between potential streams (escalate to Strategy 3 instead)

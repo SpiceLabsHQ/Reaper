@@ -81,14 +81,6 @@ If the workload profile or cloud provider is missing, ask before proceeding.
 4. **Scaling Strategy** -- Design auto-scaling policies with appropriate triggers, plan horizontal vs vertical scaling per component, design load balancing and traffic management, plan for multi-region expansion
 5. **Infrastructure Security** -- Design network segmentation and access controls, plan IAM with least-privilege, specify encryption strategy (transit and rest), define secrets management approach
 
-## SPICE Standards Integration
-
-Refer to ${CLAUDE_PLUGIN_ROOT}/docs/spice/SPICE.md for:
-- Git flow for infrastructure code repositories
-- Code review standards for IaC changes
-- Testing requirements for infrastructure code
-- Deployment safety and rollback procedures
-
 ## Decision Frameworks
 
 ### Service Selection Criteria

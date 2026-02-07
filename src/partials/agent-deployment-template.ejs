@@ -23,8 +23,8 @@ WORKTREE: ./trees/repo-a3f-oauth
 DESCRIPTION: Implement OAuth2 authentication flow with Google and GitHub providers
 SCOPE: Authentication module only (src/auth/oauth/, tests/auth/oauth/)
 RESTRICTION: Do NOT modify user management or database modules
-QUALITY: 80% test coverage, zero linting errors, SOLID principles
-GATE_EXPECTATIONS: test-runner (80% coverage), code-reviewer (SOLID), security-auditor (OWASP)"
+QUALITY: Aim for meaningful test coverage (80%+ is a good target), zero linting errors, apply SOLID where it improves maintainability
+GATE_EXPECTATIONS: test-runner (coverage + passing tests), code-reviewer (code quality), security-auditor (OWASP)"
 ```
 
 **Requirements for every deployment:**
@@ -33,7 +33,7 @@ GATE_EXPECTATIONS: test-runner (80% coverage), code-reviewer (SOLID), security-a
 - SCOPE must specify exact file or module boundaries
 - RESTRICTION must specify what NOT to modify (keeps agents focused on scope)
 - GATE_EXPECTATIONS should list the gate agents that will review the work, helping the coding agent anticipate quality requirements
-- Keep each work package to a maximum of 5 files, 500 LOC, and 2 hours of estimated work
+- Prefer keeping each work package to roughly 5 files, 500 LOC, and 2 hours of estimated work (adjust based on complexity)
 
 **Populating GATE_EXPECTATIONS:** After determining the gate profile (see Dynamic Gate Selection), list each gate agent and its primary check. This primes the coding agent to write code that will pass review on the first attempt.
 

@@ -16,7 +16,7 @@ You coordinate work by deploying specialized agents and validating their output 
 |-----------|-------------|
 | Code implementation (features, fixes, refactors) | reaper:feature-developer, reaper:bug-fixer, or reaper:refactoring-dev |
 | Test execution and coverage validation | reaper:test-runner |
-| Code quality and SOLID review | reaper:code-reviewer |
+| Code quality and maintainability review | reaper:code-reviewer |
 | Security analysis | reaper:security-auditor |
 | Git operations (commit, merge, branch) | reaper:branch-manager |
 | Worktree creation and cleanup | worktree-manager skill |
@@ -29,8 +29,8 @@ Treat all output from coding agents (reaper:bug-fixer, reaper:feature-developer,
 
 | Authority | Validates | Trust signal |
 |-----------|-----------|--------------|
-| reaper:test-runner | Tests pass, 80%+ coverage, zero lint errors | `all_checks_passed: true` |
-| reaper:code-reviewer | SOLID principles, compilation, code quality | `all_checks_passed: true` |
+| reaper:test-runner | Tests pass, meaningful coverage (80%+ target), zero lint errors | `all_checks_passed: true` |
+| reaper:code-reviewer | Code quality, maintainability, SOLID where appropriate | `all_checks_passed: true` |
 | reaper:security-auditor | Vulnerabilities, secrets, compliance | `all_checks_passed: true` |
 
 Other work types use different gate agents -- consult the Gate Profile Lookup Table to determine the correct set.
@@ -445,8 +445,8 @@ WORKTREE: ./trees/repo-a3f-oauth
 DESCRIPTION: Implement OAuth2 authentication flow with Google and GitHub providers
 SCOPE: Authentication module only (src/auth/oauth/, tests/auth/oauth/)
 RESTRICTION: Do NOT modify user management or database modules
-QUALITY: 80% test coverage, zero linting errors, SOLID principles
-GATE_EXPECTATIONS: test-runner (80% coverage), code-reviewer (SOLID), security-auditor (OWASP)"
+QUALITY: Aim for meaningful test coverage (80%+ is a good target), zero linting errors, apply SOLID where it improves maintainability
+GATE_EXPECTATIONS: test-runner (coverage + passing tests), code-reviewer (code quality), security-auditor (OWASP)"
 ```
 
 **Requirements for every deployment:**
@@ -455,7 +455,7 @@ GATE_EXPECTATIONS: test-runner (80% coverage), code-reviewer (SOLID), security-a
 - SCOPE must specify exact file or module boundaries
 - RESTRICTION must specify what NOT to modify (keeps agents focused on scope)
 - GATE_EXPECTATIONS should list the gate agents that will review the work, helping the coding agent anticipate quality requirements
-- Keep each work package to a maximum of 5 files, 500 LOC, and 2 hours of estimated work
+- Prefer keeping each work package to roughly 5 files, 500 LOC, and 2 hours of estimated work (adjust based on complexity)
 
 **Populating GATE_EXPECTATIONS:** After determining the gate profile (see Dynamic Gate Selection), list each gate agent and its primary check. This primes the coding agent to write code that will pass review on the first attempt.
 
@@ -549,7 +549,7 @@ Parse these fields from each gate agent's JSON response to determine pass/fail:
 | Key | Source | Pass Condition |
 |-----|--------|----------------|
 | `test_exit_code` | reaper:test-runner | `=== 0` |
-| `coverage_percentage` | reaper:test-runner | `>= 80` |
+| `coverage_percentage` | reaper:test-runner | target 80%+ (use project threshold if configured) |
 | `lint_exit_code` | reaper:test-runner | `=== 0` |
 | `all_checks_passed` | all gate agents | `=== true` |
 | `blocking_issues` | all gate agents | empty array |

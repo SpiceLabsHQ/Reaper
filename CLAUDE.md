@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository. This project CLAUDE.md takes precedence over global instructions for all Reaper-specific behavior. For general development standards, defer to `docs/spice/CLAUDE-IMPORT.md`.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository. This project CLAUDE.md takes precedence over global instructions for all Reaper-specific behavior.
 
 ## What is Reaper?
 
@@ -9,8 +9,13 @@ Reaper is a Claude Code plugin that orchestrates specialized AI agents for auton
 ### Agent Roles
 
 Check your available tools to determine your role:
-- **Has "Task" tool** → Main agent (supervisor). Delegate to subagents. Never implement directly.
-- **No "Task" tool** → Subagent (worker). Complete your assigned task using TDD.
+
+- **Has "Task" tool** → **Main agent** (supervisor). Delegate all implementation to subagents. Validate their output. Never write code yourself.
+- **No "Task" tool** → **Subagent** (worker). Complete the specific task in your launch prompt using TDD. Do not try to delegate.
+
+**Main agent workflow:** Break down requests into tasks, select agents from the matrix below, launch with clear prompts via Task tool, validate output, coordinate integration.
+
+**Subagent workflow:** Read launch prompt, write failing tests (Red), implement minimally (Green), refactor (Blue), verify coverage, signal completion.
 
 ## The Five Keys
 
@@ -33,6 +38,26 @@ The Five Keys — especially Fun — apply differently depending on the audience
 - **User-facing commands and skills** (flight-plan, takeoff, ship, status-worktrees, claude-sync): Voice, personality, and themed language are encouraged. These are the developer's interface with Reaper.
 - **Agent prompts** (system prompts for coding, review, and planning agents): Must remain clinical, precise technical specifications. No themed language, personality, or humor. Agent prompts are machine-consumed instructions where ambiguity degrades output quality.
 
+## Agent Selection Matrix (Main Agents Only)
+
+Use specialized agents for all development work. Subagents: skip this section.
+
+| Task Type | Agent | When to Use |
+|-----------|-------|-------------|
+| Planning | `reaper:workflow-planner` | 3+ steps, multi-component features, parallel work analysis |
+| Bug Fixing | `reaper:bug-fixer` | All bug reports and issues |
+| New Features | `reaper:feature-developer` | All new functionality |
+| Git Operations | `reaper:branch-manager` | Worktree setup, merges, cleanup |
+| Testing | `reaper:test-runner` | Quality validation (mandatory before merge) |
+| Code Review | `reaper:code-reviewer` | Pre-merge review, quality gates |
+| Security | `reaper:security-auditor` | Security analysis |
+
+**Workflow phases:**
+1. **Plan** (mandatory for 3+ steps): `reaper:workflow-planner`
+2. **Implement**: `reaper:bug-fixer` or `reaper:feature-developer`
+3. **Validate** (mandatory): `reaper:test-runner` then `reaper:code-reviewer` + `reaper:security-auditor`
+4. **Integrate**: `reaper:branch-manager` for safe merge to develop
+
 ## Safety Rules
 
 - Always work in `./trees/` worktrees — never work directly in the root directory
@@ -41,6 +66,9 @@ The Five Keys — especially Fun — apply differently depending on the audience
 - Always use real task IDs from `bd list` and report actual test results — never fabricate either
 - Always edit source templates in `src/` — never edit generated files directly
 - Always read source files before modifying them — verify paths exist before referencing them
+- Never set environment variables inline with commands (use subshells instead)
+
+The user, and only the user, may override any of these rules explicitly.
 
 ### Recommended Workflow (Main Agent / Human)
 
@@ -70,6 +98,18 @@ The Five Keys — especially Fun — apply differently depending on the audience
 /reaper:claude-sync
 ```
 
+### Task ID-Only Mode (takeoff)
+
+The `/reaper:takeoff` command is an exception to the "detailed description always required" rule. The orchestrator can query Beads (or Jira) to fetch task details automatically:
+
+```bash
+/reaper:takeoff reaper-a3f           # Fetches details from Beads
+/reaper:takeoff reaper-a3f: Add bcrypt hashing   # Enriches with extra context
+/reaper:takeoff Fix payment timeout with retry    # Description-only (no task system)
+```
+
+**Fetch behavior:** Beads format (`reaper-xxx`) queries `bd show`. Jira format (`PROJ-123`) queries `acli jira workitem view`. Unknown formats require a description. When the orchestrator deploys subagents, it always passes the full fetched description — subagents never see just a task ID.
+
 ### Commit Standards
 
 Commits are enforced by commitlint with Beads reference requirement:
@@ -95,6 +135,9 @@ Use `bd list` to find issue IDs, or `bd create` to create one.
 - Prompt quality gate: always run `reaper:ai-prompt-engineer` after modifying agents, skills, commands, hooks, or partials (see Workflow for Editing Agents/Skills step 4)
 - Self-learning: recurring quality gate failures surface as CLAUDE.md update candidates
 - Auto-formatting: PostToolUse hook formats code on every write/edit (detects Prettier, Biome, ESLint, Pint, PHP-CS-Fixer, Ruff, Black, gofmt, rustfmt, RuboCop, and more)
+- Prefer SOLID principles (single responsibility, dependency injection, interface segregation) in all application code
+- Mock all external services in tests — no real API calls
+- Favor integration tests over unit tests; reserve unit tests for complex pure functions and hard-to-trigger edge cases
 
 ### Environment Requirements
 
@@ -104,19 +147,29 @@ Use `bd list` to find issue IDs, or `bd create` to create one.
 
 ### Worktree Isolation
 
-All development work happens in isolated worktrees:
+All development work happens in isolated worktrees. Never edit files, run tests, or execute commands directly in the repository root.
 
 ```bash
+# Verify you are in the root (not inside a worktree)
+pwd | grep -q "/trees/" && { echo "ERROR: Must start from root"; exit 1; }
+
 # Create worktree
+mkdir -p trees
 git worktree add ./trees/TASK-ID-desc -b feature/TASK-ID-desc develop
 
-# Run commands in worktree
+# Run commands in worktree (use git -C for git, subshells for everything else)
 git -C ./trees/TASK-ID status
 (cd ./trees/TASK-ID && npm test)
 
+# List all worktrees
+git worktree list
+
 # Cleanup after merge
 git worktree remove ./trees/TASK-ID
+git branch -d feature/TASK-ID-desc
 ```
+
+Prefer using `reaper:branch-manager` for worktree setup and teardown — it handles edge cases safely.
 
 ## Project Structure
 
@@ -135,7 +188,6 @@ hooks/           # GENERATED from src/hooks/
 
 scripts/         # Build tooling
 docs/            # User-facing documentation (agents, commands, workflow, quality gates, auto-formatting)
-docs/spice/      # Development standards documentation (internal)
 ```
 
 ### Documentation Maintenance
@@ -216,6 +268,8 @@ bd close reaper-xxx        # Mark complete
 bd sync                    # Sync with git remote
 ```
 
+**Before starting work:** Run `bd show reaper-xxx` to read the issue details and update status to "In Progress". **After merge to develop:** Update to "In Review" and add a completion comment.
+
 ## Reference
 
 ### Agent Categories
@@ -241,3 +295,29 @@ Task --subagent_type workflow-planner
 ```
 
 This prefix is required because Reaper is a Claude Code plugin, and plugin agents must be namespaced.
+
+### Quick Reference (Subagent Launching)
+
+```bash
+# Planning (mandatory for 3+ steps)
+Task --subagent_type reaper:workflow-planner \
+  --prompt "TASK: reaper-a3f, DESCRIPTION: Analyze feature for parallel work opportunities"
+
+# Bug fix
+Task --subagent_type reaper:bug-fixer \
+  --prompt "TASK: reaper-b2e, DESCRIPTION: Fix null pointer in payment processing"
+
+# Feature
+Task --subagent_type reaper:feature-developer \
+  --prompt "TASK: reaper-c4d, DESCRIPTION: Add user profile API with validation"
+
+# Worktree setup
+Task --subagent_type reaper:branch-manager \
+  --prompt "TASK: reaper-a3f, WORKTREE: ./trees/reaper-a3f-oauth, DESCRIPTION: Create worktree"
+
+# Quality (mandatory before merge)
+Task --subagent_type reaper:test-runner \
+  --prompt "TASK: reaper-a3f, WORKTREE: ./trees/reaper-a3f-oauth, DESCRIPTION: Run full suite"
+Task --subagent_type reaper:code-reviewer \
+  --prompt "TASK: reaper-a3f, WORKTREE: ./trees/reaper-a3f-oauth, DESCRIPTION: Review for quality"
+```

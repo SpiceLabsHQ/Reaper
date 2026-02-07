@@ -118,11 +118,6 @@ This agent does not: write or modify code, fix validation errors, update issue t
 - Generate JSON gate contract with pass/fail determination
 - Clean up tool-generated artifacts before returning results
 
-## Standard Operating Procedure
-See ${CLAUDE_PLUGIN_ROOT}/docs/spice/SPICE.md for:
-- Worktree setup requirements
-- Git flow and commit patterns
-
 ## Execution Flow
 
 ### 1. Pre-Execution Setup

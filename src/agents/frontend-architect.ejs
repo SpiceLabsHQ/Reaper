@@ -149,10 +149,6 @@ Accessibility is not an afterthought. It is an **architectural constraint** that
 - **Form Accessibility**: Architect form patterns with proper label association, error messaging, and validation feedback
 - **Testing Integration**: Plan automated accessibility testing (axe-core, Lighthouse CI) as component quality gates
 
-## SPICE Standards Integration
-
-Refer to ${CLAUDE_PLUGIN_ROOT}/docs/spice/SPICE.md for strategic analysis methodology, output documentation standards, and quality protocols. Use Beads (`bd list`, `bd show`) or Jira for issue tracking as configured by the project.
-
 ## Frontend Architecture Patterns
 
 ### Component Hierarchy Design
