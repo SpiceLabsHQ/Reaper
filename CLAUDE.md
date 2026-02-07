@@ -96,6 +96,12 @@ Use `bd list` to find issue IDs, or `bd create` to create one.
 - Self-learning: recurring quality gate failures surface as CLAUDE.md update candidates
 - Auto-formatting: PostToolUse hook formats code on every write/edit (detects Prettier, Biome, ESLint, Pint, PHP-CS-Fixer, Ruff, Black, gofmt, rustfmt, RuboCop, and more)
 
+### Environment Requirements
+
+- **Node.js 22+** (LTS) required for coverage threshold enforcement
+- Test file lists are explicit (not glob-based) for cross-platform CI compatibility
+- When adding test files: update `package.json` scripts AND `.github/workflows/test.yml`
+
 ### Worktree Isolation
 
 All development work happens in isolated worktrees:
@@ -193,6 +199,7 @@ Common sections are extracted into `src/partials/*.ejs`:
 - `git-prohibitions.ejs` - Git operation restrictions
 - `tdd-testing-protocol.ejs` - TDD methodology
 - `artifact-cleanup-coding.ejs` - Cleanup protocols
+- `visual-vocabulary.ejs` - Gauge states and card templates for user-facing commands (parameterized by context: takeoff, ship, status-worktrees, squadron, functional). Respects `Reaper: disable ASCII art` opt-out in target project's CLAUDE.md.
 
 Use EJS includes: `<%- include('partials/output-requirements', { isReviewAgent: true }) %>`. Parameters vary by partial — check the partial source for available options.
 
