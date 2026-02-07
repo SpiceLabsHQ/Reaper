@@ -59,6 +59,31 @@ Error handling cycles (retries, over-length compression) do not change task stat
 
 ## Visual Vocabulary
 
+> **Opt-out**: If the project's CLAUDE.md contains the line `Reaper: disable ASCII art`, emit plain text status labels only. No gauge bars, no box-drawing, no card templates. Use the `functional` context behavior regardless of the `context` parameter.
+
+> **Rendering constraint**: One line, one direction, no column alignment. Every visual element must be renderable in a single horizontal pass. No multi-line box-drawing that requires vertical alignment across columns.
+
+### Gauge States
+
+Four semantic states expressed as fixed-width 10-block bars. Use these consistently across all commands to communicate work status.
+
+```
+  ██████████  LANDED       complete, healthy
+  ██████░░░░  IN FLIGHT    work in progress
+  ░░░░░░░░░░  GROUNDED     waiting, not started
+  ░░░░!!░░░░  FAULT        failed, needs attention
+```
+
+Gauge usage rules:
+- Always use exactly 10 blocks per bar (full-width = 10 filled, empty = 10 unfilled).
+- `!!` in the FAULT bar replaces two blocks at the center to signal breakage.
+- Pair each bar with its label and a short gloss on the same line.
+
+Squadron has its own visual vocabulary (mission cards, scorecards, tension diagrams, consensus markers) defined in the squadron command. This partial provides only the gauge states above for reuse. Do not duplicate squadron-specific visual elements here.
+
+
+Gauge states (LANDED, IN FLIGHT, GROUNDED, FAULT) are defined in the shared visual-vocabulary partial above. Squadron uses these for cross-command consistency but relies on its own visual vocabulary below for mission cards, scorecards, tension diagrams, and consensus markers.
+
 Three visual registers govern all output formatting:
 
 ### Registers

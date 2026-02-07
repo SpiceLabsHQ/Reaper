@@ -57,7 +57,9 @@ Error handling cycles (retries, over-length compression) do not change task stat
 
 ---
 
-## Visual Vocabulary
+<%- include('partials/visual-vocabulary', { context: 'squadron' }) %>
+
+Gauge states (LANDED, IN FLIGHT, GROUNDED, FAULT) are defined in the shared visual-vocabulary partial above. Squadron uses these for cross-command consistency but relies on its own visual vocabulary below for mission cards, scorecards, tension diagrams, and consensus markers.
 
 Three visual registers govern all output formatting:
 
