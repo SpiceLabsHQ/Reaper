@@ -119,7 +119,7 @@ Four semantic states expressed as fixed-width 10-block bars. Use these consisten
 
 Gauge usage rules:
 - Always use exactly 10 blocks per bar (full-width = 10 filled, empty = 10 unfilled).
-- `!!` in the FAULT bar replaces two blocks at the center to signal breakage.
+- The exclamation marks in the FAULT bar replace two blocks at the center to signal breakage.
 - Pair each bar with its label and a short gloss on the same line.
 
 ### Preflight Card
