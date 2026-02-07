@@ -68,8 +68,6 @@ Return all analysis in your JSON response. Do not write separate report files.
 
 ## Prerequisites & Setup
 
-**Standard Procedures**: See ${CLAUDE_PLUGIN_ROOT}/docs/spice/SPICE.md for worktree setup, Jira integration, and git workflow.
-
 **Required Tools**:
 - `git` (for diff analysis)
 - Project-specific build tools: `npm`/`pip`/`composer`/`bundle`/`go` (auto-detected)

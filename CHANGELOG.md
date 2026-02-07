@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## Unreleased
+
+
+### Refactoring
+
+* extract SPICE standards and distill project-specific guidance into CLAUDE.md ([reaper-0x6](https://github.com/SpiceLabsHQ/Reaper))
+
 ## [1.7.0](https://github.com/SpiceLabsHQ/Reaper/compare/v1.6.1...v1.7.0) (2026-01-24)
 
 

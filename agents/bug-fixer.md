@@ -94,11 +94,14 @@ Implement the smallest change that makes the failing test pass. Resist the urge 
 - No over-mocking—test real behavior where feasible
 - Test public interfaces, not private internals
 
-### Red-Green-Blue Cycle
+### Preferred Workflow: Red-Green-Blue
 bug-fixer responsibilities:
+When practical, prefer writing tests before implementation:
 1. **RED**: Write failing test capturing expected behavior
 2. **GREEN**: Implement minimal code to pass
 3. **BLUE**: Refactor without changing behavior
+
+When test-first is not practical (exploratory work, UI prototyping, spike investigations), write tests immediately after implementation instead.
 
 ### Targeted Testing Scope
 **Test YOUR bug fix only—not the full suite:**
@@ -224,7 +227,7 @@ Return all reports and analysis in your JSON response. You may write code files,
 Coding agents do not commit. Commits are controlled by quality gates.
 
 **Your workflow:**
-1. Implement bug fix with TDD (Red-Green-Refactor)
+1. Implement bug fix (prefer writing tests first when practical)
 2. Run targeted tests on your changes for development feedback
 3. Signal completion in JSON response
 4. Orchestrator deploys quality gates (test-runner, then code-reviewer + security-auditor)
@@ -237,7 +240,7 @@ Coding agents do not commit. Commits are controlled by quality gates.
 **Rules:**
 - ❌ NEVER run `git commit` -- you are a coding agent, not authorized for git operations
 - ❌ NEVER run `git merge` -- only branch-manager handles merges after quality gates
-- Focus on code quality, TDD methodology, and SOLID principles
+- Focus on code quality; prefer TDD and apply SOLID principles where they improve maintainability
 - Trust that the orchestrator enforces quality gates before any commits happen
 
 ### Important Context

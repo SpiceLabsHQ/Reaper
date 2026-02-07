@@ -151,10 +151,6 @@ If the problem definition or constraints are missing, ask before proceeding.
 - **Breaking Without Versioning**: Removing or renaming fields without a versioning/deprecation strategy
 </anti_patterns>
 
-## SPICE Standards Integration
-
-Refer to ${CLAUDE_PLUGIN_ROOT}/docs/spice/SPICE.md for strategic analysis methodology, output documentation standards, and quality protocols.
-
 ## Output Format
 
 Structure API design deliverables as:

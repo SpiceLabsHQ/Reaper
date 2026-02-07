@@ -144,10 +144,6 @@ Selection depends on: RPO/RTO requirements, geographic distribution needs, write
 - **Unbounded Queries Without Pagination**: Queries that can return unlimited result sets -- causes memory exhaustion, timeout errors, and cascading failures under load. Every user-facing query must have LIMIT/OFFSET or cursor-based pagination with a maximum page size.
 </anti_patterns>
 
-## SPICE Standards Integration
-
-Refer to ${CLAUDE_PLUGIN_ROOT}/docs/spice/SPICE.md for strategic analysis methodology, output documentation standards, and quality protocols.
-
 ## Output Format
 
 Structure database architecture deliverables with these sections (include only what is relevant):

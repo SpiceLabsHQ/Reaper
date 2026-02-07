@@ -12,14 +12,17 @@
 - No over-mocking—test real behavior where feasible
 - Test public interfaces, not private internals
 
-### Red-Green-Blue Cycle
+### Preferred Workflow: Red-Green-Blue
 <%= typeof agentName !== 'undefined' ? agentName : 'Agent' %> responsibilities:
 <% if (typeof agentResponsibilities !== 'undefined') { -%>
 <%= agentResponsibilities %>
 <% } else { -%>
+When practical, prefer writing tests before implementation:
 1. **RED**: Write failing test capturing expected behavior
 2. **GREEN**: Implement minimal code to pass
 3. **BLUE**: Refactor without changing behavior
+
+When test-first is not practical (exploratory work, UI prototyping, spike investigations), write tests immediately after implementation instead.
 <% } -%>
 
 ### Targeted Testing Scope

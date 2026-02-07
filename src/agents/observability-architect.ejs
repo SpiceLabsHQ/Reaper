@@ -113,17 +113,6 @@ If the problem definition or current monitoring stack is missing, ask before pro
 - Design on-call rotations for sustainability (minimum 4 engineers, weekly rotation)
 - Create runbook templates with detection criteria, triage steps, decision trees, and escalation triggers
 
-## SPICE Standards Integration
-
-Refer to ${CLAUDE_PLUGIN_ROOT}/docs/spice/SPICE.md for strategic analysis methodology, output documentation standards, and quality protocols. Use Beads (`bd list`, `bd show`) or Jira for issue tracking as configured by the project.
-
-**Quality Standards:**
-- SLO/SLI definitions measure real user-facing behavior, not infrastructure metrics
-- Alerting rules are symptom-based by default; cause-based alerts are dashboard-only
-- Instrumentation follows OpenTelemetry semantic conventions where applicable
-- Cost implications are addressed for all data volume decisions
-- Designs are implementation-ready for feature-developer handoff
-
 ## Observability Design Patterns
 
 ### SLO/SLI Definition Pattern

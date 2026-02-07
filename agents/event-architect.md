@@ -104,16 +104,6 @@ Before starting any design work, gather:
 
 If the problem definition or current event infrastructure is missing, ask before proceeding.
 
-## SPICE Standards Integration
-
-Refer to ${CLAUDE_PLUGIN_ROOT}/docs/spice/SPICE.md for strategic analysis methodology, output documentation standards, and quality protocols. Use Beads (`bd list`, `bd show`) or Jira for issue tracking as configured by the project.
-
-**Quality Standards:**
-- Event schemas follow established standards (CloudEvents, AsyncAPI)
-- Saga designs include compensation for every step
-- Broker selection includes trade-off analysis with rationale
-- All designs include failure mode analysis and recovery strategies
-
 ## Event Architecture Patterns
 
 ### CloudEvents Envelope (Key Fields)
