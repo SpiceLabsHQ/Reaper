@@ -142,12 +142,13 @@ If uncommitted changes exist:
 2. **Pre-stage safety scan**: Before staging, check for sensitive files in the working tree:
    ```bash
    # Scan for sensitive file patterns
-   SENSITIVE_PATTERNS='.env* *.pem *.key node_modules/ *.sqlite *.db'
-   SENSITIVE_FOUND=$(git -C "$WORKTREE_PATH" status --porcelain | awk '{print $2}' | grep -E '(\.env|\.pem$|\.key$|node_modules/|\.sqlite$|\.db$)' || true)
+   SENSITIVE_PATTERNS='.env* *.pem *.key *.p12 *.pfx *.jks id_rsa* *.credentials *.secret *.token node_modules/ *.sqlite *.db'
+   SENSITIVE_FOUND=$(git -C "$WORKTREE_PATH" status --porcelain | awk '{print $2}' | grep -E '(\.env|\.pem$|\.key$|\.p12$|\.pfx$|\.jks$|id_rsa|\.credentials$|\.secret$|\.token$|node_modules/|\.sqlite$|\.db$)' || true)
 
    if [ -n "$SENSITIVE_FOUND" ]; then
        echo "WARNING: Sensitive files detected in working tree:"
        echo "$SENSITIVE_FOUND"
+       echo "This is a common-pattern check, not a comprehensive security scan — review staged files manually."
    fi
    ```
    If sensitive files are found, warn the user and exclude them from staging:
