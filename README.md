@@ -46,15 +46,15 @@ A single command kicks off the full arc -- planning, implementation, testing, re
 
 ---
 
-## Start Small, Go Big
+## Three Commands
 
-Three commands. Each unlocks when you outgrow the last.
+Each builds on the last.
 
-### Start here: `/reaper:takeoff`
+### The engine: `/reaper:takeoff`
 
-Give Reaper a task and walk away.
+Give Reaper a well-scoped task and walk away.
 
-This is the command you will use 90% of the time. Hand it a task ID or a plain description -- Reaper selects the right agents, creates a worktree, writes code test-first, and runs every quality gate before presenting finished work.
+Hand it a task ID or a plain description -- Reaper selects the right agents, creates a worktree, writes code test-first, and runs every quality gate before presenting finished work.
 
 ```
 > /reaper:takeoff PROJ-42
@@ -66,13 +66,13 @@ This is the command you will use 90% of the time. Hand it a task ID or a plain d
 
 You review. You approve. That is it.
 
-When a single task is not enough, you will want a plan.
+When you know exactly what to build, takeoff is all you need. Most of the time, you will want a plan first.
 
-### Level up: `/reaper:flight-plan`
+### Start most work here: `/reaper:flight-plan`
 
-For work that spans multiple files, concerns, or days.
+Describe what you want and Reaper breaks it into takeoff-sized tasks.
 
-Describe the full scope and Reaper decomposes it into parallelizable work units with dependency mapping. After your approval, issues are created in your task system (Beads, Jira, or markdown fallback) and each unit is ready for `/reaper:takeoff`.
+Give it a feature, a problem, or a goal -- Reaper decomposes it into parallelizable work units with dependency mapping. After your approval, issues are created in your task system (Beads, Jira, or markdown fallback) and each unit is ready for `/reaper:takeoff`.
 
 ```
 > /reaper:flight-plan Add user notification preferences with email, SMS, push
@@ -87,15 +87,13 @@ Describe the full scope and Reaper decomposes it into parallelizable work units 
 
 Approve the plan, run `/clear` for fresh context, then `/reaper:takeoff PROJ-50` to start executing.
 
-When the decision itself is what matters, call in the experts.
+When the decision itself is what matters, call in the experts before you plan.
 
-### Unlock: `/reaper:squadron`
+### Think before you plan: `/reaper:squadron`
 
-A deliberation forum of specialist agents.
+A deliberation forum for architecture, research, and hard trade-offs.
 
-Token-heavy by design -- use when getting the architecture wrong costs more than getting it slow.
-
-Reaper assembles domain experts relevant to your question, has each deliver a position, surfaces tensions between them, and routes debate toward convergence.
+Token-heavy by design -- use when getting the decision wrong costs more than getting it slow. Reaper assembles domain experts relevant to your question, has each deliver a position, surfaces tensions between them, and routes debate toward convergence.
 
 ```
 > /reaper:squadron Should we migrate from REST to GraphQL?
@@ -109,7 +107,7 @@ Reaper assembles domain experts relevant to your question, has each deliver a po
   Ready for your input.
 ```
 
-You get structured recommendations and explicit trade-offs, not a vague summary.
+You get structured recommendations and explicit trade-offs, not a vague summary. Feed the output into a `/reaper:flight-plan` when you are ready to act on it.
 
 ---
 
