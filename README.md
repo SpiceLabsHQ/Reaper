@@ -1,4 +1,10 @@
-# Reaper
+<p align="center">
+  <img src="assets/reaper-banner.png" alt="Reaper" width="500">
+  <br><br>
+  <a href="https://github.com/SpiceLabsHQ/Reaper/actions/workflows/test.yml"><img src="https://github.com/SpiceLabsHQ/Reaper/actions/workflows/test.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-1.7.0-orange.svg" alt="Version"></a>
+</p>
 
 **Ground control for your codebase.**
 
@@ -8,16 +14,14 @@ Reaper is a Claude Code plugin that turns Claude into a caffeine-addicted air tr
 
 > Built for Spice Labs. Shared because why not.
 
-[![CI](https://github.com/SpiceLabsHQ/Reaper/actions/workflows/test.yml/badge.svg)](https://github.com/SpiceLabsHQ/Reaper/actions/workflows/test.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.7.0-orange.svg)](CHANGELOG.md)
+## Installation
+
+**Prerequisites**: [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)
 
 ```bash
 claude plugin marketplace add SpiceLabsHQ/claude-marketplace
 claude plugin install reaper@spice-labs
 ```
-
-**Prerequisites**: [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)
 
 ---
 
