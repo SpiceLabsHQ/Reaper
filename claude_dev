@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Run Claude Code with the current directory loaded as a plugin for testing Reaper.
+# Usage: ./claude_dev [any claude args...]
+
+exec claude --plugin-dir . --allow-dangerously-skip-permissions "$@"

@@ -232,6 +232,17 @@ npm run build        # Compile all templates to project root
 npm run build:watch  # Watch mode for development
 ```
 
+### Dev Launcher
+
+`claude_dev` is a permanent dev tool for testing Reaper as a plugin locally. It launches Claude Code with the repo loaded as a plugin and permissions bypass available (but not forced):
+
+```bash
+./claude_dev                  # Interactive session with Reaper loaded
+./claude_dev -p "prompt"      # Non-interactive with Reaper loaded
+```
+
+Do not delete this file — it is intentional project tooling, not a leftover artifact.
+
 ### Workflow for Editing Agents/Skills
 
 1. **Edit the source template** in `src/` (e.g., `src/agents/bug-fixer.ejs`)
