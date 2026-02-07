@@ -2,8 +2,6 @@
 
 All commands are invoked inside Claude Code using the `/reaper:command-name` syntax.
 
-[Back to README](../README.md)
-
 ---
 
 ## /reaper:takeoff
@@ -309,5 +307,3 @@ Both must be "yes" to recommend documentation. Standard dependencies, normal ref
 Reaper offers to apply high-priority suggestions directly to `CLAUDE.md`, create directory-specific documentation files for complex areas, or commit the updates.
 
 ---
-
-[Back to README](../README.md)

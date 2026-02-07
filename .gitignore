@@ -33,3 +33,7 @@ Thumbs.db
 
 # Worktrees directory (ephemeral development branches)
 trees/
+
+# VitePress
+docs/.vitepress/cache/
+docs/.vitepress/dist/

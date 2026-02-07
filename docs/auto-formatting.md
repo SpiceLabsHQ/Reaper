@@ -79,5 +79,3 @@ A file is never formatted twice. The first matching formatter wins.
 **Safe to ignore.** If no formatter is installed for a given file type, nothing happens. No errors, no warnings, no interruptions.
 
 ---
-
-[Back to README](../README.md)

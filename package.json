@@ -10,7 +10,10 @@
     "test:coverage": "node --test --experimental-test-coverage scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js scripts/contracts.test.js",
     "prepare": "husky",
     "release": "commit-and-tag-version",
-    "release:dry-run": "commit-and-tag-version --dry-run"
+    "release:dry-run": "commit-and-tag-version --dry-run",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "repository": {
     "type": "git",
@@ -29,6 +32,7 @@
     "@commitlint/config-conventional": "^20.3.0",
     "commit-and-tag-version": "^12.6.1",
     "ejs": "^3.1.9",
-    "husky": "^9.1.7"
+    "husky": "^9.1.7",
+    "vitepress": "^1.6.4"
   }
 }

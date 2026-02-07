@@ -265,5 +265,3 @@ These entries are never applied automatically. Run `/reaper:claude-sync` to revi
 | `/reaper:squadron` | Assembles domain expert agents for collaborative design discussions. Use before flight-plan when the architecture decision itself is what matters. |
 
 ---
-
-[Back to README](../README.md)

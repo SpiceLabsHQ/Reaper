@@ -77,5 +77,3 @@ The dispatch layer matches task characteristics to agent capabilities. A bug rep
 ---
 
 **Total: 25 agents** across 5 categories.
-
-[Back to README](../README.md)

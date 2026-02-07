@@ -97,5 +97,3 @@ You explicitly control what happens next:
 No code lands on your main branch without your say-so.
 
 ---
-
-[Back to README](../README.md)
