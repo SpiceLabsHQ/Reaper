@@ -70,7 +70,7 @@ Four semantic states expressed as fixed-width 10-block bars. Use these consisten
 ```
   ██████████  LANDED       complete, healthy
   ██████░░░░  IN FLIGHT    work in progress
-  ░░░░░░░░░░  GROUNDED     waiting, not started
+  ░░░░░░░░░░  TAXIING     waiting, not started
   ░░░░!!░░░░  FAULT        failed, needs attention
 ```
 
@@ -82,7 +82,7 @@ Gauge usage rules:
 Squadron has its own visual vocabulary (mission cards, scorecards, tension diagrams, consensus markers) defined in the squadron command. This partial provides only the gauge states above for reuse. Do not duplicate squadron-specific visual elements here.
 
 
-Gauge states (LANDED, IN FLIGHT, GROUNDED, FAULT) are defined in the shared visual-vocabulary partial above. Squadron uses these for cross-command consistency but relies on its own visual vocabulary below for mission cards, scorecards, tension diagrams, and consensus markers.
+Gauge states (LANDED, IN FLIGHT, TAXIING, FAULT) are defined in the shared visual-vocabulary partial above. Squadron uses these for cross-command consistency but relies on its own visual vocabulary below for mission cards, scorecards, tension diagrams, and consensus markers.
 
 Three visual registers govern all output formatting:
 

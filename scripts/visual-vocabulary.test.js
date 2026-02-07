@@ -92,8 +92,8 @@ describe('visual-vocabulary gauge states', () => {
         `Missing IN FLIGHT state in ${context}`
       );
       assert.ok(
-        result.includes('GROUNDED'),
-        `Missing GROUNDED state in ${context}`
+        result.includes('TAXIING'),
+        `Missing TAXIING state in ${context}`
       );
       assert.ok(result.includes('FAULT'), `Missing FAULT state in ${context}`);
     });
