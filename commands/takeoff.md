@@ -113,7 +113,7 @@ Four semantic states expressed as fixed-width 10-block bars. Use these consisten
 ```
   ██████████  LANDED       complete, healthy
   ██████░░░░  IN FLIGHT    work in progress
-  ░░░░░░░░░░  GROUNDED     waiting, not started
+  ░░░░░░░░░░  TAXIING     waiting, not started
   ░░░░!!░░░░  FAULT        failed, needs attention
 ```
 
@@ -134,7 +134,7 @@ Render before work begins. Shows the mission parameters the command will execute
   Worktree:   [worktree-path]
   Units:      [N work units planned]
   Strategy:   [execution strategy]
-  ░░░░░░░░░░  GROUNDED
+  ░░░░░░░░░░  TAXIING
 ```
 
 ### Gate Panel
@@ -146,13 +146,13 @@ Render after each quality gate completes. Shows gate results inline.
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   test-runner       ██████████  LANDED
   code-reviewer     ██████░░░░  IN FLIGHT
-  security-auditor  ░░░░░░░░░░  GROUNDED
+  security-auditor  ░░░░░░░░░░  TAXIING
 ```
 
 Gate panel rules:
 - One row per gate agent.
 - Gate name left-aligned, gauge bar right of name, state label after bar.
-- Update rows as gates complete -- replace GROUNDED with LANDED or FAULT.
+- Update rows as gates complete -- replace TAXIING with LANDED or FAULT.
 
 
 ## Input Processing
@@ -344,7 +344,7 @@ Use the Preflight Card template from the Visual Vocabulary above. Populate it wi
 - **Units**: count of non-closed work units from the plan
 - **Strategy**: the selected execution strategy (very_small_direct, medium_single_branch, or large_multi_worktree)
 
-The card ends with the `GROUNDED` gauge, indicating work has not yet started.
+The card ends with the `TAXIING` gauge, indicating work has not yet started.
 
 ## Strategy Execution
 
@@ -405,7 +405,7 @@ From the coding agent's `files_modified` list, classify each file into a work ty
 - If no pattern matches, default to `application_code`
 
 ### Step 3: Echo Selection
-Before deploying gate agents, announce the selection and render an initial Gate Panel with all gates in `GROUNDED` state:
+Before deploying gate agents, announce the selection and render an initial Gate Panel with all gates in `TAXIING` state:
 "Selected gate profile: [work_type]. Running [N] gate agents: [agent list]."
 For union profiles: "Mixed changeset detected ([types]). Union profile: Gate 1 [agents], Gate 2 [agents]."
 

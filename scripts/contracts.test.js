@@ -527,7 +527,7 @@ const VISUAL_VOCAB_COMMANDS = ['takeoff', 'ship', 'status-worktrees', 'squadron'
 /**
  * The four canonical gauge state labels from the visual-vocabulary partial.
  */
-const GAUGE_STATES = ['LANDED', 'IN FLIGHT', 'GROUNDED', 'FAULT'];
+const GAUGE_STATES = ['LANDED', 'IN FLIGHT', 'TAXIING', 'FAULT'];
 
 describe('Contract: command files contain visual vocabulary gauge states', () => {
   assert.ok(

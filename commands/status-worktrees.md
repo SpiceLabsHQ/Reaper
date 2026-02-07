@@ -24,7 +24,7 @@ Four semantic states expressed as fixed-width 10-block bars. Use these consisten
 ```
   ██████████  LANDED       complete, healthy
   ██████░░░░  IN FLIGHT    work in progress
-  ░░░░░░░░░░  GROUNDED     waiting, not started
+  ░░░░░░░░░░  TAXIING     waiting, not started
   ░░░░!!░░░░  FAULT        failed, needs attention
 ```
 
@@ -42,13 +42,13 @@ Render as a multi-row status overview. One row per worktree.
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   trees/TASK-001-auth       ██████████  LANDED
   trees/TASK-002-billing    ██████░░░░  IN FLIGHT
-  trees/TASK-003-notifs     ░░░░░░░░░░  GROUNDED
+  trees/TASK-003-notifs     ░░░░░░░░░░  TAXIING
   trees/TASK-004-search     ░░░░!!░░░░  FAULT
 ```
 
 Fleet dashboard rules:
 - One row per worktree. Path left-aligned, gauge bar and state right.
-- Sort: FAULT first, then IN FLIGHT, then GROUNDED, then LANDED.
+- Sort: FAULT first, then IN FLIGHT, then TAXIING, then LANDED.
 - If no worktrees exist, show a single line: `No active worktrees.`
 
 
@@ -83,7 +83,7 @@ Collect status for every worktree first, then render the fleet dashboard, then r
 #
 #   LANDED    — RESULTS.md exists and no test failures detected
 #   IN FLIGHT — Work has started (has commits beyond branch point, or TASK.md exists, or uncommitted changes)
-#   GROUNDED  — Worktree exists but no work started (clean, no TASK.md, no commits beyond branch point)
+#   TAXIING  — Worktree exists but no work started (clean, no TASK.md, no commits beyond branch point)
 #   FAULT     — A quality gate failed (test-runner, code-reviewer, or security-auditor logged a failure)
 #
 # Gate progress is tracked by counting completed quality gates:
@@ -102,12 +102,12 @@ declare -a FLEET_DETAILS=()
 determine_fleet_state() {
   local worktree_path="$1"
   local worktree_name=$(basename "$worktree_path")
-  local state="GROUNDED"
+  local state="TAXIING"
   local gates_passed=0
   local total_gates=3
 
   if [ ! -d "$worktree_path" ]; then
-    echo "GROUNDED|0/${total_gates} gates"
+    echo "TAXIING|0/${total_gates} gates"
     return
   fi
 
@@ -165,7 +165,7 @@ determine_fleet_state() {
       if [ "$commit_count" -gt 0 ]; then
         state="IN FLIGHT"
       else
-        state="GROUNDED"
+        state="TAXIING"
       fi
     fi
   fi
@@ -180,7 +180,7 @@ render_gauge() {
   case "$state" in
     "LANDED")    echo "██████████" ;;
     "IN FLIGHT") echo "██████░░░░" ;;
-    "GROUNDED")  echo "░░░░░░░░░░" ;;
+    "TAXIING")  echo "░░░░░░░░░░" ;;
     "FAULT")     echo "░░░░!!░░░░" ;;
     *)           echo "░░░░░░░░░░" ;;
   esac
@@ -215,7 +215,7 @@ fi
 # ── Collect fleet state for each worktree ─────────────
 declare -a SORTED_FAULT=()
 declare -a SORTED_INFLIGHT=()
-declare -a SORTED_GROUNDED=()
+declare -a SORTED_TAXIING=()
 declare -a SORTED_LANDED=()
 
 for worktree in "${WORKTREE_LIST[@]}"; do
@@ -229,13 +229,13 @@ for worktree in "${WORKTREE_LIST[@]}"; do
   case "$state" in
     "FAULT")     SORTED_FAULT+=("$entry") ;;
     "IN FLIGHT") SORTED_INFLIGHT+=("$entry") ;;
-    "GROUNDED")  SORTED_GROUNDED+=("$entry") ;;
+    "TAXIING")  SORTED_TAXIING+=("$entry") ;;
     "LANDED")    SORTED_LANDED+=("$entry") ;;
   esac
 done
 
-# Merge sorted arrays: FAULT first, then IN FLIGHT, GROUNDED, LANDED
-SORTED_FLEET=("${SORTED_FAULT[@]}" "${SORTED_INFLIGHT[@]}" "${SORTED_GROUNDED[@]}" "${SORTED_LANDED[@]}")
+# Merge sorted arrays: FAULT first, then IN FLIGHT, TAXIING, LANDED
+SORTED_FLEET=("${SORTED_FAULT[@]}" "${SORTED_INFLIGHT[@]}" "${SORTED_TAXIING[@]}" "${SORTED_LANDED[@]}")
 
 # ── Render Fleet Dashboard ────────────────────────────
 echo ""
@@ -255,7 +255,7 @@ done
 # ── Fleet Summary Footer ─────────────────────────────
 count_landed=${#SORTED_LANDED[@]}
 count_inflight=${#SORTED_INFLIGHT[@]}
-count_grounded=${#SORTED_GROUNDED[@]}
+count_taxiing=${#SORTED_TAXIING[@]}
 count_fault=${#SORTED_FAULT[@]}
 count_total=${#SORTED_FLEET[@]}
 
@@ -263,7 +263,7 @@ echo ""
 printf "  Fleet: %d worktrees" "$count_total"
 [ "$count_landed" -gt 0 ]   && printf "   %d landed" "$count_landed"
 [ "$count_inflight" -gt 0 ] && printf "   %d in flight" "$count_inflight"
-[ "$count_grounded" -gt 0 ] && printf "   %d grounded" "$count_grounded"
+[ "$count_taxiing" -gt 0 ] && printf "   %d taxiing" "$count_taxiing"
 [ "$count_fault" -gt 0 ]    && printf "   %d fault" "$count_fault"
 echo ""
 
@@ -433,7 +433,7 @@ The fleet dashboard renders a scannable overview before detailed information:
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   reaper-44-cache           ░░░░!!░░░░  FAULT      0/3 gates
   reaper-42-auth            ██████░░░░  IN FLIGHT  1/3 gates
-  reaper-43-migration       ░░░░░░░░░░  GROUNDED   0/3 gates
+  reaper-43-migration       ░░░░░░░░░░  TAXIING   0/3 gates
   reaper-41-billing         ██████████  LANDED     3/3 gates
 
   Fleet: 4 worktrees   1 landed   1 in flight   1 grounded   1 fault
@@ -447,5 +447,5 @@ States map to the Visual Vocabulary gauge bars:
 
 - `LANDED` -- Complete, all gates passed. Gauge: `██████████`
 - `IN FLIGHT` -- Work in progress (has commits, TASK.md, or uncommitted changes). Gauge: `██████░░░░`
-- `GROUNDED` -- Worktree exists but no work started. Gauge: `░░░░░░░░░░`
+- `TAXIING` -- Worktree exists but no work started. Gauge: `░░░░░░░░░░`
 - `FAULT` -- A quality gate failed or failure markers detected. Gauge: `░░░░!!░░░░`

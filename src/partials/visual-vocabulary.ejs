@@ -13,13 +13,13 @@ Status labels (plain text, no visual ornament):
 
 - **LANDED** -- complete, healthy
 - **IN FLIGHT** -- work in progress
-- **GROUNDED** -- waiting, not started
+- **TAXIING** -- waiting, not started
 - **FAULT** -- failed, needs attention
 <% } else { -%>
 ```
   ██████████  LANDED       complete, healthy
   ██████░░░░  IN FLIGHT    work in progress
-  ░░░░░░░░░░  GROUNDED     waiting, not started
+  ░░░░░░░░░░  TAXIING     waiting, not started
   ░░░░!!░░░░  FAULT        failed, needs attention
 ```
 
@@ -42,7 +42,7 @@ Render before work begins. Shows the mission parameters the command will execute
   Worktree:   [worktree-path]
   Units:      [N work units planned]
   Strategy:   [execution strategy]
-  ░░░░░░░░░░  GROUNDED
+  ░░░░░░░░░░  TAXIING
 ```
 
 ### Gate Panel
@@ -54,13 +54,13 @@ Render after each quality gate completes. Shows gate results inline.
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   test-runner       ██████████  LANDED
   code-reviewer     ██████░░░░  IN FLIGHT
-  security-auditor  ░░░░░░░░░░  GROUNDED
+  security-auditor  ░░░░░░░░░░  TAXIING
 ```
 
 Gate panel rules:
 - One row per gate agent.
 - Gate name left-aligned, gauge bar right of name, state label after bar.
-- Update rows as gates complete -- replace GROUNDED with LANDED or FAULT.
+- Update rows as gates complete -- replace TAXIING with LANDED or FAULT.
 <% } else if (context === 'ship') { -%>
 
 ### Departure Card
@@ -99,13 +99,13 @@ Render as a multi-row status overview. One row per worktree.
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   trees/TASK-001-auth       ██████████  LANDED
   trees/TASK-002-billing    ██████░░░░  IN FLIGHT
-  trees/TASK-003-notifs     ░░░░░░░░░░  GROUNDED
+  trees/TASK-003-notifs     ░░░░░░░░░░  TAXIING
   trees/TASK-004-search     ░░░░!!░░░░  FAULT
 ```
 
 Fleet dashboard rules:
 - One row per worktree. Path left-aligned, gauge bar and state right.
-- Sort: FAULT first, then IN FLIGHT, then GROUNDED, then LANDED.
+- Sort: FAULT first, then IN FLIGHT, then TAXIING, then LANDED.
 - If no worktrees exist, show a single line: `No active worktrees.`
 <% } else if (context === 'squadron') { -%>
 
