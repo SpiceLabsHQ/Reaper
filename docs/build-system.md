@@ -26,18 +26,26 @@ reaper/
 │   ├── hooks/                    # Hook templates
 │   │   └── hooks.json            # Static, no templating needed
 │   ├── partials/                 # Shared content partials
-│   │   ├── pre-work-validation-coding.ejs
-│   │   ├── pre-work-validation-review.ejs
-│   │   ├── pre-work-validation-planning.ejs
-│   │   ├── directory-exclusions.ejs
-│   │   ├── output-requirements.ejs
-│   │   ├── git-prohibitions.ejs
-│   │   ├── tdd-testing-protocol.ejs
+│   │   ├── agent-deployment-template.ejs
 │   │   ├── artifact-cleanup-coding.ejs
 │   │   ├── artifact-cleanup-review.ejs
+│   │   ├── directory-exclusions.ejs
 │   │   ├── file-conflict-detection.ejs
+│   │   ├── git-prohibitions.ejs
 │   │   ├── no-commits-policy.ejs
-│   │   └── json-output-structure.ejs
+│   │   ├── no-self-reporting.ejs
+│   │   ├── orchestrator-role-boundary.ejs
+│   │   ├── output-requirements.ejs
+│   │   ├── plan-file-schema.ejs
+│   │   ├── pre-work-validation-coding.ejs
+│   │   ├── pre-work-validation-planning.ejs
+│   │   ├── pre-work-validation-review.ejs
+│   │   ├── pre-work-validation-security.ejs
+│   │   ├── quality-gate-protocol.ejs
+│   │   ├── task-system-operations.ejs
+│   │   ├── tdd-testing-protocol.ejs
+│   │   ├── todowrite-plan-protocol.ejs
+│   │   └── visual-vocabulary.ejs
 │   └── README.md                 # Source directory documentation
 ├── scripts/
 │   └── build.js                  # Node.js build script
@@ -70,12 +78,6 @@ reaper/
 | `file-conflict-detection.ejs` | Coding agents | Strategy 2 parallel work safety |
 | `no-commits-policy.ejs` | Coding agents | Coding agents never commit |
 
-### Output Structure Partials
-
-| Partial | Used By | Description |
-|---------|---------|-------------|
-| `json-output-structure.ejs` | All agents | Standardized JSON response format |
-
 ## Template Variables
 
 Templates use these EJS variables passed during compilation:
@@ -97,11 +99,15 @@ Templates use these EJS variables passed during compilation:
 ```javascript
 const AGENT_TYPES = {
   coding: ['bug-fixer', 'feature-developer', 'refactoring-dev', 'integration-engineer'],
-  review: ['code-reviewer', 'security-auditor', 'test-runner'],
-  planning: ['workflow-planner', 'api-designer', 'database-architect', 'cloud-architect'],
+  review: ['code-reviewer', 'security-auditor', 'test-runner', 'validation-runner'],
+  planning: [
+    'workflow-planner', 'api-designer', 'database-architect', 'cloud-architect',
+    'event-architect', 'observability-architect', 'frontend-architect',
+    'data-engineer', 'test-strategist', 'compliance-architect',
+  ],
   operations: ['branch-manager', 'deployment-engineer', 'incident-responder'],
-  documentation: ['technical-writer', 'claude-agent-architect'],
-  performance: ['performance-engineer']
+  documentation: ['technical-writer', 'claude-agent-architect', 'ai-prompt-engineer'],
+  performance: ['performance-engineer'],
 };
 ```
 
@@ -345,14 +351,6 @@ Commit policy for all strategies:
 - Workflow explanation per strategy
 - What happens after quality gates
 - Critical rules summary
-
-### json-output-structure.ejs
-
-Standardized JSON response format:
-- Minimal required fields
-- What NOT to include
-- Agent-type variations
-- Example structures
 
 ## Maintenance
 

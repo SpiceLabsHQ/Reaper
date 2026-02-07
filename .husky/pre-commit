@@ -1,5 +1,5 @@
 # Run unit tests (excludes contract tests — those run post-build)
-node --test scripts/build.test.js scripts/commitlint.test.js
+node --test scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js scripts/visual-vocabulary.test.js
 
 # Build templates and stage output
 npm run build
@@ -7,7 +7,7 @@ npm run build
 # Run contract tests on generated output
 node --test scripts/contracts.test.js
 
-git add agents/ skills/ hooks/
+git add agents/ skills/ hooks/ commands/
 
 # Beads pre-commit: flush pending changes to JSONL
 if command -v bd >/dev/null 2>&1 && [ -d .beads ]; then
