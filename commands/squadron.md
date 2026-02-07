@@ -118,7 +118,7 @@ Use these exact formats when rendering each element type.
 
 **Expert position card** (separate multiple cards with `* * *`):
 
-> **DATABASE ARCHITECT** — Take.
+> **DATABASE ARCHITECT** — Schema-per-tenant over row-level isolation.
 >
 > **My Take**: Multi-tenant isolation at the row level is a trap at this scale. Schema-per-tenant with a shared connection pool gives you the isolation guarantees without the query complexity.
 >
@@ -288,7 +288,7 @@ Output the section header to the PO:
 
 Experts deliver their independent positions. Each position follows the forum-mode format: 300-word cap, structured as a "socratic forum not whitepaper."
 
-Present each expert's position as a blockquote card (see Rendered Examples for exact format). Separate cards with `* * *`. The facilitator adds a brief pacing line before each expert's take (except the first).
+Present each expert's position as a blockquote card (see Rendered Examples for exact format). Separate cards with `* * *`. The facilitator adds a brief pacing line before each expert's take (except the first). Each nameplate must include a unique 3-7 word stance summary distilled from that expert's "My Take" content — never use a generic placeholder like "Take." The stance summary is the expert's core position compressed to a single phrase (e.g., `> **DATABASE ARCHITECT** — Schema-per-tenant over row-level isolation.`).
 
 After all positions are in, the facilitator identifies tensions and agreements across the positions. No PO interaction yet — the facilitator synthesizes in plain markdown (facilitator voice, no blockquotes):
 

@@ -617,3 +617,39 @@ describe('Contract: status-worktrees contains fleet dashboard elements', () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Contract: squadron nameplate uses stance summaries, not generic "Take."
+// ---------------------------------------------------------------------------
+
+describe('Contract: squadron nameplate uses stance summaries', () => {
+  const filePath = path.join(COMMANDS_DIR, 'squadron.md');
+  const relative = 'commands/squadron.md';
+
+  it(`${relative} does not contain generic "Take." nameplate`, () => {
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      !content.includes('** — Take.'),
+      `${relative} still contains the generic "Take." nameplate — replace with a stance summary`
+    );
+  });
+
+  it(`${relative} rendered example nameplate has a stance summary`, () => {
+    const content = fs.readFileSync(filePath, 'utf8');
+    // The rendered example should show DATABASE ARCHITECT with a multi-word
+    // stance summary (not just "Take.") after the em-dash
+    const nameplatePattern = /\*\*DATABASE ARCHITECT\*\* — \S.{10,}/;
+    assert.ok(
+      nameplatePattern.test(content),
+      `${relative} rendered example nameplate must show a stance summary (10+ chars after em-dash)`
+    );
+  });
+
+  it(`${relative} facilitator instruction mentions stance summary`, () => {
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('stance summary'),
+      `${relative} must instruct the facilitator to write a stance summary for each nameplate`
+    );
+  });
+});
