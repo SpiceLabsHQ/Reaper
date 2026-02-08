@@ -361,6 +361,73 @@ describe('visual-vocabulary context isolation', () => {
 });
 
 // ===========================================================================
+// Gate Panel uses gate statuses, not gauge states
+// ===========================================================================
+
+describe('visual-vocabulary Gate Panel uses gate statuses not gauge states', () => {
+  it('should show PASS, RUNNING, PENDING in the Gate Panel example (takeoff)', () => {
+    const result = compileWithContext('takeoff');
+    // Extract the Gate Panel section (between "GATE RESULTS" and the next ### or end)
+    const gatePanelStart = result.indexOf('GATE RESULTS');
+    assert.ok(gatePanelStart >= 0, 'Gate Panel should contain GATE RESULTS header');
+
+    const gatePanelEnd = result.indexOf('###', gatePanelStart);
+    const gateSection =
+      gatePanelEnd > gatePanelStart
+        ? result.slice(gatePanelStart, gatePanelEnd)
+        : result.slice(gatePanelStart);
+
+    // Gate Panel example should use gate statuses
+    assert.ok(
+      gateSection.includes('PASS'),
+      'Gate Panel example should use PASS gate status'
+    );
+    assert.ok(
+      gateSection.includes('RUNNING'),
+      'Gate Panel example should use RUNNING gate status'
+    );
+    assert.ok(
+      gateSection.includes('PENDING'),
+      'Gate Panel example should use PENDING gate status'
+    );
+  });
+
+  it('should NOT use gauge states (LANDED, IN FLIGHT, TAXIING) in the Gate Panel example', () => {
+    const result = compileWithContext('takeoff');
+    const gatePanelStart = result.indexOf('GATE RESULTS');
+    assert.ok(gatePanelStart >= 0, 'Gate Panel should contain GATE RESULTS header');
+
+    const gatePanelEnd = result.indexOf('###', gatePanelStart);
+    const gateSection =
+      gatePanelEnd > gatePanelStart
+        ? result.slice(gatePanelStart, gatePanelEnd)
+        : result.slice(gatePanelStart);
+
+    // Gate Panel should NOT contain gauge states as status values
+    assert.ok(
+      !gateSection.includes('LANDED'),
+      'Gate Panel should not use LANDED gauge state'
+    );
+    assert.ok(
+      !gateSection.includes('IN FLIGHT'),
+      'Gate Panel should not use IN FLIGHT gauge state'
+    );
+    assert.ok(
+      !gateSection.includes('TAXIING'),
+      'Gate Panel should not use TAXIING gauge state'
+    );
+  });
+
+  it('should document that Gate Panel uses gate statuses not gauge bars', () => {
+    const result = compileWithContext('takeoff');
+    assert.ok(
+      result.includes('No gauge bars in the Gate Panel'),
+      'Gate Panel rules should state "No gauge bars in the Gate Panel"'
+    );
+  });
+});
+
+// ===========================================================================
 // Quality Gate Statuses — present in every context
 // ===========================================================================
 
