@@ -6,6 +6,47 @@ All commands are invoked inside Claude Code using the `/reaper:command-name` syn
 
 ---
 
+## /reaper:start
+
+**Not sure where to start? This command helps you find the right workflow.**
+
+The on-ramp for new users and anyone unsure which Reaper workflow fits their situation. Start either guides you through a visual menu of the three workflows or classifies your input and recommends the best match. It never executes work itself -- it routes you to the right command.
+
+### Usage
+
+```
+/reaper:start
+/reaper:start reaper-a3f
+/reaper:start Should we migrate from REST to GraphQL?
+/reaper:start Implement user notifications with email and push support
+```
+
+### Input
+
+Start operates in two modes depending on whether you provide input:
+
+- **No input** -- Shows the three Reaper workflows (squadron, flight-plan, takeoff) and presents an interactive choice. Use this when you are not sure which workflow to pick.
+- **With input** -- Classifies your input and recommends the best workflow. Accepts task IDs, design questions, feature descriptions, or any free-text description of what you want to do.
+
+### What happens
+
+**Mode 1 -- Bare invocation** (`/reaper:start` with no arguments):
+
+1. **Runway Card.** Renders a visual card showing the three workflows -- squadron, flight-plan, and takeoff -- with descriptions and how they connect to each other.
+2. **Interactive choice.** Presents three options: "I have a design question" (routes to squadron), "I have a feature to plan" (routes to flight-plan), and "I have a task to build" (routes to takeoff).
+3. **Delegation.** Invokes the selected command with no arguments. The downstream command prompts you for its own input.
+
+**Mode 2 -- Input classification** (`/reaper:start <input>`):
+
+1. **Deterministic classification.** Applies a heuristic in priority order: task ID patterns (like `PROJ-123`, `reaper-a3f`, or `#456`) route to takeoff; design keywords (architecture, design, decision, migrate, strategy, trade-off, "should we", compare) route to squadron; everything else routes to flight-plan.
+2. **Input Analysis Card.** Renders a visual card showing your input quoted back, key elements extracted from it, and the routing factors that determined the recommendation.
+3. **Recommendation with override.** Presents all three workflows with the recommended option marked and listed first. Option descriptions explain why each workflow fits or does not fit your input.
+4. **Delegation.** Invokes the selected command, passing your original input as arguments so the downstream command has context.
+
+Start always delegates to the selected command -- it never executes downstream logic itself.
+
+---
+
 ## /reaper:takeoff
 
 **Dispatch agents through quality gates until work lands on your desk.**

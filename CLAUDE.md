@@ -35,7 +35,7 @@ These values guide every decision in Reaper, from architecture to error messages
 
 The Five Keys — especially Fun — apply differently depending on the audience:
 
-- **User-facing commands and skills** (flight-plan, takeoff, ship, squadron, status-worktrees, claude-sync): Voice, personality, and themed language are encouraged. These are the developer's interface with Reaper.
+- **User-facing commands and skills** (start, flight-plan, takeoff, ship, squadron, status-worktrees, claude-sync): Voice, personality, and themed language are encouraged. These are the developer's interface with Reaper.
 - **Agent prompts** (system prompts for coding, review, and planning agents): Must remain clinical, precise technical specifications. No themed language, personality, or humor. Agent prompts are machine-consumed instructions where ambiguity degrades output quality.
 
 ## Agent Selection Matrix (Main Agents Only)
@@ -81,6 +81,10 @@ The user, and only the user, may override any of these rules explicitly.
 ### Key Commands (Main Agent / Human)
 
 ```bash
+# Not sure where to start?
+/reaper:start
+/reaper:start <description>
+
 # Plan your work (start here)
 /reaper:flight-plan <detailed-description>
 
@@ -255,7 +259,7 @@ The pre-commit hook automatically runs the build and stages generated files.
 
 ### User-Invocable Commands
 
-Orchestration commands (flight-plan, takeoff, ship, squadron, status-worktrees, claude-sync) are user-invocable via `/reaper:*` syntax. They are defined in `src/commands/` with `user-invocable: true` in their frontmatter.
+Orchestration commands (start, flight-plan, takeoff, ship, squadron, status-worktrees, claude-sync) are user-invocable via `/reaper:*` syntax. They are defined in `src/commands/` with `user-invocable: true` in their frontmatter.
 
 ### Partials (Shared Content)
 
@@ -268,7 +272,7 @@ Common sections are extracted into `src/partials/*.ejs`:
 - `tdd-testing-protocol.ejs` - TDD methodology
 - `artifact-cleanup-coding.ejs` - Cleanup protocols for coding agents
 - `artifact-cleanup-review.ejs` - Cleanup protocols for review agents
-- `visual-vocabulary.ejs` - Gauge states and card templates (parameterized by context: takeoff, ship, status-worktrees, squadron, functional). Respects `Reaper: disable ASCII art` opt-out in target project's CLAUDE.md.
+- `visual-vocabulary.ejs` - Gauge states and card templates (parameterized by context: takeoff, ship, status-worktrees, squadron, start, functional). Respects `Reaper: disable ASCII art` opt-out in target project's CLAUDE.md.
 - `no-self-reporting.ejs` - Prevents agents from self-reporting status
 - `plan-file-schema.ejs` - Plan file format and sections
 - `todowrite-plan-protocol.ejs` - TodoWrite plan persistence protocol

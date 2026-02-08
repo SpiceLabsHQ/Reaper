@@ -2,7 +2,7 @@
 
 > **Opt-out**: If the project's CLAUDE.md contains the line `Reaper: disable ASCII art`, emit plain text status labels only. No gauge bars, no box-drawing, no card templates. Use the `functional` context behavior regardless of the `context` parameter.
 
-> **Rendering constraint**: One line, one direction, no column alignment. Every visual element must be renderable in a single horizontal pass. No multi-line box-drawing that requires vertical alignment across columns.
+> **Rendering constraint**: One line, one direction, no column alignment. Every visual element must be renderable in a single horizontal pass. No multi-line box-drawing that requires vertical alignment across columns. Exception: The `start` context uses box-drawing for its welcome screen cards, which are rendered once as orientation content rather than repeated status displays.
 
 ### Gauge States
 
@@ -110,4 +110,91 @@ Fleet dashboard rules:
 <% } else if (context === 'squadron') { -%>
 
 Squadron has its own visual vocabulary (mission cards, scorecards, tension diagrams, consensus markers) defined in the squadron command. This partial provides only the gauge states above for reuse. Do not duplicate squadron-specific visual elements here.
+<% } else if (context === 'start') { -%>
+
+### Runway Card
+
+Render when the start command is invoked with no input (bare invocation). Shows the three workflow entrypoints and how they connect.
+
+```
+  REAPER
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Three workflows. Each builds on the last.
+
+  ┌─ SQUADRON ─────────────────────────┐
+  │  Think before you plan.            │
+  │                                    │
+  │  Design decisions & architecture.  │
+  │  Assembles domain experts who      │
+  │  debate, clash, and converge.      │
+  │                                    │
+  │  /reaper:squadron <question>       │
+  └────────────────────────────────────┘
+          ↓ feeds into
+  ┌─ FLIGHT-PLAN ──────────────────────┐
+  │  Start most work here.             │
+  │                                    │
+  │  Breaks scope into parallel tasks  │
+  │  with dependencies mapped. Creates │
+  │  issues ready for execution.       │
+  │                                    │
+  │  /reaper:flight-plan <description> │
+  └────────────────────────────────────┘
+          ↓ feeds into
+  ┌─ TAKEOFF ──────────────────────────┐
+  │  Give it a task and walk away.     │
+  │                                    │
+  │  Writes code test-first through    │
+  │  mandatory quality gates. Presents │
+  │  finished work for your sign-off.  │
+  │                                    │
+  │  /reaper:takeoff <task>            │
+  └────────────────────────────────────┘
+```
+
+Runway card rules:
+- Show exactly three entrypoint boxes in the order: SQUADRON, FLIGHT-PLAN, TAKEOFF.
+- Connect each pair with `↓ feeds into` between closing and opening boxes.
+- Each box contains: tagline (bold first line), description (2-3 lines), and command syntax.
+- Use the REAPER branded header with heavy rule (━━━) at the top.
+
+### Input Analysis Card
+
+Render when the start command is invoked with user input. Shows the parsed input, key elements extracted, and routing factors that determine which workflow to recommend.
+
+```
+  REAPER
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ┌───────────────────────────────────────────────┐
+  │                                               │
+  │  "[user's input quoted back]"                 │
+  │                                               │
+  │                  * * *                        │
+  │                                               │
+  │  KEY ELEMENTS                                 │
+  │                                               │
+  │  ★  [Concern 1]                               │
+  │     [Sub-detail expanding on concern]         │
+  │                                               │
+  │  ★  [Concern 2]                               │
+  │     [Sub-detail expanding on concern]         │
+  │                                               │
+  │                  * * *                        │
+  │                                               │
+  │  ROUTING FACTORS                              │
+  │                                               │
+  │  [Factor]      [value — with editorial gloss] │
+  │  [Factor]      [value — with editorial gloss] │
+  │                                               │
+  └───────────────────────────────────────────────┘
+```
+
+Input analysis card rules:
+- Quote the user's input verbatim inside the box, wrapped in double quotes.
+- KEY ELEMENTS section: Extract 2-4 key concerns from the input, each with a ★ bullet and a sub-detail line.
+- ROUTING FACTORS section: List factors as key-value pairs that explain why a specific workflow is recommended (e.g., Complexity, Scope, Dependencies, Design risk).
+- Separate sections with `* * *` centered dividers.
+- Use the REAPER branded header with heavy rule (━━━) at the top.
 <% } -%>

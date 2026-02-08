@@ -46,6 +46,8 @@ A single command kicks off the full arc -- planning, implementation, testing, re
 
 ---
 
+> **New to Reaper?** Run `/reaper:start` — it'll ask what you're trying to do and point you to the right command.
+
 ## Three Commands
 
 Each builds on the last.
