@@ -142,31 +142,33 @@ Apply exclusions using the framework's ignore mechanism:
 --testPathIgnorePatterns="trees|backup|node_modules"
 ```
 
-## Efficient output capture for full suite runs
+## Single-execution test protocol
 
-Full test suites produce large output that exceeds the Bash tool's display limit. **Never run tests twice to see both ends of the output.** Instead, run once in the background and read the output file:
+**CRITICAL: Execute the TEST_COMMAND exactly ONCE. Never run a second command for coverage, structured output, or any other reason.** If the caller wants coverage, they include coverage flags in TEST_COMMAND. If they don't, report coverage as unavailable. Do NOT discover or run alternative scripts (e.g., `test:coverage`) from package.json.
 
-**Step 1 — Run in background with timeout:**
+Full test suites produce large output that exceeds the Bash tool's display limit. Run once in the background and read the output file:
+
+**Step 1 — Run TEST_COMMAND in background:**
 ```
-Bash(run_in_background=true, timeout=600000): (cd "$WORKING_DIR" && npm test -- --coverage 2>&1)
+Bash(run_in_background=true, timeout=600000): (cd "$WORKING_DIR" && <TEST_COMMAND> 2>&1)
 ```
-This returns a `task_id` and an `output_file` path automatically. Set `timeout=600000` (10 min) as the hard backstop — if tests hang, the process is killed.
+This returns a `task_id` and an `output_file` path. Set `timeout=600000` (10 min) as the hard backstop.
 
 **Step 2 — Poll for completion:**
 ```
 TaskOutput(task_id=<id>, block=true, timeout=30000)
 ```
-Use the default 30s timeout. If the task is still running, poll again. The Bash timeout from step 1 is what kills a stuck process — the next poll will pick up the termination. Do not use a long TaskOutput timeout; short polls keep you responsive.
+Poll with 30s timeout. If still running, poll again. The Bash timeout from step 1 kills stuck processes.
 
-**Step 3 — Read head and tail in parallel:**
-Use the Read tool on the `output_file` with `offset`/`limit` to see both ends without re-running:
+**Step 3 — Read head and tail of output file:**
+Use the Read tool with `offset`/`limit` to see both ends without re-running:
 ```
-Read(output_file, limit=80)                        # first 80 lines
-Read(output_file, offset=<total_lines - 80>, limit=80)  # last 80 lines
+Read(output_file, limit=80)                              # first 80 lines
+Read(output_file, offset=<total_lines - 80>, limit=80)   # last 80 lines
 ```
-To compute the tail offset, run `wc -l < <output_file>` after step 2.
+Run `wc -l < <output_file>` after step 2 to compute the tail offset.
 
-**For structured data, always prefer reading framework output files** (coverage JSON, JUnit XML) over parsing console text. Test frameworks write these during execution — read them with the Read tool and include the data in your JSON response.
+**Step 4 — Parse everything from that single output.** Extract test counts, pass/fail, AND coverage from the output file and any structured data files the framework wrote during execution. If coverage data is not present in the output (because the caller's TEST_COMMAND didn't include coverage flags), set `coverage.percentage` to `null` and `coverage.threshold_met` to `false`.
 
 **Remember:**
 - Test frameworks may write temporary files (coverage/test-results.json) — that's OK, those are tool outputs
@@ -203,13 +205,12 @@ Commands are provided explicitly by the caller. The agent enhances them with sta
 **Execution flow:**
 1. Auto-detect and install dependencies (from package.json, requirements.txt, composer.json, etc.)
 2. Execute LINT_COMMAND (unless set to "skip")
-3. Enhance TEST_COMMAND with framework-appropriate exclusion flags, then execute
-4. Parse coverage from structured output files (not console text)
+3. Execute TEST_COMMAND once — enhance with exclusion flags if needed, then parse all results from its output
 
 **Key principles:**
-- Detect the test framework from project config files
-- Capture structured output (JSON coverage reports, JUnit XML) rather than parsing console text
-- Use the framework's native coverage reporter (e.g., `--coverage --json` for Jest, `--cov-report=json` for pytest)
+- The provided TEST_COMMAND is the ONLY test execution — never run additional test scripts
+- If coverage data appears in the output, parse it; if not, report coverage as unavailable
+- Prefer structured output files (coverage JSON, JUnit XML) written by the framework during that single run
 
 **Enhancement example (Jest):**
 ```bash
@@ -307,6 +308,8 @@ Common test-runner failure modes to avoid:
 - Running tests outside the provided WORKING_DIR
 - Reporting partial results as complete when a test suite crashes mid-execution
 - Assuming test count from console output when framework provides structured data
+- Running tests twice — once for results and once for coverage (run TEST_COMMAND once, parse everything from that run)
+- Discovering and executing alternative test scripts (e.g., `test:coverage`) not provided in TEST_COMMAND
 </anti_patterns>
 
 <completion_protocol>
