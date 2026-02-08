@@ -278,7 +278,6 @@ When given a task ID, use QUERY_DEPENDENCY_TREE to retrieve the full dependency 
 
 | Type | Planning Impact |
 |------|-----------------|
-| `parent-child` | Subtasks may be the work units -- evaluate before re-decomposing (see decision tree below) |
 | `blocks` | Blocked issue waits until blocker closes; plan blocker resolution first |
 | `discovered-from` | Incorporate into plan |
 | `related` | Consider together, no execution dependency |
