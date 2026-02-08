@@ -1,6 +1,8 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository. This project CLAUDE.md takes precedence over global instructions for all Reaper-specific behavior.
+This file provides guidance for **developing Reaper itself**. Everything in this document — conventions, values, safety rules, workflows — applies to working on Reaper's own codebase. This project CLAUDE.md takes precedence over global instructions for all Reaper-specific behavior.
+
+**Output boundary**: Reaper produces commands, skills, agent prompts, and other generated content that operates on **target projects** (the user's codebase). That generated output must focus on general software development best practices — not impose Reaper's internal design philosophy, values, or conventions on target projects.
 
 ## What is Reaper?
 
@@ -19,7 +21,9 @@ Check your available tools to determine your role:
 
 ## The Five Keys
 
-These values guide every decision in Reaper, from architecture to error messages. All five matter. The ordering only applies when values conflict — defer to the higher key.
+These are **Reaper's internal design values**. They guide every decision in Reaper's own development, from architecture to error messages. All five matter. The ordering only applies when values conflict — defer to the higher key.
+
+> **Scope**: The Five Keys shape how Reaper is built. They must NOT be imposed on target projects through generated prompts, agent instructions, or command output. Target projects have their own values and conventions.
 
 **1. Correctness** — Quality is non-negotiable. Tests pass, gates hold, code works. When speed conflicts with correctness, correctness wins. Every time.
 
@@ -37,6 +41,7 @@ The Five Keys — especially Fun — apply differently depending on the audience
 
 - **User-facing commands and skills** (start, flight-plan, takeoff, ship, squadron, status-worktrees, claude-sync): Voice, personality, and themed language are encouraged. These are the developer's interface with Reaper.
 - **Agent prompts** (system prompts for coding, review, and planning agents): Must remain clinical, precise technical specifications. No themed language, personality, or humor. Agent prompts are machine-consumed instructions where ambiguity degrades output quality.
+- **Output boundary** (generated agent prompts, commands, and skills that operate on target projects): Must follow general software development best practices. Do not embed Reaper-specific design philosophy, Five Keys language, or Reaper conventions into content that will guide work on the user's codebase.
 
 ## Agent Selection Matrix (Main Agents Only)
 
