@@ -43,6 +43,7 @@ const VALID_CONTEXTS = [
   'status-worktrees',
   'squadron',
   'functional',
+  'start',
 ];
 
 beforeEach(() => {
@@ -235,6 +236,95 @@ describe('visual-vocabulary functional context', () => {
   });
 });
 
+describe('visual-vocabulary start context', () => {
+  it('should include runway card template', () => {
+    const result = compileWithContext('start');
+    assert.ok(
+      /[Rr]unway [Cc]ard/i.test(result),
+      'start context should include runway card'
+    );
+  });
+
+  it('should include input analysis card template', () => {
+    const result = compileWithContext('start');
+    assert.ok(
+      /[Ii]nput [Aa]nalysis [Cc]ard/i.test(result),
+      'start context should include input analysis card'
+    );
+  });
+
+  it('should include all three workflow entrypoints', () => {
+    const result = compileWithContext('start');
+    assert.ok(result.includes('SQUADRON'), 'should reference SQUADRON');
+    assert.ok(result.includes('FLIGHT-PLAN'), 'should reference FLIGHT-PLAN');
+    assert.ok(result.includes('TAKEOFF'), 'should reference TAKEOFF');
+  });
+
+  it('should include command syntax for each entrypoint', () => {
+    const result = compileWithContext('start');
+    assert.ok(
+      result.includes('/reaper:squadron'),
+      'should include squadron command syntax'
+    );
+    assert.ok(
+      result.includes('/reaper:flight-plan'),
+      'should include flight-plan command syntax'
+    );
+    assert.ok(
+      result.includes('/reaper:takeoff'),
+      'should include takeoff command syntax'
+    );
+  });
+
+  it('should include workflow progression arrows', () => {
+    const result = compileWithContext('start');
+    assert.ok(
+      result.includes('feeds into'),
+      'should show workflow progression between entrypoints'
+    );
+  });
+
+  it('should include KEY ELEMENTS section in input analysis card', () => {
+    const result = compileWithContext('start');
+    assert.ok(
+      result.includes('KEY ELEMENTS'),
+      'input analysis card should have KEY ELEMENTS section'
+    );
+  });
+
+  it('should include ROUTING FACTORS section in input analysis card', () => {
+    const result = compileWithContext('start');
+    assert.ok(
+      result.includes('ROUTING FACTORS'),
+      'input analysis card should have ROUTING FACTORS section'
+    );
+  });
+
+  it('should NOT include gauge states in card templates', () => {
+    const result = compileWithContext('start');
+    // start context gets gauge states from the shared section above,
+    // but the card templates themselves should NOT contain gauge bars
+    const cardSection = result.split('Runway Card')[1] || '';
+    assert.ok(
+      !cardSection.includes('TAXIING'),
+      'start card templates should not contain gauge state TAXIING'
+    );
+    assert.ok(
+      !cardSection.includes('IN FLIGHT'),
+      'start card templates should not contain gauge state IN FLIGHT'
+    );
+  });
+
+  it('should include REAPER branded header', () => {
+    const result = compileWithContext('start');
+    // The card template should show a REAPER header with heavy rule
+    assert.ok(
+      result.includes('REAPER'),
+      'start context should include REAPER branded header'
+    );
+  });
+});
+
 // ===========================================================================
 // Context isolation — each context should NOT include other contexts' cards
 // ===========================================================================
@@ -256,6 +346,34 @@ describe('visual-vocabulary context isolation', () => {
     );
   });
 
+  it('start should not include other contexts card templates', () => {
+    const result = compileWithContext('start');
+    assert.ok(
+      !/[Pp]reflight [Cc]ard/i.test(result),
+      'start should not include preflight card'
+    );
+    assert.ok(
+      !/[Dd]eparture [Cc]ard/i.test(result),
+      'start should not include departure card'
+    );
+    assert.ok(
+      !/[Ff]leet [Dd]ashboard/i.test(result),
+      'start should not include fleet dashboard'
+    );
+  });
+
+  it('takeoff should not include start-specific cards', () => {
+    const result = compileWithContext('takeoff');
+    assert.ok(
+      !/[Rr]unway [Cc]ard/i.test(result),
+      'takeoff should not include runway card'
+    );
+    assert.ok(
+      !/[Ii]nput [Aa]nalysis [Cc]ard/i.test(result),
+      'takeoff should not include input analysis card'
+    );
+  });
+
   it('functional should not include any card templates', () => {
     const result = compileWithContext('functional');
     assert.ok(
@@ -269,6 +387,14 @@ describe('visual-vocabulary context isolation', () => {
     assert.ok(
       !/[Ff]leet [Dd]ashboard/i.test(result),
       'functional should not include fleet dashboard'
+    );
+    assert.ok(
+      !/[Rr]unway [Cc]ard/i.test(result),
+      'functional should not include runway card'
+    );
+    assert.ok(
+      !/[Ii]nput [Aa]nalysis [Cc]ard/i.test(result),
+      'functional should not include input analysis card'
     );
   });
 });

@@ -10,7 +10,7 @@ description: Fast-path from worktree to PR — commit, push, open.
 
 > **Opt-out**: If the project's CLAUDE.md contains the line `Reaper: disable ASCII art`, emit plain text status labels only. No gauge bars, no box-drawing, no card templates. Use the `functional` context behavior regardless of the `context` parameter.
 
-> **Rendering constraint**: One line, one direction, no column alignment. Every visual element must be renderable in a single horizontal pass. No multi-line box-drawing that requires vertical alignment across columns.
+> **Rendering constraint**: One line, one direction, no column alignment. Every visual element must be renderable in a single horizontal pass. No multi-line box-drawing that requires vertical alignment across columns. Exception: The `start` context uses box-drawing for its welcome screen cards, which are rendered once as orientation content rather than repeated status displays.
 
 ### Gauge States
 
