@@ -12,10 +12,11 @@ description: Not sure where to start? This command helps you find the right work
 
 ### Gauge States
 
-Four semantic states expressed as fixed-width 10-block bars. Use these consistently across all commands to communicate work status.
+Five semantic states expressed as fixed-width 10-block bars. Use these consistently across all commands to communicate work status.
 
 ```
   ██████████  LANDED       complete, healthy
+  ████████░░  ON APPROACH  coding done, quality gates running
   ██████░░░░  IN FLIGHT    work in progress
   ░░░░░░░░░░  TAXIING     waiting, not started
   ░░░░!!░░░░  FAULT        failed, needs attention
@@ -25,6 +26,18 @@ Gauge usage rules:
 - Always use exactly 10 blocks per bar (full-width = 10 filled, empty = 10 unfilled).
 - The exclamation marks in the FAULT bar replace two blocks at the center to signal breakage.
 - Pair each bar with its label and a short gloss on the same line.
+
+### Quality Gate Statuses
+
+Five inspection verdicts for quality gate results. Gate statuses are inspection verdicts, not work lifecycle states. Use gauge states for work unit progress, gate statuses for quality inspection results.
+
+| Status | Meaning |
+|--------|---------|
+| **PASS** | gate passed all checks |
+| **FAIL** | gate found blocking issues |
+| **RUNNING** | gate currently executing |
+| **PENDING** | gate not yet started |
+| **SKIP** | gate not applicable to this work type |
 
 ### Runway Card
 

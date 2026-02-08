@@ -2,12 +2,114 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
-## Unreleased
+## [1.8.0](https://github.com/SpiceLabsHQ/Reaper/compare/v1.7.0...v1.8.0) (2026-02-08)
+
+
+### Features
+
+* add formatter allowlist, build.js error handling, explore-first docs ([17756f7](https://github.com/SpiceLabsHQ/Reaper/commit/17756f7cdd86f33a2db0c81190dcb24ebaeaf46e))
+* **agents:** add 6 new planning agents for war room expert panel ([aca39db](https://github.com/SpiceLabsHQ/Reaper/commit/aca39dbf2b34ef115278f9dd985a1efd8207fc24))
+* **agents:** add 6 planning agents for war room expert panel expansion ([b6b1ba4](https://github.com/SpiceLabsHQ/Reaper/commit/b6b1ba4347e5d38b7be8a982a32aa2d43152146c))
+* **agents:** add ai-prompt-engineer agent ([2ee31d2](https://github.com/SpiceLabsHQ/Reaper/commit/2ee31d26e90d8b9bd389afd6bd13b4402020356d))
+* **agents:** add multi-model prompt engineering guidance ([9af6500](https://github.com/SpiceLabsHQ/Reaper/commit/9af6500dbfaceb3c1e1a2e44a261f61250e53d5f))
+* **commands:** add command contracts, ship scan patterns, coverage thresholds ([ede90ac](https://github.com/SpiceLabsHQ/Reaper/commit/ede90acd1ba1b8037594f99cfa06d035cbe970a0))
+* **commands:** add war-room collaborative design session command ([269e0f7](https://github.com/SpiceLabsHQ/Reaper/commit/269e0f743cbb4363b77dde659be71c0ccc782efc))
+* **commands:** re-theme huddle command to squadron ([f6fd593](https://github.com/SpiceLabsHQ/Reaper/commit/f6fd593b4c3d028213b260ca21029986da746489))
+* **commands:** update Gate Panel to use gate statuses and add ON APPROACH to commands ([bf65a15](https://github.com/SpiceLabsHQ/Reaper/commit/bf65a15fd91a30c8dc67552a678b1939f9f6cc8a))
+* **huddle:** redesign skill with 4-phase INTAKE/OPEN/CLASH/CONVERGE flow ([349ad6a](https://github.com/SpiceLabsHQ/Reaper/commit/349ad6a777a69c0d144ddddd8817765a1edbee79))
+* **partials:** add visual-vocabulary.ejs with gauge states and card templates ([591df62](https://github.com/SpiceLabsHQ/Reaper/commit/591df62946a5dc85939a9c3deb6db00540ff0bd0))
+* **quality-gates:** add gate infrastructure (U2, U3, U5, U11) ([75ddb35](https://github.com/SpiceLabsHQ/Reaper/commit/75ddb3554e51e6e587b2c21186ed61df8568afef))
+* **quality-gates:** add GATE_MODE sections to 4 agents (U6-U9) ([f77513c](https://github.com/SpiceLabsHQ/Reaper/commit/f77513c7bcdb37da610f6ebc5e043d5034ead9a7))
+* **quality-gates:** add work-type-aware gate profile system ([f3e793f](https://github.com/SpiceLabsHQ/Reaper/commit/f3e793f95f6426ab0916d2660351dc9493e0b297))
+* **quality-gates:** create validation-runner agent template (U4) ([7cc8707](https://github.com/SpiceLabsHQ/Reaper/commit/7cc8707e60fc2d0bf35ee5dd520ec031493a9d3a))
+* **quality-gates:** dynamic gate selection in takeoff orchestrator (U10) ([e5d9c3a](https://github.com/SpiceLabsHQ/Reaper/commit/e5d9c3ad51621586f6bdf20877243947e12ecf01))
+* **quality-gates:** gate expectations and work_type field (U12, U13) ([e18bf47](https://github.com/SpiceLabsHQ/Reaper/commit/e18bf4770c5b982886ef86687925f47ef0ff9bc8))
+* **quality:** add semantic contract tests, CI fix, docs accuracy, and context hygiene ([0cba1fb](https://github.com/SpiceLabsHQ/Reaper/commit/0cba1fb04026379133ff37ea79e8445340a93ab1))
+* **security-auditor:** add timeout protection for scanning tools ([032c916](https://github.com/SpiceLabsHQ/Reaper/commit/032c9161a2c3c73acc5d576b7e8f9d2a8ad3787c))
+* separate gauge states and quality gate vocabulary with ON APPROACH state ([6b6f20a](https://github.com/SpiceLabsHQ/Reaper/commit/6b6f20a56b6a79598d366d13209ad74b47a208ff))
+* **ship:** add departure and landing cards with pipeline gauges ([14df16b](https://github.com/SpiceLabsHQ/Reaper/commit/14df16b4e917463b97d2710d4d795d403652051c))
+* **squadron:** add stance summaries contract tests ([f9e36c9](https://github.com/SpiceLabsHQ/Reaper/commit/f9e36c9bd74ae232eede1a200b5be5e3640cf96b))
+* **squadron:** integrate shared gauge vocabulary from visual-vocabulary partial ([8407a5c](https://github.com/SpiceLabsHQ/Reaper/commit/8407a5c5520504db9698b165dc6ab84544eba4e2))
+* **squadron:** overhaul UX with visual vocabulary, editorial voice, and narrator-driven flow ([38771c3](https://github.com/SpiceLabsHQ/Reaper/commit/38771c354941c153a0413b1b82ff746900097835))
+* **squadron:** replace scout-then-swarm with explore-first architecture ([cbce770](https://github.com/SpiceLabsHQ/Reaper/commit/cbce7702434ac61f1ef7e1e710837f5bc1ac31fb))
+* **squadron:** ux overhaul with visual vocabulary and editorial voice ([d35ff2b](https://github.com/SpiceLabsHQ/Reaper/commit/d35ff2b8573add272f4cf353ab0ee282246bb26e))
+* **start:** add /reaper:start educational entry-point command ([a22b9f5](https://github.com/SpiceLabsHQ/Reaper/commit/a22b9f59f267de2bf6efc3e1fbe7aeaa09797eb3))
+* **status-worktrees:** transform summary into fleet dashboard ([cd4657d](https://github.com/SpiceLabsHQ/Reaper/commit/cd4657d2d82908a483dd02cb95e42c2533dfe9c6))
+* **takeoff:** add iteration loop, file reading allowlist, and Quick Reference fix ([985d4c7](https://github.com/SpiceLabsHQ/Reaper/commit/985d4c7c66723062ea1ba28e29f495b26786b3c7))
+* **takeoff:** add preflight card, gate panel, and touchdown card ([aa104f3](https://github.com/SpiceLabsHQ/Reaper/commit/aa104f3bee0cfe51f405d0358364f0d9d71fb5a6))
+* **test-runner:** background task pattern with timeout polling for full suite runs ([895f7ba](https://github.com/SpiceLabsHQ/Reaper/commit/895f7ba7c4c52969588bbfd9641aa048e874acf7))
+* **visual-vocabulary:** add ON APPROACH gauge state and quality gate status vocabulary ([642ba03](https://github.com/SpiceLabsHQ/Reaper/commit/642ba0396271158d2a4f52ff71956e6e3c544d13))
+* **worktree-manager:** add lock detection and timeout CLI flags ([c50969c](https://github.com/SpiceLabsHQ/Reaper/commit/c50969c3a804c16664c68aac90a8abd76ee72ebe))
+
+
+### Bug Fixes
+
+* **agents:** address review findings for ai-prompt-engineer ([46ef856](https://github.com/SpiceLabsHQ/Reaper/commit/46ef856715fea8b8fc832ac7f44eddfb889eea55)), closes [#17](https://github.com/SpiceLabsHQ/Reaper/issues/17) [#8](https://github.com/SpiceLabsHQ/Reaper/issues/8)
+* **agents:** resolve conflicting file-write instructions in ai-prompt-engineer ([1994902](https://github.com/SpiceLabsHQ/Reaper/commit/1994902cf622ae9b61838c1c790b957008b29b56)), closes [#13](https://github.com/SpiceLabsHQ/Reaper/issues/13)
+* **ci:** resolve glob expansion failure and add coverage thresholds ([3c72f02](https://github.com/SpiceLabsHQ/Reaper/commit/3c72f02bc20960209218555e753faeabca013719))
+* **docs:** correct coverage threshold to 70% in Contributing section ([f306929](https://github.com/SpiceLabsHQ/Reaper/commit/f30692972eba53094440cf09a1e51ed83c2bf858))
+* **flight-plan:** replace plain-text approval with AskUserQuestion ([030f252](https://github.com/SpiceLabsHQ/Reaper/commit/030f252ab89d35d62dac2d511135ac2aef40c4a1))
+* **huddle:** address prompt engineering audit findings ([943917d](https://github.com/SpiceLabsHQ/Reaper/commit/943917df162c97d0b1c4712e2d881ffc1e8e6de5))
+* **prompts:** remove parent-child from ADD_DEPENDENCY semantics ([e4359e9](https://github.com/SpiceLabsHQ/Reaper/commit/e4359e9da68ecd286e7f7d87566f07e2d551bcbd))
+* resolve 10 infrastructure, config, and documentation bugs ([f400d17](https://github.com/SpiceLabsHQ/Reaper/commit/f400d17cf0240b45ecd50add52ec86094198750c))
+* resolve 9 template, command, and documentation bugs ([83dcb55](https://github.com/SpiceLabsHQ/Reaper/commit/83dcb55d7f4007934e8ea5feeeddb3645e211117))
+* **takeoff:** handle multi-level task hierarchies in pre-planned detection ([fb7beee](https://github.com/SpiceLabsHQ/Reaper/commit/fb7beeea2e6f9feedbd9f75dacf5c2fe1cf33b7d))
+* **test-runner:** enforce single-execution test protocol to prevent double runs ([8f37df4](https://github.com/SpiceLabsHQ/Reaper/commit/8f37df4eb6e61e24ae713c36fe0a9477de2c3cdb))
+* **test:** consolidate all test suites lost in parallel merge ([8633ae9](https://github.com/SpiceLabsHQ/Reaper/commit/8633ae97f75bf680f46414b99984a11637e85073))
+* **visual-vocab:** remove backtick-quoted !! that triggers bash permission checker ([56cb05b](https://github.com/SpiceLabsHQ/Reaper/commit/56cb05b4a06c3fa0c30a7b736ac77153ef6b2e18))
+* **workflow-planner:** remove human-hour time estimates from sizing constraints ([9d7ee96](https://github.com/SpiceLabsHQ/Reaper/commit/9d7ee9619e52c13e4d51a49c783ab9fae8f0cd55))
 
 
 ### Refactoring
 
-* extract SPICE standards and distill project-specific guidance into CLAUDE.md ([reaper-0x6](https://github.com/SpiceLabsHQ/Reaper))
+* **agents:** audit and optimize all 23 agent prompts for Claude Opus 4.5 ([6d277d1](https://github.com/SpiceLabsHQ/Reaper/commit/6d277d158423797ec1fb797fe6d9de63c483e897))
+* **agents:** deduplicate ai-prompt-engineer against knowledge base ([d39bac6](https://github.com/SpiceLabsHQ/Reaper/commit/d39bac6d41791db1e135225c932d45ea8979eb6b))
+* **agents:** pre-deploy polish for Reaper v1.7.0 ([556c2c8](https://github.com/SpiceLabsHQ/Reaper/commit/556c2c83767e4dafe12f093933cc359fc84ae989))
+* **commands,agents:** rewrite orchestration templates with partials ([0335971](https://github.com/SpiceLabsHQ/Reaper/commit/03359713df36913b5ce1bed0cda8d61e1a8b3e09))
+* **commands:** rename war-room to huddle ([f947459](https://github.com/SpiceLabsHQ/Reaper/commit/f94745922fa3daa2aefad21a5251dd4b8f1e77cd))
+* **docs:** recategorize agents — Meta → Craft, validation-runner → Quality ([f82ac33](https://github.com/SpiceLabsHQ/Reaper/commit/f82ac33e3426511c518616a49c04ed8ded42aab4))
+* extract SPICE standards and soften prescriptive language ([7a026b4](https://github.com/SpiceLabsHQ/Reaper/commit/7a026b4b26cf35eb0e5ace33dde2a44c25f377e5))
+* **partials:** create 6 shared partials for orchestration pipeline ([269b7c1](https://github.com/SpiceLabsHQ/Reaper/commit/269b7c183e208abe635cd2fb4501cfaf670971c7))
+* **partials:** harden orchestrator guardrails and quality gate validation ([36a8683](https://github.com/SpiceLabsHQ/Reaper/commit/36a868354c2918ff6dd253deb17567a9b0577852))
+* **squadron:** optimize prompt quality and reduce token waste ([e9636bb](https://github.com/SpiceLabsHQ/Reaper/commit/e9636bbec157510b3f73d026258f5bc41dbd582b))
+* **takeoff:** add structural loop anchors to prevent execution fall-through ([f911fdf](https://github.com/SpiceLabsHQ/Reaper/commit/f911fdf1ff0a3d90a61b7d75af1f4454082c1761))
+* **takeoff:** strengthen completion guard with re-read protocol ([e3355a1](https://github.com/SpiceLabsHQ/Reaper/commit/e3355a12578572a9aeaccbf63970a00b8850468e))
+* **visual-vocab:** rename GROUNDED gauge state to TAXIING ([#5](https://github.com/SpiceLabsHQ/Reaper/issues/5)) ([a791db9](https://github.com/SpiceLabsHQ/Reaper/commit/a791db9c4e88c211f07b10d884412a7915580114))
+
+
+### Documentation
+
+* add prompt engineering knowledge base for ai-prompt-engineer agent ([ab9d8d0](https://github.com/SpiceLabsHQ/Reaper/commit/ab9d8d051415f7e6dd776a8e0d6e2ae8bf93523e))
+* add The Five Keys core values to CLAUDE.md ([d8e6225](https://github.com/SpiceLabsHQ/Reaper/commit/d8e6225dd924a5c19ad9f5af535c5ce6f1856feb))
+* **claude:** add documentation maintenance requirements and docs/ to project structure ([84e5481](https://github.com/SpiceLabsHQ/Reaper/commit/84e54818bc7e512c406db7833b3f183134e06627))
+* **claude:** add environment requirements and visual-vocabulary partial ([e2d24fc](https://github.com/SpiceLabsHQ/Reaper/commit/e2d24fc144a8bbf76538687fdaf59e92ef0b0430))
+* **CLAUDE:** improve prompt quality based on ai-prompt-engineer audit ([547e20b](https://github.com/SpiceLabsHQ/Reaper/commit/547e20beb1dc29669341b08e8989c5fc7d304b75))
+* **CLAUDE:** update coverage target to 70% with test infrastructure improvements ([2f0b5a6](https://github.com/SpiceLabsHQ/Reaper/commit/2f0b5a6165cbe71551affadac6ec23b2a874891b))
+* **readme:** add kawaii banner and reorganize hero section ([2c571a6](https://github.com/SpiceLabsHQ/Reaper/commit/2c571a63428b8c0f41ee96459e6c07983f2491b8))
+* **readme:** add usage sections and usage limit claim ([92c0bb2](https://github.com/SpiceLabsHQ/Reaper/commit/92c0bb2b8a584a9e58776d64c297382ec4579530))
+* redesign README and create user-facing docs ([c76fe37](https://github.com/SpiceLabsHQ/Reaper/commit/c76fe373263f390e6ac5a0990a75917ba7aac7a5))
+* reframe workflow entrypoints with flight-plan as default starting point ([a1b6d11](https://github.com/SpiceLabsHQ/Reaper/commit/a1b6d11b63a9981119d48ff04dde6b2bf632196b))
+* remove docs/spice/ and update CLAUDE.md references ([1728ca8](https://github.com/SpiceLabsHQ/Reaper/commit/1728ca8c4b7b3be8805935c953f7ee5d3c55da5a))
+* **start:** add /start documentation, tests, and contract coverage ([1c3c047](https://github.com/SpiceLabsHQ/Reaper/commit/1c3c0477bd096569ec76ae84d03a4e52b16af098))
+* **worktree-manager:** document timeout, lock detection, and AI remediation ([6527cb1](https://github.com/SpiceLabsHQ/Reaper/commit/6527cb1961864311be3abc2781bb0f53adbded60))
+
+
+### Styling
+
+* **commands:** remove residual CRITICAL marker from flight-plan ([8dec67e](https://github.com/SpiceLabsHQ/Reaper/commit/8dec67e96c122905d4d8313e51d979944ede30df))
+
+
+### Tests
+
+* **build:** add compileTemplate and processFile integration tests ([b6085d5](https://github.com/SpiceLabsHQ/Reaper/commit/b6085d58819b3968d0a0e7f4a3fc7a8b6b1cb35a))
+* **build:** add comprehensive parseFrontmatter unit tests ([1f085f1](https://github.com/SpiceLabsHQ/Reaper/commit/1f085f138f681e5d96bd5859d897cd32540a7096))
+* **build:** add getAgentType and formatError unit tests ([4c500b5](https://github.com/SpiceLabsHQ/Reaper/commit/4c500b5cc198dbdee27b9a3e4fbda65da3eae1f1))
+* **build:** add getAgentType and formatError unit tests ([903b774](https://github.com/SpiceLabsHQ/Reaper/commit/903b774485e293a5598dee42711d69ba9d3675f7))
+* **build:** add parseArgs and commitlint beads-ref rule tests ([008a801](https://github.com/SpiceLabsHQ/Reaper/commit/008a8018493e647c4bd9fee76a4194aaca53a2f4))
+* **contracts:** add structural contract validation for generated output ([9c70abb](https://github.com/SpiceLabsHQ/Reaper/commit/9c70abbd684eeebd4b270c3f1e9cb436dcc1f4c0))
+* **contracts:** add visual vocabulary integration contracts ([a5d7f11](https://github.com/SpiceLabsHQ/Reaper/commit/a5d7f11a223df7e4b87353099f80c0e4d44bf221))
+* **infra:** wire up node:test infrastructure with state isolation helpers ([c3541ec](https://github.com/SpiceLabsHQ/Reaper/commit/c3541ec0f6486d6907ef32a464e016a5a5afd103))
+* **visual-vocabulary:** add Gate Panel isolation tests and update GAUGE_STATES constant ([a679dfb](https://github.com/SpiceLabsHQ/Reaper/commit/a679dfb7bf823707915564a173b2f3e910e342eb))
 
 ## [1.7.0](https://github.com/SpiceLabsHQ/Reaper/compare/v1.6.1...v1.7.0) (2026-01-24)
 
