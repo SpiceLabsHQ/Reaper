@@ -154,4 +154,6 @@ Quality gates are work-type-aware. The orchestrator selects gate agents based on
 **Default profile:** `application_code` -- reaper:test-runner (Gate 1) then reaper:code-reviewer + reaper:security-auditor (Gate 2).
 
 Auto-iteration on failure with per-agent retry limits (test-runner: 3, code-reviewer: 2, all others: 1). The takeoff skill owns gate execution and iteration.
+
+Gate status rendering uses the vocabulary defined in the visual-vocabulary partial (PASS, FAIL, RUNNING, PENDING, SKIP). These are inspection verdicts for gate results, distinct from gauge states which track work unit lifecycle.
 <% } -%>

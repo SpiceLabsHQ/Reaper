@@ -19,10 +19,11 @@ Check the status of git worktrees and parallel development progress
 
 ### Gauge States
 
-Four semantic states expressed as fixed-width 10-block bars. Use these consistently across all commands to communicate work status.
+Five semantic states expressed as fixed-width 10-block bars. Use these consistently across all commands to communicate work status.
 
 ```
   ██████████  LANDED       complete, healthy
+  ████████░░  ON APPROACH  coding done, quality gates running
   ██████░░░░  IN FLIGHT    work in progress
   ░░░░░░░░░░  TAXIING     waiting, not started
   ░░░░!!░░░░  FAULT        failed, needs attention
@@ -32,6 +33,18 @@ Gauge usage rules:
 - Always use exactly 10 blocks per bar (full-width = 10 filled, empty = 10 unfilled).
 - The exclamation marks in the FAULT bar replace two blocks at the center to signal breakage.
 - Pair each bar with its label and a short gloss on the same line.
+
+### Quality Gate Statuses
+
+Five inspection verdicts for quality gate results. Gate statuses are inspection verdicts, not work lifecycle states. Use gauge states for work unit progress, gate statuses for quality inspection results.
+
+| Status | Meaning |
+|--------|---------|
+| **PASS** | gate passed all checks |
+| **FAIL** | gate found blocking issues |
+| **RUNNING** | gate currently executing |
+| **PENDING** | gate not yet started |
+| **SKIP** | gate not applicable to this work type |
 
 ### Fleet Dashboard
 
@@ -44,11 +57,12 @@ Render as a multi-row status overview. One row per worktree.
   trees/TASK-002-billing    ██████░░░░  IN FLIGHT
   trees/TASK-003-notifs     ░░░░░░░░░░  TAXIING
   trees/TASK-004-search     ░░░░!!░░░░  FAULT
+  trees/TASK-005-payments   ████████░░  ON APPROACH
 ```
 
 Fleet dashboard rules:
 - One row per worktree. Path left-aligned, gauge bar and state right.
-- Sort: FAULT first, then IN FLIGHT, then TAXIING, then LANDED.
+- Sort: FAULT first, then IN FLIGHT, then ON APPROACH, then TAXIING, then LANDED.
 - If no worktrees exist, show a single line: `No active worktrees.`
 
 
