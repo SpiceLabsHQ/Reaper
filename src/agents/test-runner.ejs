@@ -142,30 +142,34 @@ Apply exclusions using the framework's ignore mechanism:
 --testPathIgnorePatterns="trees|backup|node_modules"
 ```
 
-## Working with test data in memory
+## Efficient output capture for full suite runs
 
-**The bash examples show test commands, but you must capture results in memory for your JSON response.**
+Full test suites produce large output that exceeds the Bash tool's display limit. **Never run tests twice to see both ends of the output.** Instead, run once in the background and read the output file:
 
-**Correct pattern - capture test output in variables:**
-```bash
-# ✅ Run tests and capture all output
-TEST_OUTPUT=$(cd "$WORKING_DIR" && npm test -- --coverage --json 2>&1)
-TEST_EXIT=$?
-
-LINT_OUTPUT=$(cd "$WORKING_DIR" && npm run lint 2>&1)
-LINT_EXIT=$?
-
-# ✅ Parse test framework output and coverage files
-if [ -f "$WORKING_DIR/coverage/coverage-summary.json" ]; then
-  COVERAGE=$(jq '.total.lines.pct' "$WORKING_DIR/coverage/coverage-summary.json")
-fi
-
-# ✅ Include all metrics in your final JSON response
-# ❌ WRONG: echo "$TEST_OUTPUT" > test-results.json
+**Step 1 — Run in background with timeout:**
 ```
+Bash(run_in_background=true, timeout=600000): (cd "$WORKING_DIR" && npm test -- --coverage 2>&1)
+```
+This returns a `task_id` and an `output_file` path automatically. Set `timeout=600000` (10 min) as the hard backstop — if tests hang, the process is killed.
+
+**Step 2 — Poll for completion:**
+```
+TaskOutput(task_id=<id>, block=true, timeout=30000)
+```
+Use the default 30s timeout. If the task is still running, poll again. The Bash timeout from step 1 is what kills a stuck process — the next poll will pick up the termination. Do not use a long TaskOutput timeout; short polls keep you responsive.
+
+**Step 3 — Read head and tail in parallel:**
+Use the Read tool on the `output_file` with `offset`/`limit` to see both ends without re-running:
+```
+Read(output_file, limit=80)                        # first 80 lines
+Read(output_file, offset=<total_lines - 80>, limit=80)  # last 80 lines
+```
+To compute the tail offset, run `wc -l < <output_file>` after step 2.
+
+**For structured data, always prefer reading framework output files** (coverage JSON, JUnit XML) over parsing console text. Test frameworks write these during execution — read them with the Read tool and include the data in your JSON response.
 
 **Remember:**
-- Test frameworks may write temporary files (coverage/test-results.json) - that's OK, those are tool outputs
+- Test frameworks may write temporary files (coverage/test-results.json) — that's OK, those are tool outputs
 - You must READ those tool output files and include data in your JSON response
 - NEVER write your own analysis files like "test-summary.json" or "validation-report.json"
 - Your JSON response IS the report
