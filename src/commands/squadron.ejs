@@ -79,7 +79,7 @@ This is the key visual signal for the PO to distinguish expert voice from facili
 | `→` in nameplate | Debate direction | Clash exchanges only |
 | `✓ LOCKED IN` | Panel consensus | Synthesis sections |
 | `✗ SPLIT` / `✗ RISK` | Unresolved tension or risk | Synthesis, brief |
-| `██░░` bar chart | Qualitative score | Five Keys scorecard |
+| `██░░` bar chart | Qualitative score | Design Quality scorecard |
 | `├──` tree branches | Tension decomposition | Inline tension maps |
 | Mission card (`┌──┐`) | Session bookend | Opening and closing only |
 
@@ -150,16 +150,16 @@ PERFORMANCE ENGINEER wants eager invalidation; EVENT ARCHITECT wants eventual co
 
 `✗ RISK` uses the same format as SPLIT — reserved for risks no one had a clean mitigation for.
 
-**Five Keys scorecard:**
+**Design Quality scorecard:**
 
 ```
-Five Keys Scorecard
+Design Quality Scorecard
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Correctness   ██████████░░░░░░░░░░  50%  — isolation TBD
-Transparency  ████████████████░░░░  80%  — audit trail designed
-Craft         ██████████████░░░░░░  70%  — migration UX needs work
-Conviction    ████████████████████  100% — strong opinions throughout
-Fun           ████████░░░░░░░░░░░░  40%  — this one was a grind
+Correctness     ██████████░░░░░░░░░░  50%  — isolation TBD
+Observability   ████████████████░░░░  80%  — audit trail designed
+Maintainability ██████████████░░░░░░  70%  — migration UX needs work
+Security        ████████████████████  100% — strong auth throughout
+Performance     ████████░░░░░░░░░░░░  40%  — caching strategy TBD
 ```
 
 **Finding card:**
@@ -527,20 +527,20 @@ SECURITY AUDITOR drove the authentication design toward...
   Source → DATABASE ARCHITECT (Phase 2)
 ```
 
-**5. Five Keys Scorecard** — Rate how the design scores against the Five Keys. Use the progress bar format. Prose follows only for keys with caveats; strong-with-no-caveats keys need no words:
+**5. Design Quality Scorecard** — Rate how the design scores against five universal quality dimensions. Use the progress bar format. Prose follows only for dimensions scoring below 7/10; strong dimensions need no words:
 
 ```
-FIVE KEYS ALIGNMENT
+DESIGN QUALITY
 ━━━━━━━━━━━━━━━━━━━
 
-Correctness   ██████████░░  Strong with gaps
-Transparency  ████████████  Strong
-Craft         ████████████  Strong
-Conviction    ████████████  Strong
-Fun           ████████░░░░  Adequate, scoped
+Correctness     ██████████░░  Strong with gaps
+Observability   ████████████  Strong
+Maintainability ████████████  Strong
+Security        ████████████  Strong
+Performance     ████████░░░░  Adequate, scoped
 ```
 
-[Prose only for keys with caveats. For example: "Correctness has gaps — the cache invalidation strategy is still SPLIT and needs implementation-phase resolution. Fun is scoped to the developer experience; the migration tooling UX could use more craft attention."]
+[Prose only for dimensions scoring below 7/10. For example: "Correctness has gaps — the cache invalidation strategy is still SPLIT and needs implementation-phase resolution. Performance is scoped — the caching strategy needs load testing during implementation."]
 
 **6. Implementation Notes and Deferred Decisions** — Narrate guidance for the implementation phase and any questions deliberately left open. Keep the narrator voice — no bullet lists.
 
