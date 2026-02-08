@@ -85,12 +85,16 @@ describe('visual-vocabulary compilation', () => {
 
 describe('visual-vocabulary gauge states', () => {
   for (const context of VALID_CONTEXTS) {
-    it(`should include all four gauge states for context: ${context}`, () => {
+    it(`should include all five gauge states for context: ${context}`, () => {
       const result = compileWithContext(context);
       assert.ok(result.includes('LANDED'), `Missing LANDED state in ${context}`);
       assert.ok(
         result.includes('IN FLIGHT'),
         `Missing IN FLIGHT state in ${context}`
+      );
+      assert.ok(
+        result.includes('ON APPROACH'),
+        `Missing ON APPROACH state in ${context}`
       );
       assert.ok(
         result.includes('TAXIING'),
@@ -99,6 +103,89 @@ describe('visual-vocabulary gauge states', () => {
       assert.ok(result.includes('FAULT'), `Missing FAULT state in ${context}`);
     });
   }
+});
+
+// ===========================================================================
+// ON APPROACH gauge state specifics
+// ===========================================================================
+
+describe('visual-vocabulary ON APPROACH gauge details', () => {
+  it('should describe five semantic states (not four)', () => {
+    const result = compileWithContext('takeoff');
+    assert.ok(
+      result.includes('Five semantic states'),
+      'Introductory text should say "Five semantic states"'
+    );
+    assert.ok(
+      !result.includes('Four semantic states'),
+      'Should no longer say "Four semantic states"'
+    );
+  });
+
+  it('should show ON APPROACH gauge bar (8 filled, 2 empty) in non-functional contexts', () => {
+    const result = compileWithContext('takeoff');
+    assert.ok(
+      result.includes('████████░░'),
+      'ON APPROACH gauge bar should be 8 filled + 2 empty blocks'
+    );
+  });
+
+  it('should include ON APPROACH gloss "coding done, quality gates running" in non-functional contexts', () => {
+    const result = compileWithContext('takeoff');
+    assert.ok(
+      result.includes('coding done, quality gates running'),
+      'ON APPROACH gloss should be "coding done, quality gates running"'
+    );
+  });
+
+  it('should show plain-text ON APPROACH label in functional context', () => {
+    const result = compileWithContext('functional');
+    assert.ok(
+      result.includes('ON APPROACH'),
+      'functional context should include ON APPROACH label'
+    );
+    assert.ok(
+      result.includes('coding done, quality gates running'),
+      'functional context should include ON APPROACH gloss'
+    );
+  });
+
+  it('should NOT include gauge bars in functional context ON APPROACH entry', () => {
+    const result = compileWithContext('functional');
+    assert.ok(
+      !result.includes('████████░░'),
+      'functional context should not contain ON APPROACH gauge bar'
+    );
+  });
+});
+
+// ===========================================================================
+// Fleet dashboard sort order with ON APPROACH
+// ===========================================================================
+
+describe('visual-vocabulary fleet dashboard sort order', () => {
+  it('should sort ON APPROACH between IN FLIGHT and TAXIING in fleet dashboard', () => {
+    const result = compileWithContext('status-worktrees');
+    const faultIndex = result.indexOf('FAULT');
+    const inFlightIndex = result.indexOf('IN FLIGHT');
+    const onApproachIndex = result.indexOf('ON APPROACH');
+    const taxiingIndex = result.indexOf('TAXIING');
+    const landedIndex = result.indexOf('LANDED');
+
+    assert.ok(faultIndex >= 0, 'FAULT should be present');
+    assert.ok(inFlightIndex >= 0, 'IN FLIGHT should be present');
+    assert.ok(onApproachIndex >= 0, 'ON APPROACH should be present');
+    assert.ok(taxiingIndex >= 0, 'TAXIING should be present');
+    assert.ok(landedIndex >= 0, 'LANDED should be present');
+
+    // In fleet dashboard, the example rows should appear in sort order:
+    // FAULT first, then IN FLIGHT, then ON APPROACH, then TAXIING, then LANDED
+    // We check fleet dashboard section specifically by looking at the sort rule text
+    assert.ok(
+      result.includes('FAULT first, then IN FLIGHT, then ON APPROACH, then TAXIING, then LANDED'),
+      'Sort order rule should list: FAULT first, then IN FLIGHT, then ON APPROACH, then TAXIING, then LANDED'
+    );
+  });
 });
 
 // ===========================================================================
@@ -400,5 +487,136 @@ describe('visual-vocabulary context isolation', () => {
       !/[Ii]nput [Aa]nalysis [Cc]ard/i.test(result),
       'functional should not include input analysis card'
     );
+  });
+});
+
+// ===========================================================================
+// Gate Panel uses gate statuses, not gauge states
+// ===========================================================================
+
+describe('visual-vocabulary Gate Panel uses gate statuses not gauge states', () => {
+  it('should show PASS, RUNNING, PENDING in the Gate Panel example (takeoff)', () => {
+    const result = compileWithContext('takeoff');
+    // Extract the Gate Panel section (between "GATE RESULTS" and the next ### or end)
+    const gatePanelStart = result.indexOf('GATE RESULTS');
+    assert.ok(gatePanelStart >= 0, 'Gate Panel should contain GATE RESULTS header');
+
+    const gatePanelEnd = result.indexOf('###', gatePanelStart);
+    const gateSection =
+      gatePanelEnd > gatePanelStart
+        ? result.slice(gatePanelStart, gatePanelEnd)
+        : result.slice(gatePanelStart);
+
+    // Gate Panel example should use gate statuses
+    assert.ok(
+      gateSection.includes('PASS'),
+      'Gate Panel example should use PASS gate status'
+    );
+    assert.ok(
+      gateSection.includes('RUNNING'),
+      'Gate Panel example should use RUNNING gate status'
+    );
+    assert.ok(
+      gateSection.includes('PENDING'),
+      'Gate Panel example should use PENDING gate status'
+    );
+  });
+
+  it('should NOT use gauge states (LANDED, IN FLIGHT, TAXIING) in the Gate Panel example', () => {
+    const result = compileWithContext('takeoff');
+    const gatePanelStart = result.indexOf('GATE RESULTS');
+    assert.ok(gatePanelStart >= 0, 'Gate Panel should contain GATE RESULTS header');
+
+    const gatePanelEnd = result.indexOf('###', gatePanelStart);
+    const gateSection =
+      gatePanelEnd > gatePanelStart
+        ? result.slice(gatePanelStart, gatePanelEnd)
+        : result.slice(gatePanelStart);
+
+    // Gate Panel should NOT contain gauge states as status values
+    assert.ok(
+      !gateSection.includes('LANDED'),
+      'Gate Panel should not use LANDED gauge state'
+    );
+    assert.ok(
+      !gateSection.includes('IN FLIGHT'),
+      'Gate Panel should not use IN FLIGHT gauge state'
+    );
+    assert.ok(
+      !gateSection.includes('TAXIING'),
+      'Gate Panel should not use TAXIING gauge state'
+    );
+  });
+
+  it('should document that Gate Panel uses gate statuses not gauge bars', () => {
+    const result = compileWithContext('takeoff');
+    assert.ok(
+      result.includes('No gauge bars in the Gate Panel'),
+      'Gate Panel rules should state "No gauge bars in the Gate Panel"'
+    );
+  });
+});
+
+// ===========================================================================
+// Quality Gate Statuses — present in every context
+// ===========================================================================
+
+describe('visual-vocabulary quality gate statuses', () => {
+  const GATE_STATUSES = ['PASS', 'FAIL', 'RUNNING', 'PENDING', 'SKIP'];
+
+  for (const context of VALID_CONTEXTS) {
+    it(`should include all five gate statuses for context: ${context}`, () => {
+      const result = compileWithContext(context);
+      for (const status of GATE_STATUSES) {
+        assert.ok(
+          result.includes(status),
+          `Missing gate status ${status} in ${context}`
+        );
+      }
+    });
+  }
+
+  it('should include documentation note distinguishing gate statuses from gauge states', () => {
+    const result = compileWithContext('takeoff');
+    assert.ok(
+      result.includes('inspection verdicts'),
+      'Should document that gate statuses are inspection verdicts'
+    );
+  });
+
+  it('should include gate status meanings in non-functional contexts', () => {
+    const result = compileWithContext('takeoff');
+    assert.ok(
+      result.includes('gate passed all checks'),
+      'PASS meaning should be present'
+    );
+    assert.ok(
+      result.includes('gate found blocking issues'),
+      'FAIL meaning should be present'
+    );
+    assert.ok(
+      result.includes('gate currently executing'),
+      'RUNNING meaning should be present'
+    );
+    assert.ok(
+      result.includes('gate not yet started'),
+      'PENDING meaning should be present'
+    );
+    assert.ok(
+      result.includes('gate not applicable'),
+      'SKIP meaning should be present'
+    );
+  });
+
+  it('should use plain text for gate statuses in functional context', () => {
+    const result = compileWithContext('functional');
+    for (const status of GATE_STATUSES) {
+      assert.ok(
+        result.includes(status),
+        `functional context missing gate status ${status}`
+      );
+    }
+    // Functional context should not have gauge bars in gate status section
+    // (already covered by the existing "no gauge bars" test, but explicit here)
   });
 });
