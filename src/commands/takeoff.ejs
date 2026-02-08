@@ -87,6 +87,8 @@ Dependencies determine execution ORDER, not whether a task is included. Every no
 
 Select strategy based on the count of non-closed **leaf-level** work units: 1 uses very_small_direct, 2-4 uses medium_single_branch, 5+ uses large_multi_worktree.
 
+**File-convergence exception**: If all leaf-level work units target the same 1-2 files (based on assigned_files or acceptance criteria), override to very_small_direct regardless of unit count. Parallel agents cannot claim exclusive file ownership when all units touch the same files.
+
 **If not pre-planned**: Proceed to the Planning section below.
 
 ## Worktree Management

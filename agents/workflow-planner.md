@@ -132,12 +132,15 @@ Analyze work complexity using these scoring dimensions, then select strategy fro
 | **Integration Risk** | File overlap between work units: x3, shared interface changes: x2, cross-cutting concerns: x2 |
 | **Uncertainty** | Unfamiliar tech: +4, unclear requirements: +3, missing docs: +2, research needed: +3 |
 
+**Single-document override:** If all work units' assigned files converge on the same 1-2 files, override to very_small_direct regardless of score or unit count. A single agent editing one file sequentially is faster and cheaper than parallel agents that cannot claim exclusive ownership. This override takes precedence over the content override below.
+
 **Content override:** If the task involves 5+ repetitive similar items (e.g., creating multiple similar files, writing parallel documentation), override to medium_single_branch regardless of score. This catches content-heavy work that benefits from parallelism without inflating complexity scores.
 
 ### Decision Table
 
 | Total Score | Conditions | Strategy |
 |-------------|------------|----------|
+| any | All work units target ≤2 unique files | **very_small_direct** (single-document override) |
 | 0-10 | No file overlap, 1-2 files | **very_small_direct** |
 | 11-35 | No file overlap, <=5 work units | **medium_single_branch** |
 | >35 | - | **large_multi_worktree** |
@@ -179,7 +182,7 @@ Gate status rendering uses the vocabulary defined in the visual-vocabulary parti
 
 ### Strategy 1: Very Small Direct
 
-**When**: Score <=10, 1-2 files, no file overlap. Content override applies if 5+ repetitive items detected.
+**When**: Score <=10, 1-2 files, no file overlap. Also selected by single-document override when all work units converge on ≤2 files. Content override applies if 5+ repetitive items detected.
 
 **Workflow**:
 1. Work directly on feature branch (no worktree isolation)
