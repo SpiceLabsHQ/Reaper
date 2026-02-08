@@ -903,3 +903,28 @@ describe('Contract: squadron nameplate uses stance summaries', () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Contract: squadron output must not contain Five Keys (CLAUDE.md scope boundary)
+// ---------------------------------------------------------------------------
+
+describe('Contract: squadron output respects scope boundary', () => {
+  // The Five Keys are Reaper's internal design values and must not be imposed
+  // on target projects via command output. Squadron assembles domain experts
+  // that advise on the user's codebase, so its prompt must not leak
+  // Reaper-internal philosophy into that advice.
+  const filePath = path.join(COMMANDS_DIR, 'squadron.md');
+  const relative = 'commands/squadron.md';
+
+  it(`${relative} must not contain "Five Keys" (CLAUDE.md scope boundary)`, () => {
+    assert.ok(
+      fs.existsSync(filePath),
+      `${relative} not found at ${filePath}`
+    );
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      !content.includes('Five Keys'),
+      `${relative} contains "Five Keys" — Reaper's internal design values must not leak into command output (scope boundary violation)`
+    );
+  });
+});

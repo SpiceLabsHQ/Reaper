@@ -279,9 +279,11 @@ describe('visual-vocabulary squadron context', () => {
     const result = compileWithContext('squadron');
     // Squadron's own visual vocabulary includes mission cards, scorecards,
     // tension diagrams, etc. The partial should NOT include these.
+    // Per CLAUDE.md scope boundary: Five Keys must not be imposed on target
+    // projects through generated prompts, agent instructions, or command output.
     assert.ok(
-      !result.includes('Five Keys Scorecard'),
-      'squadron context should not duplicate Five Keys Scorecard'
+      !result.includes('Design Quality Scorecard'),
+      'squadron context should not duplicate Design Quality Scorecard'
     );
     assert.ok(
       !result.includes('TENSION:'),
