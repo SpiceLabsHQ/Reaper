@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.8.1](https://github.com/SpiceLabsHQ/Reaper/compare/v1.8.0...v1.8.1) (2026-02-08)
+
+
+### Bug Fixes
+
+* **build:** regenerate start.md with ON APPROACH gauge state ([6dc2229](https://github.com/SpiceLabsHQ/Reaper/commit/6dc22296d3fc8fe0e0509b0c676abbc1dd656f33))
+
 ## [1.8.0](https://github.com/SpiceLabsHQ/Reaper/compare/v1.7.0...v1.8.0) (2026-02-08)
 
 
