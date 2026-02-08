@@ -315,12 +315,16 @@ describe('visual-vocabulary start context', () => {
     );
   });
 
-  it('should include REAPER branded header', () => {
+  it('should include REAPER branded header with heavy rule', () => {
     const result = compileWithContext('start');
     // The card template should show a REAPER header with heavy rule
     assert.ok(
       result.includes('REAPER'),
       'start context should include REAPER branded header'
+    );
+    assert.ok(
+      result.includes('━━━'),
+      'start context should include heavy rule (━━━) under REAPER header'
     );
   });
 });

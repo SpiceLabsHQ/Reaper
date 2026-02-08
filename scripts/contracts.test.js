@@ -610,6 +610,7 @@ const ALL_COMMANDS = [
   'flight-plan',
   'squadron',
   'claude-sync',
+  'start',
 ];
 
 /**
@@ -712,6 +713,15 @@ const COMMAND_SEMANTIC_CONTRACTS = {
       { pattern: /Important Notes/i, label: 'important notes section' },
     ],
   },
+  start: {
+    label: 'start command',
+    commands: () => ['start'],
+    sections: [
+      { pattern: /Scope Boundary/i, label: 'scope boundary section' },
+      { pattern: /Mode 1/i, label: 'mode 1 bare invocation section' },
+      { pattern: /Mode 2/i, label: 'mode 2 input classification section' },
+    ],
+  },
 };
 
 /**
@@ -752,6 +762,7 @@ registerCommandSemanticSuite('status-worktrees');
 registerCommandSemanticSuite('flight-plan');
 registerCommandSemanticSuite('squadron');
 registerCommandSemanticSuite('claude-sync');
+registerCommandSemanticSuite('start');
 
 // ---------------------------------------------------------------------------
 // Contract: Visual vocabulary gauge states in generated command files
