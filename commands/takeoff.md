@@ -152,20 +152,20 @@ Render before work begins. Shows the mission parameters the command will execute
 
 ### Gate Panel
 
-Render after each quality gate completes. Shows gate results inline.
+Render after each quality gate completes. Shows gate results inline. Gate results use gate statuses (PASS, FAIL, RUNNING, PENDING, SKIP), not gauge bars.
 
 ```
   GATE RESULTS
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  test-runner       ██████████  LANDED
-  code-reviewer     ██████░░░░  IN FLIGHT
-  security-auditor  ░░░░░░░░░░  TAXIING
+  test-runner       PASS
+  code-reviewer     RUNNING
+  security-auditor  PENDING
 ```
 
 Gate panel rules:
 - One row per gate agent.
-- Gate name left-aligned, gauge bar right of name, state label after bar.
-- Update rows as gates complete -- replace TAXIING with LANDED or FAULT.
+- Gate name left-aligned, gate status right of name. No gauge bars in the Gate Panel.
+- Update rows as gates complete -- replace PENDING with PASS or FAIL.
 
 
 ## Input Processing
@@ -369,11 +369,12 @@ For each work unit in the plan, repeat this cycle:
 
 1. Update TodoWrite to mark the unit as in_progress
 2. Deploy the specified coding agent using the deployment template below
-3. Run quality gates on the completed work (see Dynamic Gate Selection and Quality Gate Protocol below)
-4. **Render Gate Panel**: After all gates for the current unit resolve, render a Gate Panel (from Visual Vocabulary) showing each gate agent with its gauge state -- `LANDED` for passed, `FAULT` for failed. Include key metrics inline (e.g., test count, coverage percentage, issue count).
-5. Update TodoWrite to mark the unit as completed
-6. If this is a pre-planned child issue, use CLOSE_ISSUE to close it in the task system
-7. **Announce progress and loop back**: "Completed [X] of [N] work units. Next: [unit name]." -- then return to step 1 for the next unit
+3. **Transition to ON APPROACH**: When the coding agent completes, the work unit enters the ON APPROACH state (coding done, quality gates not yet started). This is a transient state before gates begin.
+4. Run quality gates on the completed work (see Dynamic Gate Selection and Quality Gate Protocol below)
+5. **Render Gate Panel**: After all gates for the current unit resolve, render a Gate Panel (from Visual Vocabulary) showing each gate agent with its gate status -- `PASS` for passed, `FAIL` for failed. Include key metrics inline (e.g., test count, coverage percentage, issue count).
+6. Update TodoWrite to mark the unit as completed
+7. If this is a pre-planned child issue, use CLOSE_ISSUE to close it in the task system
+8. **Announce progress and loop back**: "Completed [X] of [N] work units. Next: [unit name]." -- then return to step 1 for the next unit
 
 This cycle repeats for every work unit. The Completion section is only reachable after the final unit passes its gates.
 
@@ -418,7 +419,7 @@ From the coding agent's `files_modified` list, classify each file into a work ty
 - If no pattern matches, default to `application_code`
 
 ### Step 3: Echo Selection
-Before deploying gate agents, announce the selection and render an initial Gate Panel with all gates in `TAXIING` state:
+Before deploying gate agents, announce the selection and render an initial Gate Panel with all gates in `PENDING` status:
 "Selected gate profile: [work_type]. Running [N] gate agents: [agent list]."
 For union profiles: "Mixed changeset detected ([types]). Union profile: Gate 1 [agents], Gate 2 [agents]."
 
@@ -660,7 +661,7 @@ When these conditions are met, present a **Touchdown Card** followed by a work s
   ██████████  LANDED
 ```
 
-Then render a final **Gate Panel** showing the cumulative result of all gates across all work units. Each gate row should show `LANDED` with its aggregate metrics (total tests passed, overall coverage, total issues found).
+Then render a final **Gate Panel** showing the cumulative result of all gates across all work units. Each gate row should show `PASS` with its aggregate metrics (total tests passed, overall coverage, total issues found).
 
 After the cards, present the work summary in this format:
 

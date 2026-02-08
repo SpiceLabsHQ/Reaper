@@ -73,20 +73,20 @@ Render before work begins. Shows the mission parameters the command will execute
 
 ### Gate Panel
 
-Render after each quality gate completes. Shows gate results inline.
+Render after each quality gate completes. Shows gate results inline. Gate results use gate statuses (PASS, FAIL, RUNNING, PENDING, SKIP), not gauge bars.
 
 ```
   GATE RESULTS
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  test-runner       ██████████  LANDED
-  code-reviewer     ██████░░░░  IN FLIGHT
-  security-auditor  ░░░░░░░░░░  TAXIING
+  test-runner       PASS
+  code-reviewer     RUNNING
+  security-auditor  PENDING
 ```
 
 Gate panel rules:
 - One row per gate agent.
-- Gate name left-aligned, gauge bar right of name, state label after bar.
-- Update rows as gates complete -- replace TAXIING with LANDED or FAULT.
+- Gate name left-aligned, gate status right of name. No gauge bars in the Gate Panel.
+- Update rows as gates complete -- replace PENDING with PASS or FAIL.
 <% } else if (context === 'ship') { -%>
 
 ### Departure Card
@@ -123,11 +123,11 @@ Render as a multi-row status overview. One row per worktree.
 ```
   FLEET STATUS
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  trees/TASK-001-auth       ██████████  LANDED
-  trees/TASK-002-billing    ██████░░░░  IN FLIGHT
-  trees/TASK-003-notifs     ░░░░░░░░░░  TAXIING
   trees/TASK-004-search     ░░░░!!░░░░  FAULT
+  trees/TASK-002-billing    ██████░░░░  IN FLIGHT
   trees/TASK-005-payments   ████████░░  ON APPROACH
+  trees/TASK-003-notifs     ░░░░░░░░░░  TAXIING
+  trees/TASK-001-auth       ██████████  LANDED
 ```
 
 Fleet dashboard rules:
