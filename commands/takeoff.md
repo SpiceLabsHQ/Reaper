@@ -86,18 +86,20 @@ Use these operations to interact with whatever task system is detected. The LLM 
 |-----------|---------|
 | FETCH_ISSUE | Retrieve a single issue by ID (title, description, status, acceptance criteria) |
 | LIST_CHILDREN | List direct child issues of a parent (one level deep) |
-| CREATE_ISSUE | Create a new issue with title, description, and optional parent |
+| CREATE_ISSUE | Create a new issue with title, description, and optional `parent` (the `parent` parameter is the sole mechanism for establishing parent-child hierarchy) |
 | UPDATE_ISSUE | Modify an existing issue (status, description, assignee) |
-| ADD_DEPENDENCY | Create a dependency relationship between two issues |
+| ADD_DEPENDENCY | Create a `blocks` or `related` dependency between two sibling issues (never for hierarchy) |
 | QUERY_DEPENDENCY_TREE | Recursively retrieve the full dependency graph from a root issue |
 | CLOSE_ISSUE | Mark an issue as completed/closed |
 
 ### Dependency Type Semantics
 
-ADD_DEPENDENCY creates execution constraints and informational links between issues. It does NOT establish hierarchy -- use CREATE_ISSUE with the `parent` parameter for parent-child relationships.
+ADD_DEPENDENCY accepts exactly two dependency types: `blocks` and `related`. It creates execution constraints and informational links between sibling issues. It does NOT establish hierarchy -- use CREATE_ISSUE with the `parent` parameter for parent-child relationships.
 
 - **blocks**: Sequential constraint (task A must complete before task B can start)
 - **related**: Informational link (tasks share context but no execution dependency)
+
+**Warning:** `parent-child` is NOT a valid dependency type. Never pass `parent-child` to ADD_DEPENDENCY. Hierarchy is established exclusively through the `parent` parameter on CREATE_ISSUE. ADD_DEPENDENCY only connects sibling issues to each other using `blocks` or `related`.
 
 
 ## Visual Vocabulary
@@ -108,12 +110,13 @@ ADD_DEPENDENCY creates execution constraints and informational links between iss
 
 ### Gauge States
 
-Five semantic states expressed as fixed-width 10-block bars. Use these consistently across all commands to communicate work status.
+Six semantic states expressed as fixed-width 10-block bars. Use these consistently across all commands to communicate work status.
 
 ```
   ██████████  LANDED       complete, healthy
   ████████░░  ON APPROACH  coding done, quality gates running
   ██████░░░░  IN FLIGHT    work in progress
+  ███░░░░░░░  TAKING OFF   deploying, about to execute
   ░░░░░░░░░░  TAXIING     waiting, not started
   ░░░░!!░░░░  FAULT        failed, needs attention
 ```
@@ -265,6 +268,8 @@ Dependencies determine execution ORDER, not whether a task is included. Every no
 
 Select strategy based on the count of non-closed **leaf-level** work units: 1 uses very_small_direct, 2-4 uses medium_single_branch, 5+ uses large_multi_worktree.
 
+**File-convergence exception**: If all leaf-level work units target the same 1-2 files (based on assigned_files or acceptance criteria), override to very_small_direct regardless of unit count. Parallel agents cannot claim exclusive file ownership when all units touch the same files.
+
 **If not pre-planned**: Proceed to the Planning section below.
 
 ## Worktree Management
@@ -368,13 +373,18 @@ Execute ALL work units from the plan. Do not present work to the user or proceed
 For each work unit in the plan, repeat this cycle:
 
 1. Update TodoWrite to mark the unit as in_progress
-2. Deploy the specified coding agent using the deployment template below
-3. **Transition to ON APPROACH**: When the coding agent completes, the work unit enters the ON APPROACH state (coding done, quality gates not yet started). This is a transient state before gates begin.
-4. Run quality gates on the completed work (see Dynamic Gate Selection and Quality Gate Protocol below)
-5. **Render Gate Panel**: After all gates for the current unit resolve, render a Gate Panel (from Visual Vocabulary) showing each gate agent with its gate status -- `PASS` for passed, `FAIL` for failed. Include key metrics inline (e.g., test count, coverage percentage, issue count).
-6. Update TodoWrite to mark the unit as completed
-7. If this is a pre-planned child issue, use CLOSE_ISSUE to close it in the task system
-8. **Announce progress and loop back**: "Completed [X] of [N] work units. Next: [unit name]." -- then return to step 1 for the next unit
+2. **Render TAKING OFF announcement**: Before deploying the agent, render a single-line gauge announcement to signal that execution is about to begin for this unit:
+   ```
+     ███░░░░░░░  TAKING OFF  Step X.Y: [unit name]
+   ```
+   This is distinct from the Preflight Card (which uses `TAXIING` to show work is queued). The TAKING OFF gauge fires once per work unit, immediately before the agent is deployed, giving the developer a clear signal that this specific unit is now launching.
+3. Deploy the specified coding agent using the deployment template below
+4. **Transition to ON APPROACH**: When the coding agent completes, the work unit enters the ON APPROACH state (coding done, quality gates not yet started). This is a transient state before gates begin.
+5. Run quality gates on the completed work (see Dynamic Gate Selection and Quality Gate Protocol below)
+6. **Render Gate Panel**: After all gates for the current unit resolve, render a Gate Panel (from Visual Vocabulary) showing each gate agent with its gate status -- `PASS` for passed, `FAIL` for failed. Include key metrics inline (e.g., test count, coverage percentage, issue count).
+7. Update TodoWrite to mark the unit as completed
+8. If this is a pre-planned child issue, use CLOSE_ISSUE to close it in the task system
+9. **Announce progress and loop back**: "Completed [X] of [N] work units. Next: [unit name]." -- then return to step 1 for the next unit
 
 This cycle repeats for every work unit. The Completion section is only reachable after the final unit passes its gates.
 
@@ -711,13 +721,14 @@ After a successful merge, invoke the `worktree-manager` skill to safely remove t
 
 **Per-unit loop (repeat for EACH work unit):**
 
->  **6. Deploy coding agent** for the current work unit
->  **7. Classify files and select gate profile** (Dynamic Gate Selection)
->  **8. Run quality gates** through the profile sequence
->  **9. Auto-iterate** on gate failures (differential retry limits)
+>  **6. Render TAKING OFF announcement** for the current work unit
+>  **7. Deploy coding agent** for the current work unit
+>  **8. Classify files and select gate profile** (Dynamic Gate Selection)
+>  **9. Run quality gates** through the profile sequence
+>  **10. Auto-iterate** on gate failures (differential retry limits)
 >  **--> Check TodoWrite: pending units remain? Loop to step 6**
 
-10. Extract learning patterns from multi-iteration gates
-11. Present completed work to user
-12. Merge on explicit user approval
-13. Clean up worktrees
+11. Extract learning patterns from multi-iteration gates
+12. Present completed work to user
+13. Merge on explicit user approval
+14. Clean up worktrees

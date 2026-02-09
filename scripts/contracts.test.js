@@ -770,14 +770,14 @@ registerCommandSemanticSuite('start');
 
 /**
  * Command files that include the visual-vocabulary partial.
- * Each must contain the five gauge state labels in their generated output.
+ * Each must contain the six gauge state labels in their generated output.
  */
 const VISUAL_VOCAB_COMMANDS = ['takeoff', 'ship', 'status-worktrees', 'squadron'];
 
 /**
- * The five canonical gauge state labels from the visual-vocabulary partial.
+ * The six canonical gauge state labels from the visual-vocabulary partial.
  */
-const GAUGE_STATES = ['LANDED', 'ON APPROACH', 'IN FLIGHT', 'TAXIING', 'FAULT'];
+const GAUGE_STATES = ['LANDED', 'ON APPROACH', 'IN FLIGHT', 'TAKING OFF', 'TAXIING', 'FAULT'];
 
 describe('Contract: command files contain visual vocabulary gauge states', () => {
   assert.ok(
@@ -869,6 +869,101 @@ describe('Contract: status-worktrees contains fleet dashboard elements', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Contract: status-worktrees TAKING OFF state detection and rendering
+// ---------------------------------------------------------------------------
+
+describe('Contract: status-worktrees TAKING OFF state in shell script', () => {
+  const filePath = path.join(COMMANDS_DIR, 'status-worktrees.md');
+  const relative = 'commands/status-worktrees.md';
+
+  it(`${relative} determine_fleet_state detects TAKING OFF (TASK.md, no commits, no changes)`, () => {
+    const content = fs.readFileSync(filePath, 'utf8');
+    // The state detection logic must distinguish TAKING OFF from TAXIING
+    // TAKING OFF: TASK.md exists but no commits beyond branch point and no uncommitted changes
+    assert.ok(
+      content.includes('TAKING OFF'),
+      `${relative} shell script must detect TAKING OFF state`
+    );
+    // Must check for TASK.md in the state detection logic
+    assert.ok(
+      content.includes('TASK.md') && content.includes('TAKING OFF'),
+      `${relative} must use TASK.md to distinguish TAKING OFF from TAXIING`
+    );
+  });
+
+  it(`${relative} render_gauge includes TAKING OFF with ███░░░░░░░ bar`, () => {
+    const content = fs.readFileSync(filePath, 'utf8');
+    // The render_gauge function must have a case for TAKING OFF
+    assert.ok(
+      content.includes('"TAKING OFF"') && content.includes('███░░░░░░░'),
+      `${relative} render_gauge must map TAKING OFF to ███░░░░░░░ gauge bar`
+    );
+  });
+
+  it(`${relative} has SORTED_TAKINGOFF array for sort bucketing`, () => {
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('SORTED_TAKINGOFF'),
+      `${relative} must declare SORTED_TAKINGOFF array for sort bucketing`
+    );
+  });
+
+  it(`${relative} sort order is FAULT, IN FLIGHT, TAKING OFF, ON APPROACH, TAXIING, LANDED`, () => {
+    const content = fs.readFileSync(filePath, 'utf8');
+    // The SORTED_FLEET merge must include TAKING OFF between IN FLIGHT and ON APPROACH
+    const sortedFleetLine = content.match(/SORTED_FLEET=\(.*\)/);
+    assert.ok(
+      sortedFleetLine,
+      `${relative} must have a SORTED_FLEET merge line`
+    );
+    const mergedLine = sortedFleetLine[0];
+    const inflightIndex = mergedLine.indexOf('INFLIGHT');
+    const takingoffIndex = mergedLine.indexOf('TAKINGOFF');
+    const onapproachIndex = mergedLine.indexOf('ONAPPROACH');
+    assert.ok(
+      inflightIndex < takingoffIndex && takingoffIndex < onapproachIndex,
+      `SORTED_FLEET merge must order INFLIGHT before TAKINGOFF before ONAPPROACH`
+    );
+  });
+
+  it(`${relative} fleet summary footer includes "taking off" count`, () => {
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('taking off'),
+      `${relative} fleet summary must include "taking off" count`
+    );
+  });
+
+  it(`${relative} Status States section documents TAKING OFF`, () => {
+    const content = fs.readFileSync(filePath, 'utf8');
+    // The Status States section must list TAKING OFF with its gauge bar
+    assert.ok(
+      content.includes('`TAKING OFF`'),
+      `${relative} Status States section must document TAKING OFF`
+    );
+  });
+
+  it(`${relative} example output includes a TAKING OFF worktree`, () => {
+    const content = fs.readFileSync(filePath, 'utf8');
+    // The example output section should show a worktree in TAKING OFF state
+    const exampleSection = content.slice(content.indexOf('## Example Output'));
+    assert.ok(
+      exampleSection.includes('TAKING OFF'),
+      `${relative} Example Output must include a worktree in TAKING OFF state`
+    );
+  });
+
+  it(`${relative} state determination comment documents TAKING OFF`, () => {
+    const content = fs.readFileSync(filePath, 'utf8');
+    // The comment block at the top of determine_fleet_state should document TAKING OFF
+    assert.ok(
+      content.includes('TAKING OFF') && content.includes('TASK.md exists'),
+      `${relative} state determination comments must document TAKING OFF with TASK.md condition`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Contract: squadron nameplate uses stance summaries, not generic "Take."
 // ---------------------------------------------------------------------------
 
@@ -900,6 +995,142 @@ describe('Contract: squadron nameplate uses stance summaries', () => {
     assert.ok(
       content.includes('stance summary'),
       `${relative} must instruct the facilitator to write a stance summary for each nameplate`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: takeoff Per-Unit Cycle contains TAKING OFF announcement
+// ---------------------------------------------------------------------------
+
+describe('Contract: takeoff Per-Unit Cycle TAKING OFF announcement', () => {
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
+
+  /**
+   * Extracts the Per-Unit Cycle section from takeoff.md content.
+   * The section starts at "### Per-Unit Cycle" and ends at the next
+   * heading of the same or higher level (##).
+   * @param {string} content - Full markdown content
+   * @returns {string} The Per-Unit Cycle section text
+   */
+  function extractPerUnitCycle(content) {
+    const startMarker = '### Per-Unit Cycle';
+    const startIndex = content.indexOf(startMarker);
+    if (startIndex === -1) return '';
+
+    // Find the next ## or ### heading after the Per-Unit Cycle section
+    const rest = content.slice(startIndex + startMarker.length);
+    const nextSectionMatch = rest.match(/\n##[# ]/);
+    if (nextSectionMatch) {
+      return content.slice(startIndex, startIndex + startMarker.length + nextSectionMatch.index);
+    }
+    return content.slice(startIndex);
+  }
+
+  it(`${relative} Per-Unit Cycle contains TAKING OFF announcement`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const perUnitSection = extractPerUnitCycle(content);
+    assert.ok(
+      perUnitSection.length > 0,
+      `${relative} must contain a Per-Unit Cycle section`
+    );
+    assert.ok(
+      perUnitSection.includes('TAKING OFF'),
+      `Per-Unit Cycle section must include a TAKING OFF announcement`
+    );
+  });
+
+  it(`${relative} TAKING OFF announcement appears before coding agent deployment step`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const perUnitSection = extractPerUnitCycle(content);
+
+    const takingOffIndex = perUnitSection.indexOf('TAKING OFF');
+    const deployIndex = perUnitSection.indexOf('Deploy the specified coding agent');
+
+    assert.ok(
+      takingOffIndex >= 0,
+      `Per-Unit Cycle must contain TAKING OFF`
+    );
+    assert.ok(
+      deployIndex >= 0,
+      `Per-Unit Cycle must contain coding agent deployment step`
+    );
+    assert.ok(
+      takingOffIndex < deployIndex,
+      `TAKING OFF announcement must appear BEFORE the coding agent deployment step`
+    );
+  });
+
+  it(`${relative} TAKING OFF announcement includes gauge bar`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const perUnitSection = extractPerUnitCycle(content);
+
+    // The TAKING OFF gauge bar is 3 filled + 7 empty: ███░░░░░░░
+    assert.ok(
+      perUnitSection.includes('███░░░░░░░'),
+      `Per-Unit Cycle TAKING OFF announcement must include the gauge bar (███░░░░░░░)`
+    );
+  });
+
+  it(`${relative} Preflight Card still uses TAXIING gauge (not TAKING OFF)`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+
+    // Find the Preflight Announcement section
+    const preflightSection = content.slice(
+      content.indexOf('## Preflight Announcement'),
+      content.indexOf('## Strategy Execution')
+    );
+    assert.ok(
+      preflightSection.includes('TAXIING'),
+      `Preflight Announcement section must still reference TAXIING`
+    );
+    // The Preflight Card template in visual vocabulary ends with TAXIING,
+    // and the Preflight Announcement section should NOT say TAKING OFF
+    assert.ok(
+      !preflightSection.includes('TAKING OFF'),
+      `Preflight Announcement section must NOT reference TAKING OFF (Preflight Card stays at TAXIING)`
+    );
+  });
+
+  it(`${relative} Per-Unit Cycle distinguishes TAXIING from TAKING OFF`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const perUnitSection = extractPerUnitCycle(content);
+
+    // The per-unit cycle should reference both states to distinguish them
+    assert.ok(
+      perUnitSection.includes('TAKING OFF'),
+      `Per-Unit Cycle must reference TAKING OFF`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: squadron output must not contain Five Keys (CLAUDE.md scope boundary)
+// ---------------------------------------------------------------------------
+
+describe('Contract: squadron output respects scope boundary', () => {
+  // The Five Keys are Reaper's internal design values and must not be imposed
+  // on target projects via command output. Squadron assembles domain experts
+  // that advise on the user's codebase, so its prompt must not leak
+  // Reaper-internal philosophy into that advice.
+  const filePath = path.join(COMMANDS_DIR, 'squadron.md');
+  const relative = 'commands/squadron.md';
+
+  it(`${relative} must not contain "Five Keys" (CLAUDE.md scope boundary)`, () => {
+    assert.ok(
+      fs.existsSync(filePath),
+      `${relative} not found at ${filePath}`
+    );
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      !content.includes('Five Keys'),
+      `${relative} contains "Five Keys" — Reaper's internal design values must not leak into command output (scope boundary violation)`
     );
   });
 });

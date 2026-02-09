@@ -84,18 +84,20 @@ Use these operations to interact with whatever task system is detected. The LLM 
 |-----------|---------|
 | FETCH_ISSUE | Retrieve a single issue by ID (title, description, status, acceptance criteria) |
 | LIST_CHILDREN | List direct child issues of a parent (one level deep) |
-| CREATE_ISSUE | Create a new issue with title, description, and optional parent |
+| CREATE_ISSUE | Create a new issue with title, description, and optional `parent` (the `parent` parameter is the sole mechanism for establishing parent-child hierarchy) |
 | UPDATE_ISSUE | Modify an existing issue (status, description, assignee) |
-| ADD_DEPENDENCY | Create a dependency relationship between two issues |
+| ADD_DEPENDENCY | Create a `blocks` or `related` dependency between two sibling issues (never for hierarchy) |
 | QUERY_DEPENDENCY_TREE | Recursively retrieve the full dependency graph from a root issue |
 | CLOSE_ISSUE | Mark an issue as completed/closed |
 
 ### Dependency Type Semantics
 
-ADD_DEPENDENCY creates execution constraints and informational links between issues. It does NOT establish hierarchy -- use CREATE_ISSUE with the `parent` parameter for parent-child relationships.
+ADD_DEPENDENCY accepts exactly two dependency types: `blocks` and `related`. It creates execution constraints and informational links between sibling issues. It does NOT establish hierarchy -- use CREATE_ISSUE with the `parent` parameter for parent-child relationships.
 
 - **blocks**: Sequential constraint (task A must complete before task B can start)
 - **related**: Informational link (tasks share context but no execution dependency)
+
+**Warning:** `parent-child` is NOT a valid dependency type. Never pass `parent-child` to ADD_DEPENDENCY. Hierarchy is established exclusively through the `parent` parameter on CREATE_ISSUE. ADD_DEPENDENCY only connects sibling issues to each other using `blocks` or `related`.
 
 
 Before planning, validate that input contains complete work scope. Do not guess about work scope.
@@ -132,12 +134,15 @@ Analyze work complexity using these scoring dimensions, then select strategy fro
 | **Integration Risk** | File overlap between work units: x3, shared interface changes: x2, cross-cutting concerns: x2 |
 | **Uncertainty** | Unfamiliar tech: +4, unclear requirements: +3, missing docs: +2, research needed: +3 |
 
+**Single-document override:** If all work units' assigned files converge on the same 1-2 files, override to very_small_direct regardless of score or unit count. A single agent editing one file sequentially is faster and cheaper than parallel agents that cannot claim exclusive ownership. This override takes precedence over the content override below.
+
 **Content override:** If the task involves 5+ repetitive similar items (e.g., creating multiple similar files, writing parallel documentation), override to medium_single_branch regardless of score. This catches content-heavy work that benefits from parallelism without inflating complexity scores.
 
 ### Decision Table
 
 | Total Score | Conditions | Strategy |
 |-------------|------------|----------|
+| any | All work units target ≤2 unique files | **very_small_direct** (single-document override) |
 | 0-10 | No file overlap, 1-2 files | **very_small_direct** |
 | 11-35 | No file overlap, <=5 work units | **medium_single_branch** |
 | >35 | - | **large_multi_worktree** |
@@ -179,7 +184,7 @@ Gate status rendering uses the vocabulary defined in the visual-vocabulary parti
 
 ### Strategy 1: Very Small Direct
 
-**When**: Score <=10, 1-2 files, no file overlap. Content override applies if 5+ repetitive items detected.
+**When**: Score <=10, 1-2 files, no file overlap. Also selected by single-document override when all work units converge on ≤2 files. Content override applies if 5+ repetitive items detected.
 
 **Workflow**:
 1. Work directly on feature branch (no worktree isolation)
@@ -275,7 +280,6 @@ When given a task ID, use QUERY_DEPENDENCY_TREE to retrieve the full dependency 
 
 | Type | Planning Impact |
 |------|-----------------|
-| `parent-child` | Subtasks may be the work units -- evaluate before re-decomposing (see decision tree below) |
 | `blocks` | Blocked issue waits until blocker closes; plan blocker resolution first |
 | `discovered-from` | Incorporate into plan |
 | `related` | Consider together, no execution dependency |

@@ -95,18 +95,20 @@ Use these operations to interact with whatever task system is detected. The LLM 
 |-----------|---------|
 | FETCH_ISSUE | Retrieve a single issue by ID (title, description, status, acceptance criteria) |
 | LIST_CHILDREN | List direct child issues of a parent (one level deep) |
-| CREATE_ISSUE | Create a new issue with title, description, and optional parent |
+| CREATE_ISSUE | Create a new issue with title, description, and optional `parent` (the `parent` parameter is the sole mechanism for establishing parent-child hierarchy) |
 | UPDATE_ISSUE | Modify an existing issue (status, description, assignee) |
-| ADD_DEPENDENCY | Create a dependency relationship between two issues |
+| ADD_DEPENDENCY | Create a `blocks` or `related` dependency between two sibling issues (never for hierarchy) |
 | QUERY_DEPENDENCY_TREE | Recursively retrieve the full dependency graph from a root issue |
 | CLOSE_ISSUE | Mark an issue as completed/closed |
 
 ### Dependency Type Semantics
 
-ADD_DEPENDENCY creates execution constraints and informational links between issues. It does NOT establish hierarchy -- use CREATE_ISSUE with the `parent` parameter for parent-child relationships.
+ADD_DEPENDENCY accepts exactly two dependency types: `blocks` and `related`. It creates execution constraints and informational links between sibling issues. It does NOT establish hierarchy -- use CREATE_ISSUE with the `parent` parameter for parent-child relationships.
 
 - **blocks**: Sequential constraint (task A must complete before task B can start)
 - **related**: Informational link (tasks share context but no execution dependency)
+
+**Warning:** `parent-child` is NOT a valid dependency type. Never pass `parent-child` to ADD_DEPENDENCY. Hierarchy is established exclusively through the `parent` parameter on CREATE_ISSUE. ADD_DEPENDENCY only connects sibling issues to each other using `blocks` or `related`.
 
 
 Classify the input (ARGUMENTS) as one of:
@@ -411,10 +413,12 @@ For each work unit in the approved plan, use abstract CRUD operations from the d
 2. **Child issues** (one per work unit):
    - CREATE_ISSUE with title, parent=EPIC_ID, and the TDD-structured description below
    - For user intervention tasks: set assignee=user
+   - **Note:** The `parent=EPIC_ID` parameter on CREATE_ISSUE is the sole mechanism for establishing parent-child hierarchy. Do NOT use ADD_DEPENDENCY for this purpose -- ADD_DEPENDENCY is exclusively for execution constraints and informational links between sibling issues.
 
 3. **Dependencies** (from plan's dependency graph):
    - ADD_DEPENDENCY with type=blocks for execution order constraints (A must complete before B starts)
    - ADD_DEPENDENCY with type=related for informational links between issues that share context but have no execution order constraint
+   - **Warning:** `parent-child` is NOT a dependency type. Never use ADD_DEPENDENCY to link a parent epic to its children -- hierarchy was already established via `parent=EPIC_ID` in step 2. ADD_DEPENDENCY only connects sibling issues to each other.
 
 ### TDD-Structured Issue Description Template
 
