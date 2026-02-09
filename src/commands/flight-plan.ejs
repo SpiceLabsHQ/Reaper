@@ -328,10 +328,12 @@ For each work unit in the approved plan, use abstract CRUD operations from the d
 2. **Child issues** (one per work unit):
    - CREATE_ISSUE with title, parent=EPIC_ID, and the TDD-structured description below
    - For user intervention tasks: set assignee=user
+   - **Note:** The `parent=EPIC_ID` parameter on CREATE_ISSUE is the sole mechanism for establishing parent-child hierarchy. Do NOT use ADD_DEPENDENCY for this purpose -- ADD_DEPENDENCY is exclusively for execution constraints and informational links between sibling issues.
 
 3. **Dependencies** (from plan's dependency graph):
    - ADD_DEPENDENCY with type=blocks for execution order constraints (A must complete before B starts)
    - ADD_DEPENDENCY with type=related for informational links between issues that share context but have no execution order constraint
+   - **Warning:** `parent-child` is NOT a dependency type. Never use ADD_DEPENDENCY to link a parent epic to its children -- hierarchy was already established via `parent=EPIC_ID` in step 2. ADD_DEPENDENCY only connects sibling issues to each other.
 
 ### TDD-Structured Issue Description Template
 
