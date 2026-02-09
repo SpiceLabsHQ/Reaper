@@ -107,6 +107,24 @@ Parse these fields from each gate agent's JSON response to determine pass/fail:
 - Apply differential retry limits per agent (see table above) before escalating to the user
 - Work autonomously through iterations without asking the user for guidance
 
+#### Resume-Based Retry
+
+Capture the `agent_id` from every Task tool response. When a gate fails and the coding agent must address issues, prefer `Task --resume` over a full redeployment. This reduces retry cost from ~3,000 tokens to 50-100 tokens.
+
+**Resume prompt template:**
+```
+Task --resume $AGENT_ID --prompt "Gate failed. Fix these blocking_issues: [paste blocking_issues array from gate response]"
+```
+
+**Resume-vs-fresh decision table:**
+
+| Condition | Action |
+|-----------|--------|
+| Same gate failed, agent_id available | Resume with blocking_issues |
+| Different gate failed than last time | Resume with blocking_issues from new gate |
+| Agent ID is stale (error on resume) | Fresh deployment with full context |
+| Max retries exceeded | Escalate to user |
+
 ### Commit on Pass
 
 After each gate passes, deploy reaper:branch-manager to commit the current state on the feature branch using conventional commit format:

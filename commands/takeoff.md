@@ -453,11 +453,9 @@ Task --subagent_type [AGENT_TYPE] \
   --description "[BRIEF_DESCRIPTION]" \
   --prompt "TASK: $TASK_ID
 WORKTREE: $WORKTREE_PATH
-DESCRIPTION: [detailed requirements from plan or task system]
-SCOPE: [exact file/module boundaries]
-RESTRICTION: [what NOT to touch]
-QUALITY: [coverage target, lint requirements, methodology]
-GATE_EXPECTATIONS: [gates that will review this work, from the selected profile]"
+BRIEF: [one-sentence summary of the work]
+SCOPE: [glob patterns for file/module boundaries]
+RESTRICTION: [what NOT to touch]"
 ```
 
 **Example:**
@@ -466,22 +464,17 @@ Task --subagent_type reaper:feature-developer \
   --description "Implement OAuth2 feature" \
   --prompt "TASK: repo-a3f
 WORKTREE: ./trees/repo-a3f-oauth
-DESCRIPTION: Implement OAuth2 authentication flow with Google and GitHub providers
-SCOPE: Authentication module only (src/auth/oauth/, tests/auth/oauth/)
-RESTRICTION: Do NOT modify user management or database modules
-QUALITY: Aim for meaningful test coverage (80%+ is a good target), zero linting errors, apply SOLID where it improves maintainability
-GATE_EXPECTATIONS: test-runner (coverage + passing tests), code-reviewer (code quality), security-auditor (OWASP)"
+BRIEF: Implement OAuth2 authentication flow with Google and GitHub providers
+SCOPE: src/auth/** tests/auth/**
+RESTRICTION: Do NOT modify user management or database modules"
 ```
 
 **Requirements for every deployment:**
 - TASK and WORKTREE must always be provided
-- DESCRIPTION must be detailed and substantial (from plan, task system, or user input)
-- SCOPE must specify exact file or module boundaries
+- BRIEF must be a single sentence summarizing the work (detailed context lives in the plan or task system)
+- SCOPE must use glob patterns for file or module boundaries
 - RESTRICTION must specify what NOT to modify (keeps agents focused on scope)
-- GATE_EXPECTATIONS should list the gate agents that will review the work, helping the coding agent anticipate quality requirements
 - Prefer keeping each work package to roughly 5 files, 500 LOC, and 2 hours of estimated work (adjust based on complexity)
-
-**Populating GATE_EXPECTATIONS:** After determining the gate profile (see Dynamic Gate Selection), list each gate agent and its primary check. This primes the coding agent to write code that will pass review on the first attempt.
 
 **After the agent returns:** Run quality gates on the completed work. Once all gates pass, check TodoWrite for the next pending work unit and continue the Per-Unit Cycle.
 
@@ -593,6 +586,24 @@ Parse these fields from each gate agent's JSON response to determine pass/fail:
 - After the coding agent addresses issues, re-run the failed gate (not all gates)
 - Apply differential retry limits per agent (see table above) before escalating to the user
 - Work autonomously through iterations without asking the user for guidance
+
+#### Resume-Based Retry
+
+Capture the `agent_id` from every Task tool response. When a gate fails and the coding agent must address issues, prefer `Task --resume` over a full redeployment. This reduces retry cost from ~3,000 tokens to 50-100 tokens.
+
+**Resume prompt template:**
+```
+Task --resume $AGENT_ID --prompt "Gate failed. Fix these blocking_issues: [paste blocking_issues array from gate response]"
+```
+
+**Resume-vs-fresh decision table:**
+
+| Condition | Action |
+|-----------|--------|
+| Same gate failed, agent_id available | Resume with blocking_issues |
+| Different gate failed than last time | Resume with blocking_issues from new gate |
+| Agent ID is stale (error on resume) | Fresh deployment with full context |
+| Max retries exceeded | Escalate to user |
 
 ### Commit on Pass
 

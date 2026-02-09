@@ -1134,3 +1134,233 @@ describe('Contract: squadron output respects scope boundary', () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Contract: agent deployment template uses compressed 5-field structure
+// ---------------------------------------------------------------------------
+
+describe('Contract: agent deployment template is compressed (5 fields)', () => {
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
+
+  /**
+   * Extracts the Agent Deployment Template section from takeoff.md.
+   * @param {string} content - Full markdown content
+   * @returns {string} The deployment template section text
+   */
+  function extractDeploymentSection(content) {
+    const startMarker = '## Agent Deployment Template';
+    const startIndex = content.indexOf(startMarker);
+    if (startIndex === -1) return '';
+
+    const rest = content.slice(startIndex + startMarker.length);
+    const nextSectionMatch = rest.match(/\n## [^#]/);
+    if (nextSectionMatch) {
+      return content.slice(
+        startIndex,
+        startIndex + startMarker.length + nextSectionMatch.index
+      );
+    }
+    return content.slice(startIndex);
+  }
+
+  it(`${relative} deployment template contains BRIEF field (renamed from DESCRIPTION)`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = extractDeploymentSection(content);
+    assert.ok(
+      section.length > 0,
+      `${relative} must contain an Agent Deployment Template section`
+    );
+    assert.ok(
+      section.includes('BRIEF:'),
+      `deployment template must use BRIEF field (renamed from DESCRIPTION)`
+    );
+  });
+
+  it(`${relative} deployment template does NOT contain QUALITY field`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = extractDeploymentSection(content);
+    assert.ok(
+      !section.includes('QUALITY:'),
+      `deployment template must NOT contain QUALITY field (removed for compression)`
+    );
+  });
+
+  it(`${relative} deployment template does NOT contain GATE_EXPECTATIONS field`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = extractDeploymentSection(content);
+    assert.ok(
+      !section.includes('GATE_EXPECTATIONS:'),
+      `deployment template must NOT contain GATE_EXPECTATIONS field (removed for compression)`
+    );
+  });
+
+  it(`${relative} deployment template has exactly 5 prompt fields`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = extractDeploymentSection(content);
+
+    // Extract the code block that defines the template structure
+    const codeBlockMatch = section.match(/```[\s\S]*?```/);
+    assert.ok(codeBlockMatch, `deployment template must have a code block`);
+    const codeBlock = codeBlockMatch[0];
+
+    const expectedFields = ['TASK:', 'WORKTREE:', 'BRIEF:', 'SCOPE:', 'RESTRICTION:'];
+    for (const field of expectedFields) {
+      assert.ok(
+        codeBlock.includes(field),
+        `deployment template code block must contain ${field}`
+      );
+    }
+  });
+
+  it(`${relative} deployment template does NOT contain "Populating GATE_EXPECTATIONS"`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = extractDeploymentSection(content);
+    assert.ok(
+      !section.includes('Populating GATE_EXPECTATIONS'),
+      `deployment template must NOT contain the "Populating GATE_EXPECTATIONS" paragraph`
+    );
+  });
+
+  it(`${relative} deployment template retains "After the agent returns" guidance`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = extractDeploymentSection(content);
+    assert.ok(
+      section.includes('After the agent returns'),
+      `deployment template must retain the "After the agent returns" paragraph`
+    );
+  });
+
+  it(`${relative} deployment example uses glob patterns for SCOPE`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = extractDeploymentSection(content);
+
+    // The example SCOPE should use glob patterns like src/auth/**
+    assert.ok(
+      /SCOPE:.*\*\*/.test(section),
+      `deployment template example SCOPE must use glob patterns (e.g., src/auth/**)`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: quality gate iteration rules include resume-based retry pattern
+// ---------------------------------------------------------------------------
+
+describe('Contract: takeoff iteration rules include resume-based retry pattern', () => {
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
+
+  /**
+   * Extracts the Iteration Rules section from takeoff.md content.
+   * The section starts at "### Iteration Rules" and ends at the next
+   * heading of the same or higher level (## or ###).
+   * @param {string} content - Full markdown content
+   * @returns {string} The Iteration Rules section text
+   */
+  function extractIterationRules(content) {
+    const startMarker = '### Iteration Rules';
+    const startIndex = content.indexOf(startMarker);
+    if (startIndex === -1) return '';
+
+    const rest = content.slice(startIndex + startMarker.length);
+    const nextSectionMatch = rest.match(/\n###? [^#]/);
+    if (nextSectionMatch) {
+      return content.slice(
+        startIndex,
+        startIndex + startMarker.length + nextSectionMatch.index
+      );
+    }
+    return content.slice(startIndex);
+  }
+
+  it(`${relative} Iteration Rules section exists`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = extractIterationRules(content);
+    assert.ok(
+      section.length > 0,
+      `${relative} must contain an Iteration Rules section`
+    );
+  });
+
+  it(`${relative} instructs capturing agent_id from Task responses`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = extractIterationRules(content);
+    assert.ok(
+      section.includes('agent_id'),
+      `Iteration Rules must instruct capturing agent_id from Task tool responses`
+    );
+  });
+
+  it(`${relative} includes Task --resume template for retry`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = extractIterationRules(content);
+    assert.ok(
+      section.includes('Task --resume'),
+      `Iteration Rules must include Task --resume template for efficient retry`
+    );
+  });
+
+  it(`${relative} includes resume-vs-fresh decision table`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = extractIterationRules(content);
+    // Decision table must have conditions for resume, fresh deployment, and escalation
+    assert.ok(
+      section.includes('agent_id available') || section.includes('agent_id') && section.includes('Resume'),
+      `Iteration Rules must include a resume-vs-fresh decision table`
+    );
+    assert.ok(
+      section.includes('stale') || section.includes('error on resume'),
+      `Decision table must handle stale agent_id (fallback to fresh deployment)`
+    );
+    assert.ok(
+      section.includes('Max retries') || section.includes('exceeded'),
+      `Decision table must handle max retries exceeded (escalation)`
+    );
+  });
+
+  it(`${relative} preserves existing iteration rules content`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = extractIterationRules(content);
+    // Original content must still be present
+    assert.ok(
+      section.includes('blocking_issues'),
+      `Iteration Rules must preserve the original blocking_issues instruction`
+    );
+    assert.ok(
+      section.includes('re-run the failed gate'),
+      `Iteration Rules must preserve the re-run failed gate instruction`
+    );
+    assert.ok(
+      section.includes('differential retry limits'),
+      `Iteration Rules must preserve the differential retry limits reference`
+    );
+    assert.ok(
+      section.includes('Work autonomously'),
+      `Iteration Rules must preserve the autonomous work instruction`
+    );
+  });
+
+  it(`${relative} does NOT add resume pattern to planner branch`, () => {
+    // The workflow-planner should NOT contain Task --resume instructions
+    const plannerPath = path.join(AGENTS_DIR, 'workflow-planner.md');
+    assert.ok(fs.existsSync(plannerPath), 'workflow-planner.md not found');
+    const plannerContent = fs.readFileSync(plannerPath, 'utf8');
+    assert.ok(
+      !plannerContent.includes('Task --resume'),
+      `workflow-planner.md must NOT contain Task --resume (planner branch must be unmodified)`
+    );
+  });
+});
