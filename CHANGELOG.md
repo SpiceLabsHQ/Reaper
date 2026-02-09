@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.9.1](https://github.com/SpiceLabsHQ/Reaper/compare/v1.9.0...v1.9.1) (2026-02-09)
+
+
+### Bug Fixes
+
+* **commands:** add git-flow back-merge to release workflow ([8e8d634](https://github.com/SpiceLabsHQ/Reaper/commit/8e8d6343c49f4ac3f184a702aea47e07f892dd1f))
+* **commands:** compress subagent I/O to prevent takeoff context exhaustion ([2b2cb5e](https://github.com/SpiceLabsHQ/Reaper/commit/2b2cb5e3e2aabd38327c7571087e9c5c971252b1))
+
 ## [1.9.0](https://github.com/SpiceLabsHQ/Reaper/compare/v1.8.2...v1.9.0) (2026-02-09)
 
 
