@@ -7,6 +7,10 @@
     {
       "filename": ".claude-plugin/plugin.json",
       "type": "json"
+    },
+    {
+      "filename": "README.md",
+      "updater": "scripts/readme-version-updater.js"
     }
   ],
   "tagPrefix": "v",

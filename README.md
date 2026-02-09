@@ -3,7 +3,7 @@
   <br><br>
   <a href="https://github.com/SpiceLabsHQ/Reaper/actions/workflows/test.yml"><img src="https://github.com/SpiceLabsHQ/Reaper/actions/workflows/test.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
-  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-1.7.0-orange.svg" alt="Version"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-1.9.1-orange.svg" alt="Version"></a>
 </p>
 
 **Ground control for your codebase.**
