@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.9.0](https://github.com/SpiceLabsHQ/Reaper/compare/v1.8.2...v1.9.0) (2026-02-09)
+
+
+### Features
+
+* **commands:** integrate TAKING OFF into takeoff and status-worktrees ([7b37646](https://github.com/SpiceLabsHQ/Reaper/commit/7b376468d3ebed80e72daeacc80cd937a43be32d))
+* **strategy:** add single-document de-escalation override ([b726382](https://github.com/SpiceLabsHQ/Reaper/commit/b726382c4819b80327b9a8d9b13deb1b8a28cc37))
+* **visual-vocab:** add TAKING OFF gauge state ([3365951](https://github.com/SpiceLabsHQ/Reaper/commit/336595138e7af9f98aa1b6b50dbfce8e56a4fed1))
+
+
+### Bug Fixes
+
+* **commands:** replace Five Keys scorecard with Design Quality in squadron ([2cb0bc3](https://github.com/SpiceLabsHQ/Reaper/commit/2cb0bc3f85fbcc24fc3af865f3487b8da3c94951))
+* **flight-plan:** reinforce hierarchy vs dependency distinction in Phase 5 ([c693ff0](https://github.com/SpiceLabsHQ/Reaper/commit/c693ff06820c13351481099b9b80eae06f70c386))
+* **partials:** strengthen hierarchy vs dependency guidance in task-system-operations ([df71947](https://github.com/SpiceLabsHQ/Reaper/commit/df719475238fc2b4193410f7d1da21f8b131250b))
+* **workflow-planner:** remove parent-child from dependency type table ([e40d1cf](https://github.com/SpiceLabsHQ/Reaper/commit/e40d1cf195f99515bed6c87345e6ad1a583bd8b4))
+
+
+### Tests
+
+* **squadron:** add scope boundary contract and update test rationale ([7ac9c25](https://github.com/SpiceLabsHQ/Reaper/commit/7ac9c254011920d6774eac54cdcb5a215d625b17))
+
+## [1.8.2](https://github.com/SpiceLabsHQ/Reaper/compare/v1.8.1...v1.8.2) (2026-02-08)
+
+
+### Documentation
+
+* **claude:** add scope boundary for Reaper-specific guidance ([21013f8](https://github.com/SpiceLabsHQ/Reaper/commit/21013f856eb8d028e0d5011b80a1c5eb90138d9d))
+
 ## [1.8.1](https://github.com/SpiceLabsHQ/Reaper/compare/v1.8.0...v1.8.1) (2026-02-08)
 
 
