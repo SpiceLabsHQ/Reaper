@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.10.0](https://github.com/SpiceLabsHQ/Reaper/compare/v1.9.1...v1.10.0) (2026-02-09)
+
+
+### Features
+
+* **release:** auto-update shields.io version badge on release ([adc5c7a](https://github.com/SpiceLabsHQ/Reaper/commit/adc5c7a5bfe60f4be8afa93971c506d420d7b588))
+
 ## [1.9.1](https://github.com/SpiceLabsHQ/Reaper/compare/v1.9.0...v1.9.1) (2026-02-09)
 
 
