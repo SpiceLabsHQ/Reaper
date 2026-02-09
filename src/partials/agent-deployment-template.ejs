@@ -7,11 +7,9 @@ Task --subagent_type [AGENT_TYPE] \
   --description "[BRIEF_DESCRIPTION]" \
   --prompt "TASK: $TASK_ID
 WORKTREE: $WORKTREE_PATH
-DESCRIPTION: [detailed requirements from plan or task system]
-SCOPE: [exact file/module boundaries]
-RESTRICTION: [what NOT to touch]
-QUALITY: [coverage target, lint requirements, methodology]
-GATE_EXPECTATIONS: [gates that will review this work, from the selected profile]"
+BRIEF: [one-sentence summary of the work]
+SCOPE: [glob patterns for file/module boundaries]
+RESTRICTION: [what NOT to touch]"
 ```
 
 **Example:**
@@ -20,21 +18,16 @@ Task --subagent_type reaper:feature-developer \
   --description "Implement OAuth2 feature" \
   --prompt "TASK: repo-a3f
 WORKTREE: ./trees/repo-a3f-oauth
-DESCRIPTION: Implement OAuth2 authentication flow with Google and GitHub providers
-SCOPE: Authentication module only (src/auth/oauth/, tests/auth/oauth/)
-RESTRICTION: Do NOT modify user management or database modules
-QUALITY: Aim for meaningful test coverage (80%+ is a good target), zero linting errors, apply SOLID where it improves maintainability
-GATE_EXPECTATIONS: test-runner (coverage + passing tests), code-reviewer (code quality), security-auditor (OWASP)"
+BRIEF: Implement OAuth2 authentication flow with Google and GitHub providers
+SCOPE: src/auth/** tests/auth/**
+RESTRICTION: Do NOT modify user management or database modules"
 ```
 
 **Requirements for every deployment:**
 - TASK and WORKTREE must always be provided
-- DESCRIPTION must be detailed and substantial (from plan, task system, or user input)
-- SCOPE must specify exact file or module boundaries
+- BRIEF must be a single sentence summarizing the work (detailed context lives in the plan or task system)
+- SCOPE must use glob patterns for file or module boundaries
 - RESTRICTION must specify what NOT to modify (keeps agents focused on scope)
-- GATE_EXPECTATIONS should list the gate agents that will review the work, helping the coding agent anticipate quality requirements
 - Prefer keeping each work package to roughly 5 files, 500 LOC, and 2 hours of estimated work (adjust based on complexity)
-
-**Populating GATE_EXPECTATIONS:** After determining the gate profile (see Dynamic Gate Selection), list each gate agent and its primary check. This primes the coding agent to write code that will pass review on the first attempt.
 
 **After the agent returns:** Run quality gates on the completed work. Once all gates pass, check TodoWrite for the next pending work unit and continue the Per-Unit Cycle.

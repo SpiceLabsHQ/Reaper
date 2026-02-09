@@ -149,9 +149,9 @@ Analyze work complexity using these scoring dimensions, then select strategy fro
 | any | File overlap between work units | **large_multi_worktree** (required) |
 | any | Any work unit >5 files or >500 LOC | **large_multi_worktree** (required) |
 
-### Strategy Selection Output (Required in JSON)
+### Strategy Selection Output
 
-Include `strategy_selection` in all planning responses with: `selected_strategy`, `complexity_score`, `score_breakdown` (all 5 dimensions), `rationale`, `override_conditions`, and `escalation_triggers`.
+The planner uses the scoring framework internally for strategy selection but returns only the strategy name in the JSON output (the `strategy` field).
 
 ## Quality Gate Protocol
 
@@ -251,7 +251,7 @@ When runtime conditions exceed the current strategy's assumptions, escalate:
 3. Select new strategy for remaining work (upgrade if file overlap detected)
 4. Provide updated guidance with new agent sequence, modified gates, and integration plan for partial + remaining work
 
-The `escalation_triggers` field in the JSON planning report should reference these conditions. The orchestrator triggers re-planning by redeploying reaper:workflow-planner with discovered context.
+The `risks` array in the JSON planning report should surface escalation-relevant conditions. The orchestrator triggers re-planning by redeploying reaper:workflow-planner with discovered context.
 
 **De-escalation** is rare. Only de-escalate when significant efficiency gains are clear and switching cost is low.
 
@@ -300,20 +300,11 @@ For each work unit, classify its `work_type` based on the `assigned_files` using
 
 ## File Assignment Protocol
 
-Assign exclusive files per work unit when paths are known:
+Assign exclusive files per work unit when paths are known. Include them in `assigned_files`. All file assignments are implicitly exclusive -- the orchestrator enforces ownership boundaries.
 
-```json
-{
-  "id": "WORK-001",
-  "work_type": "application_code",
-  "assigned_files": ["src/auth/LoginForm.js", "tests/auth/LoginForm.test.js"],
-  "file_ownership": "exclusive"
-}
-```
+When exact paths are uncertain, describe the target area in the `brief` field so the executing agent can discover files.
 
-When exact paths are uncertain, provide detailed work description with `file_discovery_required: true` and `estimated_files` count.
-
-Document file overlap warnings in `file_overlap_warnings` array with affected work units, conflict type, and recommendation (sequence or escalate to Strategy 3).
+File overlap between work units is a risk. Surface it in the `risks` array (e.g., "File overlap in src/auth/ between WORK-001 and WORK-002") and consider escalating to Strategy 3.
 
 ## Parallel Safety
 
@@ -335,51 +326,38 @@ Planning anti-patterns to avoid:
 
 ## JSON Planning Report
 
-All planning responses must include `strategy_selection` and `implementation_guidance`. Structure:
+All planning responses must return this compressed structure. The planner still performs full internal analysis (complexity scoring, parallel safety checks, risk assessment) but returns only the deployment-ready fields the orchestrator needs.
 
 ```json
 {
-  "strategy_selection": {
-    "selected_strategy": "medium_single_branch",
-    "complexity_score": 24,
-    "score_breakdown": { "file_impact": 8, "dependency": 4, "testing": 6, "integration": 2, "uncertainty": 4 },
-    "rationale": "...",
-    "override_conditions": [],
-    "escalation_triggers": ["..."]
-  },
-  "task_decomposition": {
-    "work_units": [
-      {
-        "id": "WORK-001", "title": "...", "group": 1,
-        "work_type": "application_code",
-        "prerequisites": [], "assigned_files": ["..."],
-        "file_ownership": "exclusive", "parallelizable": true,
-        "size_metrics": { "estimated_files": 2, "estimated_loc": 150, "complexity": "low" },
-        "context_safe": true
-      }
-    ],
-    "critical_path": ["WORK-001", "WORK-003"],
-    "package_size_summary": { "total_packages": 3, "oversized_packages": 0, "all_context_safe": true }
-  },
-  "parallel_work_analysis": {
-    "safe_parallel_groups": [{ "group_id": "...", "work_units": ["WORK-001", "WORK-002"], "rationale": "..." }],
-    "file_overlap_warnings": []
-  },
-  "implementation_guidance": {
-    "strategy_workflow": "Strategy N description...",
-    "environment_setup": "...",
-    "agent_deployment_sequence": [
-      { "step": 1, "phase": "implementation", "agent": "reaper:feature-developer", "purpose": "...", "critical_instructions": "...", "blocking": false }
-    ],
-    "consolidation_workflow": { "approach": "...", "steps": ["..."] },
-    "iteration_protocol": { "auto_iteration": true, "max_iterations": 3, "escalation_trigger": "..." }
-  },
-  "risk_assessment": {
-    "high_risks": [{ "risk": "...", "impact": "HIGH", "mitigation": "...", "affects_strategy": true }],
-    "context_risks": [{ "risk": "...", "mitigation": "..." }]
-  }
+  "strategy": "medium_single_branch",
+  "units": [
+    {
+      "id": "WORK-001",
+      "title": "Implement login form",
+      "work_type": "application_code",
+      "group": 1,
+      "prerequisites": [],
+      "assigned_files": ["src/auth/LoginForm.js", "tests/auth/LoginForm.test.js"],
+      "brief": "Create the login form component with email/password validation",
+      "acceptance_criteria": ["Form renders with email and password fields", "Validation rejects empty fields", "Submit dispatches auth action"]
+    }
+  ],
+  "risks": ["File overlap in src/auth/ between WORK-001 and WORK-002", "External OAuth API may require sandbox credentials"]
 }
 ```
+
+**Field reference:**
+- `strategy`: One of `very_small_direct`, `medium_single_branch`, `large_multi_worktree`
+- `units[].id`: Unique identifier for the work unit
+- `units[].title`: Short descriptive title
+- `units[].work_type`: One of `application_code`, `infrastructure_config`, `database_migration`, `api_specification`, `agent_prompt`, `documentation`, `ci_cd_pipeline`, `test_code`, `configuration`
+- `units[].group`: Execution group number (units in the same group can run in parallel)
+- `units[].prerequisites`: Array of unit IDs that must complete before this unit starts
+- `units[].assigned_files`: Array of file paths this unit owns exclusively
+- `units[].brief`: One-sentence description of the work
+- `units[].acceptance_criteria`: Array of testable success conditions
+- `risks`: Flat array of risk strings (file overlaps, external dependencies, escalation-relevant conditions)
 
 ## Safety Guidelines
 

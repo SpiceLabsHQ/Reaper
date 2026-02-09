@@ -1823,3 +1823,113 @@ describe('main', () => {
     );
   });
 });
+
+// ===========================================================================
+// output-requirements partial: isOrchestrator extraction rules
+// ===========================================================================
+
+describe('output-requirements partial: orchestrator extraction rules', () => {
+  const SRC_DIR = path.join(__dirname, '..', 'src');
+  const PARTIAL_PATH = path.join(SRC_DIR, 'partials', 'output-requirements.ejs');
+
+  /**
+   * Renders the output-requirements partial with given parameters by wrapping
+   * it in an include call from a synthetic template.
+   * @param {Object} params - Parameters to pass to the partial
+   * @returns {string} Rendered output
+   */
+  function renderPartial(params) {
+    config.srcDir = SRC_DIR;
+    const paramStr = JSON.stringify(params);
+    const wrapper = `<%- include('partials/output-requirements', ${paramStr}) %>`;
+    return compileTemplate(wrapper, {}, PARTIAL_PATH);
+  }
+
+  it('should render orchestrator extraction rules when isOrchestrator is true', () => {
+    const result = renderPartial({ isOrchestrator: true });
+    assert.ok(
+      result.includes('Orchestrator Extraction Rules'),
+      'Should contain "Orchestrator Extraction Rules" heading'
+    );
+  });
+
+  it('should NOT render orchestrator extraction rules when isOrchestrator is false', () => {
+    const result = renderPartial({ isOrchestrator: false });
+    assert.ok(
+      !result.includes('Orchestrator Extraction Rules'),
+      'Should not contain extraction rules when isOrchestrator is false'
+    );
+  });
+
+  it('should NOT render orchestrator extraction rules when isOrchestrator is undefined', () => {
+    const result = renderPartial({});
+    assert.ok(
+      !result.includes('Orchestrator Extraction Rules'),
+      'Should not contain extraction rules when isOrchestrator is not provided'
+    );
+  });
+
+  it('should list coding agent extraction fields: files_modified and work_completed', () => {
+    const result = renderPartial({ isOrchestrator: true });
+    assert.ok(
+      result.includes('files_modified') && result.includes('work_completed'),
+      'Coding agents row must list files_modified and work_completed'
+    );
+  });
+
+  it('should list gate agent extraction fields: all_checks_passed and blocking_issues', () => {
+    const result = renderPartial({ isOrchestrator: true });
+    assert.ok(
+      result.includes('all_checks_passed') && result.includes('blocking_issues'),
+      'Gate agents row must list all_checks_passed and blocking_issues'
+    );
+  });
+
+  it('should instruct to discard all other fields after extraction', () => {
+    const result = renderPartial({ isOrchestrator: true });
+    assert.ok(
+      result.includes('Discard all other fields immediately after extraction'),
+      'Must contain explicit discard instruction'
+    );
+  });
+
+  it('should mention planner uses compressed response directly', () => {
+    const result = renderPartial({ isOrchestrator: true });
+    assert.ok(
+      result.includes('workflow-planner') || result.includes('Planner'),
+      'Must reference planner/workflow-planner'
+    );
+  });
+
+  it('should include parallel gate handling guidance', () => {
+    const result = renderPartial({ isOrchestrator: true });
+    assert.ok(
+      result.includes('blocking_issues') && result.includes('failed'),
+      'Must include parallel gate handling with blocking_issues retention on failure'
+    );
+  });
+
+  it('should preserve existing isReviewAgent=false behavior alongside isOrchestrator', () => {
+    const result = renderPartial({ isReviewAgent: false, isOrchestrator: true });
+    assert.ok(
+      result.includes('You may write code files'),
+      'isReviewAgent=false branch should still render'
+    );
+    assert.ok(
+      result.includes('Orchestrator Extraction Rules'),
+      'isOrchestrator section should also render'
+    );
+  });
+
+  it('should preserve existing isReviewAgent=true behavior alongside isOrchestrator', () => {
+    const result = renderPartial({ isReviewAgent: true, isOrchestrator: true });
+    assert.ok(
+      result.includes('Do not write files to disk'),
+      'isReviewAgent=true branch should still render'
+    );
+    assert.ok(
+      result.includes('Orchestrator Extraction Rules'),
+      'isOrchestrator section should also render'
+    );
+  });
+});
