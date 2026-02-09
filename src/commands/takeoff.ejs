@@ -137,13 +137,18 @@ Execute ALL work units from the plan. Do not present work to the user or proceed
 For each work unit in the plan, repeat this cycle:
 
 1. Update TodoWrite to mark the unit as in_progress
-2. Deploy the specified coding agent using the deployment template below
-3. **Transition to ON APPROACH**: When the coding agent completes, the work unit enters the ON APPROACH state (coding done, quality gates not yet started). This is a transient state before gates begin.
-4. Run quality gates on the completed work (see Dynamic Gate Selection and Quality Gate Protocol below)
-5. **Render Gate Panel**: After all gates for the current unit resolve, render a Gate Panel (from Visual Vocabulary) showing each gate agent with its gate status -- `PASS` for passed, `FAIL` for failed. Include key metrics inline (e.g., test count, coverage percentage, issue count).
-6. Update TodoWrite to mark the unit as completed
-7. If this is a pre-planned child issue, use CLOSE_ISSUE to close it in the task system
-8. **Announce progress and loop back**: "Completed [X] of [N] work units. Next: [unit name]." -- then return to step 1 for the next unit
+2. **Render TAKING OFF announcement**: Before deploying the agent, render a single-line gauge announcement to signal that execution is about to begin for this unit:
+   ```
+     ███░░░░░░░  TAKING OFF  Step X.Y: [unit name]
+   ```
+   This is distinct from the Preflight Card (which uses `TAXIING` to show work is queued). The TAKING OFF gauge fires once per work unit, immediately before the agent is deployed, giving the developer a clear signal that this specific unit is now launching.
+3. Deploy the specified coding agent using the deployment template below
+4. **Transition to ON APPROACH**: When the coding agent completes, the work unit enters the ON APPROACH state (coding done, quality gates not yet started). This is a transient state before gates begin.
+5. Run quality gates on the completed work (see Dynamic Gate Selection and Quality Gate Protocol below)
+6. **Render Gate Panel**: After all gates for the current unit resolve, render a Gate Panel (from Visual Vocabulary) showing each gate agent with its gate status -- `PASS` for passed, `FAIL` for failed. Include key metrics inline (e.g., test count, coverage percentage, issue count).
+7. Update TodoWrite to mark the unit as completed
+8. If this is a pre-planned child issue, use CLOSE_ISSUE to close it in the task system
+9. **Announce progress and loop back**: "Completed [X] of [N] work units. Next: [unit name]." -- then return to step 1 for the next unit
 
 This cycle repeats for every work unit. The Completion section is only reachable after the final unit passes its gates.
 
@@ -308,13 +313,14 @@ After a successful merge, invoke the `worktree-manager` skill to safely remove t
 
 **Per-unit loop (repeat for EACH work unit):**
 
->  **6. Deploy coding agent** for the current work unit
->  **7. Classify files and select gate profile** (Dynamic Gate Selection)
->  **8. Run quality gates** through the profile sequence
->  **9. Auto-iterate** on gate failures (differential retry limits)
+>  **6. Render TAKING OFF announcement** for the current work unit
+>  **7. Deploy coding agent** for the current work unit
+>  **8. Classify files and select gate profile** (Dynamic Gate Selection)
+>  **9. Run quality gates** through the profile sequence
+>  **10. Auto-iterate** on gate failures (differential retry limits)
 >  **--> Check TodoWrite: pending units remain? Loop to step 6**
 
-10. Extract learning patterns from multi-iteration gates
-11. Present completed work to user
-12. Merge on explicit user approval
-13. Clean up worktrees
+11. Extract learning patterns from multi-iteration gates
+12. Present completed work to user
+13. Merge on explicit user approval
+14. Clean up worktrees
