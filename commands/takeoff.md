@@ -86,18 +86,20 @@ Use these operations to interact with whatever task system is detected. The LLM 
 |-----------|---------|
 | FETCH_ISSUE | Retrieve a single issue by ID (title, description, status, acceptance criteria) |
 | LIST_CHILDREN | List direct child issues of a parent (one level deep) |
-| CREATE_ISSUE | Create a new issue with title, description, and optional parent |
+| CREATE_ISSUE | Create a new issue with title, description, and optional `parent` (the `parent` parameter is the sole mechanism for establishing parent-child hierarchy) |
 | UPDATE_ISSUE | Modify an existing issue (status, description, assignee) |
-| ADD_DEPENDENCY | Create a dependency relationship between two issues |
+| ADD_DEPENDENCY | Create a `blocks` or `related` dependency between two sibling issues (never for hierarchy) |
 | QUERY_DEPENDENCY_TREE | Recursively retrieve the full dependency graph from a root issue |
 | CLOSE_ISSUE | Mark an issue as completed/closed |
 
 ### Dependency Type Semantics
 
-ADD_DEPENDENCY creates execution constraints and informational links between issues. It does NOT establish hierarchy -- use CREATE_ISSUE with the `parent` parameter for parent-child relationships.
+ADD_DEPENDENCY accepts exactly two dependency types: `blocks` and `related`. It creates execution constraints and informational links between sibling issues. It does NOT establish hierarchy -- use CREATE_ISSUE with the `parent` parameter for parent-child relationships.
 
 - **blocks**: Sequential constraint (task A must complete before task B can start)
 - **related**: Informational link (tasks share context but no execution dependency)
+
+**Warning:** `parent-child` is NOT a valid dependency type. Never pass `parent-child` to ADD_DEPENDENCY. Hierarchy is established exclusively through the `parent` parameter on CREATE_ISSUE. ADD_DEPENDENCY only connects sibling issues to each other using `blocks` or `related`.
 
 
 ## Visual Vocabulary
