@@ -85,12 +85,16 @@ describe('visual-vocabulary compilation', () => {
 
 describe('visual-vocabulary gauge states', () => {
   for (const context of VALID_CONTEXTS) {
-    it(`should include all five gauge states for context: ${context}`, () => {
+    it(`should include all six gauge states for context: ${context}`, () => {
       const result = compileWithContext(context);
       assert.ok(result.includes('LANDED'), `Missing LANDED state in ${context}`);
       assert.ok(
         result.includes('IN FLIGHT'),
         `Missing IN FLIGHT state in ${context}`
+      );
+      assert.ok(
+        result.includes('TAKING OFF'),
+        `Missing TAKING OFF state in ${context}`
       );
       assert.ok(
         result.includes('ON APPROACH'),
@@ -110,11 +114,15 @@ describe('visual-vocabulary gauge states', () => {
 // ===========================================================================
 
 describe('visual-vocabulary ON APPROACH gauge details', () => {
-  it('should describe five semantic states (not four)', () => {
+  it('should describe six semantic states (not five or four)', () => {
     const result = compileWithContext('takeoff');
     assert.ok(
-      result.includes('Five semantic states'),
-      'Introductory text should say "Five semantic states"'
+      result.includes('Six semantic states'),
+      'Introductory text should say "Six semantic states"'
+    );
+    assert.ok(
+      !result.includes('Five semantic states'),
+      'Should no longer say "Five semantic states"'
     );
     assert.ok(
       !result.includes('Four semantic states'),
@@ -160,30 +168,119 @@ describe('visual-vocabulary ON APPROACH gauge details', () => {
 });
 
 // ===========================================================================
+// TAKING OFF gauge state specifics
+// ===========================================================================
+
+describe('visual-vocabulary TAKING OFF gauge details', () => {
+  it('should show TAKING OFF gauge bar (3 filled, 7 empty) in non-functional contexts', () => {
+    const result = compileWithContext('takeoff');
+    assert.ok(
+      result.includes('███░░░░░░░'),
+      'TAKING OFF gauge bar should be 3 filled + 7 empty blocks'
+    );
+  });
+
+  it('should include TAKING OFF gloss in non-functional contexts', () => {
+    const result = compileWithContext('takeoff');
+    // The gloss should describe pre-execution state
+    assert.ok(
+      result.includes('TAKING OFF'),
+      'TAKING OFF label should be present'
+    );
+    // Find the line with TAKING OFF and verify it has a gloss
+    const lines = result.split('\n');
+    const takingOffLine = lines.find(
+      (l) => l.includes('TAKING OFF') && l.includes('███░░░░░░░')
+    );
+    assert.ok(
+      takingOffLine,
+      'Should have a line with both TAKING OFF label and gauge bar'
+    );
+  });
+
+  it('should place TAKING OFF between IN FLIGHT and TAXIING in gauge definitions', () => {
+    const result = compileWithContext('takeoff');
+    const inFlightIndex = result.indexOf('IN FLIGHT');
+    const takingOffIndex = result.indexOf('TAKING OFF');
+    const taxiingIndex = result.indexOf('TAXIING');
+
+    assert.ok(inFlightIndex >= 0, 'IN FLIGHT should be present');
+    assert.ok(takingOffIndex >= 0, 'TAKING OFF should be present');
+    assert.ok(taxiingIndex >= 0, 'TAXIING should be present');
+
+    assert.ok(
+      inFlightIndex < takingOffIndex,
+      'IN FLIGHT should appear before TAKING OFF in gauge definitions'
+    );
+    assert.ok(
+      takingOffIndex < taxiingIndex,
+      'TAKING OFF should appear before TAXIING in gauge definitions'
+    );
+  });
+
+  it('should show plain-text TAKING OFF label in functional context', () => {
+    const result = compileWithContext('functional');
+    assert.ok(
+      result.includes('TAKING OFF'),
+      'functional context should include TAKING OFF label'
+    );
+  });
+
+  it('should place TAKING OFF between IN FLIGHT and TAXIING in functional context', () => {
+    const result = compileWithContext('functional');
+    const inFlightIndex = result.indexOf('IN FLIGHT');
+    const takingOffIndex = result.indexOf('TAKING OFF');
+    const taxiingIndex = result.indexOf('TAXIING');
+
+    assert.ok(inFlightIndex >= 0, 'IN FLIGHT should be present in functional');
+    assert.ok(takingOffIndex >= 0, 'TAKING OFF should be present in functional');
+    assert.ok(taxiingIndex >= 0, 'TAXIING should be present in functional');
+
+    assert.ok(
+      inFlightIndex < takingOffIndex,
+      'IN FLIGHT should appear before TAKING OFF in functional context'
+    );
+    assert.ok(
+      takingOffIndex < taxiingIndex,
+      'TAKING OFF should appear before TAXIING in functional context'
+    );
+  });
+
+  it('should NOT include gauge bars in functional context TAKING OFF entry', () => {
+    const result = compileWithContext('functional');
+    assert.ok(
+      !result.includes('███░░░░░░░'),
+      'functional context should not contain TAKING OFF gauge bar'
+    );
+  });
+});
+
+// ===========================================================================
 // Fleet dashboard sort order with ON APPROACH
 // ===========================================================================
 
 describe('visual-vocabulary fleet dashboard sort order', () => {
-  it('should sort ON APPROACH between IN FLIGHT and TAXIING in fleet dashboard', () => {
+  it('should include TAKING OFF in fleet dashboard sort order between IN FLIGHT and ON APPROACH', () => {
     const result = compileWithContext('status-worktrees');
     const faultIndex = result.indexOf('FAULT');
     const inFlightIndex = result.indexOf('IN FLIGHT');
+    const takingOffIndex = result.indexOf('TAKING OFF');
     const onApproachIndex = result.indexOf('ON APPROACH');
     const taxiingIndex = result.indexOf('TAXIING');
     const landedIndex = result.indexOf('LANDED');
 
     assert.ok(faultIndex >= 0, 'FAULT should be present');
     assert.ok(inFlightIndex >= 0, 'IN FLIGHT should be present');
+    assert.ok(takingOffIndex >= 0, 'TAKING OFF should be present');
     assert.ok(onApproachIndex >= 0, 'ON APPROACH should be present');
     assert.ok(taxiingIndex >= 0, 'TAXIING should be present');
     assert.ok(landedIndex >= 0, 'LANDED should be present');
 
-    // In fleet dashboard, the example rows should appear in sort order:
-    // FAULT first, then IN FLIGHT, then ON APPROACH, then TAXIING, then LANDED
-    // We check fleet dashboard section specifically by looking at the sort rule text
+    // In fleet dashboard, the sort rule text should include TAKING OFF
+    // Sort: FAULT first, then IN FLIGHT, then TAKING OFF, then ON APPROACH, then TAXIING, then LANDED
     assert.ok(
-      result.includes('FAULT first, then IN FLIGHT, then ON APPROACH, then TAXIING, then LANDED'),
-      'Sort order rule should list: FAULT first, then IN FLIGHT, then ON APPROACH, then TAXIING, then LANDED'
+      result.includes('FAULT first, then IN FLIGHT, then TAKING OFF, then ON APPROACH, then TAXIING, then LANDED'),
+      'Sort order rule should list: FAULT first, then IN FLIGHT, then TAKING OFF, then ON APPROACH, then TAXIING, then LANDED'
     );
   });
 });

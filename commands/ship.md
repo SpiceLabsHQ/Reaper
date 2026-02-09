@@ -14,12 +14,13 @@ description: Fast-path from worktree to PR — commit, push, open.
 
 ### Gauge States
 
-Five semantic states expressed as fixed-width 10-block bars. Use these consistently across all commands to communicate work status.
+Six semantic states expressed as fixed-width 10-block bars. Use these consistently across all commands to communicate work status.
 
 ```
   ██████████  LANDED       complete, healthy
   ████████░░  ON APPROACH  coding done, quality gates running
   ██████░░░░  IN FLIGHT    work in progress
+  ███░░░░░░░  TAKING OFF   deploying, about to execute
   ░░░░░░░░░░  TAXIING     waiting, not started
   ░░░░!!░░░░  FAULT        failed, needs attention
 ```

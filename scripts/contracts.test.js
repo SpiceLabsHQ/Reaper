@@ -770,14 +770,14 @@ registerCommandSemanticSuite('start');
 
 /**
  * Command files that include the visual-vocabulary partial.
- * Each must contain the five gauge state labels in their generated output.
+ * Each must contain the six gauge state labels in their generated output.
  */
 const VISUAL_VOCAB_COMMANDS = ['takeoff', 'ship', 'status-worktrees', 'squadron'];
 
 /**
- * The five canonical gauge state labels from the visual-vocabulary partial.
+ * The six canonical gauge state labels from the visual-vocabulary partial.
  */
-const GAUGE_STATES = ['LANDED', 'ON APPROACH', 'IN FLIGHT', 'TAXIING', 'FAULT'];
+const GAUGE_STATES = ['LANDED', 'ON APPROACH', 'IN FLIGHT', 'TAKING OFF', 'TAXIING', 'FAULT'];
 
 describe('Contract: command files contain visual vocabulary gauge states', () => {
   assert.ok(

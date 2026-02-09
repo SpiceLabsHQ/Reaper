@@ -19,12 +19,13 @@ Check the status of git worktrees and parallel development progress
 
 ### Gauge States
 
-Five semantic states expressed as fixed-width 10-block bars. Use these consistently across all commands to communicate work status.
+Six semantic states expressed as fixed-width 10-block bars. Use these consistently across all commands to communicate work status.
 
 ```
   ██████████  LANDED       complete, healthy
   ████████░░  ON APPROACH  coding done, quality gates running
   ██████░░░░  IN FLIGHT    work in progress
+  ███░░░░░░░  TAKING OFF   deploying, about to execute
   ░░░░░░░░░░  TAXIING     waiting, not started
   ░░░░!!░░░░  FAULT        failed, needs attention
 ```
@@ -55,6 +56,7 @@ Render as a multi-row status overview. One row per worktree.
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   trees/TASK-004-search     ░░░░!!░░░░  FAULT
   trees/TASK-002-billing    ██████░░░░  IN FLIGHT
+  trees/TASK-006-deploy     ███░░░░░░░  TAKING OFF
   trees/TASK-005-payments   ████████░░  ON APPROACH
   trees/TASK-003-notifs     ░░░░░░░░░░  TAXIING
   trees/TASK-001-auth       ██████████  LANDED
@@ -62,7 +64,7 @@ Render as a multi-row status overview. One row per worktree.
 
 Fleet dashboard rules:
 - One row per worktree. Path left-aligned, gauge bar and state right.
-- Sort: FAULT first, then IN FLIGHT, then ON APPROACH, then TAXIING, then LANDED.
+- Sort: FAULT first, then IN FLIGHT, then TAKING OFF, then ON APPROACH, then TAXIING, then LANDED.
 - If no worktrees exist, show a single line: `No active worktrees.`
 
 
