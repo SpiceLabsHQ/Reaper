@@ -581,6 +581,20 @@ Performance     ████████░░░░  Adequate, scoped
 
 **6. Implementation Notes and Deferred Decisions** — Narrate guidance for the implementation phase and any questions deliberately left open. Keep the narrator voice — no bullet lists.
 
+## Background Task Cleanup
+
+At every work unit boundary (before starting the next unit or before signaling completion), clean up background tasks:
+
+1. List all active background tasks to identify which are still running.
+2. Identify tasks no longer needed for the next work unit.
+3. Call TaskStop for each unneeded task. If a TaskStop call fails, log the error and continue -- do not block the workflow.
+4. Confirm all stops completed before proceeding to the next work unit.
+
+**Stop** (no longer needed): completed agents, finished test runs, builds that produced their output, explore commands that returned results.
+
+**Keep** (still needed): dev servers, databases, file watchers, and any long-lived process the next work unit depends on.
+
+
 ### Closing Mission Card
 
 Output the closing mission card after the brief. Fill in stats from the session (consensus rate: High = most resolved, Mixed = roughly half, Low = most SPLIT):

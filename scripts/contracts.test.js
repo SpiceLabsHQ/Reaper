@@ -671,6 +671,7 @@ const COMMAND_SEMANTIC_CONTRACTS = {
     sections: [
       { pattern: /Scope Boundary/i, label: 'scope boundary section' },
       { pattern: /Error Handling/i, label: 'error handling section' },
+      { pattern: /Background Task Cleanup/i, label: 'background task cleanup section' },
     ],
   },
   takeoff: {
@@ -679,6 +680,7 @@ const COMMAND_SEMANTIC_CONTRACTS = {
     sections: [
       { pattern: /Orchestrator Role/i, label: 'orchestrator role section' },
       { pattern: /Quality Gate/i, label: 'quality gate section' },
+      { pattern: /Background Task Cleanup/i, label: 'background task cleanup section' },
     ],
   },
   'status-worktrees': {
@@ -695,6 +697,7 @@ const COMMAND_SEMANTIC_CONTRACTS = {
     sections: [
       { pattern: /Plan File/i, label: 'plan file section' },
       { pattern: /Scope Boundary/i, label: 'scope boundary section' },
+      { pattern: /Background Task Cleanup/i, label: 'background task cleanup section' },
     ],
   },
   squadron: {
@@ -703,6 +706,7 @@ const COMMAND_SEMANTIC_CONTRACTS = {
     sections: [
       { pattern: /PHASE 1/i, label: 'phase 1 section' },
       { pattern: /Error Handling/i, label: 'error handling section' },
+      { pattern: /Background Task Cleanup/i, label: 'background task cleanup section' },
     ],
   },
   'claude-sync': {
