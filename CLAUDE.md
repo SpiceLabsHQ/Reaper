@@ -288,6 +288,7 @@ Common sections are extracted into `src/partials/*.ejs`:
 - `directory-exclusions.ejs` - Standard directory exclusion patterns
 - `file-conflict-detection.ejs` - Parallel work file conflict detection
 - `no-commits-policy.ejs` - Coding agents never commit policy
+- `work-unit-cleanup.ejs` - Background task cleanup at work unit boundaries for orchestrator commands
 
 Use EJS includes: `<%- include('partials/output-requirements', { isReviewAgent: true }) %>`. Parameters vary by partial — check the partial source for available options.
 
