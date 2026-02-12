@@ -6,19 +6,9 @@ set -euo pipefail
 #
 # Usage: worktree-status.sh <worktree-path>
 
-# --- Color Output ---
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Color
-
-# --- Helper Functions ---
-info() { echo -e "${BLUE}ℹ${NC} $*"; }
-success() { echo -e "${GREEN}✓${NC} $*"; }
-warn() { echo -e "${YELLOW}⚠${NC} $*"; }
-error() { echo -e "${RED}✗${NC} $*"; }
+# --- Visual Helpers ---
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+. "$SCRIPT_DIR/visual-helpers.sh"
 
 usage() {
     cat << EOF
@@ -64,14 +54,14 @@ main() {
                 usage
                 ;;
             -*)
-                error "Unknown option: $1"
+                log_fail "Unknown option: $1"
                 exit 1
                 ;;
             *)
                 if [[ -z "$worktree_path" ]]; then
                     worktree_path="$1"
                 else
-                    error "Too many arguments"
+                    log_fail "Too many arguments"
                     exit 1
                 fi
                 shift
@@ -80,7 +70,7 @@ main() {
     done
 
     if [[ -z "$worktree_path" ]]; then
-        error "Worktree path is required"
+        log_fail "Worktree path is required"
         echo "Use --help for usage information"
         exit 1
     fi
@@ -231,106 +221,107 @@ EOF
 
     # Human-readable output
     echo ""
-    echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
-    echo -e "${CYAN}Worktree Status${NC}"
-    echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
-    echo ""
+    render_card_header "STATUS"
 
     echo "  Path: $worktree_path"
     echo ""
 
     # Existence check
     if [[ "$exists" != "true" ]]; then
-        error "Worktree directory does not exist"
+        log_fail "Worktree directory does not exist"
         exit 1
     fi
-    success "Directory exists"
+    log_ok "Directory exists"
 
     # Valid worktree check
     if [[ "$is_valid_worktree" != "true" ]]; then
-        error "Not a valid git worktree"
+        log_fail "Not a valid git worktree"
         exit 1
     fi
-    success "Valid git worktree"
+    log_ok "Valid git worktree"
 
     echo ""
-    echo -e "${BLUE}Git Status:${NC}"
+    log_step "Git Status:"
     echo "  Branch: $branch"
     echo "  HEAD:   $head"
     echo "  Base:   $base_branch"
 
     # Changes
     if [[ "$has_changes" == "true" ]]; then
-        warn "Uncommitted changes: $change_count file(s)"
+        log_warn "Uncommitted changes: $change_count file(s)"
         git -C "$worktree_path" status --short | head -5 | sed 's/^/    /'
         if [[ "$change_count" -gt 5 ]]; then
             echo "    ... and $((change_count - 5)) more"
         fi
     else
-        success "No uncommitted changes"
+        log_ok "No uncommitted changes"
     fi
 
     # Ahead/behind
     if [[ "$ahead_count" -gt 0 || "$behind_count" -gt 0 ]]; then
         if [[ "$ahead_count" -gt 0 ]]; then
-            info "Ahead of remote: $ahead_count commit(s)"
+            log_step "Ahead of remote: $ahead_count commit(s)"
         fi
         if [[ "$behind_count" -gt 0 ]]; then
-            warn "Behind remote: $behind_count commit(s)"
+            log_warn "Behind remote: $behind_count commit(s)"
         fi
     else
-        success "Up to date with remote"
+        log_ok "Up to date with remote"
     fi
 
     # Unmerged commits
     echo ""
     if [[ "$unmerged_count" -gt 0 ]]; then
-        warn "Unmerged commits: $unmerged_count (vs $base_branch)"
+        log_warn "Unmerged commits: $unmerged_count (vs $base_branch)"
         echo "  Recent unmerged:"
         git log "${base_branch}..${branch}" --oneline 2>/dev/null | head -3 | sed 's/^/    /'
     else
-        success "All commits merged to $base_branch"
+        log_ok "All commits merged to $base_branch"
     fi
 
     # Last commit
     echo ""
-    echo -e "${BLUE}Last Commit:${NC}"
+    log_step "Last Commit:"
     echo "  Message: $last_commit"
     echo "  Date:    $last_commit_date"
     echo "  Author:  $last_commit_author"
 
     # Dependencies
     echo ""
-    echo -e "${BLUE}Dependencies:${NC}"
+    log_step "Dependencies:"
     if [[ "$deps_type" != "none" ]]; then
         echo "  Type: $deps_type"
         if [[ "$deps_installed" == "true" ]]; then
-            success "Dependencies installed"
+            log_ok "Dependencies installed"
         elif [[ "$deps_installed" == "false" ]]; then
-            warn "Dependencies not installed"
+            log_warn "Dependencies not installed"
             echo "  Run: (cd $worktree_path && npm install)"
         else
-            info "Dependency status unknown"
+            log_step "Dependency status unknown"
         fi
     else
-        info "No dependency file detected"
+        log_step "No dependency file detected"
     fi
 
-    # Summary
+    # Health summary with gauge state
     echo ""
-    echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
 
-    local issues=0
-    [[ "$has_changes" == "true" ]] && ((issues++))
-    [[ "$behind_count" -gt 0 ]] && ((issues++))
-    [[ "$deps_installed" == "false" ]] && ((issues++))
+    local warnings=0
+    local errors=0
+    [[ "$has_changes" == "true" ]] && ((warnings++))
+    [[ "$behind_count" -gt 0 ]] && ((warnings++))
+    [[ "$deps_installed" == "false" ]] && ((warnings++))
 
-    if [[ "$issues" -eq 0 ]]; then
-        echo -e "${GREEN}Worktree is healthy${NC}"
-    else
-        echo -e "${YELLOW}$issues issue(s) found${NC}"
+    local gauge_state="LANDED"
+    if [[ "$errors" -gt 0 ]]; then
+        gauge_state="FAULT"
+    elif [[ "$warnings" -gt 0 ]]; then
+        gauge_state="IN_FLIGHT"
     fi
+
+    render_gauge "$gauge_state"
     echo ""
+    render_card_footer
 
     # Cleanup hint if ready
     if [[ "$has_changes" != "true" && "$unmerged_count" -eq 0 ]]; then

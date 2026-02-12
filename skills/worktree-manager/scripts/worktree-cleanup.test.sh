@@ -377,7 +377,7 @@ test_force_emits_warning_for_locked_worktree() {
     local output exit_code=0
     output=$(bash "$CLEANUP_SCRIPT" "$worktree_path" --delete-branch --force 2>&1) || exit_code=$?
 
-    assert_contains "$output" "[WARN]" \
+    assert_contains "$output" "Worktree is locked (bypassing" \
         "--force on locked worktree should emit a warning"
 }
 

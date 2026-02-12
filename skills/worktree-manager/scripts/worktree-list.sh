@@ -6,18 +6,9 @@ set -euo pipefail
 #
 # Usage: worktree-list.sh [--json] [--verbose]
 
-# --- Color Output ---
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Color
-
-# --- Helper Functions ---
-info() { echo -e "${BLUE}ℹ${NC} $*"; }
-success() { echo -e "${GREEN}✓${NC} $*"; }
-warn() { echo -e "${YELLOW}⚠${NC} $*" >&2; }
+# --- Visual Helpers ---
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+. "$SCRIPT_DIR/visual-helpers.sh"
 
 usage() {
     cat << EOF
@@ -90,7 +81,7 @@ main() {
                 usage
                 ;;
             *)
-                warn "Unknown option: $1"
+                log_warn "Unknown option: $1"
                 exit 1
                 ;;
         esac
@@ -203,20 +194,20 @@ EOF
 
             if [[ -d "$path" ]]; then
                 if has_changes "$path"; then
-                    changes="${YELLOW}Y${NC}"
+                    changes="${__VH_YELLOW}Y${__VH_NC}"
                 fi
                 if [[ -n "$branch" && "$branch" != "(detached)" ]]; then
                     local count
                     count=$(count_unmerged "$path" "$branch")
                     if [[ "$count" -gt 0 ]]; then
-                        unmerged="${CYAN}$count${NC}"
+                        unmerged="${__VH_BLUE}$count${__VH_NC}"
                     else
                         unmerged="0"
                     fi
                 fi
             else
-                changes="${RED}?${NC}"
-                unmerged="${RED}?${NC}"
+                changes="${__VH_RED}?${__VH_NC}"
+                unmerged="${__VH_RED}?${__VH_NC}"
             fi
 
             # Truncate path for display
@@ -229,24 +220,19 @@ EOF
         done
     else
         # Verbose output
-        local index=0
         for entry in "${worktree_data[@]}"; do
             IFS='|' read -r path head branch <<< "$entry"
-            ((index++))
 
             echo ""
-            echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
-            echo -e "${CYAN}Worktree $index${NC}"
-            echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
-            echo ""
+            render_card_header "$branch"
+
             echo "  Path:   $path"
-            echo "  Branch: $branch"
             echo "  HEAD:   ${head:0:12}"
 
             if [[ -d "$path" ]]; then
                 # Changes
                 if has_changes "$path"; then
-                    echo -e "  Changes: ${YELLOW}Yes${NC}"
+                    echo -e "  Changes: ${__VH_YELLOW}Yes${__VH_NC}"
                     git -C "$path" status --short | head -5 | sed 's/^/    /'
                     local change_count
                     change_count=$(git -C "$path" status --short | wc -l | tr -d ' ')
@@ -254,7 +240,7 @@ EOF
                         echo "    ... and $((change_count - 5)) more"
                     fi
                 else
-                    echo -e "  Changes: ${GREEN}No${NC}"
+                    echo -e "  Changes: ${__VH_GREEN}No${__VH_NC}"
                 fi
 
                 # Unmerged commits
@@ -262,9 +248,9 @@ EOF
                     local unmerged
                     unmerged=$(count_unmerged "$path" "$branch")
                     if [[ "$unmerged" -gt 0 ]]; then
-                        echo -e "  Unmerged: ${CYAN}$unmerged commits${NC}"
+                        echo -e "  Unmerged: ${__VH_YELLOW}$unmerged commits${__VH_NC}"
                     else
-                        echo -e "  Unmerged: ${GREEN}0${NC} (all merged)"
+                        echo -e "  Unmerged: ${__VH_GREEN}0${__VH_NC} (all merged)"
                     fi
                 fi
 
@@ -272,14 +258,14 @@ EOF
                 echo "  Last commit: $(get_last_commit "$path")"
                 echo "  Commit date: $(get_last_commit_date "$path")"
             else
-                echo -e "  Status: ${RED}Directory not found${NC}"
+                log_fail "Directory not found"
             fi
+
+            render_card_footer
         done
 
         echo ""
-        echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
-        echo ""
-        echo "Total worktrees: ${#worktree_data[@]}"
+        log_step "${#worktree_data[@]} worktrees"
     fi
 }
 
