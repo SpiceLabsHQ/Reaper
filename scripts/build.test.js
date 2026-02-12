@@ -1933,3 +1933,98 @@ describe('output-requirements partial: orchestrator extraction rules', () => {
     );
   });
 });
+
+// ===========================================================================
+// work-unit-cleanup partial: background task cleanup instructions
+// ===========================================================================
+
+describe('work-unit-cleanup partial: background task cleanup', () => {
+  const SRC_DIR = path.join(__dirname, '..', 'src');
+  const PARTIAL_PATH = path.join(SRC_DIR, 'partials', 'work-unit-cleanup.ejs');
+
+  /**
+   * Renders the work-unit-cleanup partial (no parameters needed).
+   * @returns {string} Rendered output
+   */
+  function renderPartial() {
+    config.srcDir = SRC_DIR;
+    const wrapper = `<%- include('partials/work-unit-cleanup') %>`;
+    return compileTemplate(wrapper, {}, PARTIAL_PATH);
+  }
+
+  it('should render without errors', () => {
+    const result = renderPartial();
+    assert.ok(
+      result.length > 0,
+      'Partial should produce non-empty output'
+    );
+  });
+
+  it('should contain "## Background Task Cleanup" heading', () => {
+    const result = renderPartial();
+    assert.ok(
+      result.includes('## Background Task Cleanup'),
+      'Must contain ## Background Task Cleanup heading for hasSection() contract testability'
+    );
+  });
+
+  it('should instruct enumerating active background tasks', () => {
+    const result = renderPartial();
+    assert.ok(
+      /enumerate|list|identify.*active.*background/i.test(result) ||
+        /active.*background.*task/i.test(result),
+      'Must instruct enumerating active background tasks'
+    );
+  });
+
+  it('should instruct calling TaskStop for unneeded tasks', () => {
+    const result = renderPartial();
+    assert.ok(
+      result.includes('TaskStop'),
+      'Must reference TaskStop for stopping unneeded background tasks'
+    );
+  });
+
+  it('should instruct confirming all stops before proceeding', () => {
+    const result = renderPartial();
+    assert.ok(
+      /confirm.*stop.*before.*proceed/i.test(result) ||
+        /verify.*stop.*before.*proceed/i.test(result) ||
+        /all.*stop.*before.*continu/i.test(result),
+      'Must instruct confirming all stops before proceeding to the next work unit'
+    );
+  });
+
+  it('should include examples of what to stop', () => {
+    const result = renderPartial();
+    assert.ok(
+      result.includes('completed agents') || result.includes('finished test runs'),
+      'Must give examples of tasks to stop (completed agents, finished test runs)'
+    );
+    assert.ok(
+      result.includes('builds') || result.includes('explore'),
+      'Must give examples of tasks to stop (builds, explore commands)'
+    );
+  });
+
+  it('should include examples of what to keep running', () => {
+    const result = renderPartial();
+    assert.ok(
+      result.includes('dev server') || result.includes('database'),
+      'Must give examples of tasks to keep (dev servers, databases)'
+    );
+    assert.ok(
+      result.includes('file watcher') || result.includes('watch'),
+      'Must give examples of tasks to keep (file watchers)'
+    );
+  });
+
+  it('should include error tolerance for TaskStop failures', () => {
+    const result = renderPartial();
+    assert.ok(
+      /log.*continue/i.test(result) || /fail.*not.*block/i.test(result) ||
+        /error.*continue/i.test(result) || /fail.*continue/i.test(result),
+      'Must include error tolerance: TaskStop failures should log and continue, not block'
+    );
+  });
+});
