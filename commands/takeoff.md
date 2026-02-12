@@ -73,10 +73,50 @@ Do not read source code files to understand implementation details -- that is th
 
 ### Detection
 
-Detect the active task system before performing any operations:
-1. Check for `.beads/` directory in project root (Beads)
-2. Check for `acli` CLI availability (Jira)
-3. If neither is detected, fall back to markdown-only mode (no external task system)
+Detect the active task system using a 3-layer chain. Each layer adds confidence. Stop as soon as a system is confirmed with high confidence.
+
+**Output variable:** `TASK_SYSTEM` — one of: `Beads`, `Jira`, `GitHub`, `markdown_only`
+
+#### Layer 1: Commit History Pattern Scan (zero permission prompts)
+
+Run `git log --format="%B" -30` and scan commit bodies for issue reference patterns:
+
+| System | Pattern | Examples |
+|--------|---------|----------|
+| Beads | `(Ref|Closes|Resolves):?\s+[a-z][a-z0-9]*-[a-f0-9]{2,}` | `Ref: reaper-a3f`, `Closes myapp-bc12` |
+| Jira | `(Ref|Fixes|Closes|Resolves):?\s+[A-Z]{2,}-\d+` | `Ref: PROJ-123`, `Fixes ENG-456` |
+| GitHub Issues | `(Fixes|Closes|Resolves):?\s+#\d+` | `Fixes #456`, `Closes #42` |
+
+**Confidence threshold:** 3+ matches of the same system type = strong signal. Only identify the system shape (do NOT try to detect or store the specific Beads prefix).
+
+**Mixed/ambiguous rule:** If multiple systems each reach 3+ matches, the system with the highest count is the primary candidate. Equal counts are ambiguous -- proceed to Layer 2 for disambiguation.
+
+**Disambiguation note:** Beads and Jira are separated at the pattern level (Beads requires a lowercase prefix, Jira requires uppercase). However, Jira (`PROJ-123`) and Linear (`ENG-123`) share the same pattern. GitHub Issues (`#123`) and GitLab Issues (`#123`) also overlap. These remaining ambiguities are resolved in Layer 2.
+
+#### Layer 2: Filesystem & Environment (zero permission prompts)
+
+Use these checks to confirm or disambiguate Layer 1 results:
+
+- **Beads**: Check `$BEADS_DIR` env var first. If set AND the directory exists, this is authoritative. If set but the directory does not exist, treat as unset and fall through. If unset, check `.beads/` in project root. Either confirms Beads.
+- **GitHub vs GitLab**: Parse `git remote get-url origin` — `github.com` in the URL confirms GitHub Issues; `gitlab.com` confirms GitLab Issues.
+- **Jira vs Linear**: Check for `.linear/` directory or similar config markers in the project root.
+
+#### Layer 3: CLI Confirmation (may trigger permission prompts — last resort only)
+
+Only invoke when Layers 1-2 are ambiguous or produce no signal:
+
+- **Beads**: `bd status` — exit 0 = confirmed. Non-zero = not a Beads project.
+- **GitHub**: `gh issue list --limit 1` — exit 0 with output = confirmed. Exit 0 with no output or non-zero = GitHub Issues not enabled.
+- **Jira**: `acli` — exit 0 = confirmed (CLI available). Non-zero or command not found = Jira not available.
+
+#### Fallback Chain
+
+```
+Commit patterns found (3+ matches of one system)?
+  |-- Yes --> Confirm with Layer 2 --> DONE (high confidence)
+  |-- Mixed/ambiguous --> Layer 2 disambiguation --> Layer 3 if still unclear
+  +-- No patterns --> Layer 2 --> Layer 3 --> markdown_only
+```
 
 ### Abstract Operations
 
