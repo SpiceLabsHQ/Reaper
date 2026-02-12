@@ -46,7 +46,6 @@ After the coding agent applies fixes, only the failed gate re-runs -- not the en
 | reaper:test-runner | 3 | Most likely to need iteration (test failures, coverage gaps) |
 | reaper:code-reviewer | 2 | Review feedback is typically addressed in fewer cycles |
 | reaper:security-auditor | 1 | Security issues require careful one-pass remediation |
-| reaper:validation-runner | 1 | Validation either passes or has fundamental issues |
 | reaper:ai-prompt-engineer | 1 | Prompt quality review is typically one-pass |
 | reaper:deployment-engineer | 1 | Pipeline validation is typically one-pass |
 
@@ -59,18 +58,18 @@ Not all work needs the same gates. Reaper auto-detects the work type from file p
 | Work Type | Gate 1 (blocking) | Gate 2 (parallel) |
 |-----------|-------------------|-------------------|
 | Application code | test-runner | code-reviewer + security-auditor |
-| Infrastructure (Terraform, K8s, Docker) | validation-runner | security-auditor |
-| Database migrations | validation-runner | code-reviewer |
-| API specifications (OpenAPI, GraphQL) | validation-runner | code-reviewer |
+| Infrastructure (Terraform, K8s, Docker) | -- | security-auditor |
+| Database migrations | -- | code-reviewer |
+| API specifications (OpenAPI, GraphQL) | -- | code-reviewer |
 | Agent prompts | -- | ai-prompt-engineer + code-reviewer |
 | Documentation | -- | code-reviewer |
-| CI/CD pipelines | validation-runner | security-auditor + deployment-engineer |
+| CI/CD pipelines | -- | security-auditor + deployment-engineer |
 | Test code | test-runner | code-reviewer |
-| Configuration files | validation-runner | security-auditor |
+| Configuration files | -- | security-auditor |
 
 Work types with no Gate 1 skip directly to Gate 2.
 
-When a changeset spans multiple work types, Reaper computes the union of all matching profiles. If any profile includes a Gate 1, it remains blocking. Gate 2 agents are deduplicated across profiles. For example, a changeset touching both `src/auth.ts` and `terraform/main.tf` produces Gate 1: test-runner + validation-runner (both blocking), Gate 2: code-reviewer + security-auditor.
+When a changeset spans multiple work types, Reaper computes the union of all matching profiles. If any profile includes a Gate 1, it remains blocking. Gate 2 agents are deduplicated across profiles. For example, a changeset touching both `src/auth.ts` and `terraform/main.tf` produces Gate 1: test-runner (blocking), Gate 2: code-reviewer + security-auditor.
 
 The default profile is `application_code`. If no file pattern matches a known work type, the full test-runner through code-reviewer + security-auditor pipeline applies.
 

@@ -97,7 +97,7 @@ Templates use these EJS variables passed during compilation:
 ```javascript
 const AGENT_TYPES = {
   coding: ['bug-fixer', 'feature-developer', 'refactoring-dev', 'integration-engineer'],
-  review: ['code-reviewer', 'security-auditor', 'test-runner', 'validation-runner'],
+  review: ['code-reviewer', 'security-auditor', 'test-runner'],
   planning: [
     'workflow-planner', 'api-designer', 'database-architect', 'cloud-architect',
     'event-architect', 'observability-architect', 'frontend-architect',
