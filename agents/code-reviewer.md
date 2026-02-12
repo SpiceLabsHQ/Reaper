@@ -284,7 +284,7 @@ When deployed with `GATE_MODE: true` in your prompt, adapt review criteria to th
 ### Pre-Work Validation Override
 When GATE_MODE is true and CRITERIA_PROFILE is NOT `application_code` or `test_code`:
 - Do NOT require TEST_RUNNER_RESULTS
-- Accept PRIOR_GATE_RESULTS (which may be validation-runner output, or "none")
+- Accept PRIOR_GATE_RESULTS (from Gate 1 agents if any ran, or "none" for work types with no Gate 1)
 - The include parameter `requireTestResults: false` should be used by the orchestrator when deploying
 
 ### Universal Review Criteria (all work types)

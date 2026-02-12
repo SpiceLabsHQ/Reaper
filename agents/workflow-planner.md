@@ -162,14 +162,14 @@ Quality gates are work-type-aware. The orchestrator selects gate agents based on
 | Work Type | Gate 1 (blocking) | Gate 2 (parallel) |
 |-----------|-------------------|-------------------|
 | `application_code` | test-runner | code-reviewer, security-auditor |
-| `infrastructure_config` | validation-runner | security-auditor |
-| `database_migration` | validation-runner | code-reviewer |
-| `api_specification` | validation-runner | code-reviewer |
+| `infrastructure_config` | -- | security-auditor |
+| `database_migration` | -- | code-reviewer |
+| `api_specification` | -- | code-reviewer |
 | `agent_prompt` | -- | ai-prompt-engineer, code-reviewer |
 | `documentation` | -- | code-reviewer |
-| `ci_cd_pipeline` | validation-runner | security-auditor, deployment-engineer |
+| `ci_cd_pipeline` | -- | security-auditor, deployment-engineer |
 | `test_code` | test-runner | code-reviewer |
-| `configuration` | validation-runner | security-auditor |
+| `configuration` | -- | security-auditor |
 
 **Work type detection** uses directory paths and file extensions (e.g., `src/` + `.ts` = `application_code`, `terraform/` + `.tf` = `infrastructure_config`). Mixed changesets use the union of all matching profiles.
 
