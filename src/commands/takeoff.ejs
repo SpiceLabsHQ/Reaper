@@ -146,6 +146,7 @@ For each work unit in the plan, repeat this cycle:
 4. **Transition to ON APPROACH**: When the coding agent completes, the work unit enters the ON APPROACH state (coding done, quality gates not yet started). This is a transient state before gates begin.
 5. Run quality gates on the completed work (see Dynamic Gate Selection and Quality Gate Protocol below)
 6. **Render Gate Panel**: After all gates for the current unit resolve, render a Gate Panel (from Visual Vocabulary) showing each gate agent with its gate status -- `PASS` for passed, `FAIL` for failed. Include key metrics inline (e.g., test count, coverage percentage, issue count).
+<%- include('partials/work-unit-cleanup') %>
 7. Update TodoWrite to mark the unit as completed
 8. If this is a pre-planned child issue, use CLOSE_ISSUE to close it in the task system
 9. **Announce progress and loop back**: "Completed [X] of [N] work units. Next: [unit name]." -- then return to step 1 for the next unit
@@ -251,6 +252,8 @@ Do not read past this point without performing the verification steps below. Thi
 **Trigger condition (verified by the STOP checkpoint above):** The TaskList re-read confirmed zero pending or in_progress work unit entries. All quality gates for the final unit have passed.
 
 If you did not perform the STOP checkpoint above, go back and do it now.
+
+<%- include('partials/work-unit-cleanup') %>
 
 When these conditions are met, present a **Touchdown Card** followed by a work summary. Use the gauge vocabulary from the Visual Vocabulary section.
 

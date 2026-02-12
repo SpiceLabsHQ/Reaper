@@ -613,6 +613,20 @@ This is a planning command. Your scope ends when issues are created and verified
 
 ---
 
+## Background Task Cleanup
+
+At every work unit boundary (before starting the next unit or before signaling completion), clean up background tasks:
+
+1. List all active background tasks to identify which are still running.
+2. Identify tasks no longer needed for the next work unit.
+3. Call TaskStop for each unneeded task. If a TaskStop call fails, log the error and continue -- do not block the workflow.
+4. Confirm all stops completed before proceeding to the next work unit.
+
+**Stop** (no longer needed): completed agents, finished test runs, builds that produced their output, explore commands that returned results.
+
+**Keep** (still needed): dev servers, databases, file watchers, and any long-lived process the next work unit depends on.
+
+
 ## Phase 7: Completion
 
 All todos complete. Output confirmation and STOP.

@@ -382,6 +382,19 @@ For each work unit in the plan, repeat this cycle:
 4. **Transition to ON APPROACH**: When the coding agent completes, the work unit enters the ON APPROACH state (coding done, quality gates not yet started). This is a transient state before gates begin.
 5. Run quality gates on the completed work (see Dynamic Gate Selection and Quality Gate Protocol below)
 6. **Render Gate Panel**: After all gates for the current unit resolve, render a Gate Panel (from Visual Vocabulary) showing each gate agent with its gate status -- `PASS` for passed, `FAIL` for failed. Include key metrics inline (e.g., test count, coverage percentage, issue count).
+## Background Task Cleanup
+
+At every work unit boundary (before starting the next unit or before signaling completion), clean up background tasks:
+
+1. List all active background tasks to identify which are still running.
+2. Identify tasks no longer needed for the next work unit.
+3. Call TaskStop for each unneeded task. If a TaskStop call fails, log the error and continue -- do not block the workflow.
+4. Confirm all stops completed before proceeding to the next work unit.
+
+**Stop** (no longer needed): completed agents, finished test runs, builds that produced their output, explore commands that returned results.
+
+**Keep** (still needed): dev servers, databases, file watchers, and any long-lived process the next work unit depends on.
+
 7. Update TodoWrite to mark the unit as completed
 8. If this is a pre-planned child issue, use CLOSE_ISSUE to close it in the task system
 9. **Announce progress and loop back**: "Completed [X] of [N] work units. Next: [unit name]." -- then return to step 1 for the next unit
@@ -669,6 +682,20 @@ Do not read past this point without performing the verification steps below. Thi
 **Trigger condition (verified by the STOP checkpoint above):** The TaskList re-read confirmed zero pending or in_progress work unit entries. All quality gates for the final unit have passed.
 
 If you did not perform the STOP checkpoint above, go back and do it now.
+
+## Background Task Cleanup
+
+At every work unit boundary (before starting the next unit or before signaling completion), clean up background tasks:
+
+1. List all active background tasks to identify which are still running.
+2. Identify tasks no longer needed for the next work unit.
+3. Call TaskStop for each unneeded task. If a TaskStop call fails, log the error and continue -- do not block the workflow.
+4. Confirm all stops completed before proceeding to the next work unit.
+
+**Stop** (no longer needed): completed agents, finished test runs, builds that produced their output, explore commands that returned results.
+
+**Keep** (still needed): dev servers, databases, file watchers, and any long-lived process the next work unit depends on.
+
 
 When these conditions are met, present a **Touchdown Card** followed by a work summary. Use the gauge vocabulary from the Visual Vocabulary section.
 
