@@ -14,12 +14,9 @@
 
 set -euo pipefail
 
-# Colors for output
-RED='\033[0;31m'
-YELLOW='\033[1;33m'
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+# Source visual-helpers for card rendering, gauge, and logging
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+. "$SCRIPT_DIR/visual-helpers.sh"
 
 # Protected branches that should never be deleted
 PROTECTED_BRANCHES="develop main master"
@@ -106,22 +103,6 @@ Examples:
 EOF
 }
 
-log_info() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-}
-
-log_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
-log_warn() {
-    echo -e "${YELLOW}[WARN]${NC} $1"
-}
-
-log_error() {
-    echo -e "${RED}[ERROR]${NC} $1" >&2
-}
-
 # Validate a timeout value is a positive integer >= 10
 # Usage: validate_timeout <flag_name> <value>
 # Returns: 0 if valid, exits with code 1 if invalid
@@ -131,7 +112,7 @@ validate_timeout() {
 
     # Must be a positive integer (digits only) and at least 10
     if ! [[ "$value" =~ ^[0-9]+$ ]] || [[ "$value" -lt 10 ]]; then
-        log_error "Invalid timeout value for $flag_name: '$value' (must be a positive integer >= 10)"
+        log_fail "Invalid timeout value for $flag_name: '$value' (must be a positive integer >= 10)"
         exit 1
     fi
 }
@@ -284,7 +265,7 @@ check_worktree_lock() {
             return 0
         fi
 
-        log_error "Worktree is locked and cannot be removed"
+        log_fail "Worktree is locked and cannot be removed"
         output_lock_remediation "$abs_worktree_path" "$lock_file" "$lock_reason" "$worktree_name"
         exit 1
     fi
@@ -349,7 +330,7 @@ find_project_root() {
 
     # Resolve to absolute path
     abs_path=$(cd "$worktree_path" 2>/dev/null && pwd) || {
-        log_error "Cannot resolve worktree path: $worktree_path"
+        log_fail "Cannot resolve worktree path: $worktree_path"
         exit 1
     }
 
@@ -413,7 +394,7 @@ remote_branch_exists() {
 # Parse command line arguments
 parse_args() {
     if [[ $# -lt 1 ]]; then
-        log_error "Missing required argument: worktree-path"
+        log_fail "Missing required argument: worktree-path"
         echo ""
         usage
         exit 1
@@ -447,7 +428,7 @@ parse_args() {
                 ;;
             --timeout)
                 if [[ $# -lt 2 ]]; then
-                    log_error "--timeout requires a value (e.g., --timeout 120)"
+                    log_fail "--timeout requires a value (e.g., --timeout 120)"
                     exit 1
                 fi
                 validate_timeout "--timeout" "$2"
@@ -456,7 +437,7 @@ parse_args() {
                 ;;
             --network-timeout)
                 if [[ $# -lt 2 ]]; then
-                    log_error "--network-timeout requires a value (e.g., --network-timeout 30)"
+                    log_fail "--network-timeout requires a value (e.g., --network-timeout 30)"
                     exit 1
                 fi
                 validate_timeout "--network-timeout" "$2"
@@ -464,7 +445,7 @@ parse_args() {
                 shift 2
                 ;;
             -*)
-                log_error "Unknown option: $1"
+                log_fail "Unknown option: $1"
                 echo ""
                 usage
                 exit 1
@@ -473,7 +454,7 @@ parse_args() {
                 if [[ -z "$WORKTREE_PATH" ]]; then
                     WORKTREE_PATH="$1"
                 else
-                    log_error "Unexpected argument: $1"
+                    log_fail "Unexpected argument: $1"
                     exit 1
                 fi
                 shift
@@ -483,7 +464,7 @@ parse_args() {
 
     # Validate worktree path provided
     if [[ -z "$WORKTREE_PATH" ]]; then
-        log_error "Missing required argument: worktree-path"
+        log_fail "Missing required argument: worktree-path"
         echo ""
         usage
         exit 1
@@ -491,7 +472,7 @@ parse_args() {
 
     # Check for mutually exclusive flags
     if [[ "$KEEP_BRANCH" == true && "$DELETE_BRANCH" == true ]]; then
-        log_error "Cannot specify both --keep-branch and --delete-branch"
+        log_fail "Cannot specify both --keep-branch and --delete-branch"
         echo ""
         echo "Choose one:"
         echo "  --keep-branch    Keep the branch for future work"
@@ -506,7 +487,7 @@ main() {
 
     # Validate worktree exists
     if [[ ! -d "$WORKTREE_PATH" ]]; then
-        log_error "Worktree directory does not exist: $WORKTREE_PATH"
+        log_fail "Worktree directory does not exist: $WORKTREE_PATH"
         exit 1
     fi
 
@@ -519,7 +500,7 @@ main() {
     project_root=$(find_project_root "$WORKTREE_PATH")
 
     if [[ -z "$project_root" || ! -d "$project_root" ]]; then
-        log_error "Cannot determine project root from worktree path"
+        log_fail "Cannot determine project root from worktree path"
         exit 1
     fi
 
@@ -527,24 +508,24 @@ main() {
     local branch
     branch=$(get_worktree_branch "$abs_worktree_path")
 
-    log_info "Worktree: $abs_worktree_path"
-    log_info "Project root: $project_root"
-    [[ -n "$branch" ]] && log_info "Associated branch: $branch"
+    log_step "Worktree: $abs_worktree_path"
+    log_step "Project root: $project_root"
+    [[ -n "$branch" ]] && log_step "Associated branch: $branch"
 
     # Check if branch is protected
     local is_protected=false
     if [[ -n "$branch" ]] && is_protected_branch "$branch"; then
         is_protected=true
-        log_info "Branch '$branch' is a protected branch (will not be deleted)"
+        log_step "Branch '$branch' is a protected branch (will not be deleted)"
     fi
 
     # BRANCH DISPOSITION CHECK
     # If worktree has an associated branch that is NOT protected, require explicit disposition
     if [[ -n "$branch" && "$is_protected" == false ]]; then
         if [[ "$KEEP_BRANCH" == false && "$DELETE_BRANCH" == false ]]; then
-            log_error "Branch disposition required for non-protected branch '$branch'"
+            log_fail "Branch disposition required for non-protected branch '$branch'"
             echo ""
-            echo -e "${YELLOW}You must specify what to do with the branch:${NC}"
+            log_warn "You must specify what to do with the branch:"
             echo ""
             echo "  --keep-branch    Keep the branch for future work or review"
             echo "                   Use this if the branch hasn't been merged yet,"
@@ -565,7 +546,7 @@ main() {
     # Safety checks (unless --force)
     if [[ "$FORCE" == false ]]; then
         if has_uncommitted_changes "$abs_worktree_path"; then
-            log_error "Worktree has uncommitted changes"
+            log_fail "Worktree has uncommitted changes"
             echo ""
             echo "Options:"
             echo "  1. Commit or stash your changes first"
@@ -596,55 +577,58 @@ main() {
     # DRY RUN: Show what would happen
     if [[ "$DRY_RUN" == true ]]; then
         echo ""
-        echo -e "${BLUE}=== DRY RUN - No changes will be made ===${NC}"
+        render_card_header "DRY RUN"
+        echo "  Mode          dry-run (no changes)"
+        echo "  Worktree      $abs_worktree_path"
+        echo "  Project root  $project_root"
         echo ""
-        echo "Would perform the following actions:"
-        echo ""
+        echo "  Planned steps:"
         local step=1
-        echo "  $step. Change to project root: $project_root"
+        echo "    $step. Change to project root: $project_root"
         ((step++))
-        echo "  $step. Remove worktree: $abs_worktree_path (timeout: ${WORKTREE_REMOVE_TIMEOUT}s)"
+        echo "    $step. Remove worktree: $abs_worktree_path (timeout: ${WORKTREE_REMOVE_TIMEOUT}s)"
         ((step++))
 
         if [[ -n "$branch" ]]; then
             if [[ "$is_protected" == true ]]; then
-                echo "  $step. Branch disposition: SKIP (protected branch '$branch')"
+                echo "    $step. Branch disposition: SKIP (protected branch '$branch')"
                 ((step++))
             elif [[ "$KEEP_BRANCH" == true ]]; then
-                echo "  $step. Branch disposition: KEEP branch '$branch'"
+                echo "    $step. Branch disposition: KEEP branch '$branch'"
                 ((step++))
             elif [[ "$DELETE_BRANCH" == true ]]; then
-                echo "  $step. Branch disposition: DELETE branch '$branch' (local)"
+                echo "    $step. Branch disposition: DELETE branch '$branch' (local)"
                 ((step++))
                 if remote_branch_exists "$branch" "$project_root"; then
-                    echo "  $step. Branch disposition: DELETE branch '$branch' (remote)"
+                    echo "    $step. Branch disposition: DELETE branch '$branch' (remote)"
                     ((step++))
                 fi
             fi
         else
-            echo "  $step. Branch disposition: N/A (no associated branch)"
+            echo "    $step. Branch disposition: N/A (no associated branch)"
             ((step++))
         fi
 
-        echo "  $step. Prune stale worktree entries"
+        echo "    $step. Prune stale worktree entries"
         echo ""
-        echo -e "${BLUE}=== End dry run ===${NC}"
+        render_gauge TAXIING
+        render_card_footer
         exit 0
     fi
 
     # ACTUAL CLEANUP
     echo ""
-    log_info "Starting worktree cleanup..."
+    log_step "Starting worktree cleanup..."
 
     # Step 1: Change to project root (THE CRITICAL FIX)
-    log_info "Changing to project root..."
+    log_step "Changing to project root..."
     cd "$project_root" || {
-        log_error "Failed to change to project root: $project_root"
+        log_fail "Failed to change to project root: $project_root"
         exit 1
     }
 
     # Step 2: Remove the worktree (with timeout protection)
-    log_info "Removing worktree (timeout: ${WORKTREE_REMOVE_TIMEOUT}s)..."
+    log_step "Removing worktree (timeout: ${WORKTREE_REMOVE_TIMEOUT}s)..."
     local remove_exit_code
     if [[ "$FORCE" == true ]]; then
         run_with_timeout "$WORKTREE_REMOVE_TIMEOUT" git worktree remove "$abs_worktree_path" --force
@@ -655,26 +639,26 @@ main() {
     fi
 
     if [[ $remove_exit_code -eq 124 ]]; then
-        log_error "Worktree removal timed out after ${WORKTREE_REMOVE_TIMEOUT} seconds"
+        log_fail "Worktree removal timed out after ${WORKTREE_REMOVE_TIMEOUT} seconds"
         output_timeout_remediation "$abs_worktree_path" "$WORKTREE_REMOVE_TIMEOUT" "git worktree remove"
         exit 4
     elif [[ $remove_exit_code -ne 0 ]]; then
-        log_error "Failed to remove worktree"
+        log_fail "Failed to remove worktree"
         exit 1
     fi
-    log_success "Worktree removed: $abs_worktree_path"
+    log_ok "Worktree removed: $abs_worktree_path"
 
     # Step 3: Handle branch disposition
     if [[ -n "$branch" ]]; then
         if [[ "$is_protected" == true ]]; then
-            log_info "Skipping branch deletion (protected branch: $branch)"
+            log_step "Skipping branch deletion (protected branch: $branch)"
         elif [[ "$KEEP_BRANCH" == true ]]; then
-            log_info "Keeping branch: $branch"
+            log_step "Keeping branch: $branch"
         elif [[ "$DELETE_BRANCH" == true ]]; then
             # Delete local branch
-            log_info "Deleting local branch: $branch"
+            log_step "Deleting local branch: $branch"
             if git branch -d "$branch" 2>/dev/null; then
-                log_success "Local branch deleted: $branch"
+                log_ok "Local branch deleted: $branch"
             elif git branch -D "$branch" 2>/dev/null; then
                 log_warn "Local branch force-deleted (was not fully merged): $branch"
             else
@@ -683,46 +667,47 @@ main() {
 
             # Delete remote branch if exists (with timeout protection)
             if remote_branch_exists "$branch" "$project_root"; then
-                log_info "Deleting remote branch: origin/$branch (timeout: ${NETWORK_TIMEOUT}s)..."
+                log_step "Deleting remote branch: origin/$branch (timeout: ${NETWORK_TIMEOUT}s)..."
                 local push_exit_code
                 run_with_timeout "$NETWORK_TIMEOUT" git push origin --delete "$branch" 2>/dev/null
                 push_exit_code=$?
 
                 if [[ $push_exit_code -eq 124 ]]; then
-                    log_error "Remote branch deletion timed out after ${NETWORK_TIMEOUT} seconds"
+                    log_fail "Remote branch deletion timed out after ${NETWORK_TIMEOUT} seconds"
                     output_timeout_remediation "$abs_worktree_path" "$NETWORK_TIMEOUT" "git push origin --delete"
                     exit 4
                 elif [[ $push_exit_code -eq 0 ]]; then
-                    log_success "Remote branch deleted: origin/$branch"
+                    log_ok "Remote branch deleted: origin/$branch"
                 else
                     log_warn "Could not delete remote branch: origin/$branch"
                 fi
             else
-                log_info "No remote branch to delete"
+                log_step "No remote branch to delete"
             fi
         fi
     fi
 
     # Step 4: Prune stale worktree entries
-    log_info "Pruning stale worktree entries..."
+    log_step "Pruning stale worktree entries..."
     git worktree prune
 
+    # CLEANUP summary card
     echo ""
-    log_success "Worktree cleanup complete!"
-
-    # Summary
-    echo ""
-    echo "Summary:"
-    echo "  Worktree removed: $abs_worktree_path"
+    render_card_header "CLEANUP"
+    echo "  Worktree  $abs_worktree_path"
     if [[ -n "$branch" ]]; then
         if [[ "$is_protected" == true ]]; then
-            echo "  Branch: $branch (protected, not deleted)"
+            echo "  Branch    $branch (protected, not deleted)"
         elif [[ "$KEEP_BRANCH" == true ]]; then
-            echo "  Branch: $branch (kept)"
+            echo "  Branch    $branch (kept)"
         elif [[ "$DELETE_BRANCH" == true ]]; then
-            echo "  Branch: $branch (deleted)"
+            echo "  Branch    $branch (deleted)"
         fi
     fi
+    echo "  Status    complete"
+    echo ""
+    render_gauge LANDED
+    render_card_footer
 }
 
 main "$@"
