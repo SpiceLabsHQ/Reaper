@@ -106,8 +106,8 @@ Different file types trigger different gate agents:
 | Work type | Gate 1 (blocking) | Gate 2 (parallel) |
 |-----------|-------------------|-------------------|
 | Application code | test-runner | code-reviewer, security-auditor |
-| Infrastructure config | validation-runner | security-auditor |
-| Database migrations | validation-runner | code-reviewer |
+| Infrastructure config | -- | security-auditor |
+| Database migrations | -- | code-reviewer |
 | Agent prompts | -- | ai-prompt-engineer, code-reviewer |
 | Documentation | -- | code-reviewer |
 

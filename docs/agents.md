@@ -1,6 +1,6 @@
 # Agent Catalog
 
-Reaper coordinates 25 specialized agents. You never invoke them directly -- Reaper dispatches the right agent based on your task. Each agent has a focused role, specific tools, and quality standards. When you run `/reaper:takeoff` or `/reaper:flight-plan`, Reaper selects and orchestrates the agents for you.
+Reaper coordinates 24 specialized agents. You never invoke them directly -- Reaper dispatches the right agent based on your task. Each agent has a focused role, specific tools, and quality standards. When you run `/reaper:takeoff` or `/reaper:flight-plan`, Reaper selects and orchestrates the agents for you.
 
 ## Planning (10 agents)
 
@@ -30,7 +30,7 @@ Builders. These agents write production code and tests in isolated worktrees usi
 | `reaper:refactoring-dev` | Improves existing code structure while preserving functionality, targeting simplicity over abstraction |
 | `reaper:branch-manager` | Git operations, worktree setup and teardown, safe merges, and repository maintenance with safety protocols |
 
-## Quality (5 agents)
+## Quality (4 agents)
 
 Gatekeepers. These agents validate code and infrastructure after implementation. They run automatically as quality gates -- you do not need to invoke them.
 
@@ -40,7 +40,6 @@ Gatekeepers. These agents validate code and infrastructure after implementation.
 | `reaper:code-reviewer` | Reviews code for SOLID principles, plan adherence, best practices, and test quality (does not re-run tests) |
 | `reaper:security-auditor` | Vulnerability detection with Trivy, Semgrep, and TruffleHog -- OWASP compliance and secrets scanning |
 | `reaper:performance-engineer` | Profiles bottlenecks, implements targeted optimizations, and validates improvements with before/after metrics |
-| `reaper:validation-runner` | Non-code validation: Terraform, OpenAPI specs, Helm charts, Docker builds, schema checks, and migration dry-runs |
 
 ## Ops (3 agents)
 
@@ -72,10 +71,10 @@ You do not choose which agent runs. Reaper handles dispatch automatically based 
 - **Quality gates** (test-runner, code-reviewer, security-auditor) run automatically after every implementation agent finishes. You never trigger them manually.
 - **Branch operations** (commits, merges, worktree management) are always handled by the branch-manager agent through orchestration scripts.
 
-The dispatch layer matches task characteristics to agent capabilities. A bug report routes to `bug-fixer`. A new feature routes to `feature-developer`. Infrastructure validation routes to `validation-runner`. The routing is deterministic -- same input, same agent.
+The dispatch layer matches task characteristics to agent capabilities. A bug report routes to `bug-fixer`. A new feature routes to `feature-developer`. The routing is deterministic -- same input, same agent.
 
 ---
 
-**Total: 25 agents** across 5 categories.
+**Total: 24 agents** across 5 categories.
 
 [Back to README](../README.md)

@@ -248,7 +248,7 @@ describe('buildTemplateVars TDD agents', () => {
 // ===========================================================================
 
 describe('buildTemplateVars review agents', () => {
-  const reviewAgents = ['code-reviewer', 'security-auditor', 'test-runner', 'validation-runner'];
+  const reviewAgents = ['code-reviewer', 'security-auditor', 'test-runner'];
 
   for (const agent of reviewAgents) {
     it(`should classify "${agent}" as IS_REVIEW_AGENT=true`, () => {
@@ -810,9 +810,6 @@ describe('getAgentType', () => {
       assert.strictEqual(getAgentType('test-runner'), 'review');
     });
 
-    it('should return "review" for validation-runner', () => {
-      assert.strictEqual(getAgentType('validation-runner'), 'review');
-    });
   });
 
   describe('planning agents', () => {

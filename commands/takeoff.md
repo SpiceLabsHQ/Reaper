@@ -490,16 +490,16 @@ Not all work types need the same quality gates. Use the profile table below to d
 | Work Type | Gate 1 (blocking) | Gate 2 (parallel) | Notes |
 |-----------|-------------------|-------------------|-------|
 | `application_code` | reaper:test-runner | reaper:code-reviewer, reaper:security-auditor | Default for source code -- full gate sequence |
-| `infrastructure_config` | reaper:validation-runner | reaper:security-auditor | Terraform, Kubernetes, Docker, Helm |
-| `database_migration` | reaper:validation-runner | reaper:code-reviewer | Schema changes, migration files |
-| `api_specification` | reaper:validation-runner | reaper:code-reviewer | OpenAPI, GraphQL schema definitions |
+| `infrastructure_config` | -- | reaper:security-auditor | No Gate 1 -- Gate 2 runs immediately. Terraform, Kubernetes, Docker, Helm |
+| `database_migration` | -- | reaper:code-reviewer | No Gate 1 -- Gate 2 runs immediately. Schema changes, migration files |
+| `api_specification` | -- | reaper:code-reviewer | No Gate 1 -- Gate 2 runs immediately. OpenAPI, GraphQL schema definitions |
 | `agent_prompt` | -- | reaper:ai-prompt-engineer, reaper:code-reviewer | No Gate 1 -- Gate 2 runs immediately |
 | `documentation` | -- | reaper:code-reviewer | No Gate 1 -- Gate 2 runs immediately |
-| `ci_cd_pipeline` | reaper:validation-runner | reaper:security-auditor, reaper:deployment-engineer | CI/CD pipeline configurations |
+| `ci_cd_pipeline` | -- | reaper:security-auditor, reaper:deployment-engineer | No Gate 1 -- Gate 2 runs immediately. CI/CD pipeline configurations |
 | `test_code` | reaper:test-runner | reaper:code-reviewer | Test files themselves |
-| `configuration` | reaper:validation-runner | reaper:security-auditor | Application config files |
+| `configuration` | -- | reaper:security-auditor | No Gate 1 -- Gate 2 runs immediately. Application config files |
 
-For work types with no Gate 1 (`agent_prompt`, `documentation`), skip directly to Gate 2.
+For work types with no Gate 1 (`infrastructure_config`, `database_migration`, `api_specification`, `agent_prompt`, `documentation`, `ci_cd_pipeline`, `configuration`), skip directly to Gate 2.
 
 #### Work Type Detection Patterns
 
@@ -529,7 +529,7 @@ When a changeset spans multiple work types, compute the union of all matching pr
 4. Deploy the union set through the standard gate sequence
 
 **Example:** A changeset touching `src/auth.ts` (application_code) and `terraform/main.tf` (infrastructure_config) produces:
-- Gate 1: reaper:test-runner + reaper:validation-runner (both blocking, run in parallel)
+- Gate 1: reaper:test-runner (from application_code; infrastructure_config has no Gate 1)
 - Gate 2: reaper:code-reviewer + reaper:security-auditor (union of both profiles)
 
 #### Differential Retry Limits
@@ -540,7 +540,6 @@ Each gate agent has its own iteration limit before escalating to the user:
 |------------|---------------|-----------|
 | reaper:test-runner | 3 | Most likely to need iteration (test failures, coverage gaps) |
 | reaper:code-reviewer | 2 | Review feedback is typically addressed in fewer cycles |
-| reaper:validation-runner | 1 | Validation either passes or has fundamental issues |
 | reaper:security-auditor | 1 | Security issues require careful one-pass remediation |
 | reaper:ai-prompt-engineer | 1 | Prompt quality review is typically one-pass |
 | reaper:deployment-engineer | 1 | Pipeline validation is typically one-pass |
