@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.11.0](https://github.com/SpiceLabsHQ/Reaper/compare/v1.10.0...v1.11.0) (2026-02-16)
+
+
+### Features
+
+* **agents:** consolidate agent colors to 3-color standard ([7a30594](https://github.com/SpiceLabsHQ/Reaper/commit/7a30594ae4df88c435cc9d68d17e716b5cf105cc))
+* **commands:** integrate work-unit-cleanup partial into orchestrator commands ([ea2d73f](https://github.com/SpiceLabsHQ/Reaper/commit/ea2d73f15524e1c8c1a257606fa46b655f416e11))
+* **detection:** replace naive task system detection with 3-layer chain ([d56d4bc](https://github.com/SpiceLabsHQ/Reaper/commit/d56d4bc7c8c4d5b59ed212c6168d067ba37e4e3d))
+* **partials:** add work-unit-cleanup behavioral instruction partial ([fd719ac](https://github.com/SpiceLabsHQ/Reaper/commit/fd719ac6b79e6ca348b75af4e74f36090b6e084d))
+* work unit cleanup protocol for orchestrator commands ([92c76aa](https://github.com/SpiceLabsHQ/Reaper/commit/92c76aa109d1dd708feac801ceb39d8a2001a240))
+* **worktree-manager:** add shared visual helpers library ([6c10022](https://github.com/SpiceLabsHQ/Reaper/commit/6c100220c9ee58dcfe3721f21da661556d6882b9))
+* **worktree-manager:** migrate scripts to visual-helpers library ([971c446](https://github.com/SpiceLabsHQ/Reaper/commit/971c44658c588e5ca190127425d066db9422c5aa))
+
+
+### Refactoring
+
+* **agents:** remove validation-runner from build and gate protocol ([3799e67](https://github.com/SpiceLabsHQ/Reaper/commit/3799e67ea60003b3624247cc0e5384ad951be669))
+
+
+### Documentation
+
+* add work-unit-cleanup partial to CLAUDE.md partials reference ([555d0fc](https://github.com/SpiceLabsHQ/Reaper/commit/555d0fc1ef6966c4ff10376f817c763eda19a3bb))
+* remove validation-runner from all documentation ([577041e](https://github.com/SpiceLabsHQ/Reaper/commit/577041e5eef8876d551a15ef7db0ef4130a3a8cc))
+
 ## [1.10.0](https://github.com/SpiceLabsHQ/Reaper/compare/v1.9.1...v1.10.0) (2026-02-09)
 
 
