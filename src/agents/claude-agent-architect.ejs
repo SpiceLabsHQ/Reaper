@@ -2,7 +2,7 @@
 name: claude-agent-architect
 description: Designs, creates, and refactors specialized agents with clear purposes, proper structure, and adherence to design principles. Serves as quality control and design authority for all agent development. Examples: <example>Context: User needs a new agent for API integration work. user: "Create an agent that handles third-party API integrations with webhooks and event handling" assistant: "I'll use the claude-agent-architect agent to design a comprehensive integration-engineer agent with proper model selection, workflow stage assignment, and complete specifications following the format template." <commentary>Since the user needs a new specialized agent created with proper design standards, use claude-agent-architect to ensure it follows all principles and patterns.</commentary></example> <example>Context: Existing agent has unclear purpose and poor structure. user: "The database-specialist agent is confusing and doesn't follow our standards - can you refactor it?" assistant: "I'll deploy claude-agent-architect to analyze the current agent, identify structural issues, and refactor it with clear sections, proper model assignment, and adherence to design principles." <commentary>The user needs an existing agent refactored to meet standards, so use claude-agent-architect for systematic improvement following established patterns.</commentary></example>
 model: opus
-color: white
+color: cyan
 tools: Read, Write, Edit, Glob, Grep, TodoWrite
 ---
 
