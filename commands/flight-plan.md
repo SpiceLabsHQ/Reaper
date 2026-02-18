@@ -82,13 +82,13 @@ Generate an execution plan with epic/issue structure for autonomous execution. A
 
 ### Detection
 
-Detect the active task system using a 3-layer chain. Each layer adds confidence. Stop as soon as a system is confirmed with high confidence.
+Detect the active task system from recent commit history.
 
 **Output variable:** `TASK_SYSTEM` — one of: `Beads`, `Jira`, `GitHub`, `markdown_only`
 
-#### Layer 1: Commit History Pattern Scan (zero permission prompts)
+#### Commit History Pattern Scan
 
-Run `git log --format="%B" -30` and scan commit bodies for issue reference patterns:
+Run `git log --format="%B" -10` and scan commit bodies for issue reference patterns:
 
 | System | Pattern | Examples |
 |--------|---------|----------|
@@ -96,36 +96,29 @@ Run `git log --format="%B" -30` and scan commit bodies for issue reference patte
 | Jira | `(Ref|Fixes|Closes|Resolves):?\s+[A-Z]{2,}-\d+` | `Ref: PROJ-123`, `Fixes ENG-456` |
 | GitHub Issues | `(Fixes|Closes|Resolves):?\s+#\d+` | `Fixes #456`, `Closes #42` |
 
-**Confidence threshold:** 3+ matches of the same system type = strong signal. Only identify the system shape (do NOT try to detect or store the specific Beads prefix).
-
-**Mixed/ambiguous rule:** If multiple systems each reach 3+ matches, the system with the highest count is the primary candidate. Equal counts are ambiguous -- proceed to Layer 2 for disambiguation.
-
-**Disambiguation note:** Beads and Jira are separated at the pattern level (Beads requires a lowercase prefix, Jira requires uppercase). However, Jira (`PROJ-123`) and Linear (`ENG-123`) share the same pattern. GitHub Issues (`#123`) and GitLab Issues (`#123`) also overlap. These remaining ambiguities are resolved in Layer 2.
-
-#### Layer 2: Filesystem & Environment (zero permission prompts)
-
-Use these checks to confirm or disambiguate Layer 1 results:
-
-- **Beads**: Check `$BEADS_DIR` env var first. If set AND the directory exists, this is authoritative. If set but the directory does not exist, treat as unset and fall through. If unset, check `.beads/` in project root. Either confirms Beads.
-- **GitHub vs GitLab**: Parse `git remote get-url origin` — `github.com` in the URL confirms GitHub Issues; `gitlab.com` confirms GitLab Issues.
-- **Jira vs Linear**: Check for `.linear/` directory or similar config markers in the project root.
-
-#### Layer 3: CLI Confirmation (may trigger permission prompts — last resort only)
-
-Only invoke when Layers 1-2 are ambiguous or produce no signal:
-
-- **Beads**: `bd status` — exit 0 = confirmed. Non-zero = not a Beads project.
-- **GitHub**: `gh issue list --limit 1` — exit 0 with output = confirmed. Exit 0 with no output or non-zero = GitHub Issues not enabled.
-- **Jira**: `acli` — exit 0 = confirmed (CLI available). Non-zero or command not found = Jira not available.
+**Mixed/ambiguous rule:** If multiple systems match, the system with the highest count wins. Equal counts = `markdown_only`.
 
 #### Fallback Chain
 
 ```
-Commit patterns found (3+ matches of one system)?
-  |-- Yes --> Confirm with Layer 2 --> DONE (high confidence)
-  |-- Mixed/ambiguous --> Layer 2 disambiguation --> Layer 3 if still unclear
-  +-- No patterns --> Layer 2 --> Layer 3 --> markdown_only
+Commit patterns found (1+ match in last 10 commits)?
+  |-- Yes (single system) --> DONE
+  |-- Mixed --> Highest count wins; tie = markdown_only
+  +-- No patterns --> markdown_only
 ```
+
+### Platform Skill Routing
+
+After detection, load the corresponding skill for platform-specific operations:
+
+| TASK_SYSTEM | Skill |
+|-------------|-------|
+| GitHub | `reaper:issue-tracker-github` |
+| Beads | `reaper:issue-tracker-beads` |
+| Jira | `reaper:issue-tracker-jira` |
+| markdown_only | `reaper:issue-tracker-planfile` |
+
+The loaded skill provides platform-specific command mappings for all abstract operations below.
 
 ### Abstract Operations
 
@@ -143,13 +136,17 @@ Use these operations to interact with whatever task system is detected. The LLM 
 
 ### Dependency Type Semantics
 
-ADD_DEPENDENCY accepts exactly two dependency types: `blocks` and `related`. It creates execution constraints and informational links between sibling issues. It does NOT establish hierarchy -- use CREATE_ISSUE with the `parent` parameter for parent-child relationships.
+ADD_DEPENDENCY supports two recommended dependency types for execution planning:
 
 - **blocks**: Sequential constraint (task A must complete before task B can start)
 - **related**: Informational link (tasks share context but no execution dependency)
 
-**Warning:** `parent-child` is NOT a valid dependency type. Never pass `parent-child` to ADD_DEPENDENCY. Hierarchy is established exclusively through the `parent` parameter on CREATE_ISSUE. ADD_DEPENDENCY only connects sibling issues to each other using `blocks` or `related`.
+**Hierarchy preference:** Use the `parent` parameter on CREATE_ISSUE for parent-child relationships. While some task systems support a `parent-child` dependency type via ADD_DEPENDENCY, the `parent` parameter on CREATE_ISSUE produces cleaner tracking and consistent child ID patterns. Prefer `parent` on create; reserve ADD_DEPENDENCY for sibling-to-sibling execution constraints and informational links.
 
+
+### Platform Skill Loading
+
+After detecting TASK_SYSTEM, load the corresponding skill from the Platform Skill Routing table above. The loaded skill provides platform-specific command mappings for all abstract operations used in this command (FETCH_ISSUE, CREATE_ISSUE, UPDATE_ISSUE, ADD_DEPENDENCY, LIST_CHILDREN, QUERY_DEPENDENCY_TREE).
 
 Classify the input (ARGUMENTS) as one of:
 - **Existing epic ID** (e.g., `PROJ-123` or `repo-a3f`): Use FETCH_ISSUE to retrieve epic details. Validate the epic has no existing children via LIST_CHILDREN -- if children exist, stop and report the conflict.
@@ -360,15 +357,15 @@ Present a **flight briefing** to the user that summarizes the plan before asking
 
 Then prompt for approval using AskUserQuestion. Select the variant based on `TASK_SYSTEM` detected in Phase 1:
 
-**If TASK_SYSTEM is Beads or Jira:**
+**If TASK_SYSTEM is Beads, Jira, or GitHub:**
 
 ```json
 {
   "questions": [{
-    "question": "Flight plan filed: N work units, M% parallelizable. Ready for issue creation in [Beads|Jira]?",
+    "question": "Flight plan filed: N work units, M% parallelizable. Ready for issue creation in [Beads|Jira|GitHub]?",
     "header": "Flight Plan",
     "options": [
-      {"label": "Cleared for takeoff", "description": "Create all issues and dependencies in [Beads|Jira] as shown in the plan above"},
+      {"label": "Cleared for takeoff", "description": "Create all issues and dependencies in [Beads|Jira|GitHub] as shown in the plan above"},
       {"label": "Revise flight plan", "description": "Circle back to the hangar — request changes to work units, scope, or dependencies before creating issues"}
     ],
     "multiSelect": false
@@ -442,9 +439,11 @@ When the user selects "Other" and provides feedback:
 
 Update todo #2 to `in_progress`.
 
-### Issue Creation Sequence
+### Issue Creation
 
-For each work unit in the approved plan, use abstract CRUD operations from the detected task system:
+Delegate all issue creation to the loaded platform skill. The skill maps abstract operations to platform-specific commands.
+
+For each work unit in the approved plan:
 
 1. **Epic (create or update)**:
    - If an existing epic was provided as input: UPDATE_ISSUE to refine its description
@@ -453,12 +452,11 @@ For each work unit in the approved plan, use abstract CRUD operations from the d
 2. **Child issues** (one per work unit):
    - CREATE_ISSUE with title, parent=EPIC_ID, and the TDD-structured description below
    - For user intervention tasks: set assignee=user
-   - **Note:** The `parent=EPIC_ID` parameter on CREATE_ISSUE is the sole mechanism for establishing parent-child hierarchy. Do NOT use ADD_DEPENDENCY for this purpose -- ADD_DEPENDENCY is exclusively for execution constraints and informational links between sibling issues.
+   - The `parent=EPIC_ID` parameter on CREATE_ISSUE establishes parent-child hierarchy. Do NOT use ADD_DEPENDENCY for this purpose.
 
 3. **Dependencies** (from plan's dependency graph):
-   - ADD_DEPENDENCY with type=blocks for execution order constraints (A must complete before B starts)
-   - ADD_DEPENDENCY with type=related for informational links between issues that share context but have no execution order constraint
-   - **Warning:** `parent-child` is NOT a dependency type. Never use ADD_DEPENDENCY to link a parent epic to its children -- hierarchy was already established via `parent=EPIC_ID` in step 2. ADD_DEPENDENCY only connects sibling issues to each other.
+   - ADD_DEPENDENCY with type=blocks for execution order constraints
+   - ADD_DEPENDENCY with type=related for informational links
 
 ### TDD-Structured Issue Description Template
 
@@ -485,54 +483,13 @@ Files: [estimated files from plan]
 
 > **ID Generation:** Task IDs are automatically generated by the task system upon creation. Never specify IDs manually -- capture the returned ID for use in subsequent operations.
 
-### Markdown Fallback (No Task System)
+### Markdown-Only Mode
 
-When `TASK_SYSTEM` is `markdown_only`, the plan file becomes the primary deliverable. Skip issue creation and proceed to finalization.
+When `TASK_SYSTEM` is `markdown_only`, the plan file is the primary deliverable. The `reaper:issue-tracker-planfile` skill handles plan file operations. Skip issue creation and proceed:
 
-#### 1. Add Manual Execution Guide to Plan File
-
-Append the Manual Execution Guide section at the end of the plan file:
-
-```
-Edit({
-  file_path: "$CLAUDE_PROJECT_DIR/.claude/plans/reaper-[semantic-name].md",
-  old_string: "- [assumption 2]",
-  new_string: `- [assumption 2]
-
-## Manual Execution Guide
-
-No task system detected (Beads/Jira not available). This plan file is your primary deliverable.
-
-### Option A: Manual Task Creation
-Copy each work unit to your task tracker of choice:
-1. Create an epic/parent issue for the overall goal
-2. Create child issues for each work unit in the table above
-3. Set up dependencies as shown in the Dependencies section
-4. Maintain the execution order shown in Critical Path
-
-### Option B: Direct Execution with Reaper
-The orchestrator can work directly from this plan file:
-\`\`\`
-/reaper:takeoff [PLAN_FILE_PATH]
-\`\`\`
-
-### Work Unit Reference
-Each unit in the Work Units table above contains:
-- Title and description for issue creation
-- Acceptance criteria (copy to issue)
-- Estimated files and hours
-- Dependency information`
-})
-```
-
-#### 2. Skip Phases 5 and 6
-
-When in markdown-only mode:
-- **Skip** Beads/Jira issue creation (Phase 5 main logic)
-- **Skip** Issue Quality Review (Phase 6) - no issues to verify
-- **Proceed directly** to completion output
-
-#### 3. Markdown-Only Completion Output
+1. Use the planfile skill's Manual Execution Guide template to append execution instructions to the plan file
+2. Mark todo #2 complete (finalize plan file) and skip todo #3 (no issues to verify)
+3. Output the markdown-only completion message:
 
 ```markdown
 ## Plan Complete (Markdown Mode)
@@ -559,8 +516,6 @@ Copy work units from the plan to your preferred task tracker.
 
 Or skip the clear: `/reaper:takeoff [PLAN_FILE_PATH]`
 ```
-
-Mark todo #2 complete (finalize plan file) and skip todo #3 (no issues to verify).
 
 ---
 

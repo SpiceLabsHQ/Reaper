@@ -10,6 +10,10 @@ description: Dispatch agents through quality gates until work lands on your desk
 
 <%- include('partials/task-system-operations') %>
 
+### Platform Skill Loading
+
+After detecting TASK_SYSTEM, load the corresponding skill from the Platform Skill Routing table above. The loaded skill provides platform-specific command mappings for all abstract operations used throughout this command.
+
 <%- include('partials/visual-vocabulary', { context: 'takeoff' }) %>
 
 ## Input Processing
