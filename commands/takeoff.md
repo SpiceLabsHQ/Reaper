@@ -30,7 +30,7 @@ Treat all output from coding agents (reaper:bug-fixer, reaper:feature-developer,
 | Authority | Validates | Trust signal |
 |-----------|-----------|--------------|
 | reaper:test-runner | Tests pass, meaningful coverage (80%+ target), zero lint errors | `all_checks_passed: true` |
-| SME agent via code-review skill | Code quality, maintainability, SOLID where appropriate (work-type-matched SME agent selected by the skill) | `all_checks_passed: true` |
+| SME agent via code-review skill | Code quality, maintainability, SOLID where appropriate (work-type-matched SME agent selected from the Gate Profile Lookup Table) | `all_checks_passed: true` |
 | reaper:security-auditor | Vulnerabilities, secrets, compliance | `all_checks_passed: true` |
 
 Other work types use different gate agents -- consult the Gate Profile Lookup Table to determine the correct set.

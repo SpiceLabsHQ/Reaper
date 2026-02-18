@@ -40,7 +40,7 @@ If `PLAN_CONTEXT` is absent, skip this step and set `plan_coverage` to `not_chec
 
 ### Step 2: Scope Creep Check
 
-- Inspect every file modified in the worktree (use `git diff --name-only` relative to the base branch).
+- Inspect every file modified in the worktree (use `git diff --name-only $(git merge-base HEAD develop)` or `git diff --name-only HEAD~1` if not on a feature branch).
 - Compare the modified file list against the `SCOPE` glob patterns provided.
 - Any modification outside the declared scope is a scope violation. List each one in `scope_violations`.
 - Scope violations are blocking issues unless the caller explicitly documented them in the plan.

@@ -19,9 +19,9 @@ unless it causes functional failures, in which case flag it as blocking.
 - **Vague instructions**: Phrases like "Be thorough" or "Be careful" without
   concrete operationalization. These consume tokens without guiding behavior.
   Flag if the instruction has no actionable equivalent.
-- **Over-long system prompt**: Assess whether every section is load-bearing.
-  Flag if the prompt contains repeated content, preambles that restate
-  obvious facts, or sections that do not affect output.
+- **Over-long system prompt**: Flag if the prompt contains sections that could
+  be removed without changing the agent's behavior on its defined task —
+  repeated content, preambles that restate obvious facts, or sections that do not affect output.
 - **Contradictory instructions**: Any section that directly contradicts
   another. Example: "Always emit JSON" followed by "Respond in prose."
 
