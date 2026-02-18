@@ -24,6 +24,7 @@ if [[ -z "$PARENT_ID" ]]; then
   exit 1
 fi
 
+# Note: Returns up to 50 sub-issues. Increase `first` if needed.
 gh api graphql -f query='
   query {
     node(id: "'"$PARENT_ID"'") {

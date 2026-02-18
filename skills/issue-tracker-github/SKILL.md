@@ -85,7 +85,7 @@ GitHub supports sub-issues via its GraphQL API (beta). Use this as the primary a
    ${CLAUDE_PLUGIN_ROOT}/skills/issue-tracker-github/scripts/gh-link-sub-issues.sh <parent-number> <child-1> <child-2> <child-3>
    ```
 
-   The script resolves node IDs internally and links each child as a sub-issue. It handles errors per-child (skips failures, reports at the end).
+   The script resolves node IDs internally and links each child as a sub-issue. It handles errors per-child (skips failures, reports at the end). If the script fails (sub-issues not enabled on this repo), fall back to the Tracking Issues pattern below.
 
 **LIST_CHILDREN:**
 
