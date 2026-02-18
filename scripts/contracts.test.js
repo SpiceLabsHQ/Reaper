@@ -1598,3 +1598,82 @@ describe('Contract: takeoff iteration rules include resume-based retry pattern',
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Contract: code-review skill frontmatter and JSON output contract
+// ---------------------------------------------------------------------------
+
+describe('Contract: code-review skill', () => {
+  const filePath = skillFilePath('code-review');
+  const relative = 'skills/code-review/SKILL.md';
+
+  it(`${relative} exists after build`, () => {
+    assert.ok(
+      fs.existsSync(filePath),
+      `${relative} not found at ${filePath} — run npm run build to generate`
+    );
+  });
+
+  it(`${relative} frontmatter contains "name" field`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const fm = extractFrontmatter(content);
+    assert.ok(fm !== null, `${relative} is missing YAML frontmatter (--- delimiters)`);
+    assert.ok(
+      frontmatterHasField(fm, 'name'),
+      `${relative} frontmatter is missing required "name" field`
+    );
+  });
+
+  it(`${relative} frontmatter contains "description" field`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const fm = extractFrontmatter(content);
+    assert.ok(fm !== null, `${relative} is missing frontmatter`);
+    assert.ok(
+      frontmatterHasField(fm, 'description'),
+      `${relative} frontmatter is missing required "description" field`
+    );
+  });
+
+  it(`${relative} frontmatter contains "allowed-tools" field`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const fm = extractFrontmatter(content);
+    assert.ok(fm !== null, `${relative} is missing frontmatter`);
+    assert.ok(
+      frontmatterHasField(fm, 'allowed-tools'),
+      `${relative} frontmatter is missing required "allowed-tools" field`
+    );
+  });
+
+  it(`${relative} is NOT user-invocable`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const fm = extractFrontmatter(content);
+    assert.ok(fm !== null, `${relative} is missing frontmatter`);
+    assert.ok(
+      !frontmatterHasField(fm, 'user-invocable'),
+      `${relative} must NOT have "user-invocable" field (loaded by orchestrator, not user-invocable)`
+    );
+  });
+
+  it(`${relative} contains JSON output contract (all_checks_passed field)`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('all_checks_passed'),
+      `${relative} must contain a JSON output contract section with "all_checks_passed" field`
+    );
+  });
+
+  it(`${relative} is within the 150-line limit`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const lineCount = content.split('\n').length;
+    assert.ok(
+      lineCount <= 150,
+      `${relative} exceeds 150-line limit (${lineCount} lines) — keep the skill concise`
+    );
+  });
+});
