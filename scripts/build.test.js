@@ -1583,6 +1583,54 @@ describe('buildType', () => {
     const content = fs.readFileSync(path.join(outputAgentsDir, 'readme.txt'), 'utf8');
     assert.strictEqual(content, 'Plain text file', 'Content should be identical');
   });
+
+  it('should copy nested static .sh files from skills/*/scripts/ subdirectories verbatim', () => {
+    // Simulate skills source dir with nested scripts/ containing .sh files,
+    // mirroring the real src/skills/worktree-manager/scripts/ layout.
+    const srcSkillsDir = path.join(TMP_OUTPUT_DIR, 'src', 'skills');
+    const srcScriptsDir = path.join(srcSkillsDir, 'my-skill', 'scripts');
+    const outputSkillsDir = path.join(TMP_OUTPUT_DIR, 'out', 'skills');
+    const outputScriptsDir = path.join(outputSkillsDir, 'my-skill', 'scripts');
+
+    fs.mkdirSync(srcScriptsDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(srcScriptsDir, 'helper.sh'),
+      '#!/bin/bash\necho "hello from helper"'
+    );
+    fs.writeFileSync(
+      path.join(srcScriptsDir, 'setup.sh'),
+      '#!/bin/bash\necho "setup complete"'
+    );
+
+    config.srcDir = path.join(TMP_OUTPUT_DIR, 'src');
+    config.rootDir = path.join(TMP_OUTPUT_DIR, 'out');
+
+    buildType('skills');
+
+    assert.strictEqual(stats.success, 2, 'Both .sh files should be copied successfully');
+
+    const helperPath = path.join(outputScriptsDir, 'helper.sh');
+    const setupPath = path.join(outputScriptsDir, 'setup.sh');
+
+    assert.ok(
+      fs.existsSync(helperPath),
+      'helper.sh should exist in output skills/my-skill/scripts/'
+    );
+    assert.ok(
+      fs.existsSync(setupPath),
+      'setup.sh should exist in output skills/my-skill/scripts/'
+    );
+    assert.strictEqual(
+      fs.readFileSync(helperPath, 'utf8'),
+      '#!/bin/bash\necho "hello from helper"',
+      'helper.sh content should be preserved verbatim'
+    );
+    assert.strictEqual(
+      fs.readFileSync(setupPath, 'utf8'),
+      '#!/bin/bash\necho "setup complete"',
+      'setup.sh content should be preserved verbatim'
+    );
+  });
 });
 
 // ===========================================================================
