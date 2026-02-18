@@ -25,7 +25,7 @@ Platform skill for Reaper's task-system-operations. Maps abstract operations to 
 ### FETCH_ISSUE / LIST_CHILDREN
 
 ```bash
-bd show reaper-a3f
+bd show <issue-id>
 ```
 
 Returns title, description, status, priority, children, and dependencies. Children are embedded in the output -- no separate command needed.
@@ -34,27 +34,29 @@ Returns title, description, status, priority, children, and dependencies. Childr
 
 ```bash
 bd create --title="Add OAuth support" --type=task --priority=2
-bd create --title="Implement Google provider" --type=task --parent=reaper-a3f
+bd create --title="Implement Google provider" --type=task --parent=<parent-id>
 # Types: task, bug, feature
 ```
 
-The `--parent` flag is the sole mechanism for hierarchy. Child IDs follow the pattern `<parent-id>.1`, `<parent-id>.2`, etc.
+The `--parent` flag is the sole mechanism for hierarchy. Child IDs follow the pattern `<issue-id>.1`, `<issue-id>.2`, etc.
 
 ### UPDATE_ISSUE
 
 ```bash
-bd update reaper-a3f --status=in_progress
-bd update reaper-a3f --priority=1
-bd update reaper-a3f --assignee=ryan
+bd update <issue-id> --status=in_progress
+bd update <issue-id> --priority=1
+bd update <issue-id> --assignee=<assignee>
+bd update <issue-id> --parent=<new-parent-id>          # Reparent an issue
 ```
 
 ### ADD_DEPENDENCY
 
 ```bash
-bd dep add reaper-b2e reaper-a3f   # b2e depends on a3f (a3f blocks b2e)
+bd dep add <issue-id> <dependency-id>                  # blocks (default)
+bd dep add <issue-id> <related-id> --type related      # informational link
 ```
 
-Direction: first argument **depends on** second argument.
+Direction: first argument **depends on** second argument. The default type is `blocks`. Use `--type related` for informational links that do not imply execution order.
 
 ### QUERY_DEPENDENCY_TREE
 
@@ -63,8 +65,8 @@ No single command. Walk the tree via repeated `bd show`, following children and 
 ### CLOSE_ISSUE
 
 ```bash
-bd close reaper-a3f                   # Single
-bd close reaper-a3f.1 reaper-a3f.2    # Batch
+bd close <issue-id>                        # Single
+bd close <issue-id>.1 <issue-id>.2         # Batch
 ```
 
 ## Priority Scale
@@ -89,4 +91,6 @@ bd stats                  # Project statistics
 bd sync                   # Sync with git remote
 ```
 
-Run `bd --help` for full flag reference.
+## CLI Reference
+
+Run `bd --help` for the full flag reference. This skill documents recommended patterns for Reaper's abstract operations, not the complete CLI surface. Agents may discover and use additional flags beyond what is documented here.

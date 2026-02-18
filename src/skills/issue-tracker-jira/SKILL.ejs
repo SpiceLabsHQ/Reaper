@@ -86,3 +86,7 @@ Jira enforces workflow transitions. If a transition fails, inspect available sta
 acli jira workitem update PROJ-123 --status="In Progress"
 acli jira workitem update PROJ-123 --status="Done"
 ```
+
+## CLI Reference
+
+Run `acli jira --help` for the full flag reference. This skill documents recommended patterns for Reaper's abstract operations, not the complete CLI surface. Agents may discover and use additional flags beyond what is documented here.

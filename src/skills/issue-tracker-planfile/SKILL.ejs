@@ -79,7 +79,9 @@ Derive `<task-slug>` from the task description (2-4 words, lowercase, hyphenated
 
 **UPDATE_ISSUE**: Edit the matching row in Work Units. Modify Status, Title, or other columns.
 
-**ADD_DEPENDENCY**: Update the Dependencies section. Express blocking relationships as a mermaid flowchart (`graph LR; 1 --> 2; 2 --> 3`) or a table.
+**ADD_DEPENDENCY**: Update the Dependencies section. Distinguish by type:
+- **`blocks`**: Add as mermaid flowchart edges (`graph LR; 1 --> 2; 2 --> 3`) where directional arrows mean "A blocks B".
+- **`related`**: Add as a note or annotation below the flowchart (e.g., "Related: Unit 2 and Unit 5 share auth module context"). Do NOT add related links as flowchart edges -- they are informational, not blocking.
 
 **QUERY_DEPENDENCY_TREE**: Parse Dependencies for the full graph. Return as an ordered execution sequence.
 
@@ -105,3 +107,7 @@ When flight-plan hands off to the user, paste this into the Feedback Log:
 4. Update status in Work Units table as you complete each
 5. Log any deviations in the Feedback Log section
 ```
+
+## Reference
+
+This skill documents the plan file schema and recommended patterns for Reaper's abstract operations. The file format is flexible -- agents may add sections or annotations beyond what is documented here as long as the core schema is preserved.

@@ -58,7 +58,9 @@ GitHub renders task list progress automatically. Use labels for grouping (e.g., 
 
 ## Hierarchy Pattern
 
-GitHub has no native parent-child relationship. Use tracking issues instead.
+GitHub supports sub-issues via its GraphQL API (beta). Use this as the primary approach. Fall back to tracking issues for repos where sub-issues are not enabled.
+
+### Primary: Sub-Issues via API
 
 **CREATE_ISSUE with `parent`:**
 
@@ -66,15 +68,62 @@ GitHub has no native parent-child relationship. Use tracking issues instead.
    ```bash
    gh issue create --title "Implement login" --body "Details..." --label "epic:auth"
    ```
+2. Get the node IDs for both parent and child:
+   ```bash
+   PARENT_ID=$(gh issue view <parent-number> --json id -q .id)
+   CHILD_ID=$(gh issue view <new-number> --json id -q .id)
+   ```
+3. Link the child as a sub-issue:
+   ```bash
+   gh api graphql -f query='
+     mutation {
+       addSubIssue(input: {issueId: "'"$PARENT_ID"'", subIssueId: "'"$CHILD_ID"'"}) {
+         issue { id title }
+       }
+     }
+   '
+   ```
+
+**LIST_CHILDREN:**
+
+```bash
+gh api graphql -f query='
+  query {
+    node(id: "'"$PARENT_ID"'") {
+      ... on Issue { subIssues(first: 50) { nodes { number title state } } }
+    }
+  }
+'
+```
+
+### Fallback: Tracking Issues
+
+For repos where sub-issues are not enabled, use a **tracking issue** with a task list in its body:
+
+```markdown
+## Tasks
+
+- [ ] #101 Set up database schema
+- [ ] #102 Implement API endpoints
+- [x] #100 Write design doc
+```
+
+GitHub renders task list progress automatically. Use labels for grouping (e.g., `epic:auth`, `phase:1`).
+
+**CREATE_ISSUE with `parent` (tracking issue fallback):**
+
+1. Create the child issue:
+   ```bash
+   gh issue create --title "Implement login" --body "Details..." --label "epic:auth"
+   ```
 2. Append the new issue to the tracking issue's task list:
    ```bash
-   # Fetch current body, append task list entry, update
    BODY=$(gh issue view <parent-number> --json body -q .body)
    gh issue edit <parent-number> --body "$BODY
    - [ ] #<new-number> Implement login"
    ```
 
-**LIST_CHILDREN:**
+**LIST_CHILDREN (tracking issue fallback):**
 
 Parse the tracking issue body for task list items:
 
@@ -104,9 +153,15 @@ $BODY"
 
 Add `**Related to:** #<other>` to both issues' bodies.
 
+**Idempotency:** Before appending a dependency line, read the current body and check if the reference already exists. This prevents duplicate entries on retry.
+
 **QUERY_DEPENDENCY_TREE:**
 
 1. Fetch the root issue body
 2. Extract `**Blocked by:**` and `**Related to:**` references
 3. Recursively fetch referenced issues and their cross-references
 4. Build adjacency list from collected references
+
+## CLI Reference
+
+Run `gh issue --help` and `gh project --help` for the full flag reference. This skill documents recommended patterns for Reaper's abstract operations, not the complete CLI surface. Agents may discover and use additional flags beyond what is documented here.

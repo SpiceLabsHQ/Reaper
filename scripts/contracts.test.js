@@ -295,6 +295,148 @@ describe('Contract: issue-tracker skill frontmatter', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Contract: issue-tracker skills contain all 7 abstract operations
+// ---------------------------------------------------------------------------
+
+/**
+ * The 7 abstract operations every issue-tracker skill must implement.
+ * Defined in the task-system-operations partial.
+ */
+const ABSTRACT_OPERATIONS = [
+  'FETCH_ISSUE',
+  'LIST_CHILDREN',
+  'CREATE_ISSUE',
+  'UPDATE_ISSUE',
+  'ADD_DEPENDENCY',
+  'QUERY_DEPENDENCY_TREE',
+  'CLOSE_ISSUE',
+];
+
+describe('Contract: issue-tracker operations completeness', () => {
+  for (const skillName of ISSUE_TRACKER_SKILLS) {
+    const filePath = skillFilePath(skillName);
+    const relative = `skills/${skillName}/SKILL.md`;
+
+    for (const operation of ABSTRACT_OPERATIONS) {
+      it(`${relative} contains operation ${operation}`, () => {
+        assert.ok(
+          fs.existsSync(filePath),
+          `${relative} not found at ${filePath}`
+        );
+        const content = fs.readFileSync(filePath, 'utf8');
+        assert.ok(
+          content.includes(operation),
+          `${relative} is missing abstract operation "${operation}"`
+        );
+      });
+    }
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Contract: issue-tracker skills cover identical operation sets
+// ---------------------------------------------------------------------------
+
+describe('Contract: issue-tracker cross-skill operation consistency', () => {
+  it('all 4 issue-tracker skills cover the same set of operations', () => {
+    const operationSets = {};
+
+    for (const skillName of ISSUE_TRACKER_SKILLS) {
+      const filePath = skillFilePath(skillName);
+      assert.ok(
+        fs.existsSync(filePath),
+        `skills/${skillName}/SKILL.md not found`
+      );
+      const content = fs.readFileSync(filePath, 'utf8');
+
+      // Extract which of the 7 abstract operations appear in each skill
+      const found = ABSTRACT_OPERATIONS.filter((op) => content.includes(op));
+      operationSets[skillName] = found.sort();
+    }
+
+    // Compare all skills against the first one
+    const [first, ...rest] = ISSUE_TRACKER_SKILLS;
+    const reference = operationSets[first];
+
+    for (const skillName of rest) {
+      assert.deepStrictEqual(
+        operationSets[skillName],
+        reference,
+        `Operation set mismatch: ${skillName} differs from ${first}.\n` +
+          `  ${first}: [${reference.join(', ')}]\n` +
+          `  ${skillName}: [${operationSets[skillName].join(', ')}]`
+      );
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: consumer routing table references all 4 issue-tracker skills
+// ---------------------------------------------------------------------------
+
+/**
+ * The 4 fully-qualified skill names expected in the Platform Skill Routing table.
+ */
+const EXPECTED_ROUTING_ENTRIES = [
+  'reaper:issue-tracker-github',
+  'reaper:issue-tracker-beads',
+  'reaper:issue-tracker-jira',
+  'reaper:issue-tracker-planfile',
+];
+
+describe('Contract: consumer routing table references all issue-tracker skills', () => {
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
+
+  for (const entry of EXPECTED_ROUTING_ENTRIES) {
+    it(`${relative} routing table contains ${entry}`, () => {
+      assert.ok(
+        fs.existsSync(filePath),
+        `${relative} not found at ${filePath}`
+      );
+      const content = fs.readFileSync(filePath, 'utf8');
+      assert.ok(
+        content.includes(entry),
+        `${relative} Platform Skill Routing table is missing entry for "${entry}"`
+      );
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Contract: consumer detection content contains expected mechanism keywords
+// ---------------------------------------------------------------------------
+
+/**
+ * Keywords that must appear in the task-system-operations detection content.
+ * These verify the detection mechanism is properly rendered in consumers.
+ */
+const DETECTION_KEYWORDS = [
+  { keyword: 'git log', label: 'commit-based detection (git log)' },
+  { keyword: 'TASK_SYSTEM', label: 'output variable (TASK_SYSTEM)' },
+  { keyword: 'markdown_only', label: 'fallback detection (markdown_only)' },
+];
+
+describe('Contract: consumer detection content contains mechanism keywords', () => {
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
+
+  for (const { keyword, label } of DETECTION_KEYWORDS) {
+    it(`${relative} contains detection keyword: ${label}`, () => {
+      assert.ok(
+        fs.existsSync(filePath),
+        `${relative} not found at ${filePath}`
+      );
+      const content = fs.readFileSync(filePath, 'utf8');
+      assert.ok(
+        content.includes(keyword),
+        `${relative} is missing detection mechanism keyword "${keyword}" (${label})`
+      );
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Contract 4: No unresolved EJS tags in generated .md files
 // ---------------------------------------------------------------------------
 
