@@ -189,13 +189,13 @@ Prefer using `reaper:branch-manager` for worktree setup and teardown — it hand
 src/             # SOURCE TEMPLATES - Edit files here
   agents/        # Agent EJS templates
   commands/      # Orchestration command EJS templates (flight-plan, takeoff, ship, etc.)
-  skills/        # Skill EJS templates (worktree-manager)
+  skills/        # Skill EJS templates (worktree-manager, issue-tracker-*)
   hooks/         # Hook templates
   partials/      # Shared EJS partials
 
 agents/          # GENERATED from src/agents/
 commands/        # GENERATED from src/commands/
-skills/          # GENERATED from src/skills/ (worktree-manager)
+skills/          # GENERATED from src/skills/ (worktree-manager, issue-tracker-*)
 hooks/           # GENERATED from src/hooks/
 
 scripts/         # Build tooling
@@ -281,7 +281,7 @@ Common sections are extracted into `src/partials/*.ejs`:
 - `no-self-reporting.ejs` - Prevents agents from self-reporting status
 - `plan-file-schema.ejs` - Plan file format and sections
 - `todowrite-plan-protocol.ejs` - TodoWrite plan persistence protocol
-- `task-system-operations.ejs` - Task system abstract operations
+- `task-system-operations.ejs` - Task system detection, abstract operations, and platform skill routing
 - `agent-deployment-template.ejs` - Agent deployment template structure
 - `orchestrator-role-boundary.ejs` - Orchestrator role and delegation rules
 - `quality-gate-protocol.ejs` - Quality gate profile system and sequence

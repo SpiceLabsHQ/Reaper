@@ -207,6 +207,94 @@ describe('Contract: skill frontmatter', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Contract: issue-tracker skills have required frontmatter fields
+// ---------------------------------------------------------------------------
+
+/**
+ * All issue-tracker skills that must exist with valid frontmatter.
+ * These are NOT user-invocable — they are platform skills loaded by
+ * orchestrator commands based on detected task system.
+ */
+const ISSUE_TRACKER_SKILLS = [
+  'issue-tracker-github',
+  'issue-tracker-beads',
+  'issue-tracker-jira',
+  'issue-tracker-planfile',
+];
+
+/**
+ * Resolves the generated SKILL.md path for a skill name.
+ * @param {string} skillName - Skill directory name (e.g. 'issue-tracker-github')
+ * @returns {string} Absolute path to the SKILL.md file
+ */
+function skillFilePath(skillName) {
+  return path.join(SKILLS_DIR, skillName, 'SKILL.md');
+}
+
+describe('Contract: issue-tracker skill frontmatter', () => {
+  for (const skillName of ISSUE_TRACKER_SKILLS) {
+    const filePath = skillFilePath(skillName);
+    const relative = `skills/${skillName}/SKILL.md`;
+
+    it(`${relative} exists`, () => {
+      assert.ok(
+        fs.existsSync(filePath),
+        `${relative} not found at ${filePath}`
+      );
+    });
+
+    it(`${relative} has valid YAML frontmatter`, () => {
+      const content = fs.readFileSync(filePath, 'utf8');
+      const fm = extractFrontmatter(content);
+      assert.ok(
+        fm !== null,
+        `${relative} is missing YAML frontmatter (--- delimiters)`
+      );
+    });
+
+    it(`${relative} frontmatter contains "name" field`, () => {
+      const content = fs.readFileSync(filePath, 'utf8');
+      const fm = extractFrontmatter(content);
+      assert.ok(fm !== null, `${relative} is missing frontmatter`);
+      assert.ok(
+        frontmatterHasField(fm, 'name'),
+        `${relative} frontmatter is missing required "name" field`
+      );
+    });
+
+    it(`${relative} frontmatter contains "description" field`, () => {
+      const content = fs.readFileSync(filePath, 'utf8');
+      const fm = extractFrontmatter(content);
+      assert.ok(fm !== null, `${relative} is missing frontmatter`);
+      assert.ok(
+        frontmatterHasField(fm, 'description'),
+        `${relative} frontmatter is missing required "description" field`
+      );
+    });
+
+    it(`${relative} frontmatter contains "allowed-tools" field`, () => {
+      const content = fs.readFileSync(filePath, 'utf8');
+      const fm = extractFrontmatter(content);
+      assert.ok(fm !== null, `${relative} is missing frontmatter`);
+      assert.ok(
+        frontmatterHasField(fm, 'allowed-tools'),
+        `${relative} frontmatter is missing required "allowed-tools" field`
+      );
+    });
+
+    it(`${relative} is NOT user-invocable`, () => {
+      const content = fs.readFileSync(filePath, 'utf8');
+      const fm = extractFrontmatter(content);
+      assert.ok(fm !== null, `${relative} is missing frontmatter`);
+      assert.ok(
+        !frontmatterHasField(fm, 'user-invocable'),
+        `${relative} must NOT have "user-invocable" field (platform skills are loaded by orchestrator)`
+      );
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Contract 4: No unresolved EJS tags in generated .md files
 // ---------------------------------------------------------------------------
 
