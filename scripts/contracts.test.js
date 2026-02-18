@@ -1600,6 +1600,59 @@ describe('Contract: takeoff iteration rules include resume-based retry pattern',
 });
 
 // ---------------------------------------------------------------------------
+// Contract: code-review specialty files (existence and line count)
+// ---------------------------------------------------------------------------
+
+describe('Contract: code-review skill specialty files', () => {
+  const specialtyFiles = [
+    {
+      name: 'application-code',
+      relative: 'skills/code-review/application-code.md',
+      maxLines: 80,
+    },
+    {
+      name: 'database-migration',
+      relative: 'skills/code-review/database-migration.md',
+      maxLines: 80,
+    },
+    {
+      name: 'agent-prompt',
+      relative: 'skills/code-review/agent-prompt.md',
+      maxLines: 80,
+    },
+    {
+      name: 'documentation',
+      relative: 'skills/code-review/documentation.md',
+      maxLines: 80,
+    },
+  ];
+
+  for (const { name, relative, maxLines } of specialtyFiles) {
+    const filePath = path.join(SKILLS_DIR, 'code-review', `${name}.md`);
+
+    it(`${relative} exists after build`, () => {
+      assert.ok(
+        fs.existsSync(filePath),
+        `${relative} not found at ${filePath} — run npm run build to generate`
+      );
+    });
+
+    it(`${relative} is within the ${maxLines}-line limit`, () => {
+      assert.ok(
+        fs.existsSync(filePath),
+        `${relative} not found — run npm run build to generate`
+      );
+      const content = fs.readFileSync(filePath, 'utf8');
+      const lineCount = content.split('\n').length;
+      assert.ok(
+        lineCount <= maxLines,
+        `${relative} exceeds ${maxLines}-line limit (${lineCount} lines) — keep specialty files concise`
+      );
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Contract: code-review skill frontmatter and JSON output contract
 // ---------------------------------------------------------------------------
 
