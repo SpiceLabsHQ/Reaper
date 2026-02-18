@@ -69,6 +69,10 @@ When decomposing complex tasks, invoke specialist agents for domain expertise:
 
 <%- include('partials/task-system-operations') %>
 
+### Platform Skill Loading
+
+After detecting TASK_SYSTEM, load the corresponding skill from the Platform Skill Routing table above. The loaded skill provides platform-specific command mappings for all abstract operations used in this agent.
+
 Before planning, validate that input contains complete work scope. Do not guess about work scope.
 
 ### Input Validation

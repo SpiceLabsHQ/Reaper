@@ -133,6 +133,10 @@ ADD_DEPENDENCY accepts exactly two dependency types: `blocks` and `related`. It 
 **Warning:** `parent-child` is NOT a valid dependency type. Never pass `parent-child` to ADD_DEPENDENCY. Hierarchy is established exclusively through the `parent` parameter on CREATE_ISSUE. ADD_DEPENDENCY only connects sibling issues to each other using `blocks` or `related`.
 
 
+### Platform Skill Loading
+
+After detecting TASK_SYSTEM, load the corresponding skill from the Platform Skill Routing table above. The loaded skill provides platform-specific command mappings for all abstract operations used in this agent.
+
 Before planning, validate that input contains complete work scope. Do not guess about work scope.
 
 ### Input Validation
