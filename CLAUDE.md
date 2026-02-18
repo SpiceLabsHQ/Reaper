@@ -189,7 +189,11 @@ Prefer using `reaper:branch-manager` for worktree setup and teardown — it hand
 src/             # SOURCE TEMPLATES - Edit files here
   agents/        # Agent EJS templates
   commands/      # Orchestration command EJS templates (flight-plan, takeoff, ship, etc.)
-  skills/        # Skill EJS templates (worktree-manager, issue-tracker-*)
+  skills/        # Skill EJS templates and static assets (worktree-manager, issue-tracker-*)
+    worktree-manager/
+      scripts/   # Shell scripts (copied verbatim by build)
+    issue-tracker-github/
+      scripts/   # Shell scripts (copied verbatim by build)
   hooks/         # Hook templates
   partials/      # Shared EJS partials
 
@@ -228,10 +232,12 @@ Run `/reaper:claude-sync` to detect undocumented changes.
 | `src/agents/*.ejs` | Source | ✅ Edit these |
 | `src/commands/*.ejs` | Source | ✅ Edit these |
 | `src/skills/**/*.ejs` | Source | ✅ Edit these |
+| `src/skills/**/*.sh` | Source | ✅ Edit these |
 | `src/partials/*.ejs` | Source | ✅ Edit these (shared content) |
 | `agents/*.md` | Generated | ❌ Never edit - changes will be overwritten |
 | `commands/*.md` | Generated | ❌ Never edit - changes will be overwritten |
 | `skills/**/*.md` | Generated | ❌ Never edit - changes will be overwritten |
+| `skills/**/*.sh` | Generated | ❌ Never edit - changes will be overwritten |
 | `hooks/hooks.json` | Generated | ❌ Never edit - changes will be overwritten |
 
 ### Build Commands
