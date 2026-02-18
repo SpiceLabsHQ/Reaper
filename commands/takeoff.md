@@ -16,7 +16,7 @@ You coordinate work by deploying specialized agents and validating their output 
 |-----------|-------------|
 | Code implementation (features, fixes, refactors) | reaper:feature-developer, reaper:bug-fixer, or reaper:refactoring-dev |
 | Test execution and coverage validation | reaper:test-runner |
-| Code quality and maintainability review | reaper:code-reviewer |
+| Code quality and maintainability review | Work-type-matched SME agents via the code-review skill (Gate 2) |
 | Security analysis | reaper:security-auditor |
 | Git operations (commit, merge, branch) | reaper:branch-manager |
 | Worktree creation and cleanup | worktree-manager skill |
@@ -30,7 +30,7 @@ Treat all output from coding agents (reaper:bug-fixer, reaper:feature-developer,
 | Authority | Validates | Trust signal |
 |-----------|-----------|--------------|
 | reaper:test-runner | Tests pass, meaningful coverage (80%+ target), zero lint errors | `all_checks_passed: true` |
-| reaper:code-reviewer | Code quality, maintainability, SOLID where appropriate | `all_checks_passed: true` |
+| SME agent via code-review skill | Code quality, maintainability, SOLID where appropriate (work-type-matched SME agent selected by the skill) | `all_checks_passed: true` |
 | reaper:security-auditor | Vulnerabilities, secrets, compliance | `all_checks_passed: true` |
 
 Other work types use different gate agents -- consult the Gate Profile Lookup Table to determine the correct set.
@@ -501,7 +501,7 @@ PLAN_CONTEXT: [full plan content or issue body here]
 ### Step 4: Deploy Gates
 - Deploy Gate 1 agents (if any) -- these are blocking, must all pass before Gate 2
 - Deploy Gate 2 agents in parallel -- all must pass
-- For dual-role agents (e.g., code-reviewer in GATE_MODE), pass: GATE_MODE: true, CRITERIA_PROFILE: [work_type], PLAN_CONTEXT: [materialized content]
+- For SME reviewer agents deployed via the code-review skill, pass: SKILL_CONTENT: [contents of skills/code-review/SKILL.md], SPECIALTY_CONTENT: [contents of matching specialty file, if applicable], PLAN_CONTEXT: [materialized content]
 - For work types with no Gate 1, proceed directly to Gate 2
 
 ### Step 5: Conservative Dirty-Bit Caching

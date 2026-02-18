@@ -19,15 +19,19 @@ Gate 1 must pass before anything else proceeds.
 
 The test-runner is the sole authoritative source of test metrics. Coding agents run tests during TDD for fast feedback, but only the test-runner's results determine whether the gate passes.
 
-### Gate 2: reaper:code-reviewer + reaper:security-auditor (parallel)
+### Gate 2: SME reviewer + reaper:security-auditor (parallel)
 
-Both agents run simultaneously. Both must pass.
+Gate 2 deploys a work-type-matched SME agent using the code-review skill, alongside the security auditor. Both agents run simultaneously. Both must pass.
 
-**Code reviewer:**
+**SME reviewer (via code-review skill):**
+
+Rather than a fixed code-reviewer agent, Gate 2 selects a subject matter expert based on the work type of the changeset. The SME receives the universal `skills/code-review/SKILL.md` content, a matching specialty file (if applicable), and `PLAN_CONTEXT` from the task plan. This ensures code review is performed by an agent with domain expertise in the specific work type.
+
 - Plan adherence verification (did the agent build what was specified?)
 - SOLID principles and DRY compliance
 - Test quality review (flaky patterns, over-mocking, missing edge cases)
 - Build compilation validation
+- Domain-specific review criteria from the specialty file
 
 **Security auditor:**
 - Vulnerability scanning with Trivy, Semgrep, and TruffleHog
@@ -44,7 +48,7 @@ After the coding agent applies fixes, only the failed gate re-runs -- not the en
 | Gate Agent | Max Iterations | Rationale |
 |------------|---------------|-----------|
 | reaper:test-runner | 3 | Most likely to need iteration (test failures, coverage gaps) |
-| reaper:code-reviewer | 2 | Review feedback is typically addressed in fewer cycles |
+| SME reviewer (via code-review skill) | 1 | SME reviewers perform one focused pass per iteration |
 | reaper:security-auditor | 1 | Security issues require careful one-pass remediation |
 | reaper:ai-prompt-engineer | 1 | Prompt quality review is typically one-pass |
 | reaper:deployment-engineer | 1 | Pipeline validation is typically one-pass |
@@ -55,23 +59,33 @@ If any gate exceeds its iteration limit, Reaper escalates to you with a summary 
 
 Not all work needs the same gates. Reaper auto-detects the work type from file paths and extensions in the changeset, then selects the appropriate gate agents.
 
-| Work Type | Gate 1 (blocking) | Gate 2 (parallel) |
-|-----------|-------------------|-------------------|
-| Application code | test-runner | code-reviewer + security-auditor |
-| Infrastructure (Terraform, K8s, Docker) | -- | security-auditor |
-| Database migrations | -- | code-reviewer |
-| API specifications (OpenAPI, GraphQL) | -- | code-reviewer |
-| Agent prompts | -- | ai-prompt-engineer + code-reviewer |
-| Documentation | -- | code-reviewer |
-| CI/CD pipelines | -- | security-auditor + deployment-engineer |
-| Test code | test-runner | code-reviewer |
-| Configuration files | -- | security-auditor |
+| Work Type | Gate 1 (blocking) | Gate 2 (parallel) | reviewer_agent |
+|-----------|-------------------|-------------------|----------------|
+| Application code | test-runner | SME reviewer + security-auditor | feature-developer |
+| Infrastructure (Terraform, K8s, Docker) | -- | SME reviewer + security-auditor | cloud-architect |
+| Database migrations | -- | SME reviewer | database-architect |
+| API specifications (OpenAPI, GraphQL) | -- | SME reviewer | api-designer |
+| Agent prompts | -- | ai-prompt-engineer + SME reviewer | ai-prompt-engineer |
+| Documentation | -- | SME reviewer | technical-writer |
+| CI/CD pipelines | -- | SME reviewer + security-auditor | deployment-engineer |
+| Test code | test-runner | SME reviewer | feature-developer |
+| Configuration files | -- | SME reviewer + security-auditor | feature-developer |
 
 Work types with no Gate 1 skip directly to Gate 2.
 
-When a changeset spans multiple work types, Reaper computes the union of all matching profiles. If any profile includes a Gate 1, it remains blocking. Gate 2 agents are deduplicated across profiles. For example, a changeset touching both `src/auth.ts` and `terraform/main.tf` produces Gate 1: test-runner (blocking), Gate 2: code-reviewer + security-auditor.
+When a changeset spans multiple work types, Reaper computes the union of all matching profiles. If any profile includes a Gate 1, it remains blocking. Gate 2 agents are deduplicated across profiles. For example, a changeset touching both `src/auth.ts` and `terraform/main.tf` produces Gate 1: test-runner (blocking), Gate 2: SME reviewers (reaper:feature-developer for application code, reaper:cloud-architect for infrastructure) + security-auditor.
 
-The default profile is `application_code`. If no file pattern matches a known work type, the full test-runner through code-reviewer + security-auditor pipeline applies.
+The default profile is `application_code`. If no file pattern matches a known work type, the full test-runner through SME reviewer (reaper:feature-developer with code-review skill) + security-auditor pipeline applies.
+
+### Skill Injection
+
+Each SME reviewer receives three pieces of context when deployed:
+
+1. **SKILL_CONTENT** -- the full text of `skills/code-review/SKILL.md`, which defines the universal review checklist (plan adherence, SOLID principles, test quality, etc.)
+2. **SPECIALTY_CONTENT** -- an optional specialty file from `skills/code-review/` matching the work type (e.g., `application-code.md` for application code, `database-migration.md` for migrations). Work types without a specialty file omit this field entirely.
+3. **PLAN_CONTEXT** -- the materialized plan content from the task, giving the reviewer full context on what was intended.
+
+This pattern allows any domain expert agent to perform a high-quality code review without needing a dedicated reviewer agent. The universal skill ensures consistent review standards while the specialty file adds domain-specific criteria.
 
 ## Self-Learning Loop
 
