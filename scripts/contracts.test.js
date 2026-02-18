@@ -999,6 +999,75 @@ registerCommandSemanticSuite('claude-sync');
 registerCommandSemanticSuite('start');
 
 // ---------------------------------------------------------------------------
+// Contract: takeoff materializes PLAN_CONTEXT before Gate 2 dispatch
+// ---------------------------------------------------------------------------
+
+describe('Contract: takeoff PLAN_CONTEXT materialization', () => {
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
+
+  it(`${relative} contains PLAN_CONTEXT materialization step`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('PLAN_CONTEXT'),
+      `${relative} must contain PLAN_CONTEXT materialization before Gate 2 dispatch`
+    );
+  });
+
+  it(`${relative} searches .claude/plans/ for plan file before Gate 2`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('.claude/plans/'),
+      `${relative} must reference .claude/plans/ as the plan file source for PLAN_CONTEXT`
+    );
+  });
+
+  it(`${relative} falls back to FETCH_ISSUE when no plan file found`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // The PLAN_CONTEXT section must mention FETCH_ISSUE as the fallback source
+    assert.ok(
+      content.includes('FETCH_ISSUE'),
+      `${relative} must reference FETCH_ISSUE as the fallback source for PLAN_CONTEXT`
+    );
+  });
+
+  it(`${relative} PLAN_CONTEXT section appears before Step 4 (Deploy Gates)`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const planContextIdx = content.indexOf('PLAN_CONTEXT');
+    const step4Idx = content.indexOf('### Step 4: Deploy Gates');
+    assert.ok(
+      planContextIdx !== -1,
+      `${relative} must contain PLAN_CONTEXT`
+    );
+    assert.ok(
+      step4Idx !== -1,
+      `${relative} must contain "### Step 4: Deploy Gates"`
+    );
+    assert.ok(
+      planContextIdx < step4Idx,
+      `${relative} PLAN_CONTEXT must appear before "Step 4: Deploy Gates" (found at index ${planContextIdx}, Step 4 at ${step4Idx})`
+    );
+  });
+
+  it(`${relative} documents graceful degradation when neither plan file nor issue body found`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // Graceful degradation means omitting PLAN_CONTEXT with a warning, not failing the gate
+    assert.ok(
+      /warn|omit|skip|not found/i.test(content.slice(
+        content.indexOf('PLAN_CONTEXT'),
+        content.indexOf('PLAN_CONTEXT') + 2000
+      )),
+      `${relative} must document graceful degradation (warn/omit) when PLAN_CONTEXT cannot be resolved`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Contract: Visual vocabulary gauge states in generated command files
 // ---------------------------------------------------------------------------
 

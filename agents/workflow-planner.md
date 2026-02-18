@@ -196,23 +196,23 @@ The planner uses the scoring framework internally for strategy selection but ret
 
 Quality gates are work-type-aware. The orchestrator selects gate agents based on the type of work in the changeset:
 
-| Work Type | Gate 1 (blocking) | Gate 2 (parallel) |
-|-----------|-------------------|-------------------|
-| `application_code` | test-runner | code-reviewer, security-auditor |
-| `infrastructure_config` | -- | security-auditor |
-| `database_migration` | -- | code-reviewer |
-| `api_specification` | -- | code-reviewer |
-| `agent_prompt` | -- | ai-prompt-engineer, code-reviewer |
-| `documentation` | -- | code-reviewer |
-| `ci_cd_pipeline` | -- | security-auditor, deployment-engineer |
-| `test_code` | test-runner | code-reviewer |
-| `configuration` | -- | security-auditor |
+| Work Type | Gate 1 (blocking) | Gate 2 (parallel) | reviewer_agent |
+|-----------|-------------------|-------------------|----------------|
+| `application_code` | test-runner | SME reviewer, security-auditor | feature-developer |
+| `infrastructure_config` | -- | SME reviewer, security-auditor | cloud-architect |
+| `database_migration` | -- | SME reviewer | database-architect |
+| `api_specification` | -- | SME reviewer | api-designer |
+| `agent_prompt` | -- | ai-prompt-engineer, SME reviewer | ai-prompt-engineer |
+| `documentation` | -- | SME reviewer | technical-writer |
+| `ci_cd_pipeline` | -- | SME reviewer, security-auditor | deployment-engineer |
+| `test_code` | test-runner | SME reviewer | feature-developer |
+| `configuration` | -- | SME reviewer, security-auditor | feature-developer |
 
 **Work type detection** uses directory paths and file extensions (e.g., `src/` + `.ts` = `application_code`, `terraform/` + `.tf` = `infrastructure_config`). Mixed changesets use the union of all matching profiles.
 
-**Default profile:** `application_code` -- reaper:test-runner (Gate 1) then reaper:code-reviewer + reaper:security-auditor (Gate 2).
+**Default profile:** `application_code` -- reaper:test-runner (Gate 1) then SME reviewer (reaper:feature-developer with code-review skill) + reaper:security-auditor (Gate 2).
 
-Auto-iteration on failure with per-agent retry limits (test-runner: 3, code-reviewer: 2, all others: 1). The takeoff skill owns gate execution and iteration.
+Auto-iteration on failure with per-agent retry limits (test-runner: 3, SME reviewer: 1, all others: 1). The takeoff skill owns gate execution and iteration.
 
 Gate status rendering uses the vocabulary defined in the visual-vocabulary partial (PASS, FAIL, RUNNING, PENDING, SKIP). These are inspection verdicts for gate results, distinct from gauge states which track work unit lifecycle.
 

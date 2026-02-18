@@ -483,10 +483,25 @@ Before deploying gate agents, announce the selection and render an initial Gate 
 "Selected gate profile: [work_type]. Running [N] gate agents: [agent list]."
 For union profiles: "Mixed changeset detected ([types]). Union profile: Gate 1 [agents], Gate 2 [agents]."
 
+### Step 3.5: Materialize PLAN_CONTEXT
+
+Before dispatching Gate 2 reviewers, resolve the plan context so reviewers assess against actual requirements — not self-inferred scope.
+
+**Resolution order:**
+
+1. **Plan file first**: Search `.claude/plans/` for a file whose filename contains the current TASK_ID, or whose contents reference the TASK_ID. If found, read its full contents as PLAN_CONTEXT.
+2. **Fallback to FETCH_ISSUE**: If no plan file matches, use the loaded platform skill's FETCH_ISSUE operation to retrieve the issue body. Use that as PLAN_CONTEXT.
+3. **Graceful degradation**: If neither source yields content, omit PLAN_CONTEXT from the reviewer's prompt and log a warning: "PLAN_CONTEXT not found — reviewer will assess without plan reference." This is not a gate failure.
+
+When resolved, inject the content into the Gate 2 reviewer prompt as:
+```
+PLAN_CONTEXT: [full plan content or issue body here]
+```
+
 ### Step 4: Deploy Gates
 - Deploy Gate 1 agents (if any) -- these are blocking, must all pass before Gate 2
 - Deploy Gate 2 agents in parallel -- all must pass
-- For dual-role agents (e.g., code-reviewer in GATE_MODE), pass: GATE_MODE: true, CRITERIA_PROFILE: [work_type]
+- For dual-role agents (e.g., code-reviewer in GATE_MODE), pass: GATE_MODE: true, CRITERIA_PROFILE: [work_type], PLAN_CONTEXT: [materialized content]
 - For work types with no Gate 1, proceed directly to Gate 2
 
 ### Step 5: Conservative Dirty-Bit Caching
@@ -537,17 +552,19 @@ Not all work types need the same quality gates. Use the profile table below to d
 
 #### Gate Profile Lookup Table
 
-| Work Type | Gate 1 (blocking) | Gate 2 (parallel) | Notes |
-|-----------|-------------------|-------------------|-------|
-| `application_code` | reaper:test-runner | reaper:code-reviewer, reaper:security-auditor | Default for source code -- full gate sequence |
-| `infrastructure_config` | -- | reaper:security-auditor | No Gate 1 -- Gate 2 runs immediately. Terraform, Kubernetes, Docker, Helm |
-| `database_migration` | -- | reaper:code-reviewer | No Gate 1 -- Gate 2 runs immediately. Schema changes, migration files |
-| `api_specification` | -- | reaper:code-reviewer | No Gate 1 -- Gate 2 runs immediately. OpenAPI, GraphQL schema definitions |
-| `agent_prompt` | -- | reaper:ai-prompt-engineer, reaper:code-reviewer | No Gate 1 -- Gate 2 runs immediately |
-| `documentation` | -- | reaper:code-reviewer | No Gate 1 -- Gate 2 runs immediately |
-| `ci_cd_pipeline` | -- | reaper:security-auditor, reaper:deployment-engineer | No Gate 1 -- Gate 2 runs immediately. CI/CD pipeline configurations |
-| `test_code` | reaper:test-runner | reaper:code-reviewer | Test files themselves |
-| `configuration` | -- | reaper:security-auditor | No Gate 1 -- Gate 2 runs immediately. Application config files |
+| Work Type | Gate 1 (blocking) | Gate 2 (parallel) | reviewer_agent | specialty_file |
+|-----------|-------------------|-------------------|----------------|----------------|
+| `application_code` | reaper:test-runner | SME reviewer, reaper:security-auditor | reaper:feature-developer | application-code.md |
+| `infrastructure_config` | -- | SME reviewer, reaper:security-auditor | reaper:cloud-architect | (none) |
+| `database_migration` | -- | SME reviewer | reaper:database-architect | database-migration.md |
+| `api_specification` | -- | SME reviewer | reaper:api-designer | (none) |
+| `agent_prompt` | -- | reaper:ai-prompt-engineer, SME reviewer | reaper:ai-prompt-engineer | agent-prompt.md |
+| `documentation` | -- | SME reviewer | reaper:technical-writer | documentation.md |
+| `ci_cd_pipeline` | -- | SME reviewer, reaper:security-auditor | reaper:deployment-engineer | (none) |
+| `test_code` | reaper:test-runner | SME reviewer | reaper:feature-developer | application-code.md |
+| `configuration` | -- | SME reviewer, reaper:security-auditor | reaper:feature-developer | (none) |
+
+"SME reviewer" resolves to the `reviewer_agent` for that work type. Each SME reviewer runs the universal code-review skill (`skills/code-review/SKILL.md`) with an optional specialty file injected as `SPECIALTY_CONTENT`.
 
 For work types with no Gate 1 (`infrastructure_config`, `database_migration`, `api_specification`, `agent_prompt`, `documentation`, `ci_cd_pipeline`, `configuration`), skip directly to Gate 2.
 
@@ -580,7 +597,7 @@ When a changeset spans multiple work types, compute the union of all matching pr
 
 **Example:** A changeset touching `src/auth.ts` (application_code) and `terraform/main.tf` (infrastructure_config) produces:
 - Gate 1: reaper:test-runner (from application_code; infrastructure_config has no Gate 1)
-- Gate 2: reaper:code-reviewer + reaper:security-auditor (union of both profiles)
+- Gate 2: SME reviewer (reaper:feature-developer, from application_code) + reaper:security-auditor (union of both profiles; deduplicated since both include security-auditor)
 
 #### Differential Retry Limits
 
@@ -589,7 +606,7 @@ Each gate agent has its own iteration limit before escalating to the user:
 | Gate Agent | Max Iterations | Rationale |
 |------------|---------------|-----------|
 | reaper:test-runner | 3 | Most likely to need iteration (test failures, coverage gaps) |
-| reaper:code-reviewer | 2 | Review feedback is typically addressed in fewer cycles |
+| SME reviewer (via code-review skill) | 1 | SME reviewers perform one focused pass per iteration |
 | reaper:security-auditor | 1 | Security issues require careful one-pass remediation |
 | reaper:ai-prompt-engineer | 1 | Prompt quality review is typically one-pass |
 | reaper:deployment-engineer | 1 | Pipeline validation is typically one-pass |
@@ -602,9 +619,28 @@ The gate agents to deploy depend on the work type profile determined above. The 
 
 **Gate 1 (blocking):** Deploy reaper:test-runner. Must pass before Gate 2 proceeds.
 
-**Gate 2 (parallel):** Deploy reaper:code-reviewer and reaper:security-auditor simultaneously in a single message. Both must pass.
+**Gate 2 (parallel):** Deploy the `reviewer_agent` from the Gate Profile Lookup Table and reaper:security-auditor simultaneously in a single message. Both must pass.
 
 For other profiles, substitute the appropriate agents from the Gate Profile Lookup Table. For work types with no Gate 1, proceed directly to Gate 2.
+
+**Gate 2 SME dispatch:** Look up `reviewer_agent` and `specialty_file` for the detected work type in the Gate Profile Lookup Table, then invoke the SME as a fresh Task:
+
+```
+Task --subagent_type <reviewer_agent> --prompt "
+TASK: <task_id>
+WORKTREE: <worktree_path>
+SCOPE: <scope_globs>
+PLAN_CONTEXT: <materialized_plan_content>
+SKILL_CONTENT: <contents of skills/code-review/SKILL.md>
+SPECIALTY_CONTENT: <contents of skills/code-review/<specialty_file>.md, if applicable>
+"
+```
+
+- `SKILL_CONTENT`: read `skills/code-review/SKILL.md` from the repo root and inject the full text
+- `SPECIALTY_CONTENT`: read the matching specialty file (e.g., `skills/code-review/application-code.md`) and inject the full text; omit this field entirely if the work type has no specialty file (`(none)` in the table)
+- `PLAN_CONTEXT`: the materialized plan content injected by takeoff before gate dispatch
+- Always use a fresh Task invocation for the SME reviewer -- never resume from the coding agent
+- **Mixed changesets**: when multiple work types are detected, deploy one SME per work type in parallel (deduplicated by `reviewer_agent`)
 
 After all gates pass, present completed work to the user and seek feedback.
 
@@ -665,18 +701,16 @@ Frequent commits on feature branches create restore points and document progress
 
 ### Parallel Deployment Pattern
 
-After Gate 1 passes, deploy Gate 2 agents in a single message with two Task calls:
-```
-Task --subagent_type reaper:code-reviewer --prompt "..."
-Task --subagent_type reaper:security-auditor --prompt "..."
-```
+After Gate 1 passes, deploy Gate 2 agents in a single message. Gate 2 now uses the `reviewer_agent` from the Gate Profile Lookup Table rather than a fixed `reaper:code-reviewer`. For the default `application_code` profile, this means deploying `reaper:feature-developer` (with the code-review skill injected) alongside `reaper:security-auditor` in parallel.
+
+See the Gate 2 SME dispatch instructions above for the full prompt structure to use when invoking the SME reviewer.
 
 If either fails, combine `blocking_issues` from both before redeploying the coding agent.
 
 ### Information Handoff
 
 - **Coding agent to reaper:test-runner**: Pass `narrative_report.summary` for test scope context, plus TEST_COMMAND and LINT_COMMAND from project config
-- **reaper:test-runner to reaper:code-reviewer**: Pass full test results JSON (test_exit_code, coverage_percentage, lint_exit_code, test_metrics)
+- **reaper:test-runner to SME reviewer**: Pass full test results JSON (test_exit_code, coverage_percentage, lint_exit_code, test_metrics) alongside SKILL_CONTENT, SPECIALTY_CONTENT, and PLAN_CONTEXT
 - **reaper:test-runner to reaper:security-auditor**: Pass plan context only (security-auditor does not need test results)
 
 
