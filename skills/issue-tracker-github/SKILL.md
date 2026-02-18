@@ -8,12 +8,21 @@ allowed-tools: Bash, Read, Grep
 
 Maps abstract task operations to `gh` CLI commands. See `gh issue --help` and `gh project --help` for full flag details.
 
+## Available Scripts
+
+Scripts are in `${CLAUDE_PLUGIN_ROOT}/skills/issue-tracker-github/scripts/`:
+
+| Script | Purpose |
+|--------|---------|
+| `gh-link-sub-issues.sh` | Link 1+ issues as sub-issues of a parent (bulk-capable) |
+| `gh-list-sub-issues.sh` | List sub-issues of a parent via GraphQL |
+
 ## Quick Reference
 
 | Operation | Command Pattern |
 |-----------|----------------|
 | FETCH_ISSUE | `gh issue view <number> --json title,body,state,labels,assignees` |
-| LIST_CHILDREN | Parse tracking issue body for task list items (`- [ ] #N ...`) |
+| LIST_CHILDREN | `gh-list-sub-issues.sh <parent>` or parse tracking issue body |
 | CREATE_ISSUE | `gh issue create --title "..." --body "..." --label "..."` |
 | UPDATE_ISSUE | `gh issue edit <number> --add-label/--title/--body/--assignee` |
 | ADD_DEPENDENCY | Add cross-references to issue bodies (see Dependency Pattern) |
@@ -64,37 +73,40 @@ GitHub supports sub-issues via its GraphQL API (beta). Use this as the primary a
 
 **CREATE_ISSUE with `parent`:**
 
-1. Create the child issue:
+1. Create child issues first (batch all creates before linking):
    ```bash
-   gh issue create --title "Implement login" --body "Details..." --label "epic:auth"
+   gh issue create --title "Set up database schema" --body "..." --label "epic:auth"
+   gh issue create --title "Implement API endpoints" --body "..." --label "epic:auth"
+   gh issue create --title "Write tests" --body "..." --label "epic:auth"
    ```
-2. Get the node IDs for both parent and child:
+
+2. Bulk-link all children to the parent in one call:
    ```bash
-   PARENT_ID=$(gh issue view <parent-number> --json id -q .id)
-   CHILD_ID=$(gh issue view <new-number> --json id -q .id)
+   ${CLAUDE_PLUGIN_ROOT}/skills/issue-tracker-github/scripts/gh-link-sub-issues.sh <parent-number> <child-1> <child-2> <child-3>
    ```
-3. Link the child as a sub-issue:
-   ```bash
-   gh api graphql -f query='
-     mutation {
-       addSubIssue(input: {issueId: "'"$PARENT_ID"'", subIssueId: "'"$CHILD_ID"'"}) {
-         issue { id title }
-       }
-     }
-   '
-   ```
+
+   The script resolves node IDs internally and links each child as a sub-issue. It handles errors per-child (skips failures, reports at the end).
 
 **LIST_CHILDREN:**
 
 ```bash
-gh api graphql -f query='
-  query {
-    node(id: "'"$PARENT_ID"'") {
-      ... on Issue { subIssues(first: 50) { nodes { number title state } } }
-    }
-  }
-'
+${CLAUDE_PLUGIN_ROOT}/skills/issue-tracker-github/scripts/gh-list-sub-issues.sh <parent-number>
 ```
+
+Returns JSON array of `{number, title, state}` objects.
+
+### Efficient Bulk Pattern
+
+When creating an epic with many children (e.g., flight-plan creating 5+ work units):
+
+1. **Create all issues** first with `gh issue create` (no linking yet)
+2. **Collect issue numbers** from the create output
+3. **Bulk-link** all children in a single script invocation:
+   ```bash
+   ${CLAUDE_PLUGIN_ROOT}/skills/issue-tracker-github/scripts/gh-link-sub-issues.sh 42 43 44 45 46 47
+   ```
+
+This is more efficient than interleaving creates and links — the script resolves the parent node ID once and reuses it for all children.
 
 ### Fallback: Tracking Issues
 
