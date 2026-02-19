@@ -24,12 +24,15 @@ The orchestrator passes the following fields when invoking this skill:
 | `PLAN_CONTEXT` | Materialized plan content (may be absent) |
 | `SKILL_CONTENT` | The contents of this file (already loaded by caller) |
 | `SPECIALTY_CONTENT` | Specialty file content for this work type (may be absent) |
+| `TEST_RUNNER_RESULTS` | Gate 1 test-runner JSON output (may be absent) |
 
 ## Universal Review Process
 
 Work through these steps in order for every review.
 
-### Step 1: Plan Completion Check
+### Step 1: Gate 1 Trust and Plan Completion Check
+
+**Trust Gate 1 results. Do not re-run the full test suite.** If `TEST_RUNNER_RESULTS` was provided, use it to confirm test coverage requirements were met. Selective test execution during inspection is permitted (e.g., running a single test to reproduce a defect you spotted), but never run the full suite.
 
 If `PLAN_CONTEXT` was provided:
 - Read the acceptance criteria and work unit description from the plan.
@@ -44,6 +47,7 @@ If `PLAN_CONTEXT` is absent, skip this step and set `plan_coverage` to `not_chec
 - Compare the modified file list against the `SCOPE` glob patterns provided.
 - Any modification outside the declared scope is a scope violation. List each one in `scope_violations`.
 - Scope violations are blocking issues unless the caller explicitly documented them in the plan.
+- As you inspect files, accumulate them in `files_reviewed`. Every file you read during the review must be listed here.
 
 ### Step 3: Completeness Check
 
@@ -73,13 +77,15 @@ If `SPECIALTY_CONTENT` is present, read it and apply any additional domain-speci
 
 Emit exactly this structure as your final output. No prose after the JSON block.
 
+> The orchestrator computes `all_checks_passed` from your response: `blocking_issues.length === 0 && scope_violations.length === 0`. Do not include it in your output.
+
 ```json
 {
-  "all_checks_passed": true,
   "blocking_issues": [],
   "non_blocking_notes": ["Optional improvement: ..."],
   "plan_coverage": "full|partial|not_checked",
   "scope_violations": [],
+  "files_reviewed": ["src/example.js", "tests/example.test.js"],
   "summary": "Brief description of what was reviewed and the verdict"
 }
 ```
@@ -88,9 +94,9 @@ Field definitions:
 
 | Field | Type | Values |
 |-------|------|--------|
-| `all_checks_passed` | boolean | `true` only when `blocking_issues` and `scope_violations` are both empty |
 | `blocking_issues` | string[] | One entry per blocking issue found; empty array if none |
 | `non_blocking_notes` | string[] | Observations that do not block approval; empty array if none |
 | `plan_coverage` | string | `"full"` all criteria met, `"partial"` some missing, `"not_checked"` no plan provided |
 | `scope_violations` | string[] | File paths modified outside declared scope; empty array if none |
+| `files_reviewed` | string[] | Required, non-empty. The paths of files you actually read or inspected during review. Used by the orchestrator to detect empty/crashed reviews. A review with an empty `files_reviewed` is invalid. |
 | `summary` | string | One or two sentences: what was reviewed and whether it passed |

@@ -22,8 +22,10 @@ unless it causes functional failures, in which case flag it as blocking.
 - **Over-long system prompt**: Flag if the prompt contains sections that could
   be removed without changing the agent's behavior on its defined task —
   repeated content, preambles that restate obvious facts, or sections that do not affect output.
-- **Contradictory instructions**: Any section that directly contradicts
+- **Contradictory instructions** (**blocking**): Any section that directly contradicts
   another. Example: "Always emit JSON" followed by "Respond in prose."
+  Functionally broken prompts are not style nits — contradictory instructions
+  cause inconsistent agent behavior.
 
 ## Output Format Contract Validation
 

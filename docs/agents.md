@@ -40,6 +40,8 @@ Gatekeepers. These agents validate code and infrastructure after implementation.
 | `reaper:security-auditor` | Vulnerability detection with Trivy, Semgrep, and TruffleHog -- OWASP compliance and secrets scanning |
 | `reaper:performance-engineer` | Profiles bottlenecks, implements targeted optimizations, and validates improvements with before/after metrics |
 
+Gate 2 code review was previously handled by `reaper:code-reviewer`, which has been replaced by work-type-matched SME routing.
+
 **Gate 2 code review -- SME routing:** Rather than a dedicated code-reviewer agent, Gate 2 code review is performed by a work-type-matched subject matter expert (SME). The orchestrator selects the reviewer based on the gate profile table defined in the quality-gate-protocol partial. Each SME receives the universal `skills/code-review/SKILL.md` skill plus an optional specialty file for their domain.
 
 | Work Type | SME Reviewer |

@@ -61,7 +61,7 @@ reaper/
 | Partial | Used By | Description |
 |---------|---------|-------------|
 | `pre-work-validation-coding.ejs` | bug-fixer, feature-developer, refactoring-dev, integration-engineer | Validates TASK, WORKTREE_PATH, DESCRIPTION |
-| `pre-work-validation-review.ejs` | code-reviewer, security-auditor, test-runner | Validates TASK, WORKING_DIR, PLAN_CONTEXT |
+| `pre-work-validation-review.ejs` | security-auditor, test-runner (and SME reviewers dispatched with code-review skill) | Validates TASK, WORKING_DIR, PLAN_CONTEXT |
 
 ### Standard Protocol Partials
 
@@ -97,7 +97,7 @@ Templates use these EJS variables passed during compilation:
 ```javascript
 const AGENT_TYPES = {
   coding: ['bug-fixer', 'feature-developer', 'refactoring-dev', 'integration-engineer'],
-  review: ['code-reviewer', 'security-auditor', 'test-runner'],
+  review: ['security-auditor', 'test-runner'],
   planning: [
     'workflow-planner', 'api-designer', 'database-architect', 'cloud-architect',
     'event-architect', 'observability-architect', 'frontend-architect',
@@ -284,7 +284,7 @@ For coding agents (bug-fixer, feature-developer, refactoring-dev, integration-en
 
 ### pre-work-validation-review.ejs
 
-For review agents (code-reviewer, security-auditor, test-runner):
+For review agents (security-auditor, test-runner; Gate 2 SME reviewers use the code-review skill injected by the orchestrator):
 
 - Validates TASK identifier
 - Validates WORKING_DIR (code location)

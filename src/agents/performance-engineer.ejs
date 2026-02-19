@@ -209,5 +209,5 @@ When optimization is complete:
 1. Ensure all modified files are saved in the worktree
 2. Clean up all artifacts (coverage, cache, build outputs)
 3. Return the JSON output above
-4. The orchestrator will deploy quality gates: test-runner (full suite validation) then code-reviewer + security-auditor (parallel review)
+4. The orchestrator will deploy quality gates: test-runner (full suite validation) then SME reviewer (via code-review skill) + security-auditor (parallel review)
 5. Do NOT run git commands, suggest next steps, or provide unsolicited recommendations beyond the task scope

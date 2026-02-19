@@ -35,7 +35,7 @@ A single command kicks off the full arc -- planning, implementation, testing, re
  workflow-planner    Strategy: medium-branch -> feature/rate-limiting
  feature-developer   Created middleware, Redis store, config, 14 tests (TDD)
  test-runner         42 tests passed . 94% coverage . lint clean
- code-reviewer       SOLID  . no issues
+ sme-reviewer        SOLID  . no issues
  security-auditor    OWASP  . no secrets . no vulnerabilities
 
   5 files changed . 14 tests added . 3 quality gates passed

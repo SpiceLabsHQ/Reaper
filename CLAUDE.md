@@ -361,6 +361,5 @@ Task --subagent_type reaper:branch-manager \
 # Quality (mandatory before merge)
 Task --subagent_type reaper:test-runner \
   --prompt "TASK: reaper-a3f, WORKTREE: ./trees/reaper-a3f-oauth, DESCRIPTION: Run full suite"
-Task --subagent_type reaper:feature-developer \
-  --prompt "TASK: reaper-a3f, WORKTREE: ./trees/reaper-a3f-oauth, SKILL_CONTENT: <skills/code-review/SKILL.md>, SPECIALTY_CONTENT: <skills/code-review/application-code.md>, PLAN_CONTEXT: <plan>, DESCRIPTION: SME code review for application_code"
+# Gate 2 SME dispatch (with skill injection) is automated by takeoff — do not construct manually.
 ```

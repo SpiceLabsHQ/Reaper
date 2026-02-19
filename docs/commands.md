@@ -82,7 +82,7 @@ Vague inputs like "fix bug" are rejected. Either provide a task ID or a detailed
 6. **Execution loop.** For each work unit:
    - Deploys the appropriate coding agent (`reaper:feature-developer`, `reaper:bug-fixer`, or `reaper:refactoring-dev`)
    - Classifies the changeset and selects a gate profile
-   - Runs quality gates (test-runner, code-reviewer, security-auditor for application code; different agents for infrastructure, database, or prompt work)
+   - Runs quality gates (test-runner + SME reviewer via code-review skill + security-auditor for application code; different SME reviewers for infrastructure, database, or prompt work)
    - Auto-iterates on failures up to per-gate retry limits
    - Commits on each gate pass for restore points
 7. **Presentation.** Completed work is presented with a summary of what was built, which gates passed, and how to test it.
@@ -105,11 +105,11 @@ Different file types trigger different gate agents:
 
 | Work type | Gate 1 (blocking) | Gate 2 (parallel) |
 |-----------|-------------------|-------------------|
-| Application code | test-runner | code-reviewer, security-auditor |
-| Infrastructure config | -- | security-auditor |
-| Database migrations | -- | code-reviewer |
-| Agent prompts | -- | ai-prompt-engineer, code-reviewer |
-| Documentation | -- | code-reviewer |
+| Application code | test-runner | SME reviewer (feature-developer), security-auditor |
+| Infrastructure config | -- | SME reviewer (cloud-architect), security-auditor |
+| Database migrations | -- | SME reviewer (database-architect) |
+| Agent prompts | -- | ai-prompt-engineer, SME reviewer (ai-prompt-engineer) |
+| Documentation | -- | SME reviewer (technical-writer) |
 
 Mixed changesets run the union of all matching profiles.
 

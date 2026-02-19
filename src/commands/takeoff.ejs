@@ -214,13 +214,35 @@ Before dispatching Gate 2 reviewers, resolve the plan context so reviewers asses
 
 When resolved, inject the content into the Gate 2 reviewer prompt as:
 ```
-PLAN_CONTEXT: [full plan content or issue body here]
+<plan_context>
+[full plan content or issue body here]
+</plan_context>
 ```
 
 ### Step 4: Deploy Gates
 - Deploy Gate 1 agents (if any) -- these are blocking, must all pass before Gate 2
 - Deploy Gate 2 agents in parallel -- all must pass
-- For SME reviewer agents deployed via the code-review skill, pass: SKILL_CONTENT: [contents of skills/code-review/SKILL.md], SPECIALTY_CONTENT: [contents of matching specialty file, if applicable], PLAN_CONTEXT: [materialized content]
+- For SME reviewer agents deployed via the code-review skill, construct the prompt using XML-wrapped fields to prevent field bleeding:
+  ```
+  <skill_content>
+  [contents of skills/code-review/SKILL.md]
+  </skill_content>
+
+  <specialty_content>
+  [contents of matching specialty file, if applicable; omit this entire block if no specialty file]
+  </specialty_content>
+
+  <plan_context>
+  [materialized plan content]
+  </plan_context>
+
+  <scope>
+  [glob patterns]
+  </scope>
+
+  TEST_RUNNER_RESULTS: [paste Gate 1 test-runner JSON output here; omit if Gate 1 was not run for this work type]
+  ```
+  Note: For SME reviewers (via code-review skill), `all_checks_passed` is computed by takeoff from `blocking_issues.length === 0 && scope_violations.length === 0`. The reviewer does not emit this field.
 - For work types with no Gate 1, proceed directly to Gate 2
 
 ### Step 5: Conservative Dirty-Bit Caching

@@ -47,11 +47,11 @@ Collect status for every worktree first, then render the fleet dashboard, then r
 #   IN FLIGHT   — Work has started (has commits beyond branch point, or uncommitted changes)
 #   TAKING OFF  — TASK.md exists but no commits beyond branch point and no uncommitted changes (assigned, not started)
 #   TAXIING    — Worktree exists but no work started (clean, no TASK.md, no commits beyond branch point)
-#   FAULT       — A quality gate failed (test-runner, code-reviewer, or security-auditor logged a failure)
+#   FAULT       — A quality gate failed (test-runner, SME reviewer, or security-auditor logged a failure)
 #
 # Gate progress is tracked by counting completed quality gates:
 #   - test-runner:       check for passing test results (last test run exit code 0)
-#   - code-reviewer:     check for REVIEW.md or code review results
+#   - sme-reviewer:      check for REVIEW.md or code review results
 #   - security-auditor:  check for SECURITY.md or security audit results
 # Gate count format: "N/3 gates" where N is the number of gates passed.
 
@@ -94,7 +94,7 @@ determine_fleet_state() {
   if [ -f "RESULTS.md" ] && ! grep -qi "status.*fail\|gate.*fail\|test.*fail" "RESULTS.md" 2>/dev/null; then
     gates_passed=$((gates_passed + 1))
   fi
-  # Gate 2: code-reviewer — REVIEW.md exists
+  # Gate 2: sme-reviewer — REVIEW.md exists
   if [ -f "REVIEW.md" ]; then
     gates_passed=$((gates_passed + 1))
   fi

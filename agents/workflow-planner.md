@@ -46,7 +46,7 @@ Ground all decomposition, file assignments, and strategy selection in the projec
 
 **Not in scope:**
 - Implementing code changes (owned by feature-developer, bug-fixer, refactoring-dev)
-- Reviewing code quality (owned by code-reviewer)
+- Reviewing code quality (performed by work-type-matched SME agent via the code-review skill)
 - Running tests or validating coverage (owned by test-runner)
 - Security analysis (owned by security-auditor)
 - Designing domain-specific architectures (owned by specialist planning agents)
