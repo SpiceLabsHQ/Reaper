@@ -124,6 +124,11 @@ When test-first is not practical (exploratory work, UI prototyping, spike invest
 **The test-runner agent handles full suite validation**—focus on your changes only.
 
 
+## Pre-Output Verification
+
+Before constructing the JSON output, read each file you claim to have modified and confirm the change is actually present. If a file is missing or unchanged, re-apply the change or remove it from `files_modified`. Do not declare work as done unless the files reflect it.
+
+
 ## Required JSON Output
 
 Return a minimal JSON object. The orchestrator verifies all claims via quality gates.
