@@ -7,18 +7,18 @@ Not all work types need the same quality gates. Use the profile table below to d
 
 #### Gate Profile Lookup Table
 
-| Work Type | Gate 1 (blocking) | Gate 2 (parallel) | Specialty File |
-|-----------|-------------------|-------------------|----------------|
-| `application_code` | reaper:test-runner | reaper:feature-developer, reaper:security-auditor | application-code.md |
-| `infrastructure_config` | -- | reaper:principal-engineer, reaper:security-auditor | architecture-review.md |
-| `database_migration` | -- | reaper:database-architect | database-migration.md |
-| `api_specification` | -- | reaper:principal-engineer | architecture-review.md |
-| `agent_prompt` | -- | reaper:ai-prompt-engineer | agent-prompt.md |
-| `documentation` | -- | reaper:technical-writer | documentation.md |
-| `ci_cd_pipeline` | -- | reaper:deployment-engineer, reaper:security-auditor | (none) |
-| `test_code` | reaper:test-runner | reaper:feature-developer | application-code.md |
-| `configuration` | -- | reaper:feature-developer, reaper:security-auditor | (none) |
-| `architecture_review` | -- | reaper:principal-engineer | architecture-review.md |
+| Work Type | Gate 1 (blocking) | Gate 2 (parallel) |
+|-----------|-------------------|-------------------|
+| `application_code` | reaper:test-runner | reaper:principal-engineer, reaper:security-auditor |
+| `infrastructure_config` | -- | reaper:principal-engineer, reaper:security-auditor |
+| `database_migration` | -- | reaper:database-architect |
+| `api_specification` | -- | reaper:principal-engineer |
+| `agent_prompt` | -- | reaper:ai-prompt-engineer |
+| `documentation` | -- | reaper:technical-writer |
+| `ci_cd_pipeline` | -- | reaper:deployment-engineer, reaper:security-auditor |
+| `test_code` | reaper:test-runner | reaper:principal-engineer |
+| `configuration` | -- | reaper:principal-engineer, reaper:security-auditor |
+| `architecture_review` | -- | reaper:principal-engineer |
 
 For work types with no Gate 1 (`infrastructure_config`, `database_migration`, `api_specification`, `agent_prompt`, `documentation`, `ci_cd_pipeline`, `configuration`, `architecture_review`), skip directly to Gate 2.
 
@@ -52,7 +52,7 @@ When a changeset spans multiple work types, compute the union of all matching pr
 
 **Example:** A changeset touching `src/auth.ts` (application_code) and `terraform/main.tf` (infrastructure_config) produces:
 - Gate 1: reaper:test-runner (from application_code; infrastructure_config has no Gate 1)
-- Gate 2: reaper:feature-developer (from application_code) + reaper:principal-engineer (from infrastructure_config) + reaper:security-auditor (union of both profiles; deduplicated since both include security-auditor)
+- Gate 2: reaper:principal-engineer (from application_code; deduplicated since both profiles include it) + reaper:security-auditor (union of both profiles; deduplicated since both include security-auditor)
 
 #### Differential Retry Limits
 
@@ -76,21 +76,21 @@ The gate agents to deploy depend on the work type profile determined above. The 
 
 For other profiles, substitute the appropriate agents from the Gate Profile Lookup Table. For work types with no Gate 1, proceed directly to Gate 2.
 
-**Gate 2 dispatch:** Look up the Gate 2 column in the profile table to identify the reviewer agent and its specialty file for the detected work type, then invoke the Gate 2 reviewer as a fresh Task:
+**Gate 2 dispatch:** Look up the Gate 2 column in the profile table to identify the reviewer agent for the detected work type, then invoke the Gate 2 reviewer as a fresh Task:
 
 ```
 Task --subagent_type <gate2_reviewer_agent> --prompt "
 TASK: <task_id>
 WORKTREE: <worktree_path>
 SCOPE: <scope_globs>
+WORK_TYPE: <detected_work_type>
 PLAN_CONTEXT: <materialized_plan_content>
 SKILL_CONTENT: <contents of skills/code-review/SKILL.md>
-SPECIALTY_CONTENT: <contents of skills/code-review/<specialty_file>.md, if applicable>
 "
 ```
 
 - `SKILL_CONTENT`: read `skills/code-review/SKILL.md` from the repo root and inject the full text
-- `SPECIALTY_CONTENT`: read the matching specialty file (e.g., `skills/code-review/application-code.md`) and inject the full text; omit this field entirely if the work type has no specialty file (`(none)` in the table)
+- `WORK_TYPE`: the detected work type string (e.g., `application_code`, `test_code`); used by the reviewer to focus its analysis
 - `PLAN_CONTEXT`: the materialized plan content injected by takeoff before gate dispatch
 - Always use a fresh Task invocation for the Gate 2 reviewer -- never resume from the coding agent
 - **Mixed changesets**: when multiple work types are detected, deploy the Gate 2 agents listed for each detected work type in parallel
@@ -163,7 +163,7 @@ If either fails, combine `blocking_issues` from both before redeploying the codi
 ### Information Handoff
 
 - **Coding agent to reaper:test-runner**: Pass `narrative_report.summary` for test scope context, plus TEST_COMMAND and LINT_COMMAND from project config
-- **reaper:test-runner to Gate 2 reviewer**: Pass full test results JSON (test_exit_code, coverage_percentage, lint_exit_code, test_metrics) alongside SKILL_CONTENT, SPECIALTY_CONTENT, and PLAN_CONTEXT
+- **reaper:test-runner to Gate 2 reviewer**: Pass full test results JSON (test_exit_code, coverage_percentage, lint_exit_code, test_metrics) alongside SKILL_CONTENT, WORK_TYPE, and PLAN_CONTEXT
 - **reaper:test-runner to reaper:security-auditor**: Pass plan context only (security-auditor does not need test results)
 <% } else { -%>
 
@@ -173,20 +173,20 @@ Quality gates are work-type-aware. The orchestrator selects gate agents based on
 
 | Work Type | Gate 1 (blocking) | Gate 2 (parallel) |
 |-----------|-------------------|-------------------|
-| `application_code` | test-runner | feature-developer, security-auditor |
+| `application_code` | test-runner | principal-engineer, security-auditor |
 | `infrastructure_config` | -- | principal-engineer, security-auditor |
 | `database_migration` | -- | database-architect |
 | `api_specification` | -- | principal-engineer |
 | `agent_prompt` | -- | ai-prompt-engineer |
 | `documentation` | -- | technical-writer |
 | `ci_cd_pipeline` | -- | deployment-engineer, security-auditor |
-| `test_code` | test-runner | feature-developer |
-| `configuration` | -- | feature-developer, security-auditor |
+| `test_code` | test-runner | principal-engineer |
+| `configuration` | -- | principal-engineer, security-auditor |
 | `architecture_review` | -- | principal-engineer |
 
 **Work type detection** uses directory paths and file extensions (e.g., `src/` + `.ts` = `application_code`, `terraform/` + `.tf` = `infrastructure_config`). Mixed changesets use the union of all matching profiles.
 
-**Default profile:** `application_code` -- reaper:test-runner (Gate 1) then reaper:feature-developer (with code-review skill) + reaper:security-auditor (Gate 2).
+**Default profile:** `application_code` -- reaper:test-runner (Gate 1) then reaper:principal-engineer (with code-review skill) + reaper:security-auditor (Gate 2).
 
 Auto-iteration on failure with per-agent retry limits (test-runner: 3, Gate 2 reviewers: 1). The takeoff skill owns gate execution and iteration.
 
