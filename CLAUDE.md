@@ -323,7 +323,7 @@ bd sync                    # Sync with git remote
 | Development | reaper:feature-developer, reaper:bug-fixer, reaper:refactoring-dev, reaper:branch-manager |
 | Quality | reaper:test-runner, reaper:security-auditor, reaper:performance-engineer (Gate 2 code review uses SME routing via code-review skill) |
 | Ops | reaper:deployment-engineer, reaper:integration-engineer, reaper:incident-responder |
-| Craft | reaper:technical-writer, reaper:claude-agent-architect, reaper:ai-prompt-engineer |
+| Craft | reaper:technical-writer, reaper:claude-agent-architect, reaper:ai-prompt-engineer, reaper:principal-engineer |
 
 ### Agent Naming Convention
 

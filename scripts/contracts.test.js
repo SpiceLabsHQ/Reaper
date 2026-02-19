@@ -1694,6 +1694,11 @@ describe('Contract: code-review skill specialty files', () => {
       relative: 'skills/code-review/documentation.md',
       maxLines: 80,
     },
+    {
+      name: 'architecture-review',
+      relative: 'skills/code-review/architecture-review.md',
+      maxLines: 80,
+    },
   ];
 
   for (const { name, relative, maxLines } of specialtyFiles) {
@@ -1805,7 +1810,7 @@ describe('Contract: code-review skill', () => {
 // ---------------------------------------------------------------------------
 
 /**
- * All 9 work types that must appear in the gate profile lookup table.
+ * All 10 work types that must appear in the gate profile lookup table.
  */
 const GATE_PROFILE_WORK_TYPES = [
   'application_code',
@@ -1817,22 +1822,23 @@ const GATE_PROFILE_WORK_TYPES = [
   'api_specification',
   'ci_cd_pipeline',
   'configuration',
+  'architecture_review',
 ];
 
 /**
- * The 7 valid SME reviewer agents that may appear as reviewer_agent values.
+ * The valid Gate 2 reviewer agents that may appear in the Gate 2 column.
  */
-const VALID_SME_REVIEWER_AGENTS = [
+const VALID_GATE2_AGENTS = [
   'reaper:feature-developer',
-  'reaper:cloud-architect',
   'reaper:database-architect',
-  'reaper:api-designer',
   'reaper:ai-prompt-engineer',
   'reaper:technical-writer',
   'reaper:deployment-engineer',
+  'reaper:principal-engineer',
+  'reaper:security-auditor',
 ];
 
-describe('Contract: gate profile correctness — all 9 work types and valid SME agents', () => {
+describe('Contract: gate profile correctness — all 10 work types and valid Gate 2 agents', () => {
   const sourcePath = path.join(ROOT, 'src', 'partials', 'quality-gate-protocol.ejs');
   const sourceRelative = 'src/partials/quality-gate-protocol.ejs';
 
@@ -1854,51 +1860,51 @@ describe('Contract: gate profile correctness — all 9 work types and valid SME 
     });
   }
 
-  it(`${sourceRelative} every reviewer_agent column value is a valid SME agent`, () => {
+  it(`${sourceRelative} every Gate 2 column value is a valid Gate 2 agent`, () => {
     assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
     const content = fs.readFileSync(sourcePath, 'utf8');
 
     // The gate profile table header is:
-    //   | Work Type | Gate 1 (blocking) | Gate 2 (parallel) | reviewer_agent | specialty_file |
-    // reviewer_agent is the 4th pipe-delimited column (0-indexed: 3).
+    //   | Work Type | Gate 1 (blocking) | Gate 2 (parallel) | Specialty File |
+    // Gate 2 is the 3rd pipe-delimited column (0-indexed: 2).
     // Parse table data rows (skip header and separator rows).
     const tableRows = content.split('\n').filter((line) => {
-      // Table data rows start and end with | and contain at least 4 cells
+      // Table data rows start and end with | and contain at least 3 cells
       if (!line.startsWith('|') || !line.endsWith('|')) return false;
       const cells = line.split('|').slice(1, -1);
-      if (cells.length < 4) return false;
+      if (cells.length < 3) return false;
       // Skip separator rows (only dashes/spaces)
       if (/^[\s|-]+$/.test(line)) return false;
       // Skip header row
-      if (line.includes('reviewer_agent')) return false;
-      // Skip rows without a reaper: agent in column 3
-      return cells[3] && cells[3].trim().startsWith('reaper:');
+      if (line.includes('Gate 2 (parallel)')) return false;
+      // Skip rows without a reaper: agent in column 2 (Gate 2 column)
+      return cells[2] && cells[2].includes('reaper:');
     });
 
     assert.ok(
       tableRows.length > 0,
-      `${sourceRelative} must contain gate profile table rows with reviewer_agent values`
+      `${sourceRelative} must contain gate profile table rows with Gate 2 agent values`
     );
 
     const foundAgents = [];
     for (const row of tableRows) {
       const cells = row.split('|').slice(1, -1);
-      // Column index 3 is the reviewer_agent column
-      const reviewerCell = cells[3].trim();
-      const agents = reviewerCell.match(/reaper:[a-z-]+/g) || [];
+      // Column index 2 is the Gate 2 column
+      const gate2Cell = cells[2].trim();
+      const agents = gate2Cell.match(/reaper:[a-z-]+/g) || [];
       foundAgents.push(...agents);
     }
 
     const uniqueAgents = [...new Set(foundAgents)];
     assert.ok(
       uniqueAgents.length > 0,
-      `${sourceRelative} must have at least one reviewer_agent value in the gate profile table`
+      `${sourceRelative} must have at least one Gate 2 agent value in the gate profile table`
     );
 
     for (const agent of uniqueAgents) {
       assert.ok(
-        VALID_SME_REVIEWER_AGENTS.includes(agent),
-        `${sourceRelative} contains unknown reviewer_agent "${agent}" — must be one of: ${VALID_SME_REVIEWER_AGENTS.join(', ')}`
+        VALID_GATE2_AGENTS.includes(agent),
+        `${sourceRelative} contains unknown Gate 2 agent "${agent}" — must be one of: ${VALID_GATE2_AGENTS.join(', ')}`
       );
     }
   });

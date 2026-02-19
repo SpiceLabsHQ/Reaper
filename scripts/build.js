@@ -55,7 +55,7 @@ const AGENT_TYPES = {
     'compliance-architect',
   ],
   operations: ['branch-manager', 'deployment-engineer', 'incident-responder'],
-  documentation: ['technical-writer', 'claude-agent-architect', 'ai-prompt-engineer'],
+  documentation: ['technical-writer', 'claude-agent-architect', 'ai-prompt-engineer', 'principal-engineer'],
   performance: ['performance-engineer'],
 };
 
@@ -73,6 +73,7 @@ const GATE_CAPABLE_AGENTS = [
   'ai-prompt-engineer',
   'security-auditor',
   'deployment-engineer',
+  'principal-engineer',
 ];
 
 /**
