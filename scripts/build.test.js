@@ -47,11 +47,12 @@ describe('GATE_CAPABLE_AGENTS', () => {
       'ai-prompt-engineer',
       'security-auditor',
       'deployment-engineer',
+      'principal-engineer',
     ];
     assert.deepStrictEqual(
       GATE_CAPABLE_AGENTS.slice().sort(),
       expected.slice().sort(),
-      'GATE_CAPABLE_AGENTS should contain exactly the three gate-capable agents'
+      'GATE_CAPABLE_AGENTS should contain exactly the four gate-capable agents'
     );
   });
 
@@ -76,6 +77,7 @@ describe('buildTemplateVars gateCapable', () => {
       'ai-prompt-engineer',
       'security-auditor',
       'deployment-engineer',
+      'principal-engineer',
     ];
 
     for (const agent of gateAgents) {
