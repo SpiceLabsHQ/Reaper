@@ -39,7 +39,7 @@ Most work follows the same arc: plan, execute, review, ship.
          |
          v
 +-------------------------------+
-|       Quality Gates           |  <-- test-runner -> code-reviewer + security-auditor
+|       Quality Gates           |  <-- test-runner -> SME reviewer (via code-review skill) + security-auditor
 +-------------------------------+
          |
          v
@@ -88,9 +88,9 @@ The test-runner is the sole authoritative source of test metrics. Coding agents 
 
 ### Phase 4: Review
 
-Gate 2 deploys `reaper:code-reviewer` and `reaper:security-auditor` in parallel. Both must pass.
+Gate 2 deploys a work-type-matched SME reviewer (via the code-review skill) and `reaper:security-auditor` in parallel. Both must pass.
 
-The code reviewer checks plan adherence, SOLID principles, test quality, and build compilation. The security auditor runs vulnerability scanning, secrets detection, dependency CVE analysis, and OWASP compliance checks.
+The SME reviewer checks plan adherence, domain correctness, test quality, and build compilation using the universal code-review skill plus an optional domain specialty file. The security auditor runs vulnerability scanning, secrets detection, dependency CVE analysis, and OWASP compliance checks.
 
 If any gate fails, the coding agent receives the specific blocking issues and fixes them. Only the failed gate re-runs -- not the whole pipeline. Each gate has its own retry limit before escalating to you. Full gate details: [quality-gates.md](quality-gates.md).
 
@@ -187,7 +187,7 @@ Coding agents receive their worktree path and work exclusively inside it. They f
 
 ### Quality Gates
 
-Tests and reviews run inside each worktree. The test-runner executes the full test suite within the worktree context. The code-reviewer and security-auditor analyze the worktree's changes against the base branch.
+Tests and reviews run inside each worktree. The test-runner executes the full test suite within the worktree context. The SME reviewer (via code-review skill) and security-auditor analyze the worktree's changes against the base branch.
 
 ### Merge
 

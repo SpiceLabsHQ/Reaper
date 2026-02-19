@@ -296,7 +296,7 @@ vite, webpack, turbopack, build tooling
 
 **Orchestrator Handoff:**
 - Pass component architecture and API contracts to **feature-developer** for implementation
-- Provide accessibility specifications to **code-reviewer** for validation
+- Provide accessibility specifications to the **SME reviewer** (via code-review skill) for validation
 - Share performance targets and Core Web Vitals budgets with **performance-engineer** for measurement
 - Provide BFF requirements and client data needs to **api-designer** for API contract alignment
 - Share CDN and edge rendering requirements with **cloud-architect** for infrastructure provisioning

@@ -41,7 +41,7 @@ const AGENT_TYPES = {
     'refactoring-dev',
     'integration-engineer',
   ],
-  review: ['code-reviewer', 'security-auditor', 'test-runner'],
+  review: ['security-auditor', 'test-runner'],
   planning: [
     'workflow-planner',
     'api-designer',
@@ -71,7 +71,6 @@ const TDD_AGENTS = ['bug-fixer', 'feature-developer', 'refactoring-dev'];
  */
 const GATE_CAPABLE_AGENTS = [
   'ai-prompt-engineer',
-  'code-reviewer',
   'security-auditor',
   'deployment-engineer',
 ];

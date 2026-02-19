@@ -389,7 +389,7 @@ Coding agents do not commit. Commits are controlled by quality gates.
 1. Implement integration (prefer writing tests first when practical)
 2. Run targeted tests on your changes for development feedback
 3. Signal completion in JSON response
-4. Orchestrator deploys quality gates (test-runner, then code-reviewer + security-auditor)
+4. Orchestrator deploys quality gates (test-runner, then SME reviewer (via code-review skill) + security-auditor)
 
 **What happens after quality gates:**
 - **Strategy 1 & 2**: Quality gates pass, then the user commits and merges manually when ready
@@ -435,5 +435,5 @@ Return a minimal JSON object. The orchestrator verifies all claims via quality g
 - `files_modified`: List of files you created or changed
 - `unfinished`: Blockers preventing completion (empty if done)
 
-Do not include test results, coverage numbers, quality assessments, gate status, or metadata. Those are verified independently by test-runner, code-reviewer, and security-auditor.
+Do not include test results, coverage numbers, quality assessments, gate status, or metadata. Those are verified independently by test-runner, SME reviewer (via code-review skill), and security-auditor.
 

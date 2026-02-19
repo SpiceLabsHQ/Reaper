@@ -1,6 +1,6 @@
 # Agent Catalog
 
-Reaper coordinates 24 specialized agents. You never invoke them directly -- Reaper dispatches the right agent based on your task. Each agent has a focused role, specific tools, and quality standards. When you run `/reaper:takeoff` or `/reaper:flight-plan`, Reaper selects and orchestrates the agents for you.
+Reaper coordinates 23 specialized agents. You never invoke them directly -- Reaper dispatches the right agent based on your task. Each agent has a focused role, specific tools, and quality standards. When you run `/reaper:takeoff` or `/reaper:flight-plan`, Reaper selects and orchestrates the agents for you.
 
 ## Planning (10 agents)
 
@@ -30,16 +30,29 @@ Builders. These agents write production code and tests in isolated worktrees usi
 | `reaper:refactoring-dev` | Improves existing code structure while preserving functionality, targeting simplicity over abstraction |
 | `reaper:branch-manager` | Git operations, worktree setup and teardown, safe merges, and repository maintenance with safety protocols |
 
-## Quality (4 agents)
+## Quality (3 agents + SME routing)
 
 Gatekeepers. These agents validate code and infrastructure after implementation. They run automatically as quality gates -- you do not need to invoke them.
 
 | Agent | Purpose |
 |-------|---------|
 | `reaper:test-runner` | Executes full test suites, validates coverage thresholds, runs linting -- the authoritative source for test metrics |
-| `reaper:code-reviewer` | Reviews code for SOLID principles, plan adherence, best practices, and test quality (does not re-run tests) |
 | `reaper:security-auditor` | Vulnerability detection with Trivy, Semgrep, and TruffleHog -- OWASP compliance and secrets scanning |
 | `reaper:performance-engineer` | Profiles bottlenecks, implements targeted optimizations, and validates improvements with before/after metrics |
+
+Gate 2 code review was previously handled by `reaper:code-reviewer`, which has been replaced by work-type-matched SME routing.
+
+**Gate 2 code review -- SME routing:** Rather than a dedicated code-reviewer agent, Gate 2 code review is performed by a work-type-matched subject matter expert (SME). The orchestrator selects the reviewer based on the gate profile table defined in the quality-gate-protocol partial. Each SME receives the universal `skills/code-review/SKILL.md` skill plus an optional specialty file for their domain.
+
+| Work Type | SME Reviewer |
+|-----------|-------------|
+| `application_code`, `test_code`, `configuration` | `reaper:feature-developer` |
+| `infrastructure_config` | `reaper:cloud-architect` |
+| `database_migration` | `reaper:database-architect` |
+| `api_specification` | `reaper:api-designer` |
+| `agent_prompt` | `reaper:ai-prompt-engineer` |
+| `documentation` | `reaper:technical-writer` |
+| `ci_cd_pipeline` | `reaper:deployment-engineer` |
 
 ## Ops (3 agents)
 
@@ -68,13 +81,13 @@ You do not choose which agent runs. Reaper handles dispatch automatically based 
 - **`/reaper:takeoff`** determines which development agent to use based on task type (new feature, bug fix, refactoring), then runs quality gate agents automatically after implementation completes.
 - **`/reaper:flight-plan`** deploys the workflow planner to decompose complex tasks into work units before execution begins.
 - **`/reaper:squadron`** coordinates multiple planning agents in parallel for cross-cutting architectural decisions.
-- **Quality gates** (test-runner, code-reviewer, security-auditor) run automatically after every implementation agent finishes. You never trigger them manually.
+- **Quality gates** (test-runner, SME reviewer, security-auditor) run automatically after every implementation agent finishes. The SME reviewer is selected based on work type -- you never trigger them manually.
 - **Branch operations** (commits, merges, worktree management) are always handled by the branch-manager agent through orchestration scripts.
 
 The dispatch layer matches task characteristics to agent capabilities. A bug report routes to `bug-fixer`. A new feature routes to `feature-developer`. The routing is deterministic -- same input, same agent.
 
 ---
 
-**Total: 24 agents** across 5 categories.
+**Total: 23 agents** across 5 categories (plus work-type-matched SME routing for code review).
 
 [Back to README](../README.md)

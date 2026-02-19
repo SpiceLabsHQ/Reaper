@@ -204,7 +204,7 @@ Design continuous monitoring: control dashboards (access patterns, consent statu
 | Infrastructure | cloud-architect | Data residency requirements, geographic routing rules, framework compatibility |
 | Events | event-architect | Consent propagation event schemas, audit event contracts |
 | API | api-designer | DSAR endpoints, consent capture APIs, data minimization constraints |
-| Quality | code-reviewer, test-runner | Validates implementation matches compliance architecture |
+| Quality | SME reviewer (via code-review skill), test-runner | Validates implementation matches compliance architecture |
 
 ## Quick Reference
 

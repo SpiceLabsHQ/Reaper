@@ -999,6 +999,75 @@ registerCommandSemanticSuite('claude-sync');
 registerCommandSemanticSuite('start');
 
 // ---------------------------------------------------------------------------
+// Contract: takeoff materializes PLAN_CONTEXT before Gate 2 dispatch
+// ---------------------------------------------------------------------------
+
+describe('Contract: takeoff PLAN_CONTEXT materialization', () => {
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
+
+  it(`${relative} contains PLAN_CONTEXT materialization step`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('PLAN_CONTEXT'),
+      `${relative} must contain PLAN_CONTEXT materialization before Gate 2 dispatch`
+    );
+  });
+
+  it(`${relative} searches .claude/plans/ for plan file before Gate 2`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('.claude/plans/'),
+      `${relative} must reference .claude/plans/ as the plan file source for PLAN_CONTEXT`
+    );
+  });
+
+  it(`${relative} falls back to FETCH_ISSUE when no plan file found`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // The PLAN_CONTEXT section must mention FETCH_ISSUE as the fallback source
+    assert.ok(
+      content.includes('FETCH_ISSUE'),
+      `${relative} must reference FETCH_ISSUE as the fallback source for PLAN_CONTEXT`
+    );
+  });
+
+  it(`${relative} PLAN_CONTEXT section appears before Step 4 (Deploy Gates)`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const planContextIdx = content.indexOf('PLAN_CONTEXT');
+    const step4Idx = content.indexOf('### Step 4: Deploy Gates');
+    assert.ok(
+      planContextIdx !== -1,
+      `${relative} must contain PLAN_CONTEXT`
+    );
+    assert.ok(
+      step4Idx !== -1,
+      `${relative} must contain "### Step 4: Deploy Gates"`
+    );
+    assert.ok(
+      planContextIdx < step4Idx,
+      `${relative} PLAN_CONTEXT must appear before "Step 4: Deploy Gates" (found at index ${planContextIdx}, Step 4 at ${step4Idx})`
+    );
+  });
+
+  it(`${relative} documents graceful degradation when neither plan file nor issue body found`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // Graceful degradation means omitting PLAN_CONTEXT with a warning, not failing the gate
+    assert.ok(
+      /warn|omit|skip|not found/i.test(content.slice(
+        content.indexOf('PLAN_CONTEXT'),
+        content.indexOf('PLAN_CONTEXT') + 2000
+      )),
+      `${relative} must document graceful degradation (warn/omit) when PLAN_CONTEXT cannot be resolved`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Contract: Visual vocabulary gauge states in generated command files
 // ---------------------------------------------------------------------------
 
@@ -1597,4 +1666,427 @@ describe('Contract: takeoff iteration rules include resume-based retry pattern',
       `workflow-planner.md must NOT contain Task --resume (planner branch must be unmodified)`
     );
   });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: code-review specialty files (existence and line count)
+// ---------------------------------------------------------------------------
+
+describe('Contract: code-review skill specialty files', () => {
+  const specialtyFiles = [
+    {
+      name: 'application-code',
+      relative: 'skills/code-review/application-code.md',
+      maxLines: 80,
+    },
+    {
+      name: 'database-migration',
+      relative: 'skills/code-review/database-migration.md',
+      maxLines: 80,
+    },
+    {
+      name: 'agent-prompt',
+      relative: 'skills/code-review/agent-prompt.md',
+      maxLines: 80,
+    },
+    {
+      name: 'documentation',
+      relative: 'skills/code-review/documentation.md',
+      maxLines: 80,
+    },
+  ];
+
+  for (const { name, relative, maxLines } of specialtyFiles) {
+    const filePath = path.join(SKILLS_DIR, 'code-review', `${name}.md`);
+
+    it(`${relative} exists after build`, () => {
+      assert.ok(
+        fs.existsSync(filePath),
+        `${relative} not found at ${filePath} — run npm run build to generate`
+      );
+    });
+
+    it(`${relative} is within the ${maxLines}-line limit`, () => {
+      assert.ok(
+        fs.existsSync(filePath),
+        `${relative} not found — run npm run build to generate`
+      );
+      const content = fs.readFileSync(filePath, 'utf8');
+      const lineCount = content.split('\n').length;
+      assert.ok(
+        lineCount <= maxLines,
+        `${relative} exceeds ${maxLines}-line limit (${lineCount} lines) — keep specialty files concise`
+      );
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Contract: code-review skill frontmatter and JSON output contract
+// ---------------------------------------------------------------------------
+
+describe('Contract: code-review skill', () => {
+  const filePath = skillFilePath('code-review');
+  const relative = 'skills/code-review/SKILL.md';
+
+  it(`${relative} exists after build`, () => {
+    assert.ok(
+      fs.existsSync(filePath),
+      `${relative} not found at ${filePath} — run npm run build to generate`
+    );
+  });
+
+  it(`${relative} frontmatter contains "name" field`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const fm = extractFrontmatter(content);
+    assert.ok(fm !== null, `${relative} is missing YAML frontmatter (--- delimiters)`);
+    assert.ok(
+      frontmatterHasField(fm, 'name'),
+      `${relative} frontmatter is missing required "name" field`
+    );
+  });
+
+  it(`${relative} frontmatter contains "description" field`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const fm = extractFrontmatter(content);
+    assert.ok(fm !== null, `${relative} is missing frontmatter`);
+    assert.ok(
+      frontmatterHasField(fm, 'description'),
+      `${relative} frontmatter is missing required "description" field`
+    );
+  });
+
+  it(`${relative} frontmatter contains "allowed-tools" field`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const fm = extractFrontmatter(content);
+    assert.ok(fm !== null, `${relative} is missing frontmatter`);
+    assert.ok(
+      frontmatterHasField(fm, 'allowed-tools'),
+      `${relative} frontmatter is missing required "allowed-tools" field`
+    );
+  });
+
+  it(`${relative} is NOT user-invocable`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const fm = extractFrontmatter(content);
+    assert.ok(fm !== null, `${relative} is missing frontmatter`);
+    assert.ok(
+      !frontmatterHasField(fm, 'user-invocable'),
+      `${relative} must NOT have "user-invocable" field (loaded by orchestrator, not user-invocable)`
+    );
+  });
+
+  it(`${relative} documents that orchestrator computes all_checks_passed`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('The orchestrator computes'),
+      `${relative} must document that the orchestrator computes all_checks_passed (not the reviewer)`
+    );
+  });
+
+  it(`${relative} is within the 150-line limit`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const lineCount = content.split('\n').length;
+    assert.ok(
+      lineCount <= 150,
+      `${relative} exceeds 150-line limit (${lineCount} lines) — keep the skill concise`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: gate profile correctness (B1)
+// ---------------------------------------------------------------------------
+
+/**
+ * All 9 work types that must appear in the gate profile lookup table.
+ */
+const GATE_PROFILE_WORK_TYPES = [
+  'application_code',
+  'test_code',
+  'agent_prompt',
+  'database_migration',
+  'documentation',
+  'infrastructure_config',
+  'api_specification',
+  'ci_cd_pipeline',
+  'configuration',
+];
+
+/**
+ * The 7 valid SME reviewer agents that may appear as reviewer_agent values.
+ */
+const VALID_SME_REVIEWER_AGENTS = [
+  'reaper:feature-developer',
+  'reaper:cloud-architect',
+  'reaper:database-architect',
+  'reaper:api-designer',
+  'reaper:ai-prompt-engineer',
+  'reaper:technical-writer',
+  'reaper:deployment-engineer',
+];
+
+describe('Contract: gate profile correctness — all 9 work types and valid SME agents', () => {
+  const sourcePath = path.join(ROOT, 'src', 'partials', 'quality-gate-protocol.ejs');
+  const sourceRelative = 'src/partials/quality-gate-protocol.ejs';
+
+  it(`${sourceRelative} exists`, () => {
+    assert.ok(
+      fs.existsSync(sourcePath),
+      `${sourceRelative} not found at ${sourcePath}`
+    );
+  });
+
+  for (const workType of GATE_PROFILE_WORK_TYPES) {
+    it(`${sourceRelative} mentions work type "${workType}"`, () => {
+      assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+      const content = fs.readFileSync(sourcePath, 'utf8');
+      assert.ok(
+        content.includes(workType),
+        `${sourceRelative} is missing work type "${workType}" in the gate profile table`
+      );
+    });
+  }
+
+  it(`${sourceRelative} every reviewer_agent column value is a valid SME agent`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+
+    // The gate profile table header is:
+    //   | Work Type | Gate 1 (blocking) | Gate 2 (parallel) | reviewer_agent | specialty_file |
+    // reviewer_agent is the 4th pipe-delimited column (0-indexed: 3).
+    // Parse table data rows (skip header and separator rows).
+    const tableRows = content.split('\n').filter((line) => {
+      // Table data rows start and end with | and contain at least 4 cells
+      if (!line.startsWith('|') || !line.endsWith('|')) return false;
+      const cells = line.split('|').slice(1, -1);
+      if (cells.length < 4) return false;
+      // Skip separator rows (only dashes/spaces)
+      if (/^[\s|-]+$/.test(line)) return false;
+      // Skip header row
+      if (line.includes('reviewer_agent')) return false;
+      // Skip rows without a reaper: agent in column 3
+      return cells[3] && cells[3].trim().startsWith('reaper:');
+    });
+
+    assert.ok(
+      tableRows.length > 0,
+      `${sourceRelative} must contain gate profile table rows with reviewer_agent values`
+    );
+
+    const foundAgents = [];
+    for (const row of tableRows) {
+      const cells = row.split('|').slice(1, -1);
+      // Column index 3 is the reviewer_agent column
+      const reviewerCell = cells[3].trim();
+      const agents = reviewerCell.match(/reaper:[a-z-]+/g) || [];
+      foundAgents.push(...agents);
+    }
+
+    const uniqueAgents = [...new Set(foundAgents)];
+    assert.ok(
+      uniqueAgents.length > 0,
+      `${sourceRelative} must have at least one reviewer_agent value in the gate profile table`
+    );
+
+    for (const agent of uniqueAgents) {
+      assert.ok(
+        VALID_SME_REVIEWER_AGENTS.includes(agent),
+        `${sourceRelative} contains unknown reviewer_agent "${agent}" — must be one of: ${VALID_SME_REVIEWER_AGENTS.join(', ')}`
+      );
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: work-type detection patterns (B2)
+// ---------------------------------------------------------------------------
+
+/**
+ * Parametric tests verifying that work-type detection pattern descriptions
+ * are present in the quality-gate-protocol source. These are presence checks
+ * on the pattern table, confirming that the orchestrator's classification
+ * logic covers key example paths.
+ */
+const WORK_TYPE_PATTERN_CASES = [
+  {
+    examplePath: 'src/auth.ts',
+    workType: 'application_code',
+    // src/ prefix is described in the pattern table
+    patternHint: 'src/',
+  },
+  {
+    examplePath: 'terraform/main.tf',
+    workType: 'infrastructure_config',
+    patternHint: 'terraform/',
+  },
+  {
+    examplePath: 'migrations/0001_add_users.sql',
+    workType: 'database_migration',
+    patternHint: 'migrations/',
+  },
+  {
+    examplePath: 'src/agents/bug-fixer.ejs',
+    workType: 'agent_prompt',
+    patternHint: 'src/agents/',
+  },
+  {
+    examplePath: 'docs/README.md',
+    workType: 'documentation',
+    patternHint: 'docs/',
+  },
+  {
+    examplePath: '.github/workflows/test.yml',
+    workType: 'ci_cd_pipeline',
+    patternHint: '.github/workflows/',
+  },
+];
+
+describe('Contract: work-type detection pattern descriptions are present', () => {
+  const sourcePath = path.join(ROOT, 'src', 'partials', 'quality-gate-protocol.ejs');
+  const sourceRelative = 'src/partials/quality-gate-protocol.ejs';
+
+  for (const { examplePath, workType, patternHint } of WORK_TYPE_PATTERN_CASES) {
+    it(`pattern table describes "${patternHint}" → "${workType}" (example: ${examplePath})`, () => {
+      assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+      const content = fs.readFileSync(sourcePath, 'utf8');
+
+      // Both the pattern hint and work type must appear in the file
+      assert.ok(
+        content.includes(patternHint),
+        `${sourceRelative} pattern table is missing pattern hint "${patternHint}" (needed for ${examplePath} → ${workType})`
+      );
+      assert.ok(
+        content.includes(workType),
+        `${sourceRelative} pattern table is missing work type "${workType}"`
+      );
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Contract: code-review SKILL.md JSON output contract fields (B3)
+// ---------------------------------------------------------------------------
+
+describe('Contract: code-review SKILL.md JSON output contract field presence', () => {
+  const filePath = skillFilePath('code-review');
+  const relative = 'skills/code-review/SKILL.md';
+
+  /**
+   * Extracts the first fenced JSON code block from markdown content.
+   * Returns null if no JSON code block is found.
+   * @param {string} content - Full markdown content
+   * @returns {string|null} The text inside the first ```json ... ``` block
+   */
+  function extractJsonCodeBlock(content) {
+    const match = content.match(/```json\n([\s\S]*?)```/);
+    return match ? match[1] : null;
+  }
+
+  const requiredFields = [
+    'blocking_issues',
+    'scope_violations',
+    'files_reviewed',
+    'plan_coverage',
+    'summary',
+  ];
+
+  for (const field of requiredFields) {
+    it(`${relative} JSON contract contains required field "${field}"`, () => {
+      assert.ok(fs.existsSync(filePath), `${relative} not found`);
+      const content = fs.readFileSync(filePath, 'utf8');
+      const jsonBlock = extractJsonCodeBlock(content);
+      assert.ok(
+        jsonBlock !== null,
+        `${relative} must contain a JSON code block with the output contract`
+      );
+      assert.ok(
+        jsonBlock.includes(`"${field}"`),
+        `${relative} JSON contract is missing required field "${field}"`
+      );
+    });
+  }
+
+  it(`${relative} JSON contract does NOT contain "all_checks_passed" (orchestrator computes it)`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const jsonBlock = extractJsonCodeBlock(content);
+    assert.ok(
+      jsonBlock !== null,
+      `${relative} must contain a JSON code block with the output contract`
+    );
+    assert.ok(
+      !jsonBlock.includes('"all_checks_passed"'),
+      `${relative} JSON contract must NOT contain "all_checks_passed" — the orchestrator computes this value and reviewers should not output it`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: SME agent files do not contain gate-specific schema vocabulary (C)
+// ---------------------------------------------------------------------------
+
+/**
+ * SME agent source files that perform Gate 2 reviews ONLY via the code-review
+ * skill — they are not gate-capable review agents in their own right.
+ * They must NOT define the code-review skill's JSON output schema, since that
+ * contract lives exclusively in SKILL.md.
+ *
+ * This test prevents skill boundary erosion: if an SME agent starts embedding
+ * SKILL.md schema definitions directly, the skill contract becomes ambiguous.
+ *
+ * Note: ai-prompt-engineer, technical-writer, and deployment-engineer are
+ * excluded here because they ARE gate-capable review agents with their own
+ * native output contracts that legitimately include blocking_issues.
+ */
+const SME_AGENT_SOURCES = [
+  'src/agents/feature-developer.ejs',
+  'src/agents/cloud-architect.ejs',
+  'src/agents/database-architect.ejs',
+  'src/agents/api-designer.ejs',
+];
+
+/**
+ * Gate-specific schema terms that belong exclusively in SKILL.md.
+ * These are checked as JSON field definition patterns (with colon) to
+ * distinguish schema definitions from legitimate prose references.
+ *
+ * For example, an agent may say "the skill returns blocking_issues" in prose,
+ * but should never contain `"blocking_issues":` (a JSON field definition).
+ */
+const GATE_SCHEMA_TERMS = [
+  '"gate_status":',
+  '"blocking_issues":',
+  '"files_reviewed":',
+  '"plan_coverage":',
+];
+
+describe('Contract: SME agent sources do not contain gate-specific schema definitions', () => {
+  for (const agentRelative of SME_AGENT_SOURCES) {
+    const agentPath = path.join(ROOT, agentRelative);
+
+    it(`${agentRelative} exists`, () => {
+      assert.ok(
+        fs.existsSync(agentPath),
+        `${agentRelative} not found at ${agentPath}`
+      );
+    });
+
+    for (const schemaTerm of GATE_SCHEMA_TERMS) {
+      it(`${agentRelative} does not contain gate schema term "${schemaTerm}"`, () => {
+        assert.ok(fs.existsSync(agentPath), `${agentRelative} not found`);
+        const content = fs.readFileSync(agentPath, 'utf8');
+        assert.ok(
+          !content.includes(schemaTerm),
+          `${agentRelative} contains gate-specific schema definition "${schemaTerm}" — this belongs only in skills/code-review/SKILL.md (skill boundary violation)`
+        );
+      });
+    }
+  }
 });

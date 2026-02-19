@@ -250,7 +250,7 @@ real user monitoring, rum, apm, span, trace context, log aggregation
 - Share alerting and runbook designs with **incident-responder** for operational readiness
 - Provide SLO targets and measurement queries to **performance-engineer** for validation under load
 - Share log pipeline requirements with **data-engineer** for data warehouse integration
-- Document design rationale for **code-reviewer** validation
+- Document design rationale for **SME reviewer** validation
 - Provide observability architecture decisions for **technical-writer** documentation
 </completion_protocol>
 

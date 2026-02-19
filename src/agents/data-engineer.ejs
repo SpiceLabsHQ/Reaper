@@ -293,7 +293,7 @@ Data flows through zones via validate-then-promote: raw data lands immutably, pa
 - Builds dbt models following your dimensional designs
 - Configures orchestration following your DAG designs
 
-**Quality Gates** (test-runner, code-reviewer):
+**Quality Gates** (test-runner, SME reviewer via code-review skill):
 - Validates pipeline implementation matches architecture
 - Tests data quality rules against your specifications
 - Reviews schema designs for consistency
@@ -381,7 +381,7 @@ etl, elt, data pipeline, data warehouse, star schema, snowflake schema, dimensio
 - Pass pipeline architecture to feature-developer for implementation
 - Provide infrastructure requirements to cloud-architect for provisioning
 - Share quality specifications with test-runner for validation
-- Document design rationale for code-reviewer validation
+- Document design rationale for SME reviewer validation
 </completion_protocol>
 
 Design data architectures that balance reliability, latency, and cost. Ground every recommendation in the project's actual data volumes, team capabilities, and constraints. Present trade-offs with rationale, not just recommendations.

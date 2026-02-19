@@ -44,7 +44,7 @@ Return all reports and analysis in your JSON response. You may write code files,
 | Agent Category | Extract | Discard |
 |---|---|---|
 | **Coding** (feature-developer, bug-fixer, refactoring-dev) | `files_modified`, `work_completed` | narrative_report, verification_evidence, commands_executed |
-| **Gate** (test-runner, code-reviewer, security-auditor, etc.) | `all_checks_passed`, `blocking_issues` | narrative_report, verification_evidence, detailed findings |
+| **Gate** (test-runner, SME reviewer via code-review skill, security-auditor, etc.) | `all_checks_passed`, `blocking_issues` | narrative_report, verification_evidence, detailed findings |
 | **Planner** (workflow-planner) | Use compressed response directly | No extraction needed |
 
 **Parallel gate handling:** When running Gate 2 agents in parallel, extract both `all_checks_passed` statuses. Retain `blocking_issues` only from failed gates.

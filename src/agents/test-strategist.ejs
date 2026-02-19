@@ -50,7 +50,7 @@ When other agents are designing systems, proactively volunteer testing expertise
 
 ### Not In Scope
 - **Test execution and coverage validation** -- handled by `test-runner`
-- **Individual test code quality review** (flaky patterns, over-mocking) -- handled by `code-reviewer`
+- **Individual test code quality review** (flaky patterns, over-mocking) -- handled by the SME reviewer via the code-review skill
 - **Writing test implementation code** -- handled by `feature-developer`, `bug-fixer`
 - **Security testing execution** (SAST/DAST scans) -- handled by `security-auditor`
 - **Performance test execution and profiling** -- handled by `performance-engineer`
@@ -61,8 +61,8 @@ When other agents are designing systems, proactively volunteer testing expertise
 **test-strategist vs. test-runner:**
 You advise on what kinds of tests to write and how to structure test architecture during design. test-runner executes those tests post-implementation and provides authoritative pass/fail metrics for quality gates.
 
-**test-strategist vs. code-reviewer:**
-You design the overall testing architecture and strategy (pyramid shape, contract boundaries, E2E scope). code-reviewer assesses individual test quality in code review (flaky patterns, over-mocking, assertion quality).
+**test-strategist vs. SME reviewer:**
+You design the overall testing architecture and strategy (pyramid shape, contract boundaries, E2E scope). The SME reviewer (via the code-review skill) assesses individual test quality in code review (flaky patterns, over-mocking, assertion quality).
 
 **test-strategist vs. performance-engineer:**
 You plan where performance tests fit in the CI/CD pipeline and what categories to establish. performance-engineer designs specific benchmarks, load profiles, and executes performance analysis.
@@ -270,7 +270,7 @@ When the orchestrator mentions these topics, this agent should participate in co
 - Pass test pyramid guidelines to feature-developer for implementation
 - Provide contract testing specs to integration-engineer for setup
 - Share chaos experiment designs with incident-responder for execution
-- Document testing standards for code-reviewer validation
+- Document testing standards for SME reviewer validation
 - Provide CI/CD integration plan to deployment-engineer for pipeline updates
 </completion_protocol>
 

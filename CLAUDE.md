@@ -54,13 +54,13 @@ Use specialized agents for all development work. Subagents: skip this section.
 | New Features | `reaper:feature-developer` | All new functionality |
 | Git Operations | `reaper:branch-manager` | Worktree setup, merges, cleanup |
 | Testing | `reaper:test-runner` | Quality validation (mandatory before merge) |
-| Code Review | `reaper:code-reviewer` | Pre-merge review, quality gates |
+| Code Review | SME via code-review skill (automatic) | Work-type-matched reviewer; see gate profile table |
 | Security | `reaper:security-auditor` | Security analysis |
 
 **Workflow phases:**
 1. **Plan** (mandatory for 3+ steps): `reaper:workflow-planner`
 2. **Implement**: `reaper:bug-fixer` or `reaper:feature-developer`
-3. **Validate** (mandatory): `reaper:test-runner` then `reaper:code-reviewer` + `reaper:security-auditor`
+3. **Validate** (mandatory): `reaper:test-runner` then SME reviewer (via code-review skill) + `reaper:security-auditor`
 4. **Integrate**: `reaper:branch-manager` for safe merge to develop
 
 ## Safety Rules
@@ -143,7 +143,7 @@ Use `bd list` to find issue IDs, or `bd create` to create one.
 - 70%+ coverage required (untestable plumbing excluded via `node:coverage disable`)
 - All tests run in worktrees (`./trees/`), never in root
 - Run linting before every commit (enforced by husky)
-- Quality gates: reaper:test-runner → reaper:code-reviewer + reaper:security-auditor
+- Quality gates: reaper:test-runner → SME reviewer (via code-review skill) + reaper:security-auditor
 - Prompt quality gate: always run `reaper:ai-prompt-engineer` after modifying agents, skills, commands, hooks, or partials (see Workflow for Editing Agents/Skills step 4)
 - Self-learning: recurring quality gate failures surface as CLAUDE.md update candidates
 - Auto-formatting: PostToolUse hook formats code on every write/edit (detects Prettier, Biome, ESLint, Pint, PHP-CS-Fixer, Ruff, Black, gofmt, rustfmt, RuboCop, and more)
@@ -321,7 +321,7 @@ bd sync                    # Sync with git remote
 |----------|--------|
 | Planning | reaper:workflow-planner, reaper:api-designer, reaper:cloud-architect, reaper:database-architect, reaper:event-architect, reaper:observability-architect, reaper:frontend-architect, reaper:data-engineer, reaper:test-strategist, reaper:compliance-architect |
 | Development | reaper:feature-developer, reaper:bug-fixer, reaper:refactoring-dev, reaper:branch-manager |
-| Quality | reaper:test-runner, reaper:code-reviewer, reaper:security-auditor, reaper:performance-engineer |
+| Quality | reaper:test-runner, reaper:security-auditor, reaper:performance-engineer (Gate 2 code review uses SME routing via code-review skill) |
 | Ops | reaper:deployment-engineer, reaper:integration-engineer, reaper:incident-responder |
 | Craft | reaper:technical-writer, reaper:claude-agent-architect, reaper:ai-prompt-engineer |
 
@@ -361,6 +361,5 @@ Task --subagent_type reaper:branch-manager \
 # Quality (mandatory before merge)
 Task --subagent_type reaper:test-runner \
   --prompt "TASK: reaper-a3f, WORKTREE: ./trees/reaper-a3f-oauth, DESCRIPTION: Run full suite"
-Task --subagent_type reaper:code-reviewer \
-  --prompt "TASK: reaper-a3f, WORKTREE: ./trees/reaper-a3f-oauth, DESCRIPTION: Review for quality"
+# Gate 2 SME dispatch (with skill injection) is automated by takeoff — do not construct manually.
 ```

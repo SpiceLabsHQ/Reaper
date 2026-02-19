@@ -45,14 +45,13 @@ describe('GATE_CAPABLE_AGENTS', () => {
   it('should contain the expected gate-capable agents', () => {
     const expected = [
       'ai-prompt-engineer',
-      'code-reviewer',
       'security-auditor',
       'deployment-engineer',
     ];
     assert.deepStrictEqual(
       GATE_CAPABLE_AGENTS.slice().sort(),
       expected.slice().sort(),
-      'GATE_CAPABLE_AGENTS should contain exactly the four gate-capable agents'
+      'GATE_CAPABLE_AGENTS should contain exactly the three gate-capable agents'
     );
   });
 
@@ -75,7 +74,6 @@ describe('buildTemplateVars gateCapable', () => {
   it('should set gateCapable to true for gate-capable agents', () => {
     const gateAgents = [
       'ai-prompt-engineer',
-      'code-reviewer',
       'security-auditor',
       'deployment-engineer',
     ];
@@ -248,7 +246,7 @@ describe('buildTemplateVars TDD agents', () => {
 // ===========================================================================
 
 describe('buildTemplateVars review agents', () => {
-  const reviewAgents = ['code-reviewer', 'security-auditor', 'test-runner'];
+  const reviewAgents = ['security-auditor', 'test-runner'];
 
   for (const agent of reviewAgents) {
     it(`should classify "${agent}" as IS_REVIEW_AGENT=true`, () => {
@@ -798,10 +796,6 @@ describe('getAgentType', () => {
   });
 
   describe('review agents', () => {
-    it('should return "review" for code-reviewer', () => {
-      assert.strictEqual(getAgentType('code-reviewer'), 'review');
-    });
-
     it('should return "review" for security-auditor', () => {
       assert.strictEqual(getAgentType('security-auditor'), 'review');
     });
