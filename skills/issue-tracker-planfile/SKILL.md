@@ -32,13 +32,13 @@ Derive `<task-slug>` from the task description (2-4 words, lowercase, hyphenated
 # Plan: [Title]
 
 ## Input
-[Original task description -- IMMUTABLE after creation]
+[Original task description]
 
 ## Research
-[Codebase analysis findings -- APPEND only]
+[Codebase analysis findings]
 
 ## Strategy
-[Selected approach and complexity rationale -- EDIT allowed]
+[Selected approach and complexity rationale]
 
 ## Work Units
 | # | Title | Type | Status | Blocked By |
@@ -47,27 +47,7 @@ Derive `<task-slug>` from the task description (2-4 words, lowercase, hyphenated
 
 ## Dependencies
 [Mermaid flowchart or table showing execution order]
-
-## Assumptions
-[Constraints and decisions -- APPEND only]
-
-## Feedback Log
-[User feedback entries with timestamps -- APPEND only]
 ```
-
-### Section Update Rules
-
-| Section | Rule | Meaning |
-|---------|------|---------|
-| Input | IMMUTABLE | Never modify after initial creation |
-| Research | APPEND | Add new findings below existing content |
-| Strategy | EDIT | Rewrite when approach changes |
-| Work Units | EDIT | Add, remove, or update rows as work progresses |
-| Dependencies | EDIT | Rewrite when work unit structure changes |
-| Assumptions | APPEND | Add new entries; never delete previous ones |
-| Feedback Log | APPEND | Timestamped entries; never delete previous ones |
-
-**Definitions:** IMMUTABLE = write once, never change. APPEND = add below existing, never delete. EDIT = modify in place freely.
 
 ## Operations Detail
 
@@ -94,19 +74,6 @@ Derive `<task-slug>` from the task description (2-4 words, lowercase, hyphenated
 3. Passes the Research section to coding agents as codebase context
 4. Uses Dependencies to determine work unit execution order
 5. If only Research exists (no Work Units), deploys the planner with research as input
-
-## Manual Execution Guide Template
-
-When flight-plan hands off to the user, paste this into the Feedback Log:
-
-```markdown
-### Manual Execution Guide
-1. Review Work Units above for task breakdown
-2. Execute units in dependency order
-3. For each unit: write failing tests -> implement -> verify
-4. Update status in Work Units table as you complete each
-5. Log any deviations in the Feedback Log section
-```
 
 ## Reference
 

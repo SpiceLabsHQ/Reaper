@@ -306,7 +306,7 @@ Search `.claude/plans/` for a matching plan file from a prior `/reaper:flight-pl
 
 ### Plan File Sections
 
-A plan file at `.claude/plans/reaper-*.md` may contain: Input, Research, Strategy, Work Units, Dependencies, Assumptions, Feedback Log.
+A plan file at `.claude/plans/reaper-*.md` may contain: Input, Research, Strategy, Work Units, Dependencies.
 
 ### Extraction Priority
 
@@ -315,7 +315,6 @@ When reading a plan file, extract sections in this order of importance:
 2. **Dependencies** -- execution order and blocking relationships
 3. **Research** -- codebase context for agent prompts
 4. **Strategy** -- selected strategy and complexity rationale
-5. **Assumptions** -- constraints and decisions made during planning
 
 ### Adapting to Plan Completeness
 
@@ -323,7 +322,6 @@ When reading a plan file, extract sections in this order of importance:
 - **Plan with Research only**: Deploy reaper:workflow-planner with research as input context
 - **Plan with Research + Work Units**: Skip planner, extract work units directly
 - **Plan with Research + Work Units + Strategy**: Skip planner entirely, use provided strategy
-- **Full plan (all sections)**: Skip planning, pass Feedback Log entries as context to coding agents
 
 
 Append any extracted Research and Strategy sections to the implementation context so downstream agents receive codebase insights gathered during planning.
