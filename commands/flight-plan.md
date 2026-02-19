@@ -83,35 +83,13 @@ Create the plan file with this structure on first write:
 [Selected strategy name, complexity score with breakdown, rationale for strategy choice]
 
 ## Work Units
-| # | Title | Type | Hours | Parallel | Assignee | Blocked By |
+| # | Title | Type | Status | Blocked By |
 [Table of decomposed work units with details below]
 
 ## Dependencies
 [Mermaid flowchart showing execution order and blocking relationships]
-
-## Assumptions
-[List of assumptions made during planning - with strikethrough for corrected ones]
-
-## Feedback Log
-[Append-only user corrections from refinement iterations - timestamped]
 ```
 
-### Update Rules
-
-| Section | Update Type | Rule |
-|---------|-------------|------|
-| Input | IMMUTABLE | Never modified after initial write |
-| Research | APPEND | New findings added below existing content |
-| Strategy | EDIT | Modified when strategy changes based on feedback |
-| Work Units | EDIT | Modified based on feedback, use strikethrough for history |
-| Dependencies | EDIT | Modified when work unit structure changes |
-| Assumptions | EDIT | Strikethrough corrected assumptions, add new ones |
-| Feedback Log | APPEND | Each entry timestamped, never delete previous entries |
-
-**Update type definitions:**
-- **IMMUTABLE**: Write once, never change. Preserves original context.
-- **APPEND**: Add new content below existing. Never delete previous entries.
-- **EDIT**: Modify in place. For corrections, use ~~strikethrough~~ to show history.
 
 
 ---
@@ -398,8 +376,6 @@ Use the Write tool to create the plan file at the path from Phase 0, following i
 - **Strategy**: Leave as placeholder -- will be populated during execution by workflow-planner
 - **Work Units**: Table from Phase 2 analysis, followed by detailed Unit sections (each with Description, Acceptance Criteria, Estimated Files)
 - **Dependencies**: Mermaid flowchart showing execution order, critical path, and parallel opportunities
-- **Assumptions**: Planning assumptions the user can correct in feedback
-- **Feedback Log**: Empty on first write -- populated during Phase 4 refinement
 
 ### After Writing the Plan
 
@@ -407,10 +383,9 @@ Present a **flight briefing** to the user that summarizes the plan before asking
 
 1. **Plan file path** (link to the plan for full details)
 2. **Epic title and goal** (one-liner)
-3. **Work units summary** — for each unit: number, title, type, estimated hours, and whether it runs in parallel
+3. **Work units summary** — for each unit: number, title, type, and blocked-by dependencies
 4. **Critical path** — which units are sequential blockers
 5. **Parallelization** — percentage of work that can run concurrently
-6. **Key assumptions** — list assumptions the user might want to correct
 
 <!-- user-comms: say "checking the task system" not "TASK_SYSTEM detected in Phase 1" -->
 Then prompt for approval using AskUserQuestion. Select the variant based on `TASK_SYSTEM` detected in Phase 1:
@@ -483,8 +458,6 @@ When the user selects "Other" and provides feedback:
 | Strategy | EDIT | Modify when strategy changes based on feedback |
 | Work Units | EDIT | Replace section content |
 | Dependencies | EDIT | Replace section content |
-| Assumptions | EDIT | Strikethrough old + add new |
-| Feedback Log | APPEND | Each entry timestamped, never delete previous |
 
 ### Refinement Guidelines
 
@@ -551,9 +524,8 @@ Files: [estimated files from plan]
 <!-- user-comms: say "no task tracker detected" not "TASK_SYSTEM is markdown_only" -->
 When `TASK_SYSTEM` is `markdown_only`, the plan file is the primary deliverable. The `reaper:issue-tracker-planfile` skill handles plan file operations. Skip issue creation and proceed:
 
-1. Use the planfile skill's Manual Execution Guide template to append execution instructions to the plan file
-2. Mark todo #2 complete (finalize plan file) and skip todo #3 (no issues to verify)
-3. Output the markdown-only completion message:
+1. Mark todo #2 complete (finalize plan file) and skip todo #3 (no issues to verify)
+2. Output the markdown-only completion message:
 
 ```markdown
 ## Plan Complete (Markdown Mode)

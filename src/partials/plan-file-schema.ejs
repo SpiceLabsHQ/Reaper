@@ -24,40 +24,18 @@ Create the plan file with this structure on first write:
 [Selected strategy name, complexity score with breakdown, rationale for strategy choice]
 
 ## Work Units
-| # | Title | Type | Hours | Parallel | Assignee | Blocked By |
+| # | Title | Type | Status | Blocked By |
 [Table of decomposed work units with details below]
 
 ## Dependencies
 [Mermaid flowchart showing execution order and blocking relationships]
-
-## Assumptions
-[List of assumptions made during planning - with strikethrough for corrected ones]
-
-## Feedback Log
-[Append-only user corrections from refinement iterations - timestamped]
 ```
 
-### Update Rules
-
-| Section | Update Type | Rule |
-|---------|-------------|------|
-| Input | IMMUTABLE | Never modified after initial write |
-| Research | APPEND | New findings added below existing content |
-| Strategy | EDIT | Modified when strategy changes based on feedback |
-| Work Units | EDIT | Modified based on feedback, use strikethrough for history |
-| Dependencies | EDIT | Modified when work unit structure changes |
-| Assumptions | EDIT | Strikethrough corrected assumptions, add new ones |
-| Feedback Log | APPEND | Each entry timestamped, never delete previous entries |
-
-**Update type definitions:**
-- **IMMUTABLE**: Write once, never change. Preserves original context.
-- **APPEND**: Add new content below existing. Never delete previous entries.
-- **EDIT**: Modify in place. For corrections, use ~~strikethrough~~ to show history.
 <% } else { -%>
 
 ### Plan File Sections
 
-A plan file at `.claude/plans/reaper-*.md` may contain: Input, Research, Strategy, Work Units, Dependencies, Assumptions, Feedback Log.
+A plan file at `.claude/plans/reaper-*.md` may contain: Input, Research, Strategy, Work Units, Dependencies.
 
 ### Extraction Priority
 
@@ -66,7 +44,6 @@ When reading a plan file, extract sections in this order of importance:
 2. **Dependencies** -- execution order and blocking relationships
 3. **Research** -- codebase context for agent prompts
 4. **Strategy** -- selected strategy and complexity rationale
-5. **Assumptions** -- constraints and decisions made during planning
 
 ### Adapting to Plan Completeness
 
@@ -74,5 +51,4 @@ When reading a plan file, extract sections in this order of importance:
 - **Plan with Research only**: Deploy reaper:workflow-planner with research as input context
 - **Plan with Research + Work Units**: Skip planner, extract work units directly
 - **Plan with Research + Work Units + Strategy**: Skip planner entirely, use provided strategy
-- **Full plan (all sections)**: Skip planning, pass Feedback Log entries as context to coding agents
 <% } -%>
