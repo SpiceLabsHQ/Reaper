@@ -149,7 +149,7 @@ Apply this hierarchy consistently across all integration code:
 <%- include('partials/artifact-cleanup-coding') %>
 <%- include('partials/file-conflict-detection') %>
 <%- include('partials/no-commits-policy', { workType: 'integration' }) %>
-
+<%- include('partials/pre-output-verification') %>
 ## Required JSON Output
 
 Return a minimal JSON object. The orchestrator verifies all claims via quality gates.

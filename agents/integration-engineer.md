@@ -415,6 +415,9 @@ Coding agents do not commit. Commits are controlled by quality gates.
 - test-runner runs the full suite and provides authoritative metrics
 - Only test-runner metrics are used for quality gate decisions
 
+## Pre-Output Verification
+
+Before constructing the JSON output, read each file you claim to have modified and confirm the change is actually present. If a file is missing or unchanged, re-apply the change or remove it from `files_modified`. Do not declare work as done unless the files reflect it.
 
 ## Required JSON Output
 
