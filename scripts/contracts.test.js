@@ -2809,3 +2809,162 @@ describe('Contract: flight-plan does not embed hardcoded completion templates', 
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Contract: workflow-planner dirty-root safety check
+// ---------------------------------------------------------------------------
+
+describe('Contract: workflow-planner dirty-root safety check', () => {
+  const filePath = agentFilePath('workflow-planner');
+  const relative = 'agents/workflow-planner.md';
+
+  it(`${relative} contains "Dirty-Root Safety Check" section heading`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('Dirty-Root Safety Check'),
+      `${relative} must contain a "Dirty-Root Safety Check" section heading`
+    );
+  });
+
+  it(`${relative} dirty-root check uses git status --porcelain`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('git status --porcelain'),
+      `${relative} dirty-root check must use "git status --porcelain" as the detection command`
+    );
+  });
+
+  it(`${relative} dirty-root check escalates very_small_direct to medium_single_branch`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // The section must co-locate uncommitted/dirty language with medium_single_branch escalation
+    assert.ok(
+      /uncommitted[\s\S]{0,300}medium_single_branch|medium_single_branch[\s\S]{0,300}uncommitted/
+        .test(content),
+      `${relative} must describe escalating to medium_single_branch when root has uncommitted changes`
+    );
+  });
+
+  it(`${relative} dirty-root check fires unconditionally after strategy selection`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // "Post-Selection" in heading and "unconditionally" in body confirm post-selection behaviour
+    assert.ok(
+      content.includes('Post-Selection') && content.includes('unconditionally'),
+      `${relative} dirty-root section must be labelled "Post-Selection" and instruct applying the check unconditionally`
+    );
+  });
+
+  it(`${relative} dirty-root check applies to single-document override with no exemptions`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('with no exemptions'),
+      `${relative} must state the dirty-root check applies "with no exemptions", including when the single-document override selected the strategy`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: takeoff dirty-root escalation
+// ---------------------------------------------------------------------------
+
+describe('Contract: takeoff dirty-root escalation', () => {
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
+
+  /**
+   * Extracts the Dirty-Root Escalation section from takeoff.md.
+   * The section starts at "## Dirty-Root Escalation" and ends at the next
+   * top-level heading ("## ").
+   * @param {string} content - Full markdown content
+   * @returns {string} The Dirty-Root Escalation section text
+   */
+  function extractDirtyRootSection(content) {
+    const startMarker = '## Dirty-Root Escalation';
+    const startIndex = content.indexOf(startMarker);
+    if (startIndex === -1) return '';
+
+    const rest = content.slice(startIndex + startMarker.length);
+    const nextSectionMatch = rest.match(/\n## [^#]/);
+    if (nextSectionMatch) {
+      return content.slice(startIndex, startIndex + startMarker.length + nextSectionMatch.index);
+    }
+    return content.slice(startIndex);
+  }
+
+  it(`${relative} contains "Dirty-Root Escalation" section`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = extractDirtyRootSection(content);
+    assert.ok(
+      section.length > 0,
+      `${relative} must contain a "## Dirty-Root Escalation" section`
+    );
+  });
+
+  it(`${relative} dirty-root escalation uses git status --porcelain`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = extractDirtyRootSection(content);
+    assert.ok(
+      section.includes('git status --porcelain'),
+      `${relative} Dirty-Root Escalation must use "git status --porcelain" as the detection command`
+    );
+  });
+
+  it(`${relative} dirty-root escalation overrides very_small_direct to medium_single_branch`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = extractDirtyRootSection(content);
+    assert.ok(
+      section.includes('very_small_direct') && section.includes('medium_single_branch'),
+      `${relative} Dirty-Root Escalation must reference both very_small_direct (trigger condition) and medium_single_branch (escalation target)`
+    );
+  });
+
+  it(`${relative} dirty-root escalation emits the expected user-facing message`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = extractDirtyRootSection(content);
+    // The escalation message must include "uncommitted changes" and "medium_single_branch"
+    assert.ok(
+      /uncommitted changes[\s\S]{0,200}medium_single_branch|medium_single_branch[\s\S]{0,200}uncommitted changes/
+        .test(section),
+      `${relative} Dirty-Root Escalation must include a user-facing message containing "uncommitted changes" co-located with "medium_single_branch"`
+    );
+  });
+
+  it(`${relative} dirty-root escalation is a universal post-selection check`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = extractDirtyRootSection(content);
+    // The section must indicate it fires after any source determines the strategy
+    assert.ok(
+      /universal|any source|regardless/i.test(section),
+      `${relative} Dirty-Root Escalation must state it is a universal post-selection check (fires regardless of strategy source)`
+    );
+  });
+
+  it(`${relative} dirty-root escalation appears before Preflight Announcement`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const dirtyRootIdx = content.indexOf('## Dirty-Root Escalation');
+    const preflightIdx = content.indexOf('## Preflight Announcement');
+    assert.ok(
+      dirtyRootIdx !== -1,
+      `${relative} must contain "## Dirty-Root Escalation"`
+    );
+    assert.ok(
+      preflightIdx !== -1,
+      `${relative} must contain "## Preflight Announcement"`
+    );
+    assert.ok(
+      dirtyRootIdx < preflightIdx,
+      `${relative} "## Dirty-Root Escalation" must appear before "## Preflight Announcement" ` +
+        `(found at index ${dirtyRootIdx}, Preflight at ${preflightIdx})`
+    );
+  });
+});
