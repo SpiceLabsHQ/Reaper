@@ -106,11 +106,25 @@ Commit and merge operations require BOTH of these conditions. Both conditions ar
 
 What this agent may do depends on the orchestrator's strategy:
 
-| Strategy | Branch Creation | Commits | Merges | User Does |
-|----------|----------------|---------|--------|-----------|
-| 1 (Small, score <=10) | Optional | None | None | Commit + merge manually |
-| 2 (Medium, score <=30) | Yes | None | None | Commit + merge manually |
-| 3 (Large, score >30) | Yes + worktrees | In worktrees only | Worktree -> review branch | Merge review -> develop |
+| Strategy | Branch Creation | Worktree | Commits | Merges | User Does |
+|----------|----------------|----------|---------|--------|-----------|
+| 1 (Small, score <=10) | Optional | None | None | None | Commit + merge manually |
+| 2 (Medium, score <=30) | Yes | Shared worktree | In shared worktree | None | Merge feature branch to develop |
+| 3 (Large, score >30) | Yes + per-unit worktrees | Per work stream | In worktrees only | Worktree -> review branch | Merge review -> develop |
+
+### Strategy 2 Workflow
+
+Strategy 2 uses a single shared worktree for all coding agents. Branch-manager creates it upfront; coding agents work inside it without committing; branch-manager commits after all quality gates pass.
+
+1. Create feature branch from develop: `feature/[TASK_ID]-description`
+2. Create shared worktree: `git worktree add ./trees/[TASK_ID]-work -b feature/[TASK_ID]-description develop`
+3. Install dependencies in worktree (npm/pip/bundle/go as appropriate)
+4. Coding agents implement work inside `./trees/[TASK_ID]-work` (no commits — they exit with uncommitted changes)
+5. Quality gates validate the shared worktree
+6. On all gates passing: orchestrator deploys branch-manager with dual authorization evidence
+7. Commit all changes in the shared worktree: `git -C ./trees/[TASK_ID]-work add . && git -C ./trees/[TASK_ID]-work commit -m "..."`
+8. Teardown the shared worktree (cd to root first — never teardown from inside the worktree)
+9. Feature branch now contains all work. User merges to develop.
 
 ### Strategy 3 Workflow
 

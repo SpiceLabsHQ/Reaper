@@ -2096,3 +2096,324 @@ describe('Contract: SME agent sources do not contain gate-specific schema defini
     }
   }
 });
+
+// ---------------------------------------------------------------------------
+// Contract: no-commits-policy partial — all strategies use branch-manager
+// ---------------------------------------------------------------------------
+
+describe('Contract: no-commits-policy — all strategies direct branch-manager to commit', () => {
+  const sourcePath = path.join(ROOT, 'src', 'partials', 'no-commits-policy.ejs');
+  const sourceRelative = 'src/partials/no-commits-policy.ejs';
+
+  it(`${sourceRelative} Strategy 1 & 2 directs orchestrator to deploy branch-manager (not manual user commit)`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+
+    // Must NOT say users commit manually for Strategy 1 & 2
+    assert.ok(
+      !content.includes('user commits and merges manually'),
+      `${sourceRelative} must not say "user commits and merges manually" for Strategy 1 & 2 — orchestrator should direct branch-manager to commit`
+    );
+  });
+
+  it(`${sourceRelative} Strategy 1 & 2 mentions branch-manager for committing`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+
+    // Strategy 1 & 2 line must reference branch-manager
+    const strategyLine = content.split('\n').find((line) => line.includes('Strategy 1') && line.includes('2'));
+    assert.ok(
+      strategyLine !== undefined,
+      `${sourceRelative} must have a line referencing "Strategy 1" and "2"`
+    );
+    assert.ok(
+      strategyLine.includes('branch-manager'),
+      `${sourceRelative} Strategy 1 & 2 line must reference branch-manager for committing (found: "${strategyLine.trim()}")`
+    );
+  });
+
+  it(`${sourceRelative} Strategy 3 also mentions branch-manager for committing`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+
+    const strategyLine = content.split('\n').find((line) => line.includes('Strategy 3'));
+    assert.ok(
+      strategyLine !== undefined,
+      `${sourceRelative} must have a line referencing "Strategy 3"`
+    );
+    assert.ok(
+      strategyLine.includes('branch-manager'),
+      `${sourceRelative} Strategy 3 line must reference branch-manager for committing (found: "${strategyLine.trim()}")`
+    );
+  });
+
+  it(`${sourceRelative} contains "unless the user prescribes otherwise" escape hatch`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    assert.ok(
+      content.includes('unless the user prescribes otherwise') ||
+        content.includes('user prescribes otherwise'),
+      `${sourceRelative} must contain "unless the user prescribes otherwise" escape hatch`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: quality-gate-protocol Commit on Pass — feature branch constraint
+// ---------------------------------------------------------------------------
+
+describe('Contract: quality-gate-protocol Commit on Pass feature branch constraint', () => {
+  const sourcePath = path.join(ROOT, 'src', 'partials', 'quality-gate-protocol.ejs');
+  const sourceRelative = 'src/partials/quality-gate-protocol.ejs';
+
+  /**
+   * Extracts the "Commit on Pass" section from quality-gate-protocol.ejs.
+   * @param {string} content - Full file content
+   * @returns {string} The Commit on Pass section text, or empty string if not found
+   */
+  function extractCommitOnPass(content) {
+    const startMarker = '### Commit on Pass';
+    const startIndex = content.indexOf(startMarker);
+    if (startIndex === -1) return '';
+
+    const rest = content.slice(startIndex + startMarker.length);
+    const nextSectionMatch = rest.match(/\n###? /);
+    if (nextSectionMatch) {
+      return content.slice(startIndex, startIndex + startMarker.length + nextSectionMatch.index);
+    }
+    return content.slice(startIndex);
+  }
+
+  it(`${sourceRelative} Commit on Pass section exists`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    const section = extractCommitOnPass(content);
+    assert.ok(
+      section.length > 0,
+      `${sourceRelative} must contain a "### Commit on Pass" section`
+    );
+  });
+
+  it(`${sourceRelative} Commit on Pass specifies commits go to feature branch only`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    const section = extractCommitOnPass(content);
+    assert.ok(
+      section.includes('feature branch'),
+      `${sourceRelative} Commit on Pass must explicitly state commits go to the feature branch`
+    );
+  });
+
+  it(`${sourceRelative} Commit on Pass contains "never" constraint for main/master/develop`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    const section = extractCommitOnPass(content);
+    assert.ok(
+      /never.*master|never.*main|never.*develop|master.*never|main.*never|develop.*never/i.test(section),
+      `${sourceRelative} Commit on Pass must contain a "never" constraint for master/main/develop branches`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: branch-manager Strategy 2 uses shared worktree + branch-manager commits
+// ---------------------------------------------------------------------------
+
+describe('Contract: branch-manager Strategy 2 uses shared worktree with branch-manager commits', () => {
+  const filePath = agentFilePath('branch-manager');
+  const relative = 'agents/branch-manager.md';
+
+  it(`${relative} Strategy-Based Authority table has Strategy 2 row with worktree`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // Strategy 2 row must mention worktree creation
+    const tableRows = content.split('\n').filter((line) =>
+      line.startsWith('|') && line.includes('2') && (line.includes('Medium') || line.includes('worktree'))
+    );
+    assert.ok(
+      tableRows.length > 0,
+      `${relative} Strategy-Based Authority table must have a Strategy 2 row referencing worktree`
+    );
+  });
+
+  it(`${relative} Strategy-Based Authority table Strategy 2 row includes commits`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // Strategy 2 table row must indicate branch-manager does commits (not "None")
+    const tableLines = content.split('\n');
+    const strategy2Row = tableLines.find(
+      (line) => line.startsWith('|') && /\|\s*2\s*\(/.test(line)
+    );
+    assert.ok(
+      strategy2Row !== undefined,
+      `${relative} must have a Strategy 2 row in the strategy table (format: "| 2 (...")`
+    );
+    // The row should NOT say "None" for commits column when worktree is present
+    // It should reference commits or branch-manager committing
+    assert.ok(
+      !(/\|\s*None\s*\|.*\|\s*None\s*\|/.test(strategy2Row)),
+      `${relative} Strategy 2 row must not have None for both Commits and Merges when using worktree`
+    );
+  });
+
+  it(`${relative} contains a Strategy 2 Workflow section`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('Strategy 2 Workflow'),
+      `${relative} must contain a "Strategy 2 Workflow" section`
+    );
+  });
+
+  it(`${relative} Strategy 2 Workflow describes creating a shared worktree`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const s2Start = content.indexOf('Strategy 2 Workflow');
+    assert.ok(s2Start !== -1, `${relative} must contain Strategy 2 Workflow`);
+    // The section should end before the next ## heading or Strategy 3 Workflow
+    const s3Start = content.indexOf('Strategy 3 Workflow');
+    const section = s3Start !== -1
+      ? content.slice(s2Start, s3Start)
+      : content.slice(s2Start, s2Start + 2000);
+    assert.ok(
+      /worktree/i.test(section),
+      `${relative} Strategy 2 Workflow must describe creating a shared worktree`
+    );
+  });
+
+  it(`${relative} Strategy 2 Workflow states coding agents do not commit`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const s2Start = content.indexOf('Strategy 2 Workflow');
+    assert.ok(s2Start !== -1, `${relative} must contain Strategy 2 Workflow`);
+    const s3Start = content.indexOf('Strategy 3 Workflow');
+    const section = s3Start !== -1
+      ? content.slice(s2Start, s3Start)
+      : content.slice(s2Start, s2Start + 2000);
+    assert.ok(
+      /no commit|without commit|no.*commit|uncommitted|never commit/i.test(section),
+      `${relative} Strategy 2 Workflow must state that coding agents work without committing`
+    );
+  });
+
+  it(`${relative} Strategy 2 Workflow states branch-manager commits after gates pass`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const s2Start = content.indexOf('Strategy 2 Workflow');
+    assert.ok(s2Start !== -1, `${relative} must contain Strategy 2 Workflow`);
+    const s3Start = content.indexOf('Strategy 3 Workflow');
+    const section = s3Start !== -1
+      ? content.slice(s2Start, s3Start)
+      : content.slice(s2Start, s2Start + 2000);
+    assert.ok(
+      /branch-manager.*commit|commit.*branch-manager/i.test(section),
+      `${relative} Strategy 2 Workflow must state that branch-manager commits after quality gates pass`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: workflow-planner Strategy 2 mentions shared worktree
+// ---------------------------------------------------------------------------
+
+describe('Contract: workflow-planner medium_single_branch mentions shared worktree', () => {
+  const filePath = agentFilePath('workflow-planner');
+  const relative = 'agents/workflow-planner.md';
+
+  it(`${relative} Strategy 2 description mentions shared worktree`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const s2Start = content.indexOf('Strategy 2: Medium Single Branch');
+    assert.ok(
+      s2Start !== -1,
+      `${relative} must contain "Strategy 2: Medium Single Branch" section`
+    );
+    const s3Start = content.indexOf('Strategy 3: Large Multi-Worktree');
+    const section = s3Start !== -1
+      ? content.slice(s2Start, s3Start)
+      : content.slice(s2Start, s2Start + 2000);
+    assert.ok(
+      /shared worktree|single.*worktree|worktree.*shared/i.test(section),
+      `${relative} Strategy 2 description must mention a shared worktree`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: file-conflict-detection partial heading acknowledges worktree model
+// ---------------------------------------------------------------------------
+
+describe('Contract: file-conflict-detection partial acknowledges worktree-based isolation', () => {
+  const sourcePath = path.join(ROOT, 'src', 'partials', 'file-conflict-detection.ejs');
+  const sourceRelative = 'src/partials/file-conflict-detection.ejs';
+
+  it(`${sourceRelative} heading no longer implies branch-only model`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    // The old heading was "Strategy 2: Single Branch Parallel Work"
+    // which implied no worktree isolation. Must be updated.
+    assert.ok(
+      !content.includes('Single Branch Parallel Work'),
+      `${sourceRelative} heading must not say "Single Branch Parallel Work" — update to acknowledge worktree-based model`
+    );
+  });
+
+  it(`${sourceRelative} references worktree-based isolation for medium_single_branch`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    assert.ok(
+      /worktree/i.test(content),
+      `${sourceRelative} must reference worktree-based isolation for medium_single_branch`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: todowrite-plan-protocol cleanup note covers both strategies
+// ---------------------------------------------------------------------------
+
+describe('Contract: todowrite-plan-protocol cleanup note covers both strategies', () => {
+  const sourcePath = path.join(ROOT, 'src', 'partials', 'todowrite-plan-protocol.ejs');
+  const sourceRelative = 'src/partials/todowrite-plan-protocol.ejs';
+
+  it(`${sourceRelative} cleanup note covers medium_single_branch`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    assert.ok(
+      content.includes('medium_single_branch'),
+      `${sourceRelative} cleanup note must mention "medium_single_branch" strategy`
+    );
+  });
+
+  it(`${sourceRelative} medium_single_branch cleanup note says cleanup at completion`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    // Find the line(s) referencing medium_single_branch
+    const lines = content.split('\n');
+    const mediumLine = lines.find((l) => l.includes('medium_single_branch'));
+    assert.ok(
+      mediumLine !== undefined,
+      `${sourceRelative} must have a line mentioning medium_single_branch`
+    );
+    assert.ok(
+      /completion|end|finish|after.*merge|once|done/i.test(mediumLine),
+      `${sourceRelative} medium_single_branch cleanup note must indicate cleanup at completion (found: "${mediumLine.trim()}")`
+    );
+  });
+
+  it(`${sourceRelative} large_multi_worktree cleanup note specifies per-unit cleanup`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    // Find the line(s) referencing large_multi_worktree
+    const lines = content.split('\n');
+    const largeLine = lines.find((l) => l.includes('large_multi_worktree'));
+    assert.ok(
+      largeLine !== undefined,
+      `${sourceRelative} must have a line mentioning large_multi_worktree`
+    );
+    assert.ok(
+      /per.unit|each unit|per worktree|each worktree/i.test(largeLine),
+      `${sourceRelative} large_multi_worktree cleanup note must specify per-unit cleanup (found: "${largeLine.trim()}")`
+    );
+  });
+});

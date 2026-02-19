@@ -22,7 +22,8 @@ Always append these after all work unit entries (no task IDs):
 
 Append these after the mandatory tasks when conditions are met:
 - "Close completed tasks" -- when a task system (Beads or Jira) is detected
-- "Clean up session worktrees" -- when using the large_multi_worktree strategy
+- "Clean up shared worktree" -- when using the medium_single_branch strategy (cleanup at completion, not per-unit)
+- "Clean up session worktrees" -- when using the large_multi_worktree strategy (per-unit cleanup, once per worktree teardown)
 
 ### Example Output
 
@@ -46,9 +47,10 @@ After creating all TodoWrite entries, set up blockedBy relationships for the fin
 - "User review and feedback" is blockedBy every work unit entry (all Step X.Y tasks)
 - "Merge to [target branch]" is blockedBy "User review and feedback"
 - "Close completed tasks" is blockedBy "Merge to [target branch]"
-- "Clean up session worktrees" is blockedBy "Merge to [target branch]"
+- "Clean up shared worktree" is blockedBy "Merge to [target branch]" (medium_single_branch only)
+- "Clean up session worktrees" is blockedBy "Merge to [target branch]" (large_multi_worktree only)
 
-"Close completed tasks" and "Clean up session worktrees" are siblings -- both blocked by Merge, not by each other -- so they run in parallel after merge completes.
+"Close completed tasks", "Clean up shared worktree", and "Clean up session worktrees" are siblings -- all blocked by Merge, not by each other -- so they run in parallel after merge completes.
 
 ### Why Persist to TodoWrite
 
