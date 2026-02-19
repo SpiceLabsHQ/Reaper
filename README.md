@@ -143,7 +143,7 @@ Full formatter list: [docs/auto-formatting.md](docs/auto-formatting.md)
 
 ### Agents
 
-20+ specialized agents. You never hire them directly -- the orchestrator dispatches the right ones based on task complexity, type, and phase. Planners, developers, reviewers, security auditors, incident responders, and more.
+24 specialized agents. You never hire them directly -- the orchestrator dispatches the right ones based on task complexity, type, and phase. Planners, developers, reviewers, security auditors, incident responders, and more.
 
 Full agent catalog: [docs/agents.md](docs/agents.md)
 

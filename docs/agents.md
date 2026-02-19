@@ -1,6 +1,6 @@
 # Agent Catalog
 
-Reaper coordinates 23 specialized agents. You never invoke them directly -- Reaper dispatches the right agent based on your task. Each agent has a focused role, specific tools, and quality standards. When you run `/reaper:takeoff` or `/reaper:flight-plan`, Reaper selects and orchestrates the agents for you.
+Reaper coordinates 24 specialized agents. You never invoke them directly -- Reaper dispatches the right agent based on your task. Each agent has a focused role, specific tools, and quality standards. When you run `/reaper:takeoff` or `/reaper:flight-plan`, Reaper selects and orchestrates the agents for you.
 
 ## Planning (10 agents)
 
@@ -64,7 +64,7 @@ Operators. These agents handle deployment, integration, and incident response fo
 | `reaper:integration-engineer` | Third-party service integration, API clients, webhook handlers, and event-driven system connectivity |
 | `reaper:incident-responder` | Production incident diagnosis, log analysis, root cause investigation, and coordinated emergency remediation |
 
-## Craft (3 agents)
+## Craft (4 agents)
 
 Shapers. These agents refine documentation, agent design, and prompt quality for any project -- not just Reaper.
 
@@ -73,6 +73,7 @@ Shapers. These agents refine documentation, agent design, and prompt quality for
 | `reaper:technical-writer` | Generates technical documentation from codebases with verification and accuracy standards |
 | `reaper:claude-agent-architect` | Designs, creates, and refactors agents -- structure, format compliance, and design quality control |
 | `reaper:ai-prompt-engineer` | Prompt optimization, anti-pattern detection, token reduction, and model-specific tuning across LLM families |
+| `reaper:principal-engineer` | Senior technical leadership providing architectural oversight, system design review, and decision arbitration -- use when evaluating service boundaries, assessing technical debt, arbitrating competing approaches, or reviewing architecture at a systemic level |
 
 ## How agents are dispatched
 
@@ -88,6 +89,6 @@ The dispatch layer matches task characteristics to agent capabilities. A bug rep
 
 ---
 
-**Total: 23 agents** across 5 categories (plus work-type-matched SME routing for code review).
+**Total: 24 agents** across 5 categories (plus work-type-matched SME routing for code review).
 
 [Back to README](../README.md)
