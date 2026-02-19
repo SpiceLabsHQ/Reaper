@@ -349,14 +349,15 @@ rm -f "$WORKTREE_PATH/.tsbuildinfo"
 - Include cleanup evidence in JSON response field `artifacts_cleaned`
 - Report cleanup failures but don't block on them
 
-### File Conflict Detection (Strategy 2: Single Branch Parallel Work)
+### File Conflict Detection (Strategy 2: Shared Worktree Parallel Work)
 
-**If working on a single branch with other agents:**
+**If working in a shared worktree with other agents:**
+
+Strategy 2 (medium_single_branch) uses a single shared worktree where multiple agents work concurrently with exclusive file assignments. Each agent must detect and exit if its assigned files are unexpectedly modified by another agent.
 
 ```bash
-# Before making changes, check git status
-cd "[WORKTREE_OR_ROOT]"
-git status
+# Before making changes, check git status in the shared worktree
+git -C "[WORKTREE_PATH]" status
 
 # If you see UNEXPECTED modified files (not yours):
 # - Another agent is editing files concurrently
@@ -364,7 +365,7 @@ git status
 # - Orchestrator will resolve the conflict
 
 # Example detection:
-if git status --short | grep -v "^M.*YOUR_FILES"; then
+if git -C "[WORKTREE_PATH]" status --short | grep -v "^M.*YOUR_FILES"; then
   echo "ERROR: File conflict detected - external edits to non-assigned files"
   echo "EXITING: Orchestrator must resolve concurrent edit conflict"
   exit 1
@@ -392,9 +393,9 @@ Coding agents do not commit. Commits are controlled by quality gates.
 4. Orchestrator deploys quality gates (test-runner, then SME reviewer (via code-review skill) + security-auditor)
 
 **What happens after quality gates:**
-- **Strategy 1 & 2**: Quality gates pass, then the user commits and merges manually when ready
+- **Strategy 1 & 2**: Quality gates pass, then the orchestrator directs branch-manager to commit on the feature branch
 - **Strategy 3**: Quality gates pass, then the orchestrator directs branch-manager to commit in worktree and merge to review branch
-- **All strategies**: User always manually merges final work to develop/main
+- **All strategies**: branch-manager commits to the feature branch only — never master/main/develop, unless the user prescribes otherwise
 
 **Rules:**
 - ❌ NEVER run `git commit` -- you are a coding agent, not authorized for git operations

@@ -235,17 +235,18 @@ Gate status rendering uses the vocabulary defined in the visual-vocabulary parti
 **When**: Score 11-35 (or lower with 5+ repetitive items), no file overlap, 2-5 work units.
 
 **Workflow**:
-1. Create feature branch from develop: `feature/TASK-ID-description`
-2. Deploy multiple agents IN PARALLEL with exclusive file assignments
-3. Each agent: exclusive files, conflict detection (exit if files unexpectedly modified), focused testing, no commit authority
-4. After ALL agents complete: run quality gate sequence on full suite
+1. Deploy reaper:branch-manager to create a single shared worktree: `./trees/TASK-ID-work` on `feature/TASK-ID-description`
+2. Deploy multiple coding agents IN PARALLEL with exclusive file assignments, all working inside the shared worktree
+3. Each agent: exclusive files, conflict detection (exit if files unexpectedly modified), focused testing, no commit authority — work stays uncommitted
+4. After ALL agents complete: run quality gate sequence on full suite in the shared worktree
 5. On failure: identify responsible agent by file analysis, return with blocking_issues
-6. Present feature branch to user; user commits manually
+6. On all gates passing: deploy reaper:branch-manager to commit the shared worktree and tear it down
+7. Feature branch contains all consolidated work; user merges to develop
 
 **Parallel deployment example**:
 ```
-Task --subagent_type reaper:feature-developer "TASK_ID: PROJ-123, FILES: src/auth.js tests/auth.test.js, EXCLUSIVE ownership"
-Task --subagent_type reaper:feature-developer "TASK_ID: PROJ-123, FILES: src/config.js tests/config.test.js, EXCLUSIVE ownership"
+Task --subagent_type reaper:feature-developer "TASK_ID: PROJ-123, WORKTREE: ./trees/PROJ-123-work, FILES: src/auth.js tests/auth.test.js, EXCLUSIVE ownership"
+Task --subagent_type reaper:feature-developer "TASK_ID: PROJ-123, WORKTREE: ./trees/PROJ-123-work, FILES: src/config.js tests/config.test.js, EXCLUSIVE ownership"
 ```
 
 ### Strategy 3: Large Multi-Worktree
