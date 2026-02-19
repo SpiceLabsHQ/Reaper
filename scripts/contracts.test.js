@@ -2765,3 +2765,47 @@ describe('Contract: user communication contract included in all primary workflow
     });
   }
 });
+
+// ---------------------------------------------------------------------------
+// Contract: flight-plan must not hardcode platform skill names outside Phase 1
+// ---------------------------------------------------------------------------
+
+describe('Contract: flight-plan does not hardcode platform skill names outside Phase 1', () => {
+  const filePath = commandFilePath('flight-plan');
+  const relative = 'commands/flight-plan.md';
+
+  it(`${relative} does not name reaper:issue-tracker-planfile outside the Phase 1 skill-routing table`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found at ${filePath}`);
+    const content = fs.readFileSync(filePath, 'utf8');
+
+    // The Phase 1 routing table is the only legitimate place to name this skill.
+    // Count total occurrences — exactly one is expected (the table row in Phase 1).
+    // Any additional occurrence means the skill has leaked into later phases (scope boundary violation).
+    const occurrences = (content.match(/reaper:issue-tracker-planfile/g) || []).length;
+    assert.ok(
+      occurrences <= 1,
+      `${relative} contains ${occurrences} occurrences of "reaper:issue-tracker-planfile" but at most 1 is allowed (Phase 1 routing table only). ` +
+      `Extra occurrences outside Phase 1 are platform-skill name hardcoding violations — ` +
+      `use abstract operations (CREATE_ISSUE, CLOSE_ISSUE) and the loaded platform skill instead.`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: flight-plan must not embed a hardcoded completion template
+// ---------------------------------------------------------------------------
+
+describe('Contract: flight-plan does not embed hardcoded completion templates', () => {
+  const filePath = commandFilePath('flight-plan');
+  const relative = 'commands/flight-plan.md';
+
+  it(`${relative} does not contain "Plan Complete (Markdown Mode)" inline template`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found at ${filePath}`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      !content.includes('Plan Complete (Markdown Mode)'),
+      `${relative} contains "Plan Complete (Markdown Mode)" — this is a hardcoded platform-specific completion template. ` +
+      `Output templates belong in the platform skill (reaper:issue-tracker-planfile), not in the command file.`
+    );
+  });
+});
