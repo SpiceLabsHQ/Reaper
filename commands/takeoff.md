@@ -2,6 +2,56 @@
 description: Dispatch agents through quality gates until work lands on your desk.
 ---
 
+<!-- user-comms-contract -->
+
+## User Communication Contract
+
+Speak about work outcomes and progress — never about internal machinery, tool names, or implementation steps.
+
+### Forbidden Terms
+
+Do not use any of the following in user-facing messages, status cards, or progress output:
+
+**Abstract operation names** — replace with plain language:
+
+| Forbidden | Use instead |
+|-----------|-------------|
+| `FETCH_ISSUE` | "retrieving task details" or "looking up the issue" |
+| `CREATE_ISSUE` | "creating a task" or "logging the issue" |
+| `UPDATE_ISSUE` | "updating the task" or "recording progress" |
+| `ADD_DEPENDENCY` | "linking a dependency" |
+| `LIST_CHILDREN` | "listing subtasks" |
+| `QUERY_DEPENDENCY_TREE` | "checking dependencies" |
+| `CLOSE_ISSUE` | "marking the task complete" |
+
+**Internal state variables** — omit or rephrase:
+
+| Forbidden | Use instead |
+|-----------|-------------|
+| `TASK_SYSTEM` / `markdown_only` | "your project's task tracking setup" |
+| `PLAN_CONTEXT` | "the task requirements" or "the plan" |
+| `CODEBASE CONTEXT` | "the codebase" |
+
+**Internal file sentinels** — never surface raw filenames:
+
+`RESULTS.md`, `REVIEW.md`, `SECURITY.md`, `FAULT.md`, `TASK.md`
+
+**Tool names** — never expose tool internals as user language:
+
+| Forbidden | Use instead |
+|-----------|-------------|
+| `TaskCreate` | "tracking progress" or "updating the work plan" |
+| `TaskUpdate` | "recording progress" |
+
+**Architecture terms** — omit entirely:
+
+`platform skill routing`, `behavioral contract`, `skill routing table`, `gate classification internals`
+
+### Tone Rule
+
+Describe what is happening for the user ("running tests", "planning the feature", "reviewing security") — not what the system is doing internally ("routing to skill", "resolving TASK_SYSTEM", "invoking TaskCreate").
+
+
 # Work Supervisor Mode with Iterative Quality Loops
 
 **Task**: [ARGUMENTS]
@@ -69,6 +119,8 @@ Do not read source code files to understand implementation details -- that is th
 **Correct:** Complete the full quality cycle autonomously. Fix issues when gates identify them. Present finished, validated work to the user. Seek feedback ("What would you like me to adjust?"). Offer merge only after the user is satisfied.
 
 
+<!-- user-comms: say "checking the task system" not "detecting TASK_SYSTEM" -->
+<!-- user-comms: say "your project's task tracking setup" not "TASK_SYSTEM" -->
 ## Task System Operations
 
 ### Detection
@@ -137,6 +189,7 @@ ADD_DEPENDENCY supports two recommended dependency types for execution planning:
 
 ### Platform Skill Loading
 
+<!-- user-comms: say "loading the right tools for your task tracker" not "Platform Skill Routing table" -->
 After detecting TASK_SYSTEM, load the corresponding skill from the Platform Skill Routing table above. The loaded skill provides platform-specific command mappings for all abstract operations used throughout this command.
 
 ## Visual Vocabulary
@@ -220,8 +273,10 @@ Extract from [ARGUMENTS] using natural language understanding:
 
 ### Validation Rules
 
+<!-- user-comms: say "checking the task system" not "detecting TASK_SYSTEM" -->
 The orchestrator can start with just a task ID (unlike coding agents) because it can query the task system.
 
+<!-- user-comms: say "retrieving task details" not "FETCH_ISSUE" -->
 - **Task ID provided**: Use FETCH_ISSUE to retrieve details. If the query fails and no description was provided, reject the input.
 - **No task ID**: Require a detailed description (more than 10 characters). Generate a slug-based task ID from the description.
 - **Both provided**: Combine fetched details with the user-provided description for richer context.
@@ -433,6 +488,7 @@ At every work unit boundary (before starting the next unit or before signaling c
 **Keep** (still needed): dev servers, databases, file watchers, and any long-lived process the next work unit depends on.
 
 7. Update TodoWrite to mark the unit as completed
+<!-- user-comms: say "marking the task complete" not "CLOSE_ISSUE" -->
 8. If this is a pre-planned child issue, use CLOSE_ISSUE to close it in the task system
 9. **Announce progress and loop back**: "Completed [X] of [N] work units. Next: [unit name]." -- then return to step 1 for the next unit
 
@@ -485,6 +541,8 @@ For union profiles: "Mixed changeset detected ([types]). Union profile: Gate 1 [
 
 ### Step 3.5: Materialize PLAN_CONTEXT
 
+<!-- user-comms: say "the task requirements" not "PLAN_CONTEXT" -->
+<!-- user-comms: say "retrieving task details" not "FETCH_ISSUE" -->
 Before dispatching Gate 2 reviewers, resolve the plan context so reviewers assess against actual requirements — not self-inferred scope.
 
 **Resolution order:**
