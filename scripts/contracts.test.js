@@ -1829,7 +1829,6 @@ const GATE_PROFILE_WORK_TYPES = [
  * The valid Gate 2 reviewer agents that may appear in the Gate 2 column.
  */
 const VALID_GATE2_AGENTS = [
-  'reaper:feature-developer',
   'reaper:database-architect',
   'reaper:ai-prompt-engineer',
   'reaper:technical-writer',
@@ -1865,7 +1864,7 @@ describe('Contract: gate profile correctness — all 10 work types and valid Gat
     const content = fs.readFileSync(sourcePath, 'utf8');
 
     // The gate profile table header is:
-    //   | Work Type | Gate 1 (blocking) | Gate 2 (parallel) | Specialty File |
+    //   | Work Type | Gate 1 (blocking) | Gate 2 (parallel) |
     // Gate 2 is the 3rd pipe-delimited column (0-indexed: 2).
     // Parse table data rows (skip header and separator rows).
     const tableRows = content.split('\n').filter((line) => {
