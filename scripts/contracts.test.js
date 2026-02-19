@@ -2417,3 +2417,311 @@ describe('Contract: todowrite-plan-protocol cleanup note covers both strategies'
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Takeoff-specific extraction helpers (module scope — shared across describe blocks)
+// ---------------------------------------------------------------------------
+
+/**
+ * Extracts the Strategy Notes section from takeoff.md content.
+ * @param {string} content - Full markdown content
+ * @returns {string} The Strategy Notes section text
+ */
+function extractStrategyNotes(content) {
+  const startMarker = '### Strategy Notes';
+  const startIndex = content.indexOf(startMarker);
+  if (startIndex === -1) return '';
+
+  const rest = content.slice(startIndex + startMarker.length);
+  const nextSectionMatch = rest.match(/\n###? /);
+  if (nextSectionMatch) {
+    return content.slice(startIndex, startIndex + startMarker.length + nextSectionMatch.index);
+  }
+  return content.slice(startIndex);
+}
+
+/**
+ * Extracts the full Per-Unit Cycle block from takeoff.md content.
+ * The work-unit-cleanup partial renders a "## Background Task Cleanup"
+ * heading inside the numbered list, which means a simple ##[# ] boundary
+ * stops too early. This function instead uses the "### Continuation Rule"
+ * heading as the terminator so that items 7-10 (which appear after the
+ * partial injection) are included in the extracted text.
+ * @param {string} content - Full markdown content
+ * @returns {string} The Per-Unit Cycle section text including post-partial items
+ */
+function extractFullPerUnitCycle(content) {
+  const startMarker = '### Per-Unit Cycle';
+  const startIndex = content.indexOf(startMarker);
+  if (startIndex === -1) return '';
+
+  // Use "### Continuation Rule" as the end boundary, which comes after
+  // the work-unit-cleanup partial's heading and the remaining numbered steps.
+  const endMarker = '### Continuation Rule';
+  const endIndex = content.indexOf(endMarker);
+  if (endIndex !== -1 && endIndex > startIndex) {
+    return content.slice(startIndex, endIndex);
+  }
+
+  // Fallback: next ## heading
+  const rest = content.slice(startIndex + startMarker.length);
+  const nextSectionMatch = rest.match(/\n## [^#]/);
+  if (nextSectionMatch) {
+    return content.slice(startIndex, startIndex + startMarker.length + nextSectionMatch.index);
+  }
+  return content.slice(startIndex);
+}
+
+/**
+ * Extracts the Worktree Cleanup section from takeoff.md content.
+ * This section contains the per-strategy worktree cleanup instructions.
+ * @param {string} content - Full markdown content
+ * @returns {string} The Worktree Cleanup section text
+ */
+function extractWorktreeCleanupSection(content) {
+  const startMarker = '## Worktree Cleanup';
+  const startIndex = content.indexOf(startMarker);
+  if (startIndex === -1) return '';
+
+  const rest = content.slice(startIndex + startMarker.length);
+  const nextSectionMatch = rest.match(/\n## [^#]/);
+  if (nextSectionMatch) {
+    return content.slice(startIndex, startIndex + startMarker.length + nextSectionMatch.index);
+  }
+  return content.slice(startIndex);
+}
+
+// ---------------------------------------------------------------------------
+// Contract: takeoff strategy descriptions — feature branch + worktree for all strategies
+// ---------------------------------------------------------------------------
+
+describe('Contract: takeoff strategy descriptions require feature branch and worktree', () => {
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
+
+  it(`${relative} very_small_direct description mentions creating a feature branch`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const strategyNotes = extractStrategyNotes(content);
+    assert.ok(
+      strategyNotes.length > 0,
+      `${relative} must contain a Strategy Notes section`
+    );
+    // Extract just the very_small_direct bullet
+    const lines = strategyNotes.split('\n');
+    const vsdLine = lines.find((l) => l.includes('very_small_direct'));
+    assert.ok(
+      vsdLine !== undefined,
+      `Strategy Notes must have a very_small_direct bullet`
+    );
+    assert.ok(
+      /feature branch/i.test(vsdLine),
+      `very_small_direct description must mention creating a feature branch (found: "${vsdLine.trim()}")`
+    );
+  });
+
+  it(`${relative} very_small_direct description mentions worktree setup`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const strategyNotes = extractStrategyNotes(content);
+    const lines = strategyNotes.split('\n');
+    const vsdLine = lines.find((l) => l.includes('very_small_direct'));
+    assert.ok(vsdLine !== undefined, `Strategy Notes must have a very_small_direct bullet`);
+    assert.ok(
+      /worktree/i.test(vsdLine),
+      `very_small_direct description must mention worktree setup (found: "${vsdLine.trim()}")`
+    );
+  });
+
+  it(`${relative} medium_single_branch description mentions creating a shared worktree`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const strategyNotes = extractStrategyNotes(content);
+    const lines = strategyNotes.split('\n');
+    const msbLine = lines.find((l) => l.includes('medium_single_branch'));
+    assert.ok(
+      msbLine !== undefined,
+      `Strategy Notes must have a medium_single_branch bullet`
+    );
+    assert.ok(
+      /shared worktree|single.*worktree/i.test(msbLine),
+      `medium_single_branch description must mention creating a shared worktree (found: "${msbLine.trim()}")`
+    );
+  });
+
+  it(`${relative} medium_single_branch description mentions feature branch`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const strategyNotes = extractStrategyNotes(content);
+    const lines = strategyNotes.split('\n');
+    const msbLine = lines.find((l) => l.includes('medium_single_branch'));
+    assert.ok(msbLine !== undefined, `Strategy Notes must have a medium_single_branch bullet`);
+    assert.ok(
+      /feature branch/i.test(msbLine),
+      `medium_single_branch description must mention feature branch (found: "${msbLine.trim()}")`
+    );
+  });
+
+  it(`${relative} very_small_direct description mentions worktree-manager skill or branch-manager`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const strategyNotes = extractStrategyNotes(content);
+    const lines = strategyNotes.split('\n');
+    const vsdLine = lines.find((l) => l.includes('very_small_direct'));
+    assert.ok(vsdLine !== undefined, `Strategy Notes must have a very_small_direct bullet`);
+    assert.ok(
+      /worktree-manager|branch-manager/i.test(vsdLine),
+      `very_small_direct description must reference worktree-manager or branch-manager for worktree setup (found: "${vsdLine.trim()}")`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: takeoff work-unit-cleanup partial appears exactly once
+// ---------------------------------------------------------------------------
+
+describe('Contract: takeoff work-unit-cleanup partial appears exactly once', () => {
+  const sourcePath = path.join(ROOT, 'src', 'commands', 'takeoff.ejs');
+  const sourceRelative = 'src/commands/takeoff.ejs';
+
+  it(`${sourceRelative} includes work-unit-cleanup partial exactly once`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    const matches = content.match(/include\(['"]partials\/work-unit-cleanup['"]/g) || [];
+    assert.strictEqual(
+      matches.length,
+      1,
+      `${sourceRelative} must include work-unit-cleanup partial exactly once (found ${matches.length} occurrences). ` +
+        `Remove the duplicate from the Completion section.`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: takeoff Per-Unit Cycle issue lifecycle — UPDATE_ISSUE and CLOSE_ISSUE
+// ---------------------------------------------------------------------------
+
+describe('Contract: takeoff Per-Unit Cycle issue lifecycle', () => {
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
+
+  it(`${relative} Per-Unit Cycle step 1 includes UPDATE_ISSUE to mark in_progress`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const perUnitSection = extractFullPerUnitCycle(content);
+    assert.ok(perUnitSection.length > 0, `${relative} must contain a Per-Unit Cycle section`);
+
+    // Step 1 is between "1." and "2." in the numbered list
+    const step1Match = perUnitSection.match(/1\.([\s\S]*?)(?=\n\d+\.)/);
+    const step1Text = step1Match ? step1Match[1] : '';
+    assert.ok(
+      step1Text.includes('UPDATE_ISSUE') || step1Text.includes('in_progress'),
+      `Per-Unit Cycle step 1 must include UPDATE_ISSUE to mark the issue as in_progress for tracked issues (step 1 text: "${step1Text.trim().substring(0, 200)}")`
+    );
+  });
+
+  it(`${relative} Per-Unit Cycle step 1 specifies non-markdown_only platforms for UPDATE_ISSUE`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const perUnitSection = extractFullPerUnitCycle(content);
+
+    const step1Match = perUnitSection.match(/1\.([\s\S]*?)(?=\n\d+\.)/);
+    const step1Text = step1Match ? step1Match[1] : '';
+    assert.ok(
+      /non.markdown|markdown_only|tracked issue/i.test(step1Text),
+      `Per-Unit Cycle step 1 UPDATE_ISSUE must qualify for non-markdown_only platforms`
+    );
+  });
+
+  it(`${relative} Per-Unit Cycle CLOSE_ISSUE applies to all tracked issues (not just pre-planned)`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const perUnitSection = extractFullPerUnitCycle(content);
+
+    // The close issue step must NOT be restricted to pre-planned only
+    // It should say "any tracked issue" or similar inclusive language
+    const closeLine = perUnitSection.split('\n').find(
+      (l) => l.includes('CLOSE_ISSUE') || (l.includes('close') && l.includes('issue'))
+    );
+    assert.ok(
+      closeLine !== undefined,
+      `Per-Unit Cycle must have a step referencing CLOSE_ISSUE`
+    );
+    assert.ok(
+      !/\bpre-planned child issue only\b|only pre-planned|if this is a pre-planned/i.test(closeLine),
+      `Per-Unit Cycle CLOSE_ISSUE must not be restricted to pre-planned child issues only (found: "${closeLine.trim()}")`
+    );
+    assert.ok(
+      /any tracked|tracked issue|non.markdown/i.test(perUnitSection),
+      `Per-Unit Cycle CLOSE_ISSUE must apply to any tracked issue on non-markdown_only platforms`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: takeoff worktree cleanup — per-unit for large, at-completion for others
+// ---------------------------------------------------------------------------
+
+describe('Contract: takeoff worktree cleanup strategy', () => {
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
+
+  it(`${relative} Per-Unit Cycle mentions worktree removal for large_multi_worktree`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const perUnitSection = extractFullPerUnitCycle(content);
+    assert.ok(
+      /large_multi_worktree.*worktree|worktree.*large_multi_worktree/i.test(perUnitSection) ||
+        (perUnitSection.includes('large_multi_worktree') && /remove.*worktree|worktree.*remov/i.test(perUnitSection)),
+      `Per-Unit Cycle must mention worktree removal for large_multi_worktree strategy`
+    );
+  });
+
+  it(`${relative} Per-Unit Cycle large_multi_worktree worktree removal goes through worktree-manager skill`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const perUnitSection = extractFullPerUnitCycle(content);
+    assert.ok(
+      perUnitSection.includes('worktree-manager'),
+      `Per-Unit Cycle worktree removal must go through the worktree-manager skill (never direct git worktree remove)`
+    );
+  });
+
+  it(`${relative} Per-Unit Cycle large_multi_worktree worktree removal includes reference check`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const perUnitSection = extractFullPerUnitCycle(content);
+    assert.ok(
+      /reference|still.*reference|no other.*reference|other.*unit/i.test(perUnitSection),
+      `Per-Unit Cycle large_multi_worktree worktree removal must include a reference check before removing`
+    );
+  });
+
+  it(`${relative} Worktree Cleanup section mentions medium_single_branch and very_small_direct`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const cleanupSection = extractWorktreeCleanupSection(content);
+    assert.ok(
+      cleanupSection.length > 0,
+      `${relative} must contain a Worktree Cleanup section`
+    );
+    assert.ok(
+      cleanupSection.includes('medium_single_branch'),
+      `Worktree Cleanup section must mention medium_single_branch strategy`
+    );
+    assert.ok(
+      cleanupSection.includes('very_small_direct'),
+      `Worktree Cleanup section must mention very_small_direct strategy`
+    );
+  });
+
+  it(`${relative} Worktree Cleanup section worktree removal goes through worktree-manager skill`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const cleanupSection = extractWorktreeCleanupSection(content);
+    assert.ok(
+      cleanupSection.includes('worktree-manager'),
+      `Worktree Cleanup section worktree removal must reference the worktree-manager skill`
+    );
+  });
+});

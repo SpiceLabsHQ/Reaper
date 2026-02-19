@@ -411,7 +411,7 @@ Execute ALL work units from the plan. Do not present work to the user or proceed
 
 For each work unit in the plan, repeat this cycle:
 
-1. Update TodoWrite to mark the unit as in_progress
+1. Update TodoWrite to mark the unit as in_progress. For tracked issues (Beads/Jira/GitHub, non-markdown_only platforms), also use UPDATE_ISSUE to mark the corresponding child issue as in_progress.
 2. **Render TAKING OFF announcement**: Before deploying the agent, render a single-line gauge announcement to signal that execution is about to begin for this unit:
    ```
      ███░░░░░░░  TAKING OFF  Step X.Y: [unit name]
@@ -435,8 +435,9 @@ At every work unit boundary (before starting the next unit or before signaling c
 **Keep** (still needed): dev servers, databases, file watchers, and any long-lived process the next work unit depends on.
 
 7. Update TodoWrite to mark the unit as completed
-8. If this is a pre-planned child issue, use CLOSE_ISSUE to close it in the task system
-9. **Announce progress and loop back**: "Completed [X] of [N] work units. Next: [unit name]." -- then return to step 1 for the next unit
+8. For any tracked issue (pre-planned or not) on non-markdown_only platforms, use CLOSE_ISSUE to close the corresponding child issue after gates pass.
+9. **large_multi_worktree strategy only**: After closing the issue, check that no other work units still reference this worktree, then invoke the worktree-manager skill to remove the per-unit worktree. Always go through the worktree-manager skill -- never run `git worktree remove` directly.
+10. **Announce progress and loop back**: "Completed [X] of [N] work units. Next: [unit name]." -- then return to step 1 for the next unit
 
 This cycle repeats for every work unit. The Completion section is only reachable after the final unit passes its gates.
 
@@ -455,9 +456,9 @@ When multiple work units share a group number and have no mutual dependencies, d
 
 ### Strategy Notes
 
-- **very_small_direct**: Deploy a single coding agent in the session worktree. Quality gates still apply.
-- **medium_single_branch**: Multiple agents work sequentially or in parallel on the same branch. Ensure file assignments do not overlap for parallel work.
-- **large_multi_worktree**: Each agent gets its own worktree. Use the worktree-manager skill to create isolated worktrees. Deploy reaper:branch-manager to merge completed worktrees.
+- **very_small_direct**: Create a feature branch and shared worktree (e.g., `./trees/TASK-ID-work`), then deploy a single coding agent. Quality gates still apply. Use reaper:branch-manager or the worktree-manager skill to set up the worktree.
+- **medium_single_branch**: Create a single shared worktree (e.g., `./trees/TASK-ID-work`) on a feature branch. Agents work within that worktree sequentially or in parallel. File assignments must not overlap for parallel work. Worktree cleanup happens at Completion after all units pass gates.
+- **large_multi_worktree**: Each agent gets its own worktree. Use the worktree-manager skill to create isolated worktrees. Deploy reaper:branch-manager to merge completed worktrees. Remove each per-unit worktree immediately after gates pass (via worktree-manager).
 
 ### Context Hygiene for Long Sessions
 
@@ -778,20 +779,6 @@ Do not read past this point without performing the verification steps below. Thi
 
 If you did not perform the STOP checkpoint above, go back and do it now.
 
-## Background Task Cleanup
-
-At every work unit boundary (before starting the next unit or before signaling completion), clean up background tasks:
-
-1. List all active background tasks to identify which are still running.
-2. Identify tasks no longer needed for the next work unit.
-3. Call TaskStop for each unneeded task. If a TaskStop call fails, log the error and continue -- do not block the workflow.
-4. Confirm all stops completed before proceeding to the next work unit.
-
-**Stop** (no longer needed): completed agents, finished test runs, builds that produced their output, explore commands that returned results.
-
-**Keep** (still needed): dev servers, databases, file watchers, and any long-lived process the next work unit depends on.
-
-
 When these conditions are met, present a **Touchdown Card** followed by a work summary. Use the gauge vocabulary from the Visual Vocabulary section.
 
 ```
@@ -842,6 +829,8 @@ When you're satisfied, I'll bring her in for landing on develop.
 ## Worktree Cleanup
 
 After a successful merge, invoke the `worktree-manager` skill to safely remove the session worktree.
+
+For **medium_single_branch** and **very_small_direct** strategies: invoke the worktree-manager skill to remove the shared worktree after all units complete and gates pass (at Completion, not per-unit). Always go through the worktree-manager skill -- never run `git worktree remove` directly.
 
 ## Quick Reference
 
