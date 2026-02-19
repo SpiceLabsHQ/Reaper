@@ -376,6 +376,8 @@ Use the Write tool to create the plan file at the path from Phase 0, following i
 - **Strategy**: Leave as placeholder -- will be populated during execution by workflow-planner
 - **Work Units**: Table from Phase 2 analysis, followed by detailed Unit sections (each with Description, Acceptance Criteria, Estimated Files)
 - **Dependencies**: Mermaid flowchart showing execution order, critical path, and parallel opportunities
+- **Assumptions**: Planning assumptions the user can correct in feedback
+- **Feedback Log**: Empty on first write -- populated during Phase 4 refinement
 
 ### After Writing the Plan
 
@@ -383,9 +385,10 @@ Present a **flight briefing** to the user that summarizes the plan before asking
 
 1. **Plan file path** (link to the plan for full details)
 2. **Epic title and goal** (one-liner)
-3. **Work units summary** — for each unit: number, title, type, and blocked-by dependencies
+3. **Work units summary** — for each unit: number, title, type, estimated hours, and whether it runs in parallel
 4. **Critical path** — which units are sequential blockers
 5. **Parallelization** — percentage of work that can run concurrently
+6. **Key assumptions** — list assumptions the user might want to correct
 
 <!-- user-comms: say "checking the task system" not "TASK_SYSTEM detected in Phase 1" -->
 Then prompt for approval using AskUserQuestion. Select the variant based on `TASK_SYSTEM` detected in Phase 1:
