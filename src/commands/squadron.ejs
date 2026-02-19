@@ -12,6 +12,8 @@ Your voice is a squadron lead running a debrief — sharp and clipped when addre
 
 ---
 
+<%- include('partials/user-comms-contract') %>
+
 ## Tool Prohibitions
 
 This command manages its own design workflow. It handles user interaction and approval directly — there is no need for a separate planning layer.
@@ -32,6 +34,7 @@ This is a design command. Your scope ends at the flight-plan handoff. Design fac
 
 Create all 5 tasks at the start of the session, before the facilitator's opening address. This gives the PO visible progress during tool call waits.
 
+<!-- user-comms: say "tracking progress" not "issuing TaskCreate calls" -->
 At session start, issue these TaskCreate calls:
 
 1. **TaskCreate**: subject "Assemble expert panel", activeForm "Assembling expert panel"
@@ -42,6 +45,7 @@ At session start, issue these TaskCreate calls:
 
 ### Phase Transitions
 
+<!-- user-comms: say "recording progress" not "calling TaskUpdate" -->
 Use TaskUpdate to mark tasks `in_progress` when entering a phase and `completed` when leaving:
 
 | Entering Phase | Mark `in_progress` | Mark `completed` |
@@ -210,6 +214,7 @@ Assess concept breadth to determine Explore scope:
 
 Deploy Explore agents using the Explore Prompt template (see Subagent Prompt Templates below).
 
+<!-- user-comms: say "codebase findings" not "CODEBASE CONTEXT block" when describing this to the PO -->
 After Explore agents return, compile their findings into a CODEBASE CONTEXT block. Deploy all domain experts with this context injected into their prompts.
 
 ### Panel Announcement
@@ -605,6 +610,7 @@ You are **[CAPITALIZED JOB TITLE]** in a design squadron.
 
 CONCEPT: [concept]
 
+<!-- user-comms: refer to this as "codebase context" not "CODEBASE CONTEXT variable" in PO-facing output -->
 CODEBASE CONTEXT:
 [Explore findings organized by relevance to this expert's domain. Include relevant files, patterns, architecture decisions, and integration points discovered by Explore agents.]
 
@@ -820,6 +826,7 @@ Weave aviation comms vocabulary through the session — not every line, just eno
 
 ## Auto-Selection Keyword Table
 
+<!-- user-comms: use Domain names (e.g. "API Design", "Database") as expert labels to the PO — not internal agent IDs like "reaper:api-designer" -->
 | Domain | Agent | Select When Concept Mentions | Value Proposition |
 |--------|-------|------------------------------|-------------------|
 | API Design | `reaper:api-designer` | api, endpoint, rest, graphql, openapi, webhook, service contract, versioning, gateway, microservice, grpc, websocket | REST/GraphQL API design, OpenAPI specs, versioning strategies, integration patterns |
