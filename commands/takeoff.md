@@ -577,18 +577,19 @@ Not all work types need the same quality gates. Use the profile table below to d
 | Work Type | Gate 1 (blocking) | Gate 2 (parallel) | reviewer_agent | specialty_file |
 |-----------|-------------------|-------------------|----------------|----------------|
 | `application_code` | reaper:test-runner | SME reviewer, reaper:security-auditor | reaper:feature-developer | application-code.md |
-| `infrastructure_config` | -- | SME reviewer, reaper:security-auditor | reaper:cloud-architect | (none) |
+| `infrastructure_config` | -- | SME reviewer, reaper:security-auditor | reaper:principal-engineer | architecture-review.md |
 | `database_migration` | -- | SME reviewer | reaper:database-architect | database-migration.md |
-| `api_specification` | -- | SME reviewer | reaper:api-designer | (none) |
+| `api_specification` | -- | SME reviewer | reaper:principal-engineer | architecture-review.md |
 | `agent_prompt` | -- | reaper:ai-prompt-engineer, SME reviewer | reaper:ai-prompt-engineer | agent-prompt.md |
 | `documentation` | -- | SME reviewer | reaper:technical-writer | documentation.md |
 | `ci_cd_pipeline` | -- | SME reviewer, reaper:security-auditor | reaper:deployment-engineer | (none) |
 | `test_code` | reaper:test-runner | SME reviewer | reaper:feature-developer | application-code.md |
 | `configuration` | -- | SME reviewer, reaper:security-auditor | reaper:feature-developer | (none) |
+| `architecture_review` | -- | SME reviewer | reaper:principal-engineer | architecture-review.md |
 
 "SME reviewer" resolves to the `reviewer_agent` for that work type. Each SME reviewer runs the universal code-review skill (`skills/code-review/SKILL.md`) with an optional specialty file injected as `SPECIALTY_CONTENT`.
 
-For work types with no Gate 1 (`infrastructure_config`, `database_migration`, `api_specification`, `agent_prompt`, `documentation`, `ci_cd_pipeline`, `configuration`), skip directly to Gate 2.
+For work types with no Gate 1 (`infrastructure_config`, `database_migration`, `api_specification`, `agent_prompt`, `documentation`, `ci_cd_pipeline`, `configuration`, `architecture_review`), skip directly to Gate 2.
 
 #### Work Type Detection Patterns
 
@@ -605,6 +606,7 @@ Determine the work type from the files in the changeset using these patterns:
 | `.github/workflows/`, `.gitlab-ci*`, `Jenkinsfile`, `.circleci/` | `ci_cd_pipeline` |
 | `tests/`, `test/`, `__tests__/`, `spec/`, `*_test.*`, `*.test.*`, `*.spec.*` | `test_code` |
 | `.env*`, `config/`, `*.config.*`, `*.json` (config files) | `configuration` |
+| `docs/adr/`, `docs/arch/`, `design/` + .md files; files named `*.architecture.*`, `*system-design*`, `*adr-*` | `architecture_review` |
 
 If no pattern matches, default to `application_code`.
 
@@ -619,7 +621,7 @@ When a changeset spans multiple work types, compute the union of all matching pr
 
 **Example:** A changeset touching `src/auth.ts` (application_code) and `terraform/main.tf` (infrastructure_config) produces:
 - Gate 1: reaper:test-runner (from application_code; infrastructure_config has no Gate 1)
-- Gate 2: SME reviewer (reaper:feature-developer, from application_code) + reaper:security-auditor (union of both profiles; deduplicated since both include security-auditor)
+- Gate 2: SME reviewer (reaper:feature-developer, from application_code) + SME reviewer (reaper:principal-engineer, from infrastructure_config) + reaper:security-auditor (union of both profiles; security-auditor deduplicated since both include it)
 
 #### Differential Retry Limits
 

@@ -1694,6 +1694,11 @@ describe('Contract: code-review skill specialty files', () => {
       relative: 'skills/code-review/documentation.md',
       maxLines: 80,
     },
+    {
+      name: 'architecture-review',
+      relative: 'skills/code-review/architecture-review.md',
+      maxLines: 80,
+    },
   ];
 
   for (const { name, relative, maxLines } of specialtyFiles) {
@@ -1805,7 +1810,7 @@ describe('Contract: code-review skill', () => {
 // ---------------------------------------------------------------------------
 
 /**
- * All 9 work types that must appear in the gate profile lookup table.
+ * All 10 work types that must appear in the gate profile lookup table.
  */
 const GATE_PROFILE_WORK_TYPES = [
   'application_code',
@@ -1817,10 +1822,11 @@ const GATE_PROFILE_WORK_TYPES = [
   'api_specification',
   'ci_cd_pipeline',
   'configuration',
+  'architecture_review',
 ];
 
 /**
- * The 7 valid SME reviewer agents that may appear as reviewer_agent values.
+ * The 8 valid SME reviewer agents that may appear as reviewer_agent values.
  */
 const VALID_SME_REVIEWER_AGENTS = [
   'reaper:feature-developer',
@@ -1830,9 +1836,10 @@ const VALID_SME_REVIEWER_AGENTS = [
   'reaper:ai-prompt-engineer',
   'reaper:technical-writer',
   'reaper:deployment-engineer',
+  'reaper:principal-engineer',
 ];
 
-describe('Contract: gate profile correctness — all 9 work types and valid SME agents', () => {
+describe('Contract: gate profile correctness — all 10 work types and valid SME agents', () => {
   const sourcePath = path.join(ROOT, 'src', 'partials', 'quality-gate-protocol.ejs');
   const sourceRelative = 'src/partials/quality-gate-protocol.ejs';
 
