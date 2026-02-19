@@ -107,7 +107,7 @@ Analyze work complexity using these scoring dimensions, then select strategy fro
 | **Integration Risk** | File overlap between work units: x3, shared interface changes: x2, cross-cutting concerns: x2 |
 | **Uncertainty** | Unfamiliar tech: +4, unclear requirements: +3, missing docs: +2, research needed: +3 |
 
-**Single-document override:** If all work units' assigned files converge on the same 1-2 files, override to very_small_direct regardless of score or unit count. A single agent editing one file sequentially is faster and cheaper than parallel agents that cannot claim exclusive ownership. This override takes precedence over the content override below.
+**Single-document override:** If all work units' assigned files converge on the same 1-2 files, override to very_small_direct regardless of score or unit count. A single agent editing one file sequentially is faster and cheaper than parallel agents that cannot claim exclusive ownership. This override takes precedence over all other overrides below.
 
 **Content override:** If the task involves 5+ repetitive similar items (e.g., creating multiple similar files, writing parallel documentation), override to medium_single_branch regardless of score. This catches content-heavy work that benefits from parallelism without inflating complexity scores.
 
@@ -121,6 +121,15 @@ Analyze work complexity using these scoring dimensions, then select strategy fro
 | >35 | - | **large_multi_worktree** |
 | any | File overlap between work units | **large_multi_worktree** (required) |
 | any | Any work unit >5 files or >500 LOC | **large_multi_worktree** (required) |
+
+### Dirty-Root Safety Check (Post-Selection)
+
+After all overrides above have determined the final strategy, apply this universal safety check unconditionally:
+
+1. Run `git status --porcelain` on the repo root
+2. If the output is non-empty (uncommitted changes exist in the root) AND the final strategy is `very_small_direct`, escalate to `medium_single_branch`
+
+Uncommitted changes in the root risk contaminating the shared environment when Strategy 1 works directly on the feature branch without worktree isolation. `medium_single_branch` creates an isolated `./trees/` worktree that prevents root state from leaking into the agent's working environment. This check applies to the result of all strategy selection — including the single-document override — with no exemptions. If the final strategy is already `medium_single_branch` or `large_multi_worktree`, no escalation is needed.
 
 ### Strategy Selection Output
 

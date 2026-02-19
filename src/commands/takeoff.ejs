@@ -126,6 +126,16 @@ If any package exceeds these limits, redeploy reaper:workflow-planner with instr
 
 <%- include('partials/todowrite-plan-protocol') %>
 
+## Dirty-Root Escalation
+
+After strategy is determined from any source (workflow-planner, pre-planned detection, or plan file) and the plan is written to TodoWrite, apply this universal post-selection safety check before rendering the Preflight Card.
+
+1. Run `git status --porcelain` on the repo root
+2. If the output is non-empty (uncommitted changes exist in the root) AND the current strategy is `very_small_direct`, override the strategy to `medium_single_branch`
+3. Log the escalation reason to the user: "Root directory has uncommitted changes — upgrading to medium_single_branch for worktree isolation"
+
+This check applies regardless of which source determined the strategy. If the strategy is already `medium_single_branch` or `large_multi_worktree`, no override is needed.
+
 ## Preflight Announcement
 
 After writing the plan to TodoWrite and before executing the first work unit, render a **Preflight Card** to the user. This gives the developer a clear snapshot of what is about to happen.
