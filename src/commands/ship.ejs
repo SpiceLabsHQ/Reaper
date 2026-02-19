@@ -6,6 +6,8 @@ description: Fast-path from worktree to PR — commit, push, open.
 
 **Task**: [ARGUMENTS]
 
+<%- include('partials/user-comms-contract') %>
+
 <%- include('partials/visual-vocabulary', { context: 'ship' }) %>
 
 ## 1. Determine Worktree Context
@@ -72,6 +74,7 @@ If nothing to commit and nothing to push, report "Already shipped" and stop.
 
 After validation passes, render a **Departure Card** using the template from the Visual Vocabulary. Populate it with values gathered so far:
 
+<!-- user-comms: show the resolved worktree path, not the variable name "$WORKTREE_PATH" -->
 ```
   DEPARTURE
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -310,7 +313,9 @@ This is a fast-path shipping command. For full orchestration with quality gates,
 
 ## Error Handling
 
+<!-- user-comms: say "couldn't create a PR automatically" not "no CLI tool for host" or "acli/gh/glab unavailable" -->
 - **No CLI tool for host**: Try `acli` (Bitbucket), `gh` (GitHub), `glab` (GitLab), then REST API, then push-only with manual PR URL
+<!-- user-comms: say "authentication failed — check your credentials" not "BITBUCKET_TOKEN not set" -->
 - **Auth failure**: Report which auth methods were tried, suggest setting the appropriate token env var
 - **Push rejected**: Check if branch exists on remote, suggest force-push only if user confirms
 - **No changes**: Report "nothing to ship" and stop
