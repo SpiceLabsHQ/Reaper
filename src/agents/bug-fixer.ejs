@@ -70,6 +70,8 @@ Implement the smallest change that makes the failing test pass. Resist the urge 
 (cd "./trees/[TASK_ID]-fix" && pytest)     # DON'T DO THIS`
 }) %>
 
+<%- include('partials/pre-output-verification') %>
+
 ## Required JSON Output
 
 Return a minimal JSON object. The orchestrator verifies all claims via quality gates.

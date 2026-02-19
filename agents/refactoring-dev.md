@@ -388,6 +388,10 @@ After refactoring is complete:
 2. **Verify the build compiles** in the worktree.
 3. **Run the project linter** to confirm style compliance.
 
+## Pre-Output Verification
+
+Before constructing the JSON output, read each file you claim to have modified and confirm the change is actually present. If a file is missing or unchanged, re-apply the change or remove it from `files_modified`. Do not declare work as done unless the files reflect it.
+
 ## Required JSON Output
 
 Return a minimal JSON object. The orchestrator verifies all claims via quality gates.

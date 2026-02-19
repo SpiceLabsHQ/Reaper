@@ -145,6 +145,7 @@ Break the feature description into discrete, testable units. For each unit, iden
 - The public interface (function signatures, API endpoints, class contracts)
 - Dependencies to inject (not hard-code)
 - Edge cases and error conditions from the acceptance criteria
+- **Impact Scan**: For each file modified or deleted, scan that same file and its direct importers for dangling references, broken imports, and orphaned identifiers pointing to anything you changed or removed. Scope: the modified file and its direct importers only — do not search the entire codebase.
 
 ### 2. TDD Cycle (Red-Green-Blue)
 Follow the TDD cycle defined in the testing protocol below. Write tests for application code only (business logic, APIs, services, UI). Skip dev tooling (build configs, linters, CI scripts). Apply SOLID principles during the refactor phase.
@@ -355,6 +356,11 @@ Coding agents do not commit. Commits are controlled by quality gates.
 - Orchestrator deploys test-runner after you signal completion
 - test-runner runs the full suite and provides authoritative metrics
 - Only test-runner metrics are used for quality gate decisions
+
+
+## Pre-Output Verification
+
+Before constructing the JSON output, read each file you claim to have modified and confirm the change is actually present. If a file is missing or unchanged, re-apply the change or remove it from `files_modified`. Do not declare work as done unless the files reflect it.
 
 
 ## Required JSON Output

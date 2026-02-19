@@ -746,6 +746,7 @@ const SEMANTIC_CONTRACTS = {
     sections: [
       { pattern: /TDD/, label: 'TDD protocol section' },
       { pattern: /GIT OPERATION PROHIBITIONS/i, label: 'git prohibitions section' },
+      { pattern: /Pre-Output Verification/i, label: 'pre-output verification section' },
     ],
   },
   review: {
@@ -807,6 +808,20 @@ registerSemanticSuite('coding');
 registerSemanticSuite('review');
 registerSemanticSuite('gateCapable');
 registerSemanticSuite('planning');
+
+// ---------------------------------------------------------------------------
+// Contract: feature-developer has blast-radius impact scan instruction
+// ---------------------------------------------------------------------------
+
+describe('Contract: feature-developer has impact scan instruction', () => {
+  it('feature-developer contains blast-radius impact scan instruction', () => {
+    const content = fs.readFileSync(agentFilePath('feature-developer'), 'utf8');
+    assert.ok(
+      /dangling|impact scan|direct importers/i.test(content),
+      'feature-developer.md is missing blast-radius impact scan instruction'
+    );
+  });
+});
 
 // ---------------------------------------------------------------------------
 // Contract: TDD agents are a subset of coding agents
