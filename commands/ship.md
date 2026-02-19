@@ -6,6 +6,56 @@ description: Fast-path from worktree to PR — commit, push, open.
 
 **Task**: [ARGUMENTS]
 
+<!-- user-comms-contract -->
+
+## User Communication Contract
+
+Speak about work outcomes and progress — never about internal machinery, tool names, or implementation steps.
+
+### Forbidden Terms
+
+Do not use any of the following in user-facing messages, status cards, or progress output:
+
+**Abstract operation names** — replace with plain language:
+
+| Forbidden | Use instead |
+|-----------|-------------|
+| `FETCH_ISSUE` | "retrieving task details" or "looking up the issue" |
+| `CREATE_ISSUE` | "creating a task" or "logging the issue" |
+| `UPDATE_ISSUE` | "updating the task" or "recording progress" |
+| `ADD_DEPENDENCY` | "linking a dependency" |
+| `LIST_CHILDREN` | "listing subtasks" |
+| `QUERY_DEPENDENCY_TREE` | "checking dependencies" |
+| `CLOSE_ISSUE` | "marking the task complete" |
+
+**Internal state variables** — omit or rephrase:
+
+| Forbidden | Use instead |
+|-----------|-------------|
+| `TASK_SYSTEM` / `markdown_only` | "your project's task tracking setup" |
+| `PLAN_CONTEXT` | "the task requirements" or "the plan" |
+| `CODEBASE CONTEXT` | "the codebase" |
+
+**Internal file sentinels** — never surface raw filenames:
+
+`RESULTS.md`, `REVIEW.md`, `SECURITY.md`, `FAULT.md`, `TASK.md`
+
+**Tool names** — never expose tool internals as user language:
+
+| Forbidden | Use instead |
+|-----------|-------------|
+| `TaskCreate` | "tracking progress" or "updating the work plan" |
+| `TaskUpdate` | "recording progress" |
+
+**Architecture terms** — omit entirely:
+
+`platform skill routing`, `behavioral contract`, `skill routing table`, `gate classification internals`
+
+### Tone Rule
+
+Describe what is happening for the user ("running tests", "planning the feature", "reviewing security") — not what the system is doing internally ("routing to skill", "resolving TASK_SYSTEM", "invoking TaskCreate").
+
+
 ## Visual Vocabulary
 
 > **Opt-out**: If the project's CLAUDE.md contains the line `Reaper: disable ASCII art`, emit plain text status labels only. No gauge bars, no box-drawing, no card templates. Use the `functional` context behavior regardless of the `context` parameter.
@@ -133,6 +183,7 @@ If nothing to commit and nothing to push, report "Already shipped" and stop.
 
 After validation passes, render a **Departure Card** using the template from the Visual Vocabulary. Populate it with values gathered so far:
 
+<!-- user-comms: show the resolved worktree path, not the variable name "$WORKTREE_PATH" -->
 ```
   DEPARTURE
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -383,7 +434,9 @@ This is a fast-path shipping command. For full orchestration with quality gates,
 
 ## Error Handling
 
+<!-- user-comms: say "couldn't create a PR automatically" not "no CLI tool for host" or "acli/gh/glab unavailable" -->
 - **No CLI tool for host**: Try `acli` (Bitbucket), `gh` (GitHub), `glab` (GitLab), then REST API, then push-only with manual PR URL
+<!-- user-comms: say "authentication failed — check your credentials" not "BITBUCKET_TOKEN not set" -->
 - **Auth failure**: Report which auth methods were tried, suggest setting the appropriate token env var
 - **Push rejected**: Check if branch exists on remote, suggest force-push only if user confirms
 - **No changes**: Report "nothing to ship" and stop

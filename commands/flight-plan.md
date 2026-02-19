@@ -2,6 +2,56 @@
 description: Chart work into flight-ready issues with dependencies mapped.
 ---
 
+<!-- user-comms-contract -->
+
+## User Communication Contract
+
+Speak about work outcomes and progress — never about internal machinery, tool names, or implementation steps.
+
+### Forbidden Terms
+
+Do not use any of the following in user-facing messages, status cards, or progress output:
+
+**Abstract operation names** — replace with plain language:
+
+| Forbidden | Use instead |
+|-----------|-------------|
+| `FETCH_ISSUE` | "retrieving task details" or "looking up the issue" |
+| `CREATE_ISSUE` | "creating a task" or "logging the issue" |
+| `UPDATE_ISSUE` | "updating the task" or "recording progress" |
+| `ADD_DEPENDENCY` | "linking a dependency" |
+| `LIST_CHILDREN` | "listing subtasks" |
+| `QUERY_DEPENDENCY_TREE` | "checking dependencies" |
+| `CLOSE_ISSUE` | "marking the task complete" |
+
+**Internal state variables** — omit or rephrase:
+
+| Forbidden | Use instead |
+|-----------|-------------|
+| `TASK_SYSTEM` / `markdown_only` | "your project's task tracking setup" |
+| `PLAN_CONTEXT` | "the task requirements" or "the plan" |
+| `CODEBASE CONTEXT` | "the codebase" |
+
+**Internal file sentinels** — never surface raw filenames:
+
+`RESULTS.md`, `REVIEW.md`, `SECURITY.md`, `FAULT.md`, `TASK.md`
+
+**Tool names** — never expose tool internals as user language:
+
+| Forbidden | Use instead |
+|-----------|-------------|
+| `TaskCreate` | "tracking progress" or "updating the work plan" |
+| `TaskUpdate` | "recording progress" |
+
+**Architecture terms** — omit entirely:
+
+`platform skill routing`, `behavioral contract`, `skill routing table`, `gate classification internals`
+
+### Tone Rule
+
+Describe what is happening for the user ("running tests", "planning the feature", "reviewing security") — not what the system is doing internally ("routing to skill", "resolving TASK_SYSTEM", "invoking TaskCreate").
+
+
 Do not use EnterPlanMode or ExitPlanMode tools. This command manages its own planning workflow and plan file output.
 
 ---
@@ -146,14 +196,18 @@ ADD_DEPENDENCY supports two recommended dependency types for execution planning:
 
 ### Platform Skill Loading
 
+<!-- user-comms: say "checking the task system" not "detecting TASK_SYSTEM" -->
+<!-- user-comms: say "loading the right tools for your task tracker" not "Platform Skill Routing table" -->
 After detecting TASK_SYSTEM, load the corresponding skill from the Platform Skill Routing table above. The loaded skill provides platform-specific command mappings for all abstract operations used in this command (FETCH_ISSUE, CREATE_ISSUE, UPDATE_ISSUE, ADD_DEPENDENCY, LIST_CHILDREN, QUERY_DEPENDENCY_TREE).
 
 Classify the input (ARGUMENTS) as one of:
+<!-- user-comms: say "retrieving task details" not "FETCH_ISSUE" -->
 - **Existing epic ID** (e.g., `PROJ-123` or `repo-a3f`): Use FETCH_ISSUE to retrieve epic details. Validate the epic has no existing children via LIST_CHILDREN -- if children exist, stop and report the conflict.
 - **New description**: Detect the available task system using the detection heuristics above. Store the description as the planning request.
 
 ### Markdown-Only Mode Detection
 
+<!-- user-comms: say "no task tracker detected, plan file will be the deliverable" not "TASK_SYSTEM is markdown_only" -->
 When no task system is detected, inform the user the plan file will be the primary deliverable. Update behavioral contract todo #2 to: "Finalize plan file as deliverable (no task system)".
 
 ### Validation
@@ -163,6 +217,9 @@ When no task system is detected, inform the user the plan file will be the prima
 
 ### Behavioral Contract
 
+<!-- user-comms: say "tracking progress" not "TaskCreate" -->
+<!-- user-comms: say "recording progress" not "TaskUpdate" -->
+<!-- user-comms: say "your project's task tracking setup" not "behavioral contract" -->
 After detecting task system, create three core tasks via TaskCreate with blocking dependencies:
 
 1. **TaskCreate**: "Show plan for user approval" → set `in_progress`
@@ -355,8 +412,10 @@ Present a **flight briefing** to the user that summarizes the plan before asking
 5. **Parallelization** — percentage of work that can run concurrently
 6. **Key assumptions** — list assumptions the user might want to correct
 
+<!-- user-comms: say "checking the task system" not "TASK_SYSTEM detected in Phase 1" -->
 Then prompt for approval using AskUserQuestion. Select the variant based on `TASK_SYSTEM` detected in Phase 1:
 
+<!-- user-comms: say "using [Beads|Jira|GitHub] for task tracking" not "TASK_SYSTEM is Beads, Jira, or GitHub" -->
 **If TASK_SYSTEM is Beads, Jira, or GitHub:**
 
 ```json
@@ -373,6 +432,7 @@ Then prompt for approval using AskUserQuestion. Select the variant based on `TAS
 }
 ```
 
+<!-- user-comms: say "no task tracker detected" not "TASK_SYSTEM is markdown_only" -->
 **If TASK_SYSTEM is markdown_only:**
 
 ```json
@@ -445,6 +505,8 @@ Delegate all issue creation to the loaded platform skill. The skill maps abstrac
 
 For each work unit in the approved plan:
 
+<!-- user-comms: say "creating a task" not "CREATE_ISSUE" -->
+<!-- user-comms: say "updating the task" not "UPDATE_ISSUE" -->
 1. **Epic (create or update)**:
    - If an existing epic was provided as input: UPDATE_ISSUE to refine its description
    - Otherwise: CREATE_ISSUE with type=epic, title from plan, description from plan Input section
@@ -454,6 +516,7 @@ For each work unit in the approved plan:
    - For user intervention tasks: set assignee=user
    - The `parent=EPIC_ID` parameter on CREATE_ISSUE establishes parent-child hierarchy. Do NOT use ADD_DEPENDENCY for this purpose.
 
+<!-- user-comms: say "linking a dependency" not "ADD_DEPENDENCY" -->
 3. **Dependencies** (from plan's dependency graph):
    - ADD_DEPENDENCY with type=blocks for execution order constraints
    - ADD_DEPENDENCY with type=related for informational links
@@ -485,6 +548,7 @@ Files: [estimated files from plan]
 
 ### Markdown-Only Mode
 
+<!-- user-comms: say "no task tracker detected" not "TASK_SYSTEM is markdown_only" -->
 When `TASK_SYSTEM` is `markdown_only`, the plan file is the primary deliverable. The `reaper:issue-tracker-planfile` skill handles plan file operations. Skip issue creation and proceed:
 
 1. Use the planfile skill's Manual Execution Guide template to append execution instructions to the plan file
@@ -546,6 +610,8 @@ You have full access to this session's context:
 
 Verify the created issues meet orchestratability criteria. Do NOT create new issues.
 
+<!-- user-comms: say "checking dependencies" not "QUERY_DEPENDENCY_TREE" -->
+<!-- user-comms: say "retrieving task details" not "FETCH_ISSUE" -->
 VERIFICATION QUERIES (use abstract operations from the detected task system):
 - QUERY_DEPENDENCY_TREE from EPIC_ID (full hierarchy)
 - FETCH_ISSUE for each child issue (details and acceptance criteria)

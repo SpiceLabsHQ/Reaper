@@ -2,16 +2,21 @@
 description: Dispatch agents through quality gates until work lands on your desk.
 ---
 
+<%- include('partials/user-comms-contract') %>
+
 # Work Supervisor Mode with Iterative Quality Loops
 
 **Task**: [ARGUMENTS]
 
 <%- include('partials/orchestrator-role-boundary') %>
 
+<!-- user-comms: say "checking the task system" not "detecting TASK_SYSTEM" -->
+<!-- user-comms: say "your project's task tracking setup" not "TASK_SYSTEM" -->
 <%- include('partials/task-system-operations') %>
 
 ### Platform Skill Loading
 
+<!-- user-comms: say "loading the right tools for your task tracker" not "Platform Skill Routing table" -->
 After detecting TASK_SYSTEM, load the corresponding skill from the Platform Skill Routing table above. The loaded skill provides platform-specific command mappings for all abstract operations used throughout this command.
 
 <%- include('partials/visual-vocabulary', { context: 'takeoff' }) %>
@@ -28,8 +33,10 @@ Extract from [ARGUMENTS] using natural language understanding:
 
 ### Validation Rules
 
+<!-- user-comms: say "checking the task system" not "detecting TASK_SYSTEM" -->
 The orchestrator can start with just a task ID (unlike coding agents) because it can query the task system.
 
+<!-- user-comms: say "retrieving task details" not "FETCH_ISSUE" -->
 - **Task ID provided**: Use FETCH_ISSUE to retrieve details. If the query fails and no description was provided, reject the input.
 - **No task ID**: Require a detailed description (more than 10 characters). Generate a slug-based task ID from the description.
 - **Both provided**: Combine fetched details with the user-provided description for richer context.
@@ -152,6 +159,7 @@ For each work unit in the plan, repeat this cycle:
 6. **Render Gate Panel**: After all gates for the current unit resolve, render a Gate Panel (from Visual Vocabulary) showing each gate agent with its gate status -- `PASS` for passed, `FAIL` for failed. Include key metrics inline (e.g., test count, coverage percentage, issue count).
 <%- include('partials/work-unit-cleanup') %>
 7. Update TodoWrite to mark the unit as completed
+<!-- user-comms: say "marking the task complete" not "CLOSE_ISSUE" -->
 8. For any tracked issue (pre-planned or not) on non-markdown_only platforms, use CLOSE_ISSUE to close the corresponding child issue after gates pass.
 9. **large_multi_worktree strategy only**: After closing the issue, check that no other work units still reference this worktree, then invoke the worktree-manager skill to remove the per-unit worktree. Always go through the worktree-manager skill -- never run `git worktree remove` directly.
 10. **Announce progress and loop back**: "Completed [X] of [N] work units. Next: [unit name]." -- then return to step 1 for the next unit
@@ -205,6 +213,8 @@ For union profiles: "Mixed changeset detected ([types]). Union profile: Gate 1 [
 
 ### Step 3.5: Materialize PLAN_CONTEXT
 
+<!-- user-comms: say "the task requirements" not "PLAN_CONTEXT" -->
+<!-- user-comms: say "retrieving task details" not "FETCH_ISSUE" -->
 Before dispatching Gate 2 reviewers, resolve the plan context so reviewers assess against actual requirements — not self-inferred scope.
 
 **Resolution order:**

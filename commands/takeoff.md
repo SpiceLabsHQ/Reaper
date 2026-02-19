@@ -2,6 +2,56 @@
 description: Dispatch agents through quality gates until work lands on your desk.
 ---
 
+<!-- user-comms-contract -->
+
+## User Communication Contract
+
+Speak about work outcomes and progress — never about internal machinery, tool names, or implementation steps.
+
+### Forbidden Terms
+
+Do not use any of the following in user-facing messages, status cards, or progress output:
+
+**Abstract operation names** — replace with plain language:
+
+| Forbidden | Use instead |
+|-----------|-------------|
+| `FETCH_ISSUE` | "retrieving task details" or "looking up the issue" |
+| `CREATE_ISSUE` | "creating a task" or "logging the issue" |
+| `UPDATE_ISSUE` | "updating the task" or "recording progress" |
+| `ADD_DEPENDENCY` | "linking a dependency" |
+| `LIST_CHILDREN` | "listing subtasks" |
+| `QUERY_DEPENDENCY_TREE` | "checking dependencies" |
+| `CLOSE_ISSUE` | "marking the task complete" |
+
+**Internal state variables** — omit or rephrase:
+
+| Forbidden | Use instead |
+|-----------|-------------|
+| `TASK_SYSTEM` / `markdown_only` | "your project's task tracking setup" |
+| `PLAN_CONTEXT` | "the task requirements" or "the plan" |
+| `CODEBASE CONTEXT` | "the codebase" |
+
+**Internal file sentinels** — never surface raw filenames:
+
+`RESULTS.md`, `REVIEW.md`, `SECURITY.md`, `FAULT.md`, `TASK.md`
+
+**Tool names** — never expose tool internals as user language:
+
+| Forbidden | Use instead |
+|-----------|-------------|
+| `TaskCreate` | "tracking progress" or "updating the work plan" |
+| `TaskUpdate` | "recording progress" |
+
+**Architecture terms** — omit entirely:
+
+`platform skill routing`, `behavioral contract`, `skill routing table`, `gate classification internals`
+
+### Tone Rule
+
+Describe what is happening for the user ("running tests", "planning the feature", "reviewing security") — not what the system is doing internally ("routing to skill", "resolving TASK_SYSTEM", "invoking TaskCreate").
+
+
 # Work Supervisor Mode with Iterative Quality Loops
 
 **Task**: [ARGUMENTS]
@@ -69,6 +119,8 @@ Do not read source code files to understand implementation details -- that is th
 **Correct:** Complete the full quality cycle autonomously. Fix issues when gates identify them. Present finished, validated work to the user. Seek feedback ("What would you like me to adjust?"). Offer merge only after the user is satisfied.
 
 
+<!-- user-comms: say "checking the task system" not "detecting TASK_SYSTEM" -->
+<!-- user-comms: say "your project's task tracking setup" not "TASK_SYSTEM" -->
 ## Task System Operations
 
 ### Detection
@@ -137,6 +189,7 @@ ADD_DEPENDENCY supports two recommended dependency types for execution planning:
 
 ### Platform Skill Loading
 
+<!-- user-comms: say "loading the right tools for your task tracker" not "Platform Skill Routing table" -->
 After detecting TASK_SYSTEM, load the corresponding skill from the Platform Skill Routing table above. The loaded skill provides platform-specific command mappings for all abstract operations used throughout this command.
 
 ## Visual Vocabulary
@@ -220,8 +273,10 @@ Extract from [ARGUMENTS] using natural language understanding:
 
 ### Validation Rules
 
+<!-- user-comms: say "checking the task system" not "detecting TASK_SYSTEM" -->
 The orchestrator can start with just a task ID (unlike coding agents) because it can query the task system.
 
+<!-- user-comms: say "retrieving task details" not "FETCH_ISSUE" -->
 - **Task ID provided**: Use FETCH_ISSUE to retrieve details. If the query fails and no description was provided, reject the input.
 - **No task ID**: Require a detailed description (more than 10 characters). Generate a slug-based task ID from the description.
 - **Both provided**: Combine fetched details with the user-provided description for richer context.
@@ -435,6 +490,7 @@ At every work unit boundary (before starting the next unit or before signaling c
 **Keep** (still needed): dev servers, databases, file watchers, and any long-lived process the next work unit depends on.
 
 7. Update TodoWrite to mark the unit as completed
+<!-- user-comms: say "marking the task complete" not "CLOSE_ISSUE" -->
 8. For any tracked issue (pre-planned or not) on non-markdown_only platforms, use CLOSE_ISSUE to close the corresponding child issue after gates pass.
 9. **large_multi_worktree strategy only**: After closing the issue, check that no other work units still reference this worktree, then invoke the worktree-manager skill to remove the per-unit worktree. Always go through the worktree-manager skill -- never run `git worktree remove` directly.
 10. **Announce progress and loop back**: "Completed [X] of [N] work units. Next: [unit name]." -- then return to step 1 for the next unit
@@ -488,6 +544,8 @@ For union profiles: "Mixed changeset detected ([types]). Union profile: Gate 1 [
 
 ### Step 3.5: Materialize PLAN_CONTEXT
 
+<!-- user-comms: say "the task requirements" not "PLAN_CONTEXT" -->
+<!-- user-comms: say "retrieving task details" not "FETCH_ISSUE" -->
 Before dispatching Gate 2 reviewers, resolve the plan context so reviewers assess against actual requirements — not self-inferred scope.
 
 **Resolution order:**
@@ -577,18 +635,18 @@ Not all work types need the same quality gates. Use the profile table below to d
 
 #### Gate Profile Lookup Table
 
-| Work Type | Gate 1 (blocking) | Gate 2 (parallel) | Specialty File |
-|-----------|-------------------|-------------------|----------------|
-| `application_code` | reaper:test-runner | reaper:feature-developer, reaper:security-auditor | application-code.md |
-| `infrastructure_config` | -- | reaper:principal-engineer, reaper:security-auditor | architecture-review.md |
-| `database_migration` | -- | reaper:database-architect | database-migration.md |
-| `api_specification` | -- | reaper:principal-engineer | architecture-review.md |
-| `agent_prompt` | -- | reaper:ai-prompt-engineer | agent-prompt.md |
-| `documentation` | -- | reaper:technical-writer | documentation.md |
-| `ci_cd_pipeline` | -- | reaper:deployment-engineer, reaper:security-auditor | (none) |
-| `test_code` | reaper:test-runner | reaper:feature-developer | application-code.md |
-| `configuration` | -- | reaper:feature-developer, reaper:security-auditor | (none) |
-| `architecture_review` | -- | reaper:principal-engineer | architecture-review.md |
+| Work Type | Gate 1 (blocking) | Gate 2 (parallel) |
+|-----------|-------------------|-------------------|
+| `application_code` | reaper:test-runner | reaper:principal-engineer, reaper:security-auditor |
+| `infrastructure_config` | -- | reaper:principal-engineer, reaper:security-auditor |
+| `database_migration` | -- | reaper:database-architect |
+| `api_specification` | -- | reaper:principal-engineer |
+| `agent_prompt` | -- | reaper:ai-prompt-engineer |
+| `documentation` | -- | reaper:technical-writer |
+| `ci_cd_pipeline` | -- | reaper:deployment-engineer, reaper:security-auditor |
+| `test_code` | reaper:test-runner | reaper:principal-engineer |
+| `configuration` | -- | reaper:principal-engineer, reaper:security-auditor |
+| `architecture_review` | -- | reaper:principal-engineer |
 
 For work types with no Gate 1 (`infrastructure_config`, `database_migration`, `api_specification`, `agent_prompt`, `documentation`, `ci_cd_pipeline`, `configuration`, `architecture_review`), skip directly to Gate 2.
 
@@ -622,7 +680,7 @@ When a changeset spans multiple work types, compute the union of all matching pr
 
 **Example:** A changeset touching `src/auth.ts` (application_code) and `terraform/main.tf` (infrastructure_config) produces:
 - Gate 1: reaper:test-runner (from application_code; infrastructure_config has no Gate 1)
-- Gate 2: reaper:feature-developer (from application_code) + reaper:principal-engineer (from infrastructure_config) + reaper:security-auditor (union of both profiles; deduplicated since both include security-auditor)
+- Gate 2: reaper:principal-engineer (from application_code; deduplicated since both profiles include it) + reaper:security-auditor (union of both profiles; deduplicated since both include security-auditor)
 
 #### Differential Retry Limits
 
@@ -646,21 +704,21 @@ The gate agents to deploy depend on the work type profile determined above. The 
 
 For other profiles, substitute the appropriate agents from the Gate Profile Lookup Table. For work types with no Gate 1, proceed directly to Gate 2.
 
-**Gate 2 dispatch:** Look up the Gate 2 column in the profile table to identify the reviewer agent and its specialty file for the detected work type, then invoke the Gate 2 reviewer as a fresh Task:
+**Gate 2 dispatch:** Look up the Gate 2 column in the profile table to identify the reviewer agent for the detected work type, then invoke the Gate 2 reviewer as a fresh Task:
 
 ```
 Task --subagent_type <gate2_reviewer_agent> --prompt "
 TASK: <task_id>
 WORKTREE: <worktree_path>
 SCOPE: <scope_globs>
+WORK_TYPE: <detected_work_type>
 PLAN_CONTEXT: <materialized_plan_content>
 SKILL_CONTENT: <contents of skills/code-review/SKILL.md>
-SPECIALTY_CONTENT: <contents of skills/code-review/<specialty_file>.md, if applicable>
 "
 ```
 
 - `SKILL_CONTENT`: read `skills/code-review/SKILL.md` from the repo root and inject the full text
-- `SPECIALTY_CONTENT`: read the matching specialty file (e.g., `skills/code-review/application-code.md`) and inject the full text; omit this field entirely if the work type has no specialty file (`(none)` in the table)
+- `WORK_TYPE`: the detected work type string (e.g., `application_code`, `test_code`); used by the reviewer to focus its analysis
 - `PLAN_CONTEXT`: the materialized plan content injected by takeoff before gate dispatch
 - Always use a fresh Task invocation for the Gate 2 reviewer -- never resume from the coding agent
 - **Mixed changesets**: when multiple work types are detected, deploy the Gate 2 agents listed for each detected work type in parallel
@@ -735,7 +793,7 @@ If either fails, combine `blocking_issues` from both before redeploying the codi
 ### Information Handoff
 
 - **Coding agent to reaper:test-runner**: Pass `narrative_report.summary` for test scope context, plus TEST_COMMAND and LINT_COMMAND from project config
-- **reaper:test-runner to Gate 2 reviewer**: Pass full test results JSON (test_exit_code, coverage_percentage, lint_exit_code, test_metrics) alongside SKILL_CONTENT, SPECIALTY_CONTENT, and PLAN_CONTEXT
+- **reaper:test-runner to Gate 2 reviewer**: Pass full test results JSON (test_exit_code, coverage_percentage, lint_exit_code, test_metrics) alongside SKILL_CONTENT, WORK_TYPE, and PLAN_CONTEXT
 - **reaper:test-runner to reaper:security-auditor**: Pass plan context only (security-auditor does not need test results)
 
 

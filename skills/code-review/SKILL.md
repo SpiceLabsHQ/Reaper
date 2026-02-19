@@ -10,7 +10,7 @@ You are performing a Gate 2 code review for Reaper's quality gate pipeline.
 
 ## Purpose
 
-This skill defines the **review process**, not domain knowledge. Follow the universal steps below for every review regardless of work type. If a specialty file was provided via `SPECIALTY_CONTENT`, apply its additional process steps after completing the universal steps.
+This skill defines the **review process**, not domain knowledge. Follow the universal steps below for every review regardless of work type. In Step 4, use `WORK_TYPE` to self-load the appropriate specialty file and apply its additional process steps after completing the universal steps.
 
 ## Task Prompt Fields
 
@@ -23,7 +23,7 @@ The orchestrator passes the following fields when invoking this skill:
 | `SCOPE` | Glob patterns for the files in scope |
 | `PLAN_CONTEXT` | Materialized plan content (may be absent) |
 | `SKILL_CONTENT` | The contents of this file (already loaded by caller) |
-| `SPECIALTY_CONTENT` | Specialty file content for this work type (may be absent) |
+| `WORK_TYPE` | Work type identifier used to self-load the specialty file (may be absent) |
 | `TEST_RUNNER_RESULTS` | Gate 1 test-runner JSON output (may be absent) |
 
 ## Universal Review Process
@@ -54,9 +54,31 @@ If `PLAN_CONTEXT` is absent, skip this step and set `plan_coverage` to `not_chec
 - Verify that nothing in the work unit was left half-done: no TODO stubs where functional code is required, no placeholder implementations, no missing test coverage for declared functionality.
 - Partial implementations that leave a feature unusable are blocking issues.
 
-### Step 4: Apply Specialty Steps (if provided)
+### Step 4: Load and Apply Specialty Steps
 
-If `SPECIALTY_CONTENT` is present, read it and apply any additional domain-specific checks it defines. Specialty steps extend — they do not replace — the universal steps above.
+Use the `WORK_TYPE` value to look up the specialty file in the map below, then self-load it.
+
+**Specialty File Map**
+
+| Work Type | Specialty File |
+|-----------|---------------|
+| `application_code` | `skills/code-review/application-code.md` |
+| `infrastructure_config` | (none) |
+| `database_migration` | `skills/code-review/database-migration.md` |
+| `api_specification` | (none) |
+| `agent_prompt` | `skills/code-review/agent-prompt.md` |
+| `documentation` | `skills/code-review/documentation.md` |
+| `ci_cd_pipeline` | (none) |
+| `test_code` | `skills/code-review/application-code.md` |
+| `configuration` | (none) |
+| `architecture_review` | `skills/code-review/architecture-review.md` |
+| (anything else) | (none) |
+
+**Self-loading procedure:**
+
+1. Look up `WORK_TYPE` in the table above.
+2. If a specialty file path is listed: read that file using the Read tool and apply any additional domain-specific checks it defines. Specialty steps extend — they do not replace — the universal steps above.
+3. If no specialty file is listed (none), or if `WORK_TYPE` is absent: proceed without specialty context. This is not an error.
 
 ## Blocking vs. Non-Blocking Issues
 

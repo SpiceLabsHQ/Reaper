@@ -198,20 +198,20 @@ Quality gates are work-type-aware. The orchestrator selects gate agents based on
 
 | Work Type | Gate 1 (blocking) | Gate 2 (parallel) |
 |-----------|-------------------|-------------------|
-| `application_code` | test-runner | feature-developer, security-auditor |
+| `application_code` | test-runner | principal-engineer, security-auditor |
 | `infrastructure_config` | -- | principal-engineer, security-auditor |
 | `database_migration` | -- | database-architect |
 | `api_specification` | -- | principal-engineer |
 | `agent_prompt` | -- | ai-prompt-engineer |
 | `documentation` | -- | technical-writer |
 | `ci_cd_pipeline` | -- | deployment-engineer, security-auditor |
-| `test_code` | test-runner | feature-developer |
-| `configuration` | -- | feature-developer, security-auditor |
+| `test_code` | test-runner | principal-engineer |
+| `configuration` | -- | principal-engineer, security-auditor |
 | `architecture_review` | -- | principal-engineer |
 
 **Work type detection** uses directory paths and file extensions (e.g., `src/` + `.ts` = `application_code`, `terraform/` + `.tf` = `infrastructure_config`). Mixed changesets use the union of all matching profiles.
 
-**Default profile:** `application_code` -- reaper:test-runner (Gate 1) then reaper:feature-developer (with code-review skill) + reaper:security-auditor (Gate 2).
+**Default profile:** `application_code` -- reaper:test-runner (Gate 1) then reaper:principal-engineer (with code-review skill) + reaper:security-auditor (Gate 2).
 
 Auto-iteration on failure with per-agent retry limits (test-runner: 3, Gate 2 reviewers: 1). The takeoff skill owns gate execution and iteration.
 

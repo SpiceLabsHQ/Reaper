@@ -4,6 +4,8 @@ description: Not sure where to start? This command helps you find the right work
 
 # Start: Find Your Workflow
 
+<%- include('partials/user-comms-contract') %>
+
 <%- include('partials/visual-vocabulary', { context: 'start' }) %>
 
 Parse `[ARGUMENTS]` to determine which mode to enter.
@@ -74,6 +76,7 @@ Apply these heuristic rules in order. Stop at the first match.
 
 **Rule 1 -- Task ID pattern detected: recommend takeoff**
 
+<!-- user-comms: describe detection as "looks like a task ID" — do not expose regex patterns or rule numbers in user output -->
 Match any of these patterns in the input:
 - `PROJ-123` (uppercase letters, dash, digits)
 - `repo-a3f` (lowercase letters, dash, alphanumeric short hash)
@@ -194,6 +197,7 @@ Present all three workflows using AskUserQuestion. The recommended option appear
 
 Map the user's choice to a downstream command. Pass the original user input as arguments so the downstream command has context.
 
+<!-- user-comms: do not surface skill routing or platform detection details to the user — just invoke the selected workflow -->
 | Selection | Action |
 |-----------|--------|
 | "takeoff (Recommended)" or "takeoff" | `Skill("reaper:takeoff", args="[original-user-input]")` |

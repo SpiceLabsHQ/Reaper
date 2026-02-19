@@ -1829,7 +1829,6 @@ const GATE_PROFILE_WORK_TYPES = [
  * The valid Gate 2 reviewer agents that may appear in the Gate 2 column.
  */
 const VALID_GATE2_AGENTS = [
-  'reaper:feature-developer',
   'reaper:database-architect',
   'reaper:ai-prompt-engineer',
   'reaper:technical-writer',
@@ -1865,7 +1864,7 @@ describe('Contract: gate profile correctness — all 10 work types and valid Gat
     const content = fs.readFileSync(sourcePath, 'utf8');
 
     // The gate profile table header is:
-    //   | Work Type | Gate 1 (blocking) | Gate 2 (parallel) | Specialty File |
+    //   | Work Type | Gate 1 (blocking) | Gate 2 (parallel) |
     // Gate 2 is the 3rd pipe-delimited column (0-indexed: 2).
     // Parse table data rows (skip header and separator rows).
     const tableRows = content.split('\n').filter((line) => {
@@ -2724,4 +2723,45 @@ describe('Contract: takeoff worktree cleanup strategy', () => {
       `Worktree Cleanup section worktree removal must reference the worktree-manager skill`
     );
   });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: user communication contract included in all primary workflow commands
+// ---------------------------------------------------------------------------
+
+/**
+ * Sentinel string embedded by the user-comms-contract partial.
+ * Each primary workflow command must include the partial so that communication
+ * rules are present in every user-facing orchestration command.
+ */
+const USER_COMMS_SENTINEL = '<!-- user-comms-contract -->';
+
+/**
+ * Primary workflow commands that must include the user-comms-contract partial.
+ * Matches ALL_COMMANDS — every user-invocable orchestration command.
+ */
+const PRIMARY_WORKFLOW_COMMANDS = [
+  'flight-plan',
+  'takeoff',
+  'squadron',
+  'ship',
+  'status-worktrees',
+  'start',
+  'claude-sync',
+];
+
+describe('Contract: user communication contract included in all primary workflow commands', () => {
+  for (const commandName of PRIMARY_WORKFLOW_COMMANDS) {
+    const filePath = commandFilePath(commandName);
+    const relative = `commands/${commandName}.md`;
+
+    it(`${relative} includes user-comms-contract partial`, () => {
+      assert.ok(fs.existsSync(filePath), `${relative} not found at ${filePath}`);
+      const content = fs.readFileSync(filePath, 'utf8');
+      assert.ok(
+        content.includes(USER_COMMS_SENTINEL),
+        `${relative} is missing the user-comms-contract partial — add <%- include('partials/user-comms-contract') %> to src/commands/${commandName}.ejs`
+      );
+    });
+  }
 });

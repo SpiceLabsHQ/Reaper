@@ -4,6 +4,56 @@ description: Not sure where to start? This command helps you find the right work
 
 # Start: Find Your Workflow
 
+<!-- user-comms-contract -->
+
+## User Communication Contract
+
+Speak about work outcomes and progress — never about internal machinery, tool names, or implementation steps.
+
+### Forbidden Terms
+
+Do not use any of the following in user-facing messages, status cards, or progress output:
+
+**Abstract operation names** — replace with plain language:
+
+| Forbidden | Use instead |
+|-----------|-------------|
+| `FETCH_ISSUE` | "retrieving task details" or "looking up the issue" |
+| `CREATE_ISSUE` | "creating a task" or "logging the issue" |
+| `UPDATE_ISSUE` | "updating the task" or "recording progress" |
+| `ADD_DEPENDENCY` | "linking a dependency" |
+| `LIST_CHILDREN` | "listing subtasks" |
+| `QUERY_DEPENDENCY_TREE` | "checking dependencies" |
+| `CLOSE_ISSUE` | "marking the task complete" |
+
+**Internal state variables** — omit or rephrase:
+
+| Forbidden | Use instead |
+|-----------|-------------|
+| `TASK_SYSTEM` / `markdown_only` | "your project's task tracking setup" |
+| `PLAN_CONTEXT` | "the task requirements" or "the plan" |
+| `CODEBASE CONTEXT` | "the codebase" |
+
+**Internal file sentinels** — never surface raw filenames:
+
+`RESULTS.md`, `REVIEW.md`, `SECURITY.md`, `FAULT.md`, `TASK.md`
+
+**Tool names** — never expose tool internals as user language:
+
+| Forbidden | Use instead |
+|-----------|-------------|
+| `TaskCreate` | "tracking progress" or "updating the work plan" |
+| `TaskUpdate` | "recording progress" |
+
+**Architecture terms** — omit entirely:
+
+`platform skill routing`, `behavioral contract`, `skill routing table`, `gate classification internals`
+
+### Tone Rule
+
+Describe what is happening for the user ("running tests", "planning the feature", "reviewing security") — not what the system is doing internally ("routing to skill", "resolving TASK_SYSTEM", "invoking TaskCreate").
+
+
 ## Visual Vocabulary
 
 > **Opt-out**: If the project's CLAUDE.md contains the line `Reaper: disable ASCII art`, emit plain text status labels only. No gauge bars, no box-drawing, no card templates. Use the `functional` context behavior regardless of the `context` parameter.
@@ -195,6 +245,7 @@ Apply these heuristic rules in order. Stop at the first match.
 
 **Rule 1 -- Task ID pattern detected: recommend takeoff**
 
+<!-- user-comms: describe detection as "looks like a task ID" — do not expose regex patterns or rule numbers in user output -->
 Match any of these patterns in the input:
 - `PROJ-123` (uppercase letters, dash, digits)
 - `repo-a3f` (lowercase letters, dash, alphanumeric short hash)
@@ -315,6 +366,7 @@ Present all three workflows using AskUserQuestion. The recommended option appear
 
 Map the user's choice to a downstream command. Pass the original user input as arguments so the downstream command has context.
 
+<!-- user-comms: do not surface skill routing or platform detection details to the user — just invoke the selected workflow -->
 | Selection | Action |
 |-----------|--------|
 | "takeoff (Recommended)" or "takeoff" | `Skill("reaper:takeoff", args="[original-user-input]")` |

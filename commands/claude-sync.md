@@ -4,6 +4,56 @@ description: Surface changes since CLAUDE.md last touched down.
 
 # Synchronize CLAUDE.md with Recent Code Changes
 
+<!-- user-comms-contract -->
+
+## User Communication Contract
+
+Speak about work outcomes and progress — never about internal machinery, tool names, or implementation steps.
+
+### Forbidden Terms
+
+Do not use any of the following in user-facing messages, status cards, or progress output:
+
+**Abstract operation names** — replace with plain language:
+
+| Forbidden | Use instead |
+|-----------|-------------|
+| `FETCH_ISSUE` | "retrieving task details" or "looking up the issue" |
+| `CREATE_ISSUE` | "creating a task" or "logging the issue" |
+| `UPDATE_ISSUE` | "updating the task" or "recording progress" |
+| `ADD_DEPENDENCY` | "linking a dependency" |
+| `LIST_CHILDREN` | "listing subtasks" |
+| `QUERY_DEPENDENCY_TREE` | "checking dependencies" |
+| `CLOSE_ISSUE` | "marking the task complete" |
+
+**Internal state variables** — omit or rephrase:
+
+| Forbidden | Use instead |
+|-----------|-------------|
+| `TASK_SYSTEM` / `markdown_only` | "your project's task tracking setup" |
+| `PLAN_CONTEXT` | "the task requirements" or "the plan" |
+| `CODEBASE CONTEXT` | "the codebase" |
+
+**Internal file sentinels** — never surface raw filenames:
+
+`RESULTS.md`, `REVIEW.md`, `SECURITY.md`, `FAULT.md`, `TASK.md`
+
+**Tool names** — never expose tool internals as user language:
+
+| Forbidden | Use instead |
+|-----------|-------------|
+| `TaskCreate` | "tracking progress" or "updating the work plan" |
+| `TaskUpdate` | "recording progress" |
+
+**Architecture terms** — omit entirely:
+
+`platform skill routing`, `behavioral contract`, `skill routing table`, `gate classification internals`
+
+### Tone Rule
+
+Describe what is happening for the user ("running tests", "planning the feature", "reviewing security") — not what the system is doing internally ("routing to skill", "resolving TASK_SYSTEM", "invoking TaskCreate").
+
+
 Analyze git commits since CLAUDE.md was last modified and identify **critical, non-obvious changes** that should be documented for LLM context.
 
 This command uses parallel specialized agents to thoroughly analyze commits across multiple dimensions.
@@ -406,6 +456,7 @@ After presenting the report, offer to help the user:
 
 **Remember:** CLAUDE.md is loaded into context on every conversation. Keep it minimal and high-signal.
 
+<!-- user-comms: describe the filtering test in plain language — say "worth documenting?" not "Two-Question Test" when presenting findings to the user -->
 **The Two-Question Test:**
 1. **Critical?** Would an LLM agent make mistakes without this knowledge?
 2. **Non-Obvious?** Can this be discovered by reading current files with available tools?
@@ -414,6 +465,7 @@ Both must be "yes" to document.
 
 ### Examples of What to Document
 
+<!-- user-comms: present these as guidance ("worth documenting" / "skip this") not as internal filtering labels when reporting to the user -->
 ✅ **DO Document:**
 - Feature flags that control code paths
 - "Never modify files in /generated" constraints
