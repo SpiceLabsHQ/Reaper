@@ -4,6 +4,8 @@ description: Radar sweep your parallel worktrees for progress and drift.
 
 # Status of Worktrees for Tasks
 
+<%- include('partials/user-comms-contract') %>
+
 Check the status of git worktrees and parallel development progress
 
 ## Variables
@@ -42,16 +44,23 @@ Collect status for every worktree first, then render the fleet dashboard, then r
 # ── Status state determination ────────────────────────
 # For each worktree, determine its fleet state:
 #
+# State labels map to user-visible status names on the dashboard — use these labels as-is.
+# When describing states to the user, say "all gates passed" not "RESULTS.md exists".
 #   LANDED      — All quality gates passed (RESULTS.md exists, gates_passed >= total_gates, no faults)
 #   ON APPROACH — Coding complete, quality gates running or partially passed (RESULTS.md exists, gates_passed < total_gates, no faults)
 #   IN FLIGHT   — Work has started (has commits beyond branch point, or uncommitted changes)
+<!-- user-comms: say "assigned, not yet started" not "TASK.md exists but no commits" -->
 #   TAKING OFF  — TASK.md exists but no commits beyond branch point and no uncommitted changes (assigned, not started)
 #   TAXIING    — Worktree exists but no work started (clean, no TASK.md, no commits beyond branch point)
+<!-- user-comms: say "a gate failed" not "FAULT.md detected" -->
 #   FAULT       — A quality gate failed (test-runner, SME reviewer, or security-auditor logged a failure)
 #
 # Gate progress is tracked by counting completed quality gates:
+<!-- user-comms: say "tests passed" not "RESULTS.md exists without failure markers" -->
 #   - test-runner:       check for passing test results (last test run exit code 0)
+<!-- user-comms: say "code review complete" not "REVIEW.md exists" -->
 #   - sme-reviewer:      check for REVIEW.md or code review results
+<!-- user-comms: say "security audit complete" not "SECURITY.md exists" -->
 #   - security-auditor:  check for SECURITY.md or security audit results
 # Gate count format: "N/3 gates" where N is the number of gates passed.
 
@@ -283,6 +292,7 @@ check_worktree_status() {
     echo "Branch: $branch"
 
     # Check for RESULTS.md
+    # <!-- user-comms: say "Implementation complete" not "has RESULTS.md" -->
     if [ -f "$worktree_path/RESULTS.md" ]; then
       echo "Implementation: COMPLETED (has RESULTS.md)"
       # Show first few lines of results
@@ -296,6 +306,7 @@ check_worktree_status() {
     fi
 
     # Check for TASK.md
+    # <!-- user-comms: say "Task: Assigned" not "has TASK.md" -->
     if [ -f "$worktree_path/TASK.md" ]; then
       echo "Task: Assigned (has TASK.md)"
     fi
