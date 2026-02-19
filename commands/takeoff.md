@@ -550,24 +550,24 @@ Before deploying gate agents, announce the selection and render an initial Gate 
 "Selected gate profile: [work_type]. Running [N] gate agents: [agent list]."
 For union profiles: "Mixed changeset detected ([types]). Union profile: Gate 1 [agents], Gate 2 [agents]."
 
-### Step 3.5: Materialize PLAN_CONTEXT
+### Step 3.5: Pass PLAN_CONTEXT Reference
 
 <!-- user-comms: say "the task requirements" not "PLAN_CONTEXT" -->
-<!-- user-comms: say "retrieving task details" not "FETCH_ISSUE" -->
-Before dispatching Gate 2 reviewers, resolve the plan context so reviewers assess against actual requirements — not self-inferred scope.
+Before dispatching Gate 2 reviewers, pass a lightweight reference so reviewers can self-serve the context they need.
 
-**Resolution order:**
+Construct the reference from what is already known at this point in the command:
+- **TASK_ID**: always available (required to reach this step)
+- **Plan file path**: include only if a plan file was discovered during Plan File Discovery earlier in this command
 
-1. **Plan file first**: Search `.claude/plans/` for a file whose filename contains the current TASK_ID, or whose contents reference the TASK_ID. If found, read its full contents as PLAN_CONTEXT.
-2. **Fallback to FETCH_ISSUE**: If no plan file matches, use the loaded platform skill's FETCH_ISSUE operation to retrieve the issue body. Use that as PLAN_CONTEXT.
-3. **Graceful degradation**: If neither source yields content, omit PLAN_CONTEXT from the reviewer's prompt and log a warning: "PLAN_CONTEXT not found — reviewer will assess without plan reference." This is not a gate failure.
-
-When resolved, inject the content into the Gate 2 reviewer prompt as:
+Pass the reference to Gate 2 reviewer prompts as:
 ```
 <plan_context>
-[full plan content or issue body here]
+task: [TASK_ID]
+planfile: [path/to/.claude/plans/file.md — omit this line if no plan file was discovered]
 </plan_context>
 ```
+
+Gate 2 reviewers use this reference to self-serve context via `bd show [TASK_ID]` or by reading the plan file directly.
 
 ### Step 4: Deploy Gates
 - Deploy Gate 1 agents (if any) -- these are blocking, must all pass before Gate 2
@@ -583,7 +583,8 @@ When resolved, inject the content into the Gate 2 reviewer prompt as:
   </specialty_content>
 
   <plan_context>
-  [materialized plan content]
+  task: [TASK_ID]
+  planfile: [path/to/.claude/plans/file.md — omit this line if no plan file was discovered]
   </plan_context>
 
   <scope>

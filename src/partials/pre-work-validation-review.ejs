@@ -3,33 +3,32 @@
 <% var _sectionCount = _hasReviewContext ? '5' : '4'; -%>
 ## PRE-WORK VALIDATION (MANDATORY)
 
-**CRITICAL**: Before ANY work begins, validate ALL <%= _sectionCount %> requirements:
+**CRITICAL**: Before ANY work begins, validate these inputs — required fields marked with ★:
 
-### 1. TASK Identifier
+### 1. ★ TASK Identifier
 - **Required**: Task identifier (any format)
 - **Format**: Flexible - accepts PROJ-123, repo-a3f, #456, sprint-5-auth
 - **If Missing**: EXIT with "ERROR: Need task identifier"
 
-### 2. WORKING_DIR (Code Location)
+### 2. ★ WORKING_DIR (Code Location)
 - **Required Format**: ./trees/[task-id]-description (or project root if no worktree)
 - **If Missing**: EXIT with "ERROR: Working directory required (e.g., ./trees/PROJ-123-review)"
 - **Validation**: Path must exist and contain the code to review
 - **Purpose**: Directory where code changes are located - agent does NOT create this, only works within it
 - **Note**: This agent does NOT manage worktrees - it reviews code in the provided directory
 
-### 3. PLAN_CONTEXT (Implementation Plan)
-- **Required**: The full implementation plan that guided development
-- **Accepted Sources** (any of the following):
-  - Plan content passed directly in prompt
-  - File path to plan (e.g., `@plan.md`, `./plans/feature-plan.md`)
-  - Jira issue key (agent will fetch details)
-  - Beads issue key (agent will fetch details)
-  - Inline detailed description of what was planned
-- **If Missing**: EXIT with "ERROR: PLAN_CONTEXT required"
+### 3. PLAN_CONTEXT (Plan Reference)
+- **Optional**: A lightweight reference identifying the plan that guided development
+- **Accepted Values** (any of the following):
+  - Issue ID(s) with optional labels: e.g., `epic: reaper-wiax, task: reaper-wiax.3`
+  - Planfile path with optional unit range: e.g., `.claude/plans/reaper-wiax.md Units 2.1-2.3`
+  - Absent — reviewer proceeds without plan context in that case
+- **If provided**: Self-serve context via `bd show <issue-id>` or read the referenced plan file
+- **If Missing**: Proceed without plan context — do NOT exit on missing PLAN_CONTEXT
 - **Purpose**: Verify that actual code changes match the planned implementation
 <% if (_requireTestResults) { -%>
 
-### 4. TEST_RUNNER_RESULTS (Test Validation Output)
+### 4. ★ TEST_RUNNER_RESULTS (Test Validation Output)
 - **Required**: Full JSON output from test-runner agent
 - **Must Include**: test_exit_code, coverage_percentage, lint_exit_code, test_metrics
 - **If Missing**: EXIT with "ERROR: TEST_RUNNER_RESULTS required (full JSON from test-runner agent)"
@@ -54,4 +53,4 @@
 <% } -%>
 
 **EXIT PROTOCOL**:
-If any requirement is missing, agent MUST exit immediately with specific error message.
+If TASK or WORKING_DIR is missing, exit immediately with the specific error message shown above. Optional fields (PLAN_CONTEXT<% if (_requireTestResults) { %>, REVIEW_CONTEXT<% } else { %>, PRIOR_GATE_RESULTS, REVIEW_CONTEXT<% } %>) — proceed without them when absent.

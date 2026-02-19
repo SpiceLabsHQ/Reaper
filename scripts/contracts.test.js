@@ -1083,6 +1083,65 @@ describe('Contract: takeoff PLAN_CONTEXT materialization', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Contract: test-runner validation does not require PLAN_CONTEXT or TEST_RUNNER_RESULTS
+// (ADR-0012: test-runner is Gate 1; these fields are Gate 2 reviewer concerns)
+// ---------------------------------------------------------------------------
+
+describe('Contract: test-runner validation does not declare PLAN_CONTEXT or TEST_RUNNER_RESULTS as required inputs', () => {
+  const filePath = path.join(AGENTS_DIR, 'test-runner.md');
+  const relative = 'agents/test-runner.md';
+
+  it(`${relative} should not require PLAN_CONTEXT in validation section`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // test-runner is Gate 1; it should not declare PLAN_CONTEXT as a required input
+    assert.ok(
+      !content.match(/PLAN_CONTEXT.*required/i),
+      `${relative} must not declare PLAN_CONTEXT as a required input — test-runner is Gate 1 and does not consume plan context`
+    );
+  });
+
+  it(`${relative} should not require TEST_RUNNER_RESULTS in validation section`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // TEST_RUNNER_RESULTS is passed from Gate 1 to Gate 2; test-runner must not require it of itself
+    assert.ok(
+      !content.match(/TEST_RUNNER_RESULTS.*required/i),
+      `${relative} must not declare TEST_RUNNER_RESULTS as a required input — this field is produced by test-runner, not consumed by it`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: takeoff Step 3.5 passes lightweight PLAN_CONTEXT reference (ADR-0012)
+// ---------------------------------------------------------------------------
+
+describe('Contract: takeoff Step 3.5 passes lightweight PLAN_CONTEXT reference (ADR-0012)', () => {
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
+
+  it(`${relative} Step 3.5 should not instruct full-content materialization of PLAN_CONTEXT`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // ADR-0012: takeoff must NOT read and inject full plan content — reviewers self-serve
+    assert.ok(
+      !content.match(/Materialize PLAN_CONTEXT/i),
+      `${relative} must not contain "Materialize PLAN_CONTEXT" — ADR-0012 replaced full materialization with a lightweight reference`
+    );
+  });
+
+  it(`${relative} Step 3.5 should pass task ID as the PLAN_CONTEXT reference`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // Gate 2 reviewers receive a task reference, not materialized content
+    assert.ok(
+      content.match(/task:\s*\[TASK_ID\]/i),
+      `${relative} must pass a task ID reference (task: [TASK_ID]) in the PLAN_CONTEXT block so Gate 2 reviewers can self-serve context`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Contract: Visual vocabulary gauge states in generated command files
 // ---------------------------------------------------------------------------
 
