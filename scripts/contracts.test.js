@@ -2096,3 +2096,44 @@ describe('Contract: SME agent sources do not contain gate-specific schema defini
     }
   }
 });
+
+// ---------------------------------------------------------------------------
+// Contract: user communication contract included in all primary workflow commands
+// ---------------------------------------------------------------------------
+
+/**
+ * Sentinel string embedded by the user-comms-contract partial.
+ * Each primary workflow command must include the partial so that communication
+ * rules are present in every user-facing orchestration command.
+ */
+const USER_COMMS_SENTINEL = '<!-- user-comms-contract -->';
+
+/**
+ * Primary workflow commands that must include the user-comms-contract partial.
+ * Matches ALL_COMMANDS — every user-invocable orchestration command.
+ */
+const PRIMARY_WORKFLOW_COMMANDS = [
+  'flight-plan',
+  'takeoff',
+  'squadron',
+  'ship',
+  'status-worktrees',
+  'start',
+  'claude-sync',
+];
+
+describe('Contract: user communication contract included in all primary workflow commands', () => {
+  for (const commandName of PRIMARY_WORKFLOW_COMMANDS) {
+    const filePath = commandFilePath(commandName);
+    const relative = `commands/${commandName}.md`;
+
+    it(`${relative} includes user-comms-contract partial`, () => {
+      assert.ok(fs.existsSync(filePath), `${relative} not found at ${filePath}`);
+      const content = fs.readFileSync(filePath, 'utf8');
+      assert.ok(
+        content.includes(USER_COMMS_SENTINEL),
+        `${relative} is missing the user-comms-contract partial — add <%- include('partials/user-comms-contract') %> to src/commands/${commandName}.ejs`
+      );
+    });
+  }
+});

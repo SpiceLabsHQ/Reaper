@@ -4,6 +4,56 @@ description: Radar sweep your parallel worktrees for progress and drift.
 
 # Status of Worktrees for Tasks
 
+<!-- user-comms-contract -->
+
+## User Communication Contract
+
+Speak about work outcomes and progress — never about internal machinery, tool names, or implementation steps.
+
+### Forbidden Terms
+
+Do not use any of the following in user-facing messages, status cards, or progress output:
+
+**Abstract operation names** — replace with plain language:
+
+| Forbidden | Use instead |
+|-----------|-------------|
+| `FETCH_ISSUE` | "retrieving task details" or "looking up the issue" |
+| `CREATE_ISSUE` | "creating a task" or "logging the issue" |
+| `UPDATE_ISSUE` | "updating the task" or "recording progress" |
+| `ADD_DEPENDENCY` | "linking a dependency" |
+| `LIST_CHILDREN` | "listing subtasks" |
+| `QUERY_DEPENDENCY_TREE` | "checking dependencies" |
+| `CLOSE_ISSUE` | "marking the task complete" |
+
+**Internal state variables** — omit or rephrase:
+
+| Forbidden | Use instead |
+|-----------|-------------|
+| `TASK_SYSTEM` / `markdown_only` | "your project's task tracking setup" |
+| `PLAN_CONTEXT` | "the task requirements" or "the plan" |
+| `CODEBASE CONTEXT` | "the codebase" |
+
+**Internal file sentinels** — never surface raw filenames:
+
+`RESULTS.md`, `REVIEW.md`, `SECURITY.md`, `FAULT.md`, `TASK.md`
+
+**Tool names** — never expose tool internals as user language:
+
+| Forbidden | Use instead |
+|-----------|-------------|
+| `TaskCreate` | "tracking progress" or "updating the work plan" |
+| `TaskUpdate` | "recording progress" |
+
+**Architecture terms** — omit entirely:
+
+`platform skill routing`, `behavioral contract`, `skill routing table`, `gate classification internals`
+
+### Tone Rule
+
+Describe what is happening for the user ("running tests", "planning the feature", "reviewing security") — not what the system is doing internally ("routing to skill", "resolving TASK_SYSTEM", "invoking TaskCreate").
+
+
 Check the status of git worktrees and parallel development progress
 
 ## Variables
@@ -97,16 +147,23 @@ Collect status for every worktree first, then render the fleet dashboard, then r
 # ── Status state determination ────────────────────────
 # For each worktree, determine its fleet state:
 #
+# State labels map to user-visible status names on the dashboard — use these labels as-is.
+# When describing states to the user, say "all gates passed" not "RESULTS.md exists".
 #   LANDED      — All quality gates passed (RESULTS.md exists, gates_passed >= total_gates, no faults)
 #   ON APPROACH — Coding complete, quality gates running or partially passed (RESULTS.md exists, gates_passed < total_gates, no faults)
 #   IN FLIGHT   — Work has started (has commits beyond branch point, or uncommitted changes)
+<!-- user-comms: say "assigned, not yet started" not "TASK.md exists but no commits" -->
 #   TAKING OFF  — TASK.md exists but no commits beyond branch point and no uncommitted changes (assigned, not started)
 #   TAXIING    — Worktree exists but no work started (clean, no TASK.md, no commits beyond branch point)
+<!-- user-comms: say "a gate failed" not "FAULT.md detected" -->
 #   FAULT       — A quality gate failed (test-runner, SME reviewer, or security-auditor logged a failure)
 #
 # Gate progress is tracked by counting completed quality gates:
+<!-- user-comms: say "tests passed" not "RESULTS.md exists without failure markers" -->
 #   - test-runner:       check for passing test results (last test run exit code 0)
+<!-- user-comms: say "code review complete" not "REVIEW.md exists" -->
 #   - sme-reviewer:      check for REVIEW.md or code review results
+<!-- user-comms: say "security audit complete" not "SECURITY.md exists" -->
 #   - security-auditor:  check for SECURITY.md or security audit results
 # Gate count format: "N/3 gates" where N is the number of gates passed.
 
@@ -338,6 +395,7 @@ check_worktree_status() {
     echo "Branch: $branch"
 
     # Check for RESULTS.md
+    # <!-- user-comms: say "Implementation complete" not "has RESULTS.md" -->
     if [ -f "$worktree_path/RESULTS.md" ]; then
       echo "Implementation: COMPLETED (has RESULTS.md)"
       # Show first few lines of results
@@ -351,6 +409,7 @@ check_worktree_status() {
     fi
 
     # Check for TASK.md
+    # <!-- user-comms: say "Task: Assigned" not "has TASK.md" -->
     if [ -f "$worktree_path/TASK.md" ]; then
       echo "Task: Assigned (has TASK.md)"
     fi
