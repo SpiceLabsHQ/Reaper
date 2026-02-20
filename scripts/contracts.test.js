@@ -941,7 +941,6 @@ const COMMAND_SEMANTIC_CONTRACTS = {
     label: 'flight-plan command',
     commands: () => ['flight-plan'],
     sections: [
-      { pattern: /Plan File/i, label: 'plan file section' },
       { pattern: /Scope Boundary/i, label: 'scope boundary section' },
       { pattern: /Background Task Cleanup/i, label: 'background task cleanup section' },
     ],
