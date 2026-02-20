@@ -1,6 +1,7 @@
 ---
 description: Detect and configure quality gate test and lint commands for this project.
 ---
+<%- include('partials/mission-header', { command: 'CONFIGURE QUALITY GATES', subtitle: 'detecting test and lint commands' }) %>
 
 # Configure Quality Gates
 
@@ -248,6 +249,19 @@ Confirm success by reporting:
 - Which commands were written
 - Whether the section was appended or updated in-place
 - The commit hash
+
+After confirming success, render a completion card:
+
+> **Opt-out**: If the project's CLAUDE.md contains the line `Reaper: disable ASCII art`, skip this card entirely.
+
+```
+  CONFIGURED
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Test:    [final-test-command]
+  Lint:    [final-lint-command]
+  Commit:  [commit-hash]
+  ██████████  LANDED
+```
 
 ---
 

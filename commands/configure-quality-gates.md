@@ -1,6 +1,18 @@
 ---
 description: Detect and configure quality gate test and lint commands for this project.
 ---
+## Mission Header
+
+> **Opt-out**: If the target project's CLAUDE.md contains the line `Reaper: disable ASCII art`, output nothing — skip the header entirely.
+
+> **Render-once directive**: Render this header immediately as the first user-visible output of the command, before any tool calls or information gathering. Do not re-render it at any later point in the same session.
+
+```
+  REAPER // CONFIGURE QUALITY GATES
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  detecting test and lint commands
+```
+
 
 # Configure Quality Gates
 
@@ -296,6 +308,19 @@ Confirm success by reporting:
 - Which commands were written
 - Whether the section was appended or updated in-place
 - The commit hash
+
+After confirming success, render a completion card:
+
+> **Opt-out**: If the project's CLAUDE.md contains the line `Reaper: disable ASCII art`, skip this card entirely.
+
+```
+  CONFIGURED
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Test:    [final-test-command]
+  Lint:    [final-lint-command]
+  Commit:  [commit-hash]
+  ██████████  LANDED
+```
 
 ---
 

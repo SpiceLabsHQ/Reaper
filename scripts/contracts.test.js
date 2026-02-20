@@ -3380,4 +3380,15 @@ describe('Contract: commands contain mission banner', () => {
       `${relative} is missing mission banner 'REAPER // CLAUDE SYNC'`
     );
   });
+
+  it("commands/configure-quality-gates.md contains 'REAPER // CONFIGURE QUALITY GATES'", () => {
+    const filePath = commandFilePath('configure-quality-gates');
+    const relative = 'commands/configure-quality-gates.md';
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('REAPER // CONFIGURE QUALITY GATES'),
+      `${relative} is missing mission banner 'REAPER // CONFIGURE QUALITY GATES'`
+    );
+  });
 });
