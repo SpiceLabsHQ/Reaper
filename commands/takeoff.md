@@ -913,7 +913,9 @@ Run `/reaper:claude-sync` to review and apply.
 **Control tower, how do we look?** I can adjust the approach, run additional checks,
 or address any concerns before final landing.
 
-When you're satisfied, I'll bring her in for landing on develop.
+When you're satisfied, I'll bring her in for landing on develop. Alternatively, if
+you'd prefer to open a PR instead of merging directly, just say so and I'll run
+`/reaper:ship` on the feature worktree.
 ```
 
 ### Response Handling
@@ -923,6 +925,7 @@ When you're satisfied, I'll bring her in for landing on develop.
 | Feedback or questions | Address concerns, re-run quality gates if changes were made |
 | "looks good" / "nice work" | Ask: "Shall I merge to develop?" |
 | "merge" / "ship it" / "approved" | Use reaper:branch-manager to merge the feature branch to develop. Resume `BRANCH_MANAGER_SESSION_ID` via `Task --resume` if available; fall back to a fresh deployment if the session is stale. |
+| "open a PR" / "create PR" | Invoke `/reaper:ship` on the feature worktree to commit, push, and open a PR. |
 | Silence or unclear | Ask: "Any feedback, or ready to merge?" |
 
 ## Worktree Cleanup
