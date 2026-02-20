@@ -1976,6 +1976,120 @@ describe('output-requirements partial: orchestrator extraction rules', () => {
 });
 
 // ===========================================================================
+// branch-manager.ejs: authority model and strategy naming
+// ===========================================================================
+
+describe('branch-manager.ejs: pure executor authority model', () => {
+  const BRANCH_MANAGER_SRC = path.join(__dirname, '..', 'src', 'agents', 'branch-manager.ejs');
+
+  function readBranchManagerSrc() {
+    return fs.readFileSync(BRANCH_MANAGER_SRC, 'utf8');
+  }
+
+  it('should not contain "Dual Authorization" section', () => {
+    const content = readBranchManagerSrc();
+    assert.ok(
+      !content.includes('Dual Authorization'),
+      'branch-manager.ejs must not contain "Dual Authorization" — authorization belongs to the orchestrator'
+    );
+  });
+
+  it('should not contain "allow_main_merge" references', () => {
+    const content = readBranchManagerSrc();
+    assert.ok(
+      !content.includes('allow_main_merge'),
+      'branch-manager.ejs must not reference allow_main_merge flag'
+    );
+  });
+
+  it('should not contain contradictory "Feature branches merge to develop only" constraint', () => {
+    const content = readBranchManagerSrc();
+    assert.ok(
+      !content.includes('Feature branches merge to develop only'),
+      'branch-manager.ejs must not contain "Feature branches merge to develop only" — orchestrator decides merge targets'
+    );
+  });
+
+  it('should contain pure executor framing', () => {
+    const content = readBranchManagerSrc();
+    assert.ok(
+      content.includes('pure executor') || content.includes('pure-executor'),
+      'branch-manager.ejs must declare itself a pure executor — authorization decisions belong to the orchestrator'
+    );
+  });
+
+  it('should use "very_small_direct" strategy name in strategy table', () => {
+    const content = readBranchManagerSrc();
+    assert.ok(
+      content.includes('very_small_direct'),
+      'Strategy table must use "very_small_direct" naming to align with takeoff'
+    );
+  });
+
+  it('should use "medium_single_branch" strategy name in strategy table', () => {
+    const content = readBranchManagerSrc();
+    assert.ok(
+      content.includes('medium_single_branch'),
+      'Strategy table must use "medium_single_branch" naming to align with takeoff'
+    );
+  });
+
+  it('should use "large_multi_worktree" strategy name in strategy table', () => {
+    const content = readBranchManagerSrc();
+    assert.ok(
+      content.includes('large_multi_worktree'),
+      'Strategy table must use "large_multi_worktree" naming to align with takeoff'
+    );
+  });
+
+  it('should retain Strategy 2 (medium_single_branch) Workflow section', () => {
+    const content = readBranchManagerSrc();
+    // The workflow section describes single shared worktree approach
+    assert.ok(
+      content.includes('shared worktree') || content.includes('Shared worktree'),
+      'medium_single_branch workflow section must remain intact'
+    );
+  });
+
+  it('should retain Strategy 3 (large_multi_worktree) Workflow section', () => {
+    const content = readBranchManagerSrc();
+    // The workflow section describes review branch consolidation
+    assert.ok(
+      content.includes('review branch') || content.includes('Review branch'),
+      'large_multi_worktree workflow section must remain intact'
+    );
+  });
+
+  it('should not contain "dual_authorization_met" in JSON response format', () => {
+    const content = readBranchManagerSrc();
+    assert.ok(
+      !content.includes('dual_authorization_met'),
+      'JSON response format must not include dual_authorization_met field'
+    );
+  });
+
+  it('should contain precondition check for missing authorization evidence on commit/merge operations', () => {
+    const content = readBranchManagerSrc();
+    // Must instruct the agent to return an error when the deployment prompt
+    // lacks explicit confirmation that quality gates passed and user authorization
+    // was obtained — without re-adding Dual Authorization or allow_main_merge.
+    const hasMissingEvidence =
+      content.includes('missing authorization evidence') ||
+      content.includes('Missing authorization evidence');
+    const hasErrorResponse =
+      content.includes('status: error') || content.includes('"status": "error"');
+    assert.ok(
+      hasMissingEvidence,
+      'branch-manager.ejs must contain a precondition check for missing authorization evidence'
+    );
+    assert.ok(
+      hasErrorResponse,
+      'branch-manager.ejs must instruct the agent to return status: error when evidence is missing'
+    );
+  });
+});
+
+// ===========================================================================
 // work-unit-cleanup partial: background task cleanup instructions
 // ===========================================================================
 
@@ -2066,6 +2180,242 @@ describe('work-unit-cleanup partial: background task cleanup', () => {
       /log.*continue/i.test(result) || /fail.*not.*block/i.test(result) ||
         /error.*continue/i.test(result) || /fail.*continue/i.test(result),
       'Must include error tolerance: TaskStop failures should log and continue, not block'
+    );
+  });
+});
+
+// ===========================================================================
+// quality-gate-protocol partial: Commit on Pass removal
+// ===========================================================================
+
+describe('quality-gate-protocol partial: Commit on Pass section must not exist', () => {
+  const SRC_DIR = path.join(__dirname, '..', 'src');
+  const PARTIAL_PATH = path.join(SRC_DIR, 'partials', 'quality-gate-protocol.ejs');
+
+  /**
+   * Renders the quality-gate-protocol partial in orchestrator role mode.
+   * @returns {string} Rendered output
+   */
+  function renderOrchestratorPartial() {
+    config.srcDir = SRC_DIR;
+    const wrapper = `<%- include('partials/quality-gate-protocol', { role: 'orchestrator' }) %>`;
+    return compileTemplate(wrapper, {}, PARTIAL_PATH);
+  }
+
+  it('should NOT contain a "### Commit on Pass" heading', () => {
+    const result = renderOrchestratorPartial();
+    assert.ok(
+      !result.includes('### Commit on Pass'),
+      'quality-gate-protocol must not contain a "### Commit on Pass" section'
+    );
+  });
+
+  it('should NOT instruct deploying branch-manager after each gate passes', () => {
+    const result = renderOrchestratorPartial();
+    // The old section said "After each gate passes, deploy reaper:branch-manager"
+    assert.ok(
+      !/after each gate passes.*deploy.*branch-manager/i.test(result),
+      'quality-gate-protocol must not instruct deploying branch-manager after each gate'
+    );
+  });
+
+  it('should still contain Gate Sequence section', () => {
+    const result = renderOrchestratorPartial();
+    assert.ok(
+      result.includes('### Gate Sequence'),
+      'quality-gate-protocol must still contain the Gate Sequence section'
+    );
+  });
+});
+
+// ===========================================================================
+// takeoff command: explicit branch-manager commit step in per-unit cycle
+// ===========================================================================
+
+describe('takeoff command: per-unit cycle has explicit branch-manager commit step', () => {
+  const SRC_DIR = path.join(__dirname, '..', 'src');
+  const COMMAND_PATH = path.join(SRC_DIR, 'commands', 'takeoff.ejs');
+
+  /**
+   * Renders the full takeoff command template.
+   * @returns {string} Rendered output
+   */
+  function renderTakeoff() {
+    config.srcDir = SRC_DIR;
+    const source = fs.readFileSync(COMMAND_PATH, 'utf8');
+    const { body } = parseFrontmatter(source);
+    const vars = buildTemplateVars('commands', 'takeoff', 'commands/takeoff.ejs');
+    return compileTemplate(body, vars, COMMAND_PATH);
+  }
+
+  /**
+   * Extracts the Per-Unit Cycle section from the rendered takeoff output.
+   * Finds the text between "### Per-Unit Cycle" and the next "###" heading.
+   * @param {string} rendered - The full rendered takeoff output
+   * @returns {string} The per-unit cycle section text
+   */
+  function extractPerUnitCycle(rendered) {
+    const start = rendered.indexOf('### Per-Unit Cycle');
+    if (start === -1) return '';
+    // Find the next ### heading after the per-unit cycle section
+    const afterStart = rendered.indexOf('###', start + 1);
+    return afterStart !== -1 ? rendered.slice(start, afterStart) : rendered.slice(start);
+  }
+
+  it('should render without errors', () => {
+    const result = renderTakeoff();
+    assert.ok(result.length > 0, 'takeoff command should produce non-empty output');
+  });
+
+  it('should NOT contain "### Commit on Pass" heading', () => {
+    const result = renderTakeoff();
+    assert.ok(
+      !result.includes('### Commit on Pass'),
+      'takeoff must not contain "### Commit on Pass" section (removed from quality-gate-protocol)'
+    );
+  });
+
+  it('should contain a per-unit cycle step that deploys branch-manager to commit after gates pass', () => {
+    const result = renderTakeoff();
+    const perUnitSection = extractPerUnitCycle(result);
+    assert.ok(
+      perUnitSection.length > 0,
+      'takeoff must contain a "### Per-Unit Cycle" section'
+    );
+    assert.ok(
+      /branch-manager.*commit/i.test(perUnitSection),
+      'Per-Unit Cycle must instruct deploying reaper:branch-manager to commit after gates pass'
+    );
+  });
+
+  it('should specify commit-only -- do not merge to develop -- in per-unit cycle step', () => {
+    const result = renderTakeoff();
+    const perUnitSection = extractPerUnitCycle(result);
+    assert.ok(
+      /commit.only|do not merge.*develop|commit.*not.*merge/i.test(perUnitSection),
+      'Per-unit commit step must explicitly say commit only, do not merge to develop'
+    );
+  });
+
+  it('should specify the feature branch as commit target in per-unit cycle step', () => {
+    const result = renderTakeoff();
+    const perUnitSection = extractPerUnitCycle(result);
+    assert.ok(
+      /feature branch/i.test(perUnitSection),
+      'Per-unit commit step must specify the feature branch as the commit target'
+    );
+  });
+
+  it('should specify merging feature branch to develop at Completion when user approves', () => {
+    const result = renderTakeoff();
+    // The Completion / merge response handling section should mention develop as the merge target
+    assert.ok(
+      /merge.*to develop|feature branch.*develop|develop.*merge/i.test(result),
+      'Completion section must specify merging to develop when user approves'
+    );
+  });
+});
+
+// ===========================================================================
+// no-commits-policy.ejs: strategy naming and per-unit commit flow
+// ===========================================================================
+
+describe('no-commits-policy.ejs: strategy naming uses new identifiers', () => {
+  const NO_COMMITS_SRC = path.join(__dirname, '..', 'src', 'partials', 'no-commits-policy.ejs');
+
+  function readSrc() {
+    return fs.readFileSync(NO_COMMITS_SRC, 'utf8');
+  }
+
+  it('should use "very_small_direct" strategy name', () => {
+    const content = readSrc();
+    assert.ok(
+      content.includes('very_small_direct'),
+      'no-commits-policy.ejs must use "very_small_direct" strategy name — not "Strategy 1"'
+    );
+  });
+
+  it('should use "medium_single_branch" strategy name', () => {
+    const content = readSrc();
+    assert.ok(
+      content.includes('medium_single_branch'),
+      'no-commits-policy.ejs must use "medium_single_branch" strategy name — not "Strategy 2"'
+    );
+  });
+
+  it('should use "large_multi_worktree" strategy name', () => {
+    const content = readSrc();
+    assert.ok(
+      content.includes('large_multi_worktree'),
+      'no-commits-policy.ejs must use "large_multi_worktree" strategy name — not "Strategy 3"'
+    );
+  });
+
+  it('should not use legacy "Strategy 1" label', () => {
+    const content = readSrc();
+    assert.ok(
+      !content.includes('Strategy 1'),
+      'no-commits-policy.ejs must not use legacy "Strategy 1" label — use "very_small_direct" instead'
+    );
+  });
+
+  it('should not use legacy "Strategy 2" label', () => {
+    const content = readSrc();
+    assert.ok(
+      !content.includes('Strategy 2'),
+      'no-commits-policy.ejs must not use legacy "Strategy 2" label — use "medium_single_branch" instead'
+    );
+  });
+
+  it('should not use legacy "Strategy 3" label', () => {
+    const content = readSrc();
+    assert.ok(
+      !content.includes('Strategy 3'),
+      'no-commits-policy.ejs must not use legacy "Strategy 3" label — use "large_multi_worktree" instead'
+    );
+  });
+
+  it('should describe per-unit commit flow: orchestrator deploys branch-manager after ALL gates pass', () => {
+    const content = readSrc();
+    assert.ok(
+      /after all gates pass|after.*gates.*pass|all.*gates.*pass/i.test(content),
+      'no-commits-policy.ejs must describe the per-unit commit flow: branch-manager is deployed after ALL gates pass for a unit'
+    );
+  });
+});
+
+// ===========================================================================
+// orchestrator-role-boundary.ejs: 'commit freely' removed from wrong examples
+// ===========================================================================
+
+describe('orchestrator-role-boundary.ejs: commit freely example removed', () => {
+  const ORCH_ROLE_SRC = path.join(__dirname, '..', 'src', 'partials', 'orchestrator-role-boundary.ejs');
+
+  function readSrc() {
+    return fs.readFileSync(ORCH_ROLE_SRC, 'utf8');
+  }
+
+  it('should not contain "commit freely on feature branches"', () => {
+    const content = readSrc();
+    assert.ok(
+      !content.includes('commit freely on feature branches'),
+      'orchestrator-role-boundary.ejs must not contain "commit freely on feature branches" — commits are now delegated to branch-manager'
+    );
+  });
+
+  it('should still contain the Wrong examples section', () => {
+    const content = readSrc();
+    assert.ok(
+      content.includes('Wrong') || content.includes('wrong'),
+      'orchestrator-role-boundary.ejs must still contain the Wrong examples section'
+    );
+  });
+
+  it('should still contain autonomy guidance for iterating through gates', () => {
+    const content = readSrc();
+    assert.ok(
+      content.includes('gate') || content.includes('quality'),
+      'orchestrator-role-boundary.ejs must still contain gate iteration guidance'
     );
   });
 });

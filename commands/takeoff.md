@@ -111,7 +111,7 @@ Do not read source code files to understand implementation details -- that is th
 - Merge to the target branch only after the user explicitly approves (phrases like "merge", "ship it", "approved")
 
 **Wrong (breaks the autonomous quality loop):**
-- "Should I commit these changes?" -- commit freely on feature branches
+- "Should I commit these changes?" -- deploy branch-manager after all gates pass; do not ask the user
 - "Tests pass, may I continue?" -- always continue through the gate sequence
 - "Code review found issues, what should I do?" -- redeploy the coding agent with blocking_issues automatically
 - "I've fixed the linting errors, should I re-run?" -- always re-run the failed gate
@@ -518,11 +518,12 @@ At every work unit boundary (before starting the next unit or before signaling c
 
 **Keep** (still needed): dev servers, databases, file watchers, and any long-lived process the next work unit depends on.
 
-7. Update TodoWrite to mark the unit as completed
+7. **Commit to feature branch**: After all gates pass, deploy reaper:branch-manager to commit the current state to the feature branch in WORKTREE_PATH. This is a commit-only step -- do not merge to develop. Use conventional commit format based on the work completed (e.g., `feat: implement X`, `fix: resolve Y`).
+8. Update TodoWrite to mark the unit as completed
 <!-- user-comms: say "marking the task complete" not "CLOSE_ISSUE" -->
-8. For any tracked issue (pre-planned or not) on non-markdown_only platforms, use CLOSE_ISSUE to close the corresponding child issue after gates pass.
-9. **large_multi_worktree strategy only**: After closing the issue, check that no other work units still reference this worktree, then invoke the worktree-manager skill to remove the per-unit worktree. Always go through the worktree-manager skill -- never run `git worktree remove` directly.
-10. **Announce progress and loop back**: "Completed [X] of [N] work units. Next: [unit name]." -- then return to step 1 for the next unit
+9. For any tracked issue (pre-planned or not) on non-markdown_only platforms, use CLOSE_ISSUE to close the corresponding child issue after gates pass.
+10. **large_multi_worktree strategy only**: After closing the issue, check that no other work units still reference this worktree, then invoke the worktree-manager skill to remove the per-unit worktree. Always go through the worktree-manager skill -- never run `git worktree remove` directly.
+11. **Announce progress and loop back**: "Completed [X] of [N] work units. Next: [unit name]." -- then return to step 1 for the next unit
 
 This cycle repeats for every work unit. The Completion section is only reachable after the final unit passes its gates.
 
@@ -801,17 +802,6 @@ Task --resume $AGENT_ID --prompt "Gate failed. Fix these blocking_issues: [paste
 | Agent ID is stale (error on resume) | Fresh deployment with full context |
 | Max retries exceeded | Escalate to user |
 
-### Commit on Pass
-
-After each gate passes, deploy reaper:branch-manager to commit the current state on the feature branch using conventional commit format:
-- Tests pass: `test: all tests passing with X% coverage`
-- Lint fixed: `style: fix linting errors`
-- Review issues fixed: `refactor: address code review feedback`
-
-Commits go to the feature branch only — never master, main, or develop — unless the user prescribes otherwise.
-
-Frequent commits on feature branches create restore points and document progress.
-
 ### Parallel Deployment Pattern
 
 After Gate 1 passes, deploy Gate 2 agents in a single message. Look up the Gate 2 column in the profile table and deploy the Gate 2 agents listed for the detected work type in parallel.
@@ -911,7 +901,7 @@ When you're satisfied, I'll bring her in for landing on develop.
 |---------------|--------|
 | Feedback or questions | Address concerns, re-run quality gates if changes were made |
 | "looks good" / "nice work" | Ask: "Shall I merge to develop?" |
-| "merge" / "ship it" / "approved" | Deploy reaper:branch-manager to merge |
+| "merge" / "ship it" / "approved" | Deploy reaper:branch-manager to merge the feature branch to develop |
 | Silence or unclear | Ask: "Any feedback, or ready to merge?" |
 
 ## Worktree Cleanup
@@ -935,9 +925,10 @@ For **medium_single_branch** and **very_small_direct** strategies: invoke the wo
 >  **8. Classify files and select gate profile** (Dynamic Gate Selection)
 >  **9. Run quality gates** through the profile sequence
 >  **10. Auto-iterate** on gate failures (differential retry limits)
+>  **11. Deploy branch-manager to commit** to the feature branch (commit-only, do not merge)
 >  **--> Check TodoWrite: pending units remain? Loop to step 6**
 
-11. Extract learning patterns from multi-iteration gates
-12. Present completed work to user
-13. Merge on explicit user approval
-14. Clean up worktrees
+12. Extract learning patterns from multi-iteration gates
+13. Present completed work to user
+14. Merge feature branch to develop on explicit user approval
+15. Clean up worktrees

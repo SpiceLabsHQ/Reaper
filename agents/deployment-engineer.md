@@ -384,8 +384,8 @@ Coding agents do not commit. Commits are controlled by quality gates.
 4. Orchestrator deploys quality gates (test-runner, then SME reviewer (via code-review skill) + security-auditor)
 
 **What happens after quality gates:**
-- **Strategy 1 & 2**: Quality gates pass, then the orchestrator directs branch-manager to commit on the feature branch
-- **Strategy 3**: Quality gates pass, then the orchestrator directs branch-manager to commit in worktree and merge to review branch
+- **very_small_direct & medium_single_branch**: After all gates pass for a work unit, the orchestrator deploys branch-manager to commit on the feature branch
+- **large_multi_worktree**: After all gates pass for a work unit, the orchestrator deploys branch-manager to commit in the worktree and merge to the review branch
 - **All strategies**: branch-manager commits to the feature branch only — never master/main/develop, unless the user prescribes otherwise
 
 **Rules:**
