@@ -940,7 +940,6 @@ const COMMAND_SEMANTIC_CONTRACTS = {
     label: 'flight-plan command',
     commands: () => ['flight-plan'],
     sections: [
-      { pattern: /Plan File/i, label: 'plan file section' },
       { pattern: /Scope Boundary/i, label: 'scope boundary section' },
       { pattern: /Background Task Cleanup/i, label: 'background task cleanup section' },
     ],
@@ -3039,6 +3038,60 @@ describe('Contract: takeoff dirty-root escalation', () => {
       dirtyRootIdx < preflightIdx,
       `${relative} "## Dirty-Root Escalation" must appear before "## Preflight Announcement" ` +
         `(found at index ${dirtyRootIdx}, Preflight at ${preflightIdx})`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: flight-plan must not write plan files directly
+//
+// After reaper-zn5e: flight-plan no longer writes plan files unconditionally.
+// For Beads/Jira/GitHub task systems the plan lives only in-conversation.
+// For markdown_only, plan file creation is delegated to the
+// issue-tracker-planfile skill via CREATE_ISSUE — flight-plan must not write
+// the file itself.
+//
+// These assertions are RED against the pre-refactor flight-plan.md and will
+// turn GREEN once flight-plan.ejs removes Phase 0 (Plan File Schema) and
+// Phase 3 (Write Initial Plan to File).
+// ---------------------------------------------------------------------------
+
+describe('Contract: flight-plan does not write plan files directly', () => {
+  const filePath = commandFilePath('flight-plan');
+  const relative = 'commands/flight-plan.md';
+
+  it(`${relative} does not contain "Phase 0: Plan File Schema" writer section`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found at ${filePath}`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      !content.includes('Phase 0: Plan File Schema'),
+      `${relative} contains "Phase 0: Plan File Schema" — this section defines the plan file writer contract ` +
+      `and must be removed. After reaper-zn5e, flight-plan no longer writes plan files directly: ` +
+      `for Beads/Jira/GitHub the plan lives in-conversation; for markdown_only the ` +
+      `issue-tracker-planfile skill handles file creation via CREATE_ISSUE.`
+    );
+  });
+
+  it(`${relative} does not contain "Phase 3: Write Initial Plan to File" unconditional write phase`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found at ${filePath}`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      !content.includes('Phase 3: Write Initial Plan to File'),
+      `${relative} contains "Phase 3: Write Initial Plan to File" — this phase writes the plan file ` +
+      `unconditionally for all task systems and must be removed. After reaper-zn5e, plan file ` +
+      `creation for markdown_only is delegated to the issue-tracker-planfile skill's CREATE_ISSUE ` +
+      `operation; Beads/Jira/GitHub keep the plan in-conversation only.`
+    );
+  });
+
+  it(`${relative} does not instruct using the Write tool to create a plan file`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found at ${filePath}`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      !content.includes('Use the Write tool to create the plan file'),
+      `${relative} contains "Use the Write tool to create the plan file" — flight-plan must not ` +
+      `write plan files directly. After reaper-zn5e, this instruction belongs only in the ` +
+      `issue-tracker-planfile skill, invoked via CREATE_ISSUE for markdown_only task systems.`
     );
   });
 });
