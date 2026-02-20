@@ -175,6 +175,15 @@ The card ends with the `TAXIING` gauge, indicating work has not yet started.
 
 Execute ALL work units from the plan. Do not present work to the user or proceed to the Completion section until every work unit in the TodoWrite plan is marked completed.
 
+### Branch-Manager Session Tracking
+
+To reduce per-unit token overhead, reuse a single branch-manager agent session across all git operations within this takeoff run. Track the session using a variable named `BRANCH_MANAGER_SESSION_ID`:
+
+- Initialize `BRANCH_MANAGER_SESSION_ID` to `null` at the start of Strategy Execution.
+- After the first branch-manager Task call succeeds, capture the `agent_id` from the Task tool response and store it as `BRANCH_MANAGER_SESSION_ID`.
+- On all subsequent branch-manager operations (per-unit commits and the final merge), attempt to resume the stored session using `Task --resume BRANCH_MANAGER_SESSION_ID` rather than deploying a new agent.
+- **Fallback**: If `Task --resume` fails (e.g., the session is stale due to context compaction), fall back to a fresh `reaper:branch-manager` deployment, capture the new `agent_id`, and store it as `BRANCH_MANAGER_SESSION_ID` for subsequent operations.
+
 ### Per-Unit Cycle -- REPEAT until all units done
 
 For each work unit in the plan, repeat this cycle:
@@ -190,7 +199,7 @@ For each work unit in the plan, repeat this cycle:
 5. Run quality gates on the completed work (see Dynamic Gate Selection and Quality Gate Protocol below)
 6. **Render Gate Panel**: After all gates for the current unit resolve, render a Gate Panel (from Visual Vocabulary) showing each gate agent with its gate status -- `PASS` for passed, `FAIL` for failed. Include key metrics inline (e.g., test count, coverage percentage, issue count).
 <%- include('partials/work-unit-cleanup') %>
-7. **Commit to feature branch**: After all gates pass, deploy reaper:branch-manager to commit the current state to the feature branch in WORKTREE_PATH. This is a commit-only step -- do not merge to develop. Use conventional commit format based on the work completed (e.g., `feat: implement X`, `fix: resolve Y`).
+7. **Commit to feature branch**: After all gates pass, use reaper:branch-manager to commit the current state to the feature branch in WORKTREE_PATH. This is a commit-only step -- do not merge to develop. Use conventional commit format based on the work completed (e.g., `feat: implement X`, `fix: resolve Y`). If `BRANCH_MANAGER_SESSION_ID` is set, resume that session via `Task --resume BRANCH_MANAGER_SESSION_ID`; otherwise deploy a fresh reaper:branch-manager agent and store the returned `agent_id` as `BRANCH_MANAGER_SESSION_ID`. If resume fails, fall back to a fresh deployment and update `BRANCH_MANAGER_SESSION_ID`.
 8. Update TodoWrite to mark the unit as completed
 <!-- user-comms: say "marking the task complete" not "CLOSE_ISSUE" -->
 9. For any tracked issue (pre-planned or not) on non-markdown_only platforms, use CLOSE_ISSUE to close the corresponding child issue after gates pass.
@@ -383,7 +392,7 @@ When you're satisfied, I'll bring her in for landing on develop.
 |---------------|--------|
 | Feedback or questions | Address concerns, re-run quality gates if changes were made |
 | "looks good" / "nice work" | Ask: "Shall I merge to develop?" |
-| "merge" / "ship it" / "approved" | Deploy reaper:branch-manager to merge the feature branch to develop |
+| "merge" / "ship it" / "approved" | Use reaper:branch-manager to merge the feature branch to develop. Resume `BRANCH_MANAGER_SESSION_ID` via `Task --resume` if available; fall back to a fresh deployment if the session is stale. |
 | Silence or unclear | Ask: "Any feedback, or ready to merge?" |
 
 ## Worktree Cleanup
