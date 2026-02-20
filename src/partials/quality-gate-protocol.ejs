@@ -143,17 +143,6 @@ Task --resume $AGENT_ID --prompt "Gate failed. Fix these blocking_issues: [paste
 | Agent ID is stale (error on resume) | Fresh deployment with full context |
 | Max retries exceeded | Escalate to user |
 
-### Commit on Pass
-
-After each gate passes, deploy reaper:branch-manager to commit the current state on the feature branch using conventional commit format:
-- Tests pass: `test: all tests passing with X% coverage`
-- Lint fixed: `style: fix linting errors`
-- Review issues fixed: `refactor: address code review feedback`
-
-Commits go to the feature branch only — never master, main, or develop — unless the user prescribes otherwise.
-
-Frequent commits on feature branches create restore points and document progress.
-
 ### Parallel Deployment Pattern
 
 After Gate 1 passes, deploy Gate 2 agents in a single message. Look up the Gate 2 column in the profile table and deploy the Gate 2 agents listed for the detected work type in parallel.

@@ -2243,63 +2243,6 @@ describe('Contract: no-commits-policy — all strategies direct branch-manager t
 });
 
 // ---------------------------------------------------------------------------
-// Contract: quality-gate-protocol Commit on Pass — feature branch constraint
-// ---------------------------------------------------------------------------
-
-describe('Contract: quality-gate-protocol Commit on Pass feature branch constraint', () => {
-  const sourcePath = path.join(ROOT, 'src', 'partials', 'quality-gate-protocol.ejs');
-  const sourceRelative = 'src/partials/quality-gate-protocol.ejs';
-
-  /**
-   * Extracts the "Commit on Pass" section from quality-gate-protocol.ejs.
-   * @param {string} content - Full file content
-   * @returns {string} The Commit on Pass section text, or empty string if not found
-   */
-  function extractCommitOnPass(content) {
-    const startMarker = '### Commit on Pass';
-    const startIndex = content.indexOf(startMarker);
-    if (startIndex === -1) return '';
-
-    const rest = content.slice(startIndex + startMarker.length);
-    const nextSectionMatch = rest.match(/\n###? /);
-    if (nextSectionMatch) {
-      return content.slice(startIndex, startIndex + startMarker.length + nextSectionMatch.index);
-    }
-    return content.slice(startIndex);
-  }
-
-  it(`${sourceRelative} Commit on Pass section exists`, () => {
-    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
-    const content = fs.readFileSync(sourcePath, 'utf8');
-    const section = extractCommitOnPass(content);
-    assert.ok(
-      section.length > 0,
-      `${sourceRelative} must contain a "### Commit on Pass" section`
-    );
-  });
-
-  it(`${sourceRelative} Commit on Pass specifies commits go to feature branch only`, () => {
-    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
-    const content = fs.readFileSync(sourcePath, 'utf8');
-    const section = extractCommitOnPass(content);
-    assert.ok(
-      section.includes('feature branch'),
-      `${sourceRelative} Commit on Pass must explicitly state commits go to the feature branch`
-    );
-  });
-
-  it(`${sourceRelative} Commit on Pass contains "never" constraint for main/master/develop`, () => {
-    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
-    const content = fs.readFileSync(sourcePath, 'utf8');
-    const section = extractCommitOnPass(content);
-    assert.ok(
-      /never.*master|never.*main|never.*develop|master.*never|main.*never|develop.*never/i.test(section),
-      `${sourceRelative} Commit on Pass must contain a "never" constraint for master/main/develop branches`
-    );
-  });
-});
-
-// ---------------------------------------------------------------------------
 // Contract: branch-manager Strategy 2 uses shared worktree + branch-manager commits
 // ---------------------------------------------------------------------------
 

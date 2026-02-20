@@ -2069,3 +2069,135 @@ describe('work-unit-cleanup partial: background task cleanup', () => {
     );
   });
 });
+
+// ===========================================================================
+// quality-gate-protocol partial: Commit on Pass removal
+// ===========================================================================
+
+describe('quality-gate-protocol partial: Commit on Pass section must not exist', () => {
+  const SRC_DIR = path.join(__dirname, '..', 'src');
+  const PARTIAL_PATH = path.join(SRC_DIR, 'partials', 'quality-gate-protocol.ejs');
+
+  /**
+   * Renders the quality-gate-protocol partial in orchestrator role mode.
+   * @returns {string} Rendered output
+   */
+  function renderOrchestratorPartial() {
+    config.srcDir = SRC_DIR;
+    const wrapper = `<%- include('partials/quality-gate-protocol', { role: 'orchestrator' }) %>`;
+    return compileTemplate(wrapper, {}, PARTIAL_PATH);
+  }
+
+  it('should NOT contain a "### Commit on Pass" heading', () => {
+    const result = renderOrchestratorPartial();
+    assert.ok(
+      !result.includes('### Commit on Pass'),
+      'quality-gate-protocol must not contain a "### Commit on Pass" section'
+    );
+  });
+
+  it('should NOT instruct deploying branch-manager after each gate passes', () => {
+    const result = renderOrchestratorPartial();
+    // The old section said "After each gate passes, deploy reaper:branch-manager"
+    assert.ok(
+      !/after each gate passes.*deploy.*branch-manager/i.test(result),
+      'quality-gate-protocol must not instruct deploying branch-manager after each gate'
+    );
+  });
+
+  it('should still contain Gate Sequence section', () => {
+    const result = renderOrchestratorPartial();
+    assert.ok(
+      result.includes('### Gate Sequence'),
+      'quality-gate-protocol must still contain the Gate Sequence section'
+    );
+  });
+});
+
+// ===========================================================================
+// takeoff command: explicit branch-manager commit step in per-unit cycle
+// ===========================================================================
+
+describe('takeoff command: per-unit cycle has explicit branch-manager commit step', () => {
+  const SRC_DIR = path.join(__dirname, '..', 'src');
+  const COMMAND_PATH = path.join(SRC_DIR, 'commands', 'takeoff.ejs');
+
+  /**
+   * Renders the full takeoff command template.
+   * @returns {string} Rendered output
+   */
+  function renderTakeoff() {
+    config.srcDir = SRC_DIR;
+    const source = fs.readFileSync(COMMAND_PATH, 'utf8');
+    const { body } = parseFrontmatter(source);
+    const vars = buildTemplateVars('commands', 'takeoff', 'commands/takeoff.ejs');
+    return compileTemplate(body, vars, COMMAND_PATH);
+  }
+
+  /**
+   * Extracts the Per-Unit Cycle section from the rendered takeoff output.
+   * Finds the text between "### Per-Unit Cycle" and the next "###" heading.
+   * @param {string} rendered - The full rendered takeoff output
+   * @returns {string} The per-unit cycle section text
+   */
+  function extractPerUnitCycle(rendered) {
+    const start = rendered.indexOf('### Per-Unit Cycle');
+    if (start === -1) return '';
+    // Find the next ### heading after the per-unit cycle section
+    const afterStart = rendered.indexOf('###', start + 1);
+    return afterStart !== -1 ? rendered.slice(start, afterStart) : rendered.slice(start);
+  }
+
+  it('should render without errors', () => {
+    const result = renderTakeoff();
+    assert.ok(result.length > 0, 'takeoff command should produce non-empty output');
+  });
+
+  it('should NOT contain "### Commit on Pass" heading', () => {
+    const result = renderTakeoff();
+    assert.ok(
+      !result.includes('### Commit on Pass'),
+      'takeoff must not contain "### Commit on Pass" section (removed from quality-gate-protocol)'
+    );
+  });
+
+  it('should contain a per-unit cycle step that deploys branch-manager to commit after gates pass', () => {
+    const result = renderTakeoff();
+    const perUnitSection = extractPerUnitCycle(result);
+    assert.ok(
+      perUnitSection.length > 0,
+      'takeoff must contain a "### Per-Unit Cycle" section'
+    );
+    assert.ok(
+      /branch-manager.*commit/i.test(perUnitSection),
+      'Per-Unit Cycle must instruct deploying reaper:branch-manager to commit after gates pass'
+    );
+  });
+
+  it('should specify commit-only -- do not merge to develop -- in per-unit cycle step', () => {
+    const result = renderTakeoff();
+    const perUnitSection = extractPerUnitCycle(result);
+    assert.ok(
+      /commit.only|do not merge.*develop|commit.*not.*merge/i.test(perUnitSection),
+      'Per-unit commit step must explicitly say commit only, do not merge to develop'
+    );
+  });
+
+  it('should specify the feature branch as commit target in per-unit cycle step', () => {
+    const result = renderTakeoff();
+    const perUnitSection = extractPerUnitCycle(result);
+    assert.ok(
+      /feature branch/i.test(perUnitSection),
+      'Per-unit commit step must specify the feature branch as the commit target'
+    );
+  });
+
+  it('should specify merging feature branch to develop at Completion when user approves', () => {
+    const result = renderTakeoff();
+    // The Completion / merge response handling section should mention develop as the merge target
+    assert.ok(
+      /merge.*to develop|feature branch.*develop|develop.*merge/i.test(result),
+      'Completion section must specify merging to develop when user approves'
+    );
+  });
+});
