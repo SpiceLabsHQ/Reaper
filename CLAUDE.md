@@ -1,8 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance for **developing Reaper itself**. Everything in this document — conventions, values, safety rules, workflows — applies to working on Reaper's own codebase. This project CLAUDE.md takes precedence over global instructions for all Reaper-specific behavior.
-
-**Output boundary**: Reaper produces commands, skills, agent prompts, and other generated content that operates on **target projects** (the user's codebase). That generated output must focus on general software development best practices — not impose Reaper's internal design philosophy, values, or conventions on target projects.
+This file guides **Reaper development**. **Output boundary**: generated content for target projects must use general software development best practices — not Reaper internals.
 
 ## What is Reaper?
 
@@ -10,14 +8,7 @@ Reaper is a Claude Code plugin that orchestrates specialized AI agents for auton
 
 ### Agent Roles
 
-Check your available tools to determine your role:
-
-- **Has "Task" tool** → **Main agent** (supervisor). Delegate all implementation to subagents. Validate their output. Never write code yourself.
-- **No "Task" tool** → **Subagent** (worker). Complete the specific task in your launch prompt using TDD. Do not try to delegate.
-
-**Main agent workflow:** Break down requests into tasks, select agents from the matrix below, launch with clear prompts via Task tool, validate output, coordinate integration.
-
-**Subagent workflow:** Read launch prompt, write failing tests (Red), implement minimally (Green), refactor (Blue), verify coverage, signal completion.
+See global CLAUDE.md for role detection. Main agents use the Agent Selection Matrix below; subagents follow TDD (Red/Green/Blue).
 
 ## The Five Keys
 
@@ -37,11 +28,11 @@ These are **Reaper's internal design values**. They guide every decision in Reap
 
 ### Where Voice Applies
 
-The Five Keys — especially Fun — apply differently depending on the audience:
-
-- **User-facing commands and skills** (start, flight-plan, takeoff, ship, squadron, status-worktrees, claude-sync): Voice, personality, and themed language are encouraged. These are the developer's interface with Reaper.
-- **Agent prompts** (system prompts for coding, review, and planning agents): Must remain clinical, precise technical specifications. No themed language, personality, or humor. Agent prompts are machine-consumed instructions where ambiguity degrades output quality.
-- **Output boundary** (generated agent prompts, commands, and skills that operate on target projects): Must follow general software development best practices. Do not embed Reaper-specific design philosophy, Five Keys language, or Reaper conventions into content that will guide work on the user's codebase.
+| Context | Voice |
+|---------|-------|
+| User-facing commands/skills | Personality and themed language encouraged |
+| Agent prompts | Clinical, precise, no personality |
+| Generated output for target projects | Neutral best practices only |
 
 ## Agent Selection Matrix (Main Agents Only)
 
@@ -75,55 +66,22 @@ Use specialized agents for all development work. Subagents: skip this section.
 
 The user, and only the user, may override any of these rules explicitly.
 
-### Recommended Workflow (Main Agent / Human)
+### Workflow & Commands (Main Agent / Human)
 
-1. **Plan first**: `/reaper:flight-plan <detailed-description>` — Create execution plan with work breakdown
-2. **Review & approve** — Claude presents the plan for your approval
-3. **Issues created** — Claude creates issues in Beads/Jira (or markdown fallback)
-4. **Clear context**: `/clear` — Fresh context for execution (recommended)
-5. **Execute**: `/reaper:takeoff <TASK-ID>` — Executes the task plan autonomously
+Typical flow: `flight-plan` -> approve -> `/clear` -> `takeoff`
 
-### Key Commands (Main Agent / Human)
+| Command | Purpose |
+|---------|---------|
+| `/reaper:start [desc]` | Orientation / getting started |
+| `/reaper:flight-plan <desc>` | Plan with work breakdown |
+| `/reaper:takeoff <TASK-ID\|desc>` | Execute task autonomously |
+| `/reaper:ship <worktree>` | Commit, push, open PR |
+| `/reaper:squadron <question>` | Collaborative design session |
+| `/reaper:status-worktrees` | Check worktree status |
+| `/reaper:claude-sync` | Suggest CLAUDE.md updates |
+| `/reaper:configure-quality-gates` | Detect runners, write QG section |
 
-```bash
-# Not sure where to start?
-/reaper:start
-/reaper:start <description>
-
-# Plan your work (start here)
-/reaper:flight-plan <detailed-description>
-
-# Execute from task ID (preferred) or description
-/reaper:takeoff <TASK-ID>
-/reaper:takeoff <description>
-
-# Fast-path: commit, push, and open PR from a worktree
-/reaper:ship <worktree-path>
-
-# Assemble domain experts for collaborative design
-/reaper:squadron <design-question>
-
-# Check worktree status
-/reaper:status-worktrees
-
-# Suggest CLAUDE.md updates after code changes
-/reaper:claude-sync
-
-# Detect test/lint runners and write Quality Gates section to CLAUDE.md
-/reaper:configure-quality-gates
-```
-
-### Task ID-Only Mode (takeoff)
-
-The `/reaper:takeoff` command is an exception to the "detailed description always required" rule. The orchestrator can query Beads (or Jira) to fetch task details automatically:
-
-```bash
-/reaper:takeoff reaper-a3f           # Fetches details from Beads
-/reaper:takeoff reaper-a3f: Add bcrypt hashing   # Enriches with extra context
-/reaper:takeoff Fix payment timeout with retry    # Description-only (no task system)
-```
-
-**Fetch behavior:** Beads format (`reaper-xxx`) queries `bd show`. Jira format (`PROJ-123`) queries `acli jira workitem view`. Unknown formats require a description. When the orchestrator deploys subagents, it always passes the full fetched description — subagents never see just a task ID.
+Takeoff auto-fetches details: Beads (`reaper-xxx`) via `bd show`, Jira (`PROJ-123`) via `acli jira workitem view`. Description-only also works.
 
 ### Commit Standards
 
@@ -160,31 +118,23 @@ Use `bd list` to find issue IDs, or `bd create` to create one.
 - Test file lists are explicit (not glob-based) for cross-platform CI compatibility
 - When adding test files: update `package.json` scripts AND `.github/workflows/test.yml`
 
+### Branch-Manager Constraints (enforced by contract tests)
+
+- Merges use temp worktree (`./trees/[TASK_ID]-integration`), never `git checkout` in root (ADR-0014)
+- Stop-and-report on unexpected state; never self-remediate or bypass hooks (Protocols #7-#11)
+- Takeoff reuses branch-manager sessions via `Task --resume`; do not redeploy fresh per commit
+
 ### Worktree Isolation
 
-All development work happens in isolated worktrees. Never edit files, run tests, or execute commands directly in the repository root.
+All work in `./trees/` worktrees, never root. Prefer `reaper:branch-manager` for setup/teardown.
 
+Manual fallback:
 ```bash
-# Verify you are in the root (not inside a worktree)
-pwd | grep -q "/trees/" && { echo "ERROR: Must start from root"; exit 1; }
-
-# Create worktree
-mkdir -p trees
 git worktree add ./trees/TASK-ID-desc -b feature/TASK-ID-desc develop
-
-# Run commands in worktree (use git -C for git, subshells for everything else)
-git -C ./trees/TASK-ID status
-(cd ./trees/TASK-ID && npm test)
-
-# List all worktrees
-git worktree list
-
-# Cleanup after merge
-git worktree remove ./trees/TASK-ID
-git branch -d feature/TASK-ID-desc
+git -C ./trees/TASK-ID-desc status
+(cd ./trees/TASK-ID-desc && npm test)
+git worktree remove ./trees/TASK-ID-desc
 ```
-
-Prefer using `reaper:branch-manager` for worktree setup and teardown — it handles edge cases safely.
 
 ## Project Structure
 
@@ -211,37 +161,13 @@ docs/            # User-facing documentation (agents, commands, workflow, qualit
 
 ### Documentation Maintenance
 
-User-facing docs (`README.md` and `docs/*.md`) must stay in sync with the codebase. When changes affect any of the following, update the corresponding doc:
-
-| Change | Update |
-|--------|--------|
-| Agent added/removed/renamed | `docs/agents.md` and README agent count |
-| Command behavior or flags changed | `docs/commands.md` |
-| Quality gate pipeline modified | `docs/quality-gates.md` |
-| Formatter added/removed in hook | `docs/auto-formatting.md` |
-| Workflow or strategy logic changed | `docs/workflow.md` |
-| Coverage threshold or key feature changed | `README.md` "Under the Hood" section |
-
-Run `/reaper:claude-sync` to detect undocumented changes.
+When changing agents, commands, gates, formatters, or workflow, update the corresponding doc in `docs/` and `README.md`. Run `/reaper:claude-sync` to detect gaps.
 
 ## Template Build System
 
-**CRITICAL**: This project uses an EJS template build system. Generated files live at the project root (not in `dist/`).
+This project uses an EJS template build system. Generated files live at the project root (not in `dist/`).
 
-### Source vs Generated Files
-
-| Location | Type | Action |
-|----------|------|--------|
-| `src/agents/*.ejs` | Source | ✅ Edit these |
-| `src/commands/*.ejs` | Source | ✅ Edit these |
-| `src/skills/**/*.ejs` | Source | ✅ Edit these |
-| `src/skills/**/*.sh` | Source | ✅ Edit these |
-| `src/partials/*.ejs` | Source | ✅ Edit these (shared content) |
-| `agents/*.md` | Generated | ❌ Never edit - changes will be overwritten |
-| `commands/*.md` | Generated | ❌ Never edit - changes will be overwritten |
-| `skills/**/*.md` | Generated | ❌ Never edit - changes will be overwritten |
-| `skills/**/*.sh` | Generated | ❌ Never edit - changes will be overwritten |
-| `hooks/hooks.json` | Generated | ❌ Never edit - changes will be overwritten |
+Edit source in `src/` only. Root-level `agents/`, `commands/`, `skills/`, `hooks/` are generated — never edit directly.
 
 ### Build Commands
 
@@ -280,29 +206,9 @@ Orchestration commands (start, flight-plan, takeoff, ship, squadron, status-work
 
 ### Partials (Shared Content)
 
-Common sections are extracted into `src/partials/*.ejs`:
-- `pre-work-validation-coding.ejs` - Validation for coding agents
-- `pre-work-validation-review.ejs` - Validation for review agents
-- `pre-work-validation-security.ejs` - Validation for security auditor
-- `output-requirements.ejs` - JSON output requirements (parameterized)
-- `git-prohibitions.ejs` - Git operation restrictions
-- `tdd-testing-protocol.ejs` - TDD methodology
-- `artifact-cleanup-coding.ejs` - Cleanup protocols for coding agents
-- `artifact-cleanup-review.ejs` - Cleanup protocols for review agents
-- `visual-vocabulary.ejs` - Gauge states and card templates (parameterized by context: takeoff, ship, status-worktrees, squadron, start, functional). Respects `Reaper: disable ASCII art` opt-out in target project's CLAUDE.md.
-- `no-self-reporting.ejs` - Prevents agents from self-reporting status
-- `plan-file-schema.ejs` - Plan file format and sections
-- `todowrite-plan-protocol.ejs` - TodoWrite plan persistence protocol
-- `task-system-operations.ejs` - Task system detection, abstract operations, and platform skill routing
-- `agent-deployment-template.ejs` - Agent deployment template structure
-- `orchestrator-role-boundary.ejs` - Orchestrator role and delegation rules
-- `quality-gate-protocol.ejs` - Quality gate profile system and sequence
-- `directory-exclusions.ejs` - Standard directory exclusion patterns
-- `file-conflict-detection.ejs` - Parallel work file conflict detection
-- `no-commits-policy.ejs` - Coding agents never commit policy
-- `work-unit-cleanup.ejs` - Background task cleanup at work unit boundaries for orchestrator commands
+Common sections in `src/partials/*.ejs`. Include via: `<%- include('partials/output-requirements', { isReviewAgent: true }) %>`. Parameters vary by partial — check the partial source for available options.
 
-Use EJS includes: `<%- include('partials/output-requirements', { isReviewAgent: true }) %>`. Parameters vary by partial — check the partial source for available options.
+Key parameterized partials: `visual-vocabulary` (by context: takeoff, ship, status-worktrees, flight-plan, squadron, start, functional; respects `Reaper: disable ASCII art` opt-out), `output-requirements` (by agent type), `tdd-testing-protocol`, `quality-gate-protocol`.
 
 ## Beads Issue Tracking
 
@@ -323,7 +229,7 @@ bd sync                    # Sync with git remote
 
 The following commands are used during automated quality gates:
 
-**Test command**: `npm test`
+**Test command**: `npm run test:coverage`
 **Lint command**: `skip`
 
 ## Reference
