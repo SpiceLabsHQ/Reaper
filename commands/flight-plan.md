@@ -88,6 +88,12 @@ Create the plan file with this structure on first write:
 
 ## Dependencies
 [Mermaid flowchart showing execution order and blocking relationships]
+
+## Proposed ADRs
+> ✦ PLANNING DECISION — Review before approving this flight plan
+
+[Architecture decisions surfaced during planning that warrant long-term documentation.
+Empty if no ADR-worthy decisions were detected.]
 ```
 
 
@@ -365,6 +371,40 @@ Mark units as `Assignee: user` when they require:
 - Production console configuration
 - License/purchase acquisition
 
+### ADR Detection
+
+After completing work analysis, evaluate whether any decisions made during research and planning meet the ADR bar.
+
+**ADR-worthy decisions share these characteristics — a candidate must meet at least one:**
+
+1. **Non-obvious**: The reasoning will not be apparent from reading the code alone. A future developer would wonder "why was this done this way?"
+2. **Consequential**: The decision meaningfully shapes how the feature works or constrains how future code in this area will be written.
+3. **Deliberate**: A choice was made between two or more valid approaches with meaningfully different trade-offs, and the reasoning for the selection would not be obvious to a future developer.
+4. **Convention-establishing**: The work creates or changes a pattern that future developers will follow across the codebase.
+
+**Not ADR-worthy**: routine implementation choices within an established pattern, obvious bug fixes, minor refactors, decisions fully explained by the task description.
+
+**For each ADR candidate detected:**
+
+1. Check `docs/adr/` to determine the next sequential number (e.g., if the last is `0012-*.md`, the next is `0013`). If the directory does not exist or contains no ADRs, start at `0001`.
+
+2. Draft a proposed ADR entry in the plan file under `## Proposed ADRs`:
+   ```
+   ### ADR-NNNN: [Short decision title]
+   **Why this warrants an ADR**: [Name the specific characteristic — non-obvious / consequential /
+   convention-establishing — and explain in 1-2 sentences how this decision meets it.]
+   **Context**: [What problem or constraint forced this decision]
+   **Decision**: [What was chosen]
+   **Alternatives rejected**: [What was considered and why it was passed over]
+   ```
+
+3. Add a `Write ADR-NNNN` work unit to the plan (type `docs`, unblocked):
+   - Title: `Write ADR-NNNN: [decision title]`
+   - Description: finalize and commit the proposed ADR document to `docs/adr/`
+   - No TDD required — this is a documentation task
+
+If no ADR candidates are detected, leave `## Proposed ADRs` empty with the placeholder text and do not add any write-ADR work units.
+
 ---
 
 ## Phase 3: Write Initial Plan to File
@@ -376,6 +416,7 @@ Use the Write tool to create the plan file at the path from Phase 0, following i
 - **Strategy**: Leave as placeholder -- will be populated during execution by workflow-planner
 - **Work Units**: Table from Phase 2 analysis, followed by detailed Unit sections (each with Description, Acceptance Criteria, Estimated Files)
 - **Dependencies**: Mermaid flowchart showing execution order, critical path, and parallel opportunities
+- **Proposed ADRs**: Drafted ADR content from Phase 2 ADR Detection; empty placeholder if no candidates were found
 - **Assumptions**: Planning assumptions the user can correct in feedback
 - **Feedback Log**: Empty on first write -- populated during Phase 4 refinement
 
@@ -389,6 +430,17 @@ Present a **flight briefing** to the user that summarizes the plan before asking
 4. **Critical path** — which units are sequential blockers
 5. **Parallelization** — percentage of work that can run concurrently
 6. **Key assumptions** — list assumptions the user might want to correct
+7. **Proposed ADRs** — if any ADR candidates were detected, present a callout per ADR. Keep it brief — full proposal lives in the plan file:
+
+   ```
+   ✦ PROPOSED ADR — ADR-NNNN: [Title]
+   ─────────────────────────────────────────────────────
+   [1-2 sentence justification naming the specific criterion met]
+   See full proposal in the plan file under Proposed ADRs.
+   A "Write ADR-NNNN" work unit is included in this plan.
+   ```
+
+   If no ADR candidates were detected, omit this section from the briefing entirely — do not mention it.
 
 <!-- user-comms: say "checking the task system" not "TASK_SYSTEM detected in Phase 1" -->
 Then prompt for approval using AskUserQuestion. Select the variant based on `TASK_SYSTEM` detected in Phase 1:
