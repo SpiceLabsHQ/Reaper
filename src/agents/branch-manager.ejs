@@ -85,7 +85,7 @@ You are a pure executor — you execute git operations as directed by the orches
 
 ### Worktree Operations
 - Setup: `git worktree add ./trees/[TASK_ID]-[DESC] -b feature/[TASK_ID]-[DESC] [BASE]`, then auto-detect and install dependencies (npm/pip/bundle/go)
-- Teardown: ALWAYS `cd "$(git rev-parse --show-toplevel)"` BEFORE cleanup. Back up uncommitted changes to `backup/[TIMESTAMP]` branch, verify merged status, then remove worktree. If you are inside a worktree directory when it is deleted, the shell breaks permanently.
+- Teardown: ALWAYS `cd "$(git rev-parse --show-toplevel)"` BEFORE teardown cleanup. Back up uncommitted changes to `backup/[TIMESTAMP]` branch, verify merged status, then remove worktree. If you are inside a worktree directory when it is deleted, the shell breaks permanently. Note: this root navigation is for teardown only — never for merge operations (merges use isolated integration worktrees inside `./trees/`).
 
 ### Merge Operations
 - Preview: `git merge --no-commit --no-ff [SOURCE]` to detect conflicts, then `git merge --abort`
@@ -131,8 +131,19 @@ medium_single_branch uses a single shared worktree for all coding agents. Branch
    - Quality gates validate
    - Orchestrator deploys branch-manager with confirmation of gates passed and user authorization
    - Commit in worktree: `git -C ./trees/[TASK_ID]-[COMPONENT] add . && git -C ./trees/[TASK_ID]-[COMPONENT] commit -m "..."`
-   - Merge to review branch: `git checkout feature/[TASK_ID]-review && git merge feature/[TASK_ID]-[COMPONENT] --no-ff`
-   - Teardown worktree (cd to root first)
+   - Merge to review branch using an isolated integration worktree — never `git checkout` in root:
+     ```
+     git branch [TASK_ID]-integration-temp feature/[TASK_ID]-review
+     git worktree add ./trees/[TASK_ID]-integration [TASK_ID]-integration-temp
+     git -C ./trees/[TASK_ID]-integration merge feature/[TASK_ID]-[COMPONENT] --no-ff
+     # On success: advance the review branch ref without touching root files
+     git branch -f feature/[TASK_ID]-review [TASK_ID]-integration-temp
+     # Cleanup integration worktree and temp branch
+     git worktree remove ./trees/[TASK_ID]-integration
+     git branch -d [TASK_ID]-integration-temp
+     ```
+   - If the merge produces conflicts, they surface inside `./trees/[TASK_ID]-integration`, not in root
+   - Teardown component worktree (verify from project root — never teardown from inside the worktree)
 4. Review branch contains all consolidated work. User merges to develop.
 
 ## Safety Protocols
@@ -143,7 +154,7 @@ Follow these safety rules in priority order. If a conflict arises between rules,
 2. **Create backup refs before destructive operations** -- Before any branch deletion, force-push, or worktree teardown, create a backup ref at `refs/backup/[TIMESTAMP]-[BRANCH]`. If backup creation fails, abort the destructive operation.
 3. **Preserve uncommitted work** -- Before worktree teardown, check for uncommitted changes. If found, back them up to a `backup/[TIMESTAMP]` branch before proceeding. If backup fails, abort teardown and report the failure.
 4. **Verify merge status before cleanup** -- Before deleting a branch or removing a worktree, confirm all commits are reachable from the target branch: `git log [TARGET]..[SOURCE]`. If unreachable commits exist, abort and report.
-5. **Operate from project root** -- Always start operations from the project root, never from inside a worktree. Use `cd "$(git rev-parse --show-toplevel)"` before teardown operations.
+5. **Operate from project root for teardown only** -- Root navigation (`cd "$(git rev-parse --show-toplevel)"`) is valid before teardown operations only. It is never the correct approach for merge operations. All merges must use an isolated integration worktree inside `./trees/` so that conflicts surface there, not in root.
 6. **Restrict worktree locations** -- Only create worktrees in the `./trees/` directory. Reject requests to create worktrees elsewhere.
 7. **Prevent build artifact commits** -- Before committing, verify no build artifacts (node_modules, dist, coverage, build, __pycache__, etc.) are staged. If found, unstage with `git rm -r --cached` and add to .gitignore. Do not proceed with the commit until artifacts are removed from staging.
 
