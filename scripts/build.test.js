@@ -2315,3 +2315,107 @@ describe('takeoff command: per-unit cycle has explicit branch-manager commit ste
     );
   });
 });
+
+// ===========================================================================
+// no-commits-policy.ejs: strategy naming and per-unit commit flow
+// ===========================================================================
+
+describe('no-commits-policy.ejs: strategy naming uses new identifiers', () => {
+  const NO_COMMITS_SRC = path.join(__dirname, '..', 'src', 'partials', 'no-commits-policy.ejs');
+
+  function readSrc() {
+    return fs.readFileSync(NO_COMMITS_SRC, 'utf8');
+  }
+
+  it('should use "very_small_direct" strategy name', () => {
+    const content = readSrc();
+    assert.ok(
+      content.includes('very_small_direct'),
+      'no-commits-policy.ejs must use "very_small_direct" strategy name — not "Strategy 1"'
+    );
+  });
+
+  it('should use "medium_single_branch" strategy name', () => {
+    const content = readSrc();
+    assert.ok(
+      content.includes('medium_single_branch'),
+      'no-commits-policy.ejs must use "medium_single_branch" strategy name — not "Strategy 2"'
+    );
+  });
+
+  it('should use "large_multi_worktree" strategy name', () => {
+    const content = readSrc();
+    assert.ok(
+      content.includes('large_multi_worktree'),
+      'no-commits-policy.ejs must use "large_multi_worktree" strategy name — not "Strategy 3"'
+    );
+  });
+
+  it('should not use legacy "Strategy 1" label', () => {
+    const content = readSrc();
+    assert.ok(
+      !content.includes('Strategy 1'),
+      'no-commits-policy.ejs must not use legacy "Strategy 1" label — use "very_small_direct" instead'
+    );
+  });
+
+  it('should not use legacy "Strategy 2" label', () => {
+    const content = readSrc();
+    assert.ok(
+      !content.includes('Strategy 2'),
+      'no-commits-policy.ejs must not use legacy "Strategy 2" label — use "medium_single_branch" instead'
+    );
+  });
+
+  it('should not use legacy "Strategy 3" label', () => {
+    const content = readSrc();
+    assert.ok(
+      !content.includes('Strategy 3'),
+      'no-commits-policy.ejs must not use legacy "Strategy 3" label — use "large_multi_worktree" instead'
+    );
+  });
+
+  it('should describe per-unit commit flow: orchestrator deploys branch-manager after ALL gates pass', () => {
+    const content = readSrc();
+    assert.ok(
+      /after all gates pass|after.*gates.*pass|all.*gates.*pass/i.test(content),
+      'no-commits-policy.ejs must describe the per-unit commit flow: branch-manager is deployed after ALL gates pass for a unit'
+    );
+  });
+});
+
+// ===========================================================================
+// orchestrator-role-boundary.ejs: 'commit freely' removed from wrong examples
+// ===========================================================================
+
+describe('orchestrator-role-boundary.ejs: commit freely example removed', () => {
+  const ORCH_ROLE_SRC = path.join(__dirname, '..', 'src', 'partials', 'orchestrator-role-boundary.ejs');
+
+  function readSrc() {
+    return fs.readFileSync(ORCH_ROLE_SRC, 'utf8');
+  }
+
+  it('should not contain "commit freely on feature branches"', () => {
+    const content = readSrc();
+    assert.ok(
+      !content.includes('commit freely on feature branches'),
+      'orchestrator-role-boundary.ejs must not contain "commit freely on feature branches" — commits are now delegated to branch-manager'
+    );
+  });
+
+  it('should still contain the Wrong examples section', () => {
+    const content = readSrc();
+    assert.ok(
+      content.includes('Wrong') || content.includes('wrong'),
+      'orchestrator-role-boundary.ejs must still contain the Wrong examples section'
+    );
+  });
+
+  it('should still contain autonomy guidance for iterating through gates', () => {
+    const content = readSrc();
+    assert.ok(
+      content.includes('gate') || content.includes('quality'),
+      'orchestrator-role-boundary.ejs must still contain gate iteration guidance'
+    );
+  });
+});

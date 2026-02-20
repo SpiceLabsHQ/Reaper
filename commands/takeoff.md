@@ -111,7 +111,7 @@ Do not read source code files to understand implementation details -- that is th
 - Merge to the target branch only after the user explicitly approves (phrases like "merge", "ship it", "approved")
 
 **Wrong (breaks the autonomous quality loop):**
-- "Should I commit these changes?" -- commit freely on feature branches
+- "Should I commit these changes?" -- deploy branch-manager after all gates pass; do not ask the user
 - "Tests pass, may I continue?" -- always continue through the gate sequence
 - "Code review found issues, what should I do?" -- redeploy the coding agent with blocking_issues automatically
 - "I've fixed the linting errors, should I re-run?" -- always re-run the failed gate
