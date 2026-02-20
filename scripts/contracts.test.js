@@ -3093,3 +3093,31 @@ describe('Contract: takeoff quality gate config check', () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Contract: commands contain mission banner
+// ---------------------------------------------------------------------------
+
+describe('Contract: commands contain mission banner', () => {
+  it("commands/takeoff.md contains 'REAPER // TAKEOFF'", () => {
+    const filePath = commandFilePath('takeoff');
+    const relative = 'commands/takeoff.md';
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('REAPER // TAKEOFF'),
+      `${relative} is missing mission banner 'REAPER // TAKEOFF'`
+    );
+  });
+
+  it("commands/flight-plan.md contains 'REAPER // FLIGHT PLAN'", () => {
+    const filePath = commandFilePath('flight-plan');
+    const relative = 'commands/flight-plan.md';
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('REAPER // FLIGHT PLAN'),
+      `${relative} is missing mission banner 'REAPER // FLIGHT PLAN'`
+    );
+  });
+});
