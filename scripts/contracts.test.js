@@ -3352,7 +3352,7 @@ describe('Contract: branch-manager large_multi_worktree merge uses isolated inte
 // and return status: error with details — not attempt to fix the situation.
 //
 // Specific prohibitions enforced here:
-//   1. No hook bypass: --no-verify, HUSKY=0, -n, or any hook-skip mechanism
+//   1. Hooks are mandatory: always respect git hooks, never circumvent them
 //   2. No git stash on files the agent did not create
 //   3. No autonomous file deletion or movement beyond orchestrator direction
 //   4. Safety Protocol #7 (staged artifact detection): report and stop, do not
@@ -3360,48 +3360,27 @@ describe('Contract: branch-manager large_multi_worktree merge uses isolated inte
 //   5. Stop-and-report doctrine: return status: error on unexpected state
 // ---------------------------------------------------------------------------
 
-describe('Contract: branch-manager prohibits hook bypass mechanisms', () => {
+describe('Contract: branch-manager hook respect obligation', () => {
   const filePath = agentFilePath('branch-manager');
   const relative = 'agents/branch-manager.md';
 
-  it(`${relative} prohibits --no-verify flag`, () => {
+  it(`${relative} states the positive obligation to always respect git hooks`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const prose = stripCodeBlocks(content);
     assert.ok(
-      /--no-verify/i.test(prose),
-      `${relative} must explicitly mention "--no-verify" as a prohibited mechanism`
-    );
-    // Verify it appears in a prohibition context (not just as an allowed usage)
-    const noVerifyLines = prose
-      .split('\n')
-      .filter((line) => /--no-verify/.test(line));
-    const hasProhibitionContext = noVerifyLines.some((line) =>
-      /never|prohibit|not.*use|must not|forbidden|do not/i.test(line)
-    );
-    assert.ok(
-      hasProhibitionContext,
-      `${relative} must use "--no-verify" in a prohibition context — found lines: ${noVerifyLines.map((l) => l.trim()).join('; ')}`
+      /hooks are mandatory|always respect.*hook|respect git hook/i.test(prose),
+      `${relative} must state the positive obligation that git hooks are mandatory checkpoints to be respected`
     );
   });
 
-  it(`${relative} prohibits HUSKY=0 environment variable bypass`, () => {
+  it(`${relative} instructs capturing hook output and returning status: error when a hook blocks`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const prose = stripCodeBlocks(content);
     assert.ok(
-      /HUSKY=0/i.test(prose),
-      `${relative} must explicitly mention "HUSKY=0" as a prohibited bypass mechanism`
-    );
-    const huskyLines = prose
-      .split('\n')
-      .filter((line) => /HUSKY=0/i.test(line));
-    const hasProhibitionContext = huskyLines.some((line) =>
-      /never|prohibit|not.*use|must not|forbidden|do not/i.test(line)
-    );
-    assert.ok(
-      hasProhibitionContext,
-      `${relative} must use "HUSKY=0" in a prohibition context — found lines: ${huskyLines.map((l) => l.trim()).join('; ')}`
+      /hook.*block|hook.*output|hook.*status.*error|hook.*blocking_issues/i.test(prose),
+      `${relative} must instruct the agent to capture hook output and return status: error when a hook blocks a commit`
     );
   });
 
@@ -3410,7 +3389,7 @@ describe('Contract: branch-manager prohibits hook bypass mechanisms', () => {
     const content = fs.readFileSync(filePath, 'utf8');
     const prose = stripCodeBlocks(content);
     assert.ok(
-      /hook.*fail.*report|hook.*fail.*stop|hook failure.*real|pre-commit.*fail/i.test(prose),
+      /hook.*fail.*report|hook.*fail.*stop|hook failure.*real|pre-commit.*fail|hook.*block.*commit/i.test(prose),
       `${relative} must state that hook failure is a real failure to be reported, not bypassed`
     );
   });
