@@ -52,45 +52,7 @@ Do not use any of the following in user-facing messages, status cards, or progre
 Describe what is happening for the user ("running tests", "planning the feature", "reviewing security") — not what the system is doing internally ("routing to skill", "resolving TASK_SYSTEM", "invoking TaskCreate").
 
 
-Do not use EnterPlanMode or ExitPlanMode tools. This command manages its own planning workflow and plan file output.
-
----
-
-## Phase 0: Plan File Schema
-
-## Plan File
-
-### Path Convention
-
-Write the plan to: `$CLAUDE_PROJECT_DIR/.claude/plans/reaper-[semantic-name].md`
-
-Derive the semantic name from the planning request (2-4 words, lowercase, hyphenated).
-
-### Schema
-
-Create the plan file with this structure on first write:
-
-```markdown
-# Plan: [Title from input]
-
-## Input
-[Original user request - IMMUTABLE after initial write]
-
-## Research
-[Codebase research findings - progressively added]
-
-## Strategy
-[Selected strategy name, complexity score with breakdown, rationale for strategy choice]
-
-## Work Units
-| # | Title | Type | Status | Blocked By |
-[Table of decomposed work units with details below]
-
-## Dependencies
-[Mermaid flowchart showing execution order and blocking relationships]
-```
-
-
+Do not use EnterPlanMode or ExitPlanMode tools. This command manages its own planning workflow and presents the plan in-conversation.
 
 ---
 
@@ -367,28 +329,15 @@ Mark units as `Assignee: user` when they require:
 
 ---
 
-## Phase 3: Write Initial Plan to File
+## Phase 3: Present Flight Briefing
 
-Use the Write tool to create the plan file at the path from Phase 0, following its schema. Populate each section:
+Present a **flight briefing** to the user that summarizes the plan in-conversation before asking for approval. Include:
 
-- **Input**: Original user request verbatim from ARGUMENTS
-- **Research**: Findings from Phase 1.5 Explore agents (affected files, architecture context, dependencies, planning implications)
-- **Strategy**: Leave as placeholder -- will be populated during execution by workflow-planner
-- **Work Units**: Table from Phase 2 analysis, followed by detailed Unit sections (each with Description, Acceptance Criteria, Estimated Files)
-- **Dependencies**: Mermaid flowchart showing execution order, critical path, and parallel opportunities
-- **Assumptions**: Planning assumptions the user can correct in feedback
-- **Feedback Log**: Empty on first write -- populated during Phase 4 refinement
-
-### After Writing the Plan
-
-Present a **flight briefing** to the user that summarizes the plan before asking for approval. Include:
-
-1. **Plan file path** (link to the plan for full details)
-2. **Epic title and goal** (one-liner)
-3. **Work units summary** — for each unit: number, title, type, estimated hours, and whether it runs in parallel
-4. **Critical path** — which units are sequential blockers
-5. **Parallelization** — percentage of work that can run concurrently
-6. **Key assumptions** — list assumptions the user might want to correct
+1. **Epic title and goal** (one-liner)
+2. **Work units summary** — for each unit: number, title, type, estimated hours, and whether it runs in parallel
+3. **Critical path** — which units are sequential blockers
+4. **Parallelization** — percentage of work that can run concurrently
+5. **Key assumptions** — list assumptions the user might want to correct
 
 <!-- user-comms: say "checking the task system" not "TASK_SYSTEM detected in Phase 1" -->
 Then prompt for approval using AskUserQuestion. Select the variant based on `TASK_SYSTEM` detected in Phase 1:
@@ -429,11 +378,9 @@ Then prompt for approval using AskUserQuestion. Select the variant based on `TAS
 
 Replace `N` with the work unit count and `M` with the parallelization percentage. AskUserQuestion automatically includes an "Other" option that lets the user type freeform feedback (use it to request changes) — see Phase 4 for response handling.
 
-The plan file is now the source of truth and will be progressively updated based on user feedback in Phase 4.
-
 ---
 
-## Phase 4: Iterative Refinement (Plan File Updates)
+## Phase 4: Iterative Refinement (In-Conversation)
 
 ### Handling AskUserQuestion Responses
 
@@ -443,19 +390,19 @@ Map the user's AskUserQuestion selection:
 |-----------|--------|
 | **Cleared for takeoff** | Proceed to Phase 5 |
 | **Revise flight plan** | Ask the user what they want to change, then apply feedback and re-prompt (same as "Other" path) |
-| **Other** (freeform text) | Treat as feedback — update plan file and re-prompt |
+| **Other** (freeform text) | Treat as feedback — revise the plan in-conversation and re-prompt |
 
-### Refinement Using Edit Tool
+### Refinement Process
 
-When the user selects "Other" and provides feedback:
+When the user selects "Other" or "Revise flight plan" and provides feedback:
 
-1. **Apply changes** using the update rules defined in the plan file schema above.
+1. **Apply changes** in-conversation based on the user's feedback.
 2. **Summarize changes** to the user, then call AskUserQuestion again with the same structure as Phase 3. Update `N` (work unit count) and `M` (parallelization percentage) in the question text if work units changed. Use the task-system or markdown-only variant matching the detected `TASK_SYSTEM`.
 
 ### Refinement Guidelines
 
-- Keep cycles fast -- use targeted edits, not full rewrites
-- Track corrected assumptions with strikethrough
+- Keep cycles fast -- revise in-conversation, not through file edits
+- Track corrected assumptions explicitly in the updated briefing
 - After major feedback, may re-run targeted Explore agents
 - The flow should feel like a conversation, not an interview
 
