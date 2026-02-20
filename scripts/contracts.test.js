@@ -2300,98 +2300,98 @@ describe('Contract: quality-gate-protocol Commit on Pass feature branch constrai
 });
 
 // ---------------------------------------------------------------------------
-// Contract: branch-manager Strategy 2 uses shared worktree + branch-manager commits
+// Contract: branch-manager medium_single_branch uses shared worktree + branch-manager commits
 // ---------------------------------------------------------------------------
 
-describe('Contract: branch-manager Strategy 2 uses shared worktree with branch-manager commits', () => {
+describe('Contract: branch-manager medium_single_branch uses shared worktree with branch-manager commits', () => {
   const filePath = agentFilePath('branch-manager');
   const relative = 'agents/branch-manager.md';
 
-  it(`${relative} Strategy-Based Authority table has Strategy 2 row with worktree`, () => {
+  it(`${relative} Strategy-Based Authority table has medium_single_branch row with worktree`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
-    // Strategy 2 row must mention worktree creation
+    // medium_single_branch row must mention worktree creation
     const tableRows = content.split('\n').filter((line) =>
-      line.startsWith('|') && line.includes('2') && (line.includes('Medium') || line.includes('worktree'))
+      line.startsWith('|') && line.includes('medium_single_branch') && line.includes('worktree')
     );
     assert.ok(
       tableRows.length > 0,
-      `${relative} Strategy-Based Authority table must have a Strategy 2 row referencing worktree`
+      `${relative} Strategy-Based Authority table must have a medium_single_branch row referencing worktree`
     );
   });
 
-  it(`${relative} Strategy-Based Authority table Strategy 2 row includes commits`, () => {
+  it(`${relative} Strategy-Based Authority table medium_single_branch row includes commits`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
-    // Strategy 2 table row must indicate branch-manager does commits (not "None")
+    // medium_single_branch table row must indicate branch-manager does commits (not "None")
     const tableLines = content.split('\n');
     const strategy2Row = tableLines.find(
-      (line) => line.startsWith('|') && /\|\s*2\s*\(/.test(line)
+      (line) => line.startsWith('|') && line.includes('medium_single_branch')
     );
     assert.ok(
       strategy2Row !== undefined,
-      `${relative} must have a Strategy 2 row in the strategy table (format: "| 2 (...")`
+      `${relative} must have a medium_single_branch row in the strategy table`
     );
     // The row should NOT say "None" for commits column when worktree is present
     // It should reference commits or branch-manager committing
     assert.ok(
       !(/\|\s*None\s*\|.*\|\s*None\s*\|/.test(strategy2Row)),
-      `${relative} Strategy 2 row must not have None for both Commits and Merges when using worktree`
+      `${relative} medium_single_branch row must not have None for both Commits and Merges when using worktree`
     );
   });
 
-  it(`${relative} contains a Strategy 2 Workflow section`, () => {
+  it(`${relative} contains a medium_single_branch Workflow section`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     assert.ok(
-      content.includes('Strategy 2 Workflow'),
-      `${relative} must contain a "Strategy 2 Workflow" section`
+      content.includes('medium_single_branch Workflow'),
+      `${relative} must contain a "medium_single_branch Workflow" section`
     );
   });
 
-  it(`${relative} Strategy 2 Workflow describes creating a shared worktree`, () => {
+  it(`${relative} medium_single_branch Workflow describes creating a shared worktree`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
-    const s2Start = content.indexOf('Strategy 2 Workflow');
-    assert.ok(s2Start !== -1, `${relative} must contain Strategy 2 Workflow`);
-    // The section should end before the next ## heading or Strategy 3 Workflow
-    const s3Start = content.indexOf('Strategy 3 Workflow');
+    const s2Start = content.indexOf('medium_single_branch Workflow');
+    assert.ok(s2Start !== -1, `${relative} must contain medium_single_branch Workflow`);
+    // The section should end before the next ## heading or large_multi_worktree Workflow
+    const s3Start = content.indexOf('large_multi_worktree Workflow');
     const section = s3Start !== -1
       ? content.slice(s2Start, s3Start)
       : content.slice(s2Start, s2Start + 2000);
     assert.ok(
       /worktree/i.test(section),
-      `${relative} Strategy 2 Workflow must describe creating a shared worktree`
+      `${relative} medium_single_branch Workflow must describe creating a shared worktree`
     );
   });
 
-  it(`${relative} Strategy 2 Workflow states coding agents do not commit`, () => {
+  it(`${relative} medium_single_branch Workflow states coding agents do not commit`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
-    const s2Start = content.indexOf('Strategy 2 Workflow');
-    assert.ok(s2Start !== -1, `${relative} must contain Strategy 2 Workflow`);
-    const s3Start = content.indexOf('Strategy 3 Workflow');
+    const s2Start = content.indexOf('medium_single_branch Workflow');
+    assert.ok(s2Start !== -1, `${relative} must contain medium_single_branch Workflow`);
+    const s3Start = content.indexOf('large_multi_worktree Workflow');
     const section = s3Start !== -1
       ? content.slice(s2Start, s3Start)
       : content.slice(s2Start, s2Start + 2000);
     assert.ok(
       /no commit|without commit|no.*commit|uncommitted|never commit/i.test(section),
-      `${relative} Strategy 2 Workflow must state that coding agents work without committing`
+      `${relative} medium_single_branch Workflow must state that coding agents work without committing`
     );
   });
 
-  it(`${relative} Strategy 2 Workflow states branch-manager commits after gates pass`, () => {
+  it(`${relative} medium_single_branch Workflow states branch-manager commits after gates pass`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
-    const s2Start = content.indexOf('Strategy 2 Workflow');
-    assert.ok(s2Start !== -1, `${relative} must contain Strategy 2 Workflow`);
-    const s3Start = content.indexOf('Strategy 3 Workflow');
+    const s2Start = content.indexOf('medium_single_branch Workflow');
+    assert.ok(s2Start !== -1, `${relative} must contain medium_single_branch Workflow`);
+    const s3Start = content.indexOf('large_multi_worktree Workflow');
     const section = s3Start !== -1
       ? content.slice(s2Start, s3Start)
       : content.slice(s2Start, s2Start + 2000);
     assert.ok(
       /branch-manager.*commit|commit.*branch-manager/i.test(section),
-      `${relative} Strategy 2 Workflow must state that branch-manager commits after quality gates pass`
+      `${relative} medium_single_branch Workflow must state that branch-manager commits after quality gates pass`
     );
   });
 });
