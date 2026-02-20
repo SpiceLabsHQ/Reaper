@@ -3093,3 +3093,113 @@ describe('Contract: takeoff quality gate config check', () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Contract: takeoff Per-Unit Cycle has a branch-manager commit step after gates
+// ---------------------------------------------------------------------------
+
+describe('Contract: takeoff Per-Unit Cycle has branch-manager commit step after gates pass', () => {
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
+
+  it(`${relative} Per-Unit Cycle deploys reaper:branch-manager to commit after gates pass`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const perUnitSection = extractFullPerUnitCycle(content);
+    assert.ok(
+      perUnitSection.length > 0,
+      `${relative} must contain a Per-Unit Cycle section`
+    );
+    assert.ok(
+      /branch-manager.*commit|commit.*branch-manager|deploy.*branch-manager.*commit|branch-manager.*to commit/i.test(perUnitSection),
+      `Per-Unit Cycle must include a step deploying reaper:branch-manager to commit after gates pass`
+    );
+  });
+
+  it(`${relative} Per-Unit Cycle commit step is commit-only (not merge to develop)`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const perUnitSection = extractFullPerUnitCycle(content);
+    assert.ok(
+      perUnitSection.length > 0,
+      `${relative} must contain a Per-Unit Cycle section`
+    );
+    // The commit step must explicitly state it is commit-only, not merge
+    assert.ok(
+      /commit.only|commit-only|do not merge/i.test(perUnitSection),
+      `Per-Unit Cycle branch-manager commit step must be commit-only — must not merge to develop`
+    );
+  });
+
+  it(`${relative} Per-Unit Cycle commit step appears after quality gates run`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const perUnitSection = extractFullPerUnitCycle(content);
+    assert.ok(
+      perUnitSection.length > 0,
+      `${relative} must contain a Per-Unit Cycle section`
+    );
+    // The commit step must appear after "quality gates" or "gates pass"
+    const commitIdx = perUnitSection.search(/branch-manager.*commit|commit.*branch-manager/i);
+    const gatesIdx = perUnitSection.search(/quality gate|Run quality|gate.*pass/i);
+    assert.ok(
+      commitIdx !== -1,
+      `Per-Unit Cycle must contain a branch-manager commit step`
+    );
+    assert.ok(
+      gatesIdx !== -1,
+      `Per-Unit Cycle must contain a quality gates step`
+    );
+    assert.ok(
+      gatesIdx < commitIdx,
+      `Per-Unit Cycle quality gates step must appear before the branch-manager commit step ` +
+        `(gates at index ${gatesIdx}, commit at index ${commitIdx})`
+    );
+  });
+
+  it(`${relative} quick-reference summary includes branch-manager commit step`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // The quick-reference block (blockquote summary) must also reference the commit step
+    assert.ok(
+      /branch-manager.*commit|Deploy branch-manager to commit/i.test(content),
+      `${relative} must reference a "Deploy branch-manager to commit" step in the per-unit cycle summary`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: branch-manager does not contain stale dual-authorization content
+// ---------------------------------------------------------------------------
+
+describe('Contract: branch-manager does not contain stale Dual Authorization content', () => {
+  const filePath = agentFilePath('branch-manager');
+  const relative = 'agents/branch-manager.md';
+
+  it(`${relative} does not contain "allow_main_merge"`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      !content.includes('allow_main_merge'),
+      `${relative} must not contain "allow_main_merge" — this was removed when branch-manager was simplified to a pure executor`
+    );
+  });
+
+  it(`${relative} does not contain "Dual Authorization"`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      !content.includes('Dual Authorization'),
+      `${relative} must not contain "Dual Authorization" — this was removed when branch-manager was simplified to a pure executor`
+    );
+  });
+
+  it(`${relative} does not contain "dual_authorization"`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      !content.includes('dual_authorization'),
+      `${relative} must not contain "dual_authorization" — this was removed when branch-manager was simplified to a pure executor`
+    );
+  });
+});
