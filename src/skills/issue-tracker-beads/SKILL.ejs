@@ -40,6 +40,25 @@ bd create --title="Implement Google provider" --type=task --parent=<parent-id>
 
 The `--parent` flag is the sole mechanism for hierarchy. Child IDs follow the pattern `<issue-id>.1`, `<issue-id>.2`, etc.
 
+**Parent and child issues:**
+
+A parent issue organizes multiple related child issues under a single grouping. Create a parent only when a plan produces multiple work items that benefit from a shared root.
+
+```bash
+# 1. Create the parent issue (no --parent flag)
+bd create --title="Authentication overhaul" --type=task --priority=2
+# Returns: reaper-a3f
+
+# 2. Create child issues using --parent
+bd create --title="Add OAuth support" --type=task --parent=reaper-a3f
+# Returns: reaper-a3f.1
+
+bd create --title="Implement Google provider" --type=task --parent=reaper-a3f
+# Returns: reaper-a3f.2
+```
+
+**Single-issue rule:** Plans with only a single issue do not require a parent issue. Only create a parent when there are multiple child work items to organize.
+
 ### UPDATE_ISSUE
 
 ```bash

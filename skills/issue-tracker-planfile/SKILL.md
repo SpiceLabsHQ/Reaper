@@ -20,7 +20,7 @@ Derive `<task-slug>` from the task description (2-4 words, lowercase, hyphenated
 |-----------|-----------------|
 | FETCH_ISSUE | Read plan file; extract Input + Work Units sections |
 | LIST_CHILDREN | Parse Work Units table rows |
-| CREATE_ISSUE | If `type=epic` and file absent: create plan file. Otherwise: append a new row to Work Units table (next sequential `#`, status `pending`) |
+| CREATE_ISSUE | If `type=parent` and file absent: create plan file. Otherwise: append a new row to Work Units table (next sequential `#`, status `pending`) |
 | UPDATE_ISSUE | Edit the matching Work Unit row (status, description) |
 | ADD_DEPENDENCY | Update Dependencies section with blocking relationship |
 | QUERY_DEPENDENCY_TREE | Parse Dependencies section for full execution graph |
@@ -55,7 +55,9 @@ Derive `<task-slug>` from the task description (2-4 words, lowercase, hyphenated
 
 **LIST_CHILDREN**: Each row in the Work Units table is a child. The `#` column is its identifier.
 
-**CREATE_ISSUE**: When `type=epic` (the root/parent issue), check whether the plan file exists first (attempt Read; if file not found, proceed to create). If the file does not exist, use the Write tool to create it at `.claude/plans/<task-slug>.md` with this structure:
+**Single-issue rule:** Plans with only a single issue do not require a parent issue. Only create a parent when there are multiple child work items to organize.
+
+**CREATE_ISSUE**: When `type=parent` (the root/parent issue), check whether the plan file exists first (attempt Read; if file not found, proceed to create). If the file does not exist, use the Write tool to create it at `.claude/plans/<task-slug>.md` with this structure:
 
 ```markdown
 # Plan: [Title]
