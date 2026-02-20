@@ -319,6 +319,13 @@ bd sync                    # Sync with git remote
 
 **Before starting work:** Run `bd show reaper-xxx` to read the issue details and update status to "In Progress". **After merge to develop:** Update to "In Review" and add a completion comment.
 
+## Quality Gates
+
+The following commands are used during automated quality gates:
+
+**Test command**: `npm test`
+**Lint command**: `skip`
+
 ## Reference
 
 ### Agent Categories
