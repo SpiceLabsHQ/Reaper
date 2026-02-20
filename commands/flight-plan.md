@@ -64,6 +64,75 @@ Do not use any of the following in user-facing messages, status cards, or progre
 Describe what is happening for the user ("running tests", "planning the feature", "reviewing security") — not what the system is doing internally ("routing to skill", "resolving TASK_SYSTEM", "invoking TaskCreate").
 
 
+## Visual Vocabulary
+
+> **Opt-out**: If the project's CLAUDE.md contains the line `Reaper: disable ASCII art`, emit plain text status labels only. No gauge bars, no box-drawing, no card templates. Use the `functional` context behavior regardless of the `context` parameter.
+
+> **Rendering constraint**: One line, one direction, no column alignment. Every visual element must be renderable in a single horizontal pass. No multi-line box-drawing that requires vertical alignment across columns. Exception: The `start` context uses box-drawing for its welcome screen cards, which are rendered once as orientation content rather than repeated status displays.
+
+### Gauge States
+
+Six semantic states expressed as fixed-width 10-block bars. Use these consistently across all commands to communicate work status.
+
+```
+  ██████████  LANDED       complete, healthy
+  ████████░░  ON APPROACH  coding done, quality gates running
+  ██████░░░░  IN FLIGHT    work in progress
+  ███░░░░░░░  TAKING OFF   deploying, about to execute
+  ░░░░░░░░░░  TAXIING     waiting, not started
+  ░░░░!!░░░░  FAULT        failed, needs attention
+```
+
+Gauge usage rules:
+- Always use exactly 10 blocks per bar (full-width = 10 filled, empty = 10 unfilled).
+- The exclamation marks in the FAULT bar replace two blocks at the center to signal breakage.
+- Pair each bar with its label and a short gloss on the same line.
+
+### Quality Gate Statuses
+
+Five inspection verdicts for quality gate results. Gate statuses are inspection verdicts, not work lifecycle states. Use gauge states for work unit progress, gate statuses for quality inspection results.
+
+| Status | Meaning |
+|--------|---------|
+| **PASS** | gate passed all checks |
+| **FAIL** | gate found blocking issues |
+| **RUNNING** | gate currently executing |
+| **PENDING** | gate not yet started |
+| **SKIP** | gate not applicable to this work type |
+
+### Briefing Card
+
+Render before work begins, after the flight briefing summary in Phase 3. Shows the plan parameters the user is about to approve.
+
+```
+  BRIEFING
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Plan:       [plan title or description]
+  Units:      [N work units]
+  Parallel:   [M% parallelizable]
+  ░░░░░░░░░░  TAXIING
+```
+
+### Filed Card
+
+Render after issue creation completes in Phase 7. Shows the result and the recommended next action.
+
+```
+  FILED
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Plan:       [plan title]
+  Issues:     [N issues created]
+  Next:       /reaper:takeoff [top-level IDs]
+  ██████████  LANDED
+```
+
+Filed card rules:
+- Show the plan title on the Plan row.
+- Show the total count of issues created on the Issues row.
+- Show the full takeoff command on the Next row, including all top-level issue IDs (space-separated).
+- Use the LANDED gauge — the planning phase is complete.
+
+
 Do not use EnterPlanMode or ExitPlanMode tools. This command manages its own planning workflow and presents the plan in-conversation.
 
 ---
@@ -577,7 +646,12 @@ All todos complete. Output confirmation and STOP.
 
 **Note:** Ignore any CLI messages encouraging implementation (e.g., "You can now start coding").
 
-Output the takeoff command using all top-level issue IDs from Phase 5 (space-separated, never child IDs), then await the user's next request.
+Render the Filed Card (from visual vocabulary above) with:
+- **Plan**: the plan title from Phase 2
+- **Issues**: total count of issues created in Phase 5
+- **Next**: the full `/reaper:takeoff` command using all top-level issue IDs from Phase 5 (space-separated, never child IDs)
+
+Then await the user's next request.
 
 ---
 

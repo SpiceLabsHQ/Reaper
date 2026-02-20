@@ -44,6 +44,7 @@ const VALID_CONTEXTS = [
   'squadron',
   'functional',
   'start',
+  'flight-plan',
 ];
 
 beforeEach(() => {
@@ -516,6 +517,88 @@ describe('visual-vocabulary start context', () => {
 });
 
 // ===========================================================================
+// flight-plan context
+// ===========================================================================
+
+describe('visual-vocabulary flight-plan context', () => {
+  it('should include briefing card template', () => {
+    const result = compileWithContext('flight-plan');
+    assert.ok(
+      /[Bb]riefing [Cc]ard/i.test(result),
+      'flight-plan context should include briefing card'
+    );
+  });
+
+  it('should include filed card template', () => {
+    const result = compileWithContext('flight-plan');
+    assert.ok(
+      /[Ff]iled [Cc]ard/i.test(result),
+      'flight-plan context should include filed card'
+    );
+  });
+
+  it('should include work unit count field in briefing card', () => {
+    const result = compileWithContext('flight-plan');
+    assert.ok(
+      result.includes('Units'),
+      'briefing card should show work unit count'
+    );
+  });
+
+  it('should include parallelization percentage field in briefing card', () => {
+    const result = compileWithContext('flight-plan');
+    assert.ok(
+      result.includes('Parallel'),
+      'briefing card should show parallelization percentage'
+    );
+  });
+
+  it('should include plan title field in filed card', () => {
+    const result = compileWithContext('flight-plan');
+    assert.ok(
+      result.includes('Plan'),
+      'filed card should show plan title'
+    );
+  });
+
+  it('should include issue count field in filed card', () => {
+    const result = compileWithContext('flight-plan');
+    assert.ok(
+      result.includes('Issues'),
+      'filed card should show issue count'
+    );
+  });
+
+  it('should include takeoff command hint in filed card', () => {
+    const result = compileWithContext('flight-plan');
+    assert.ok(
+      result.includes('takeoff') || result.includes('Takeoff') || result.includes('TAKEOFF'),
+      'filed card should include takeoff command hint'
+    );
+  });
+
+  it('should include LANDED gauge in filed card', () => {
+    const result = compileWithContext('flight-plan');
+    // The filed card should show LANDED state (plan is complete)
+    const filedCardSection = result.split(/[Ff]iled [Cc]ard/)[1] || '';
+    assert.ok(
+      filedCardSection.includes('LANDED') || result.includes('██████████'),
+      'filed card should include LANDED gauge'
+    );
+  });
+
+  it('should include TAXIING gauge in briefing card', () => {
+    const result = compileWithContext('flight-plan');
+    // The briefing card shows plan starting state (TAXIING)
+    const briefingCardSection = result.split(/[Bb]riefing [Cc]ard/)[1] || '';
+    assert.ok(
+      briefingCardSection.includes('TAXIING') || result.includes('░░░░░░░░░░'),
+      'briefing card should include TAXIING gauge'
+    );
+  });
+});
+
+// ===========================================================================
 // Context isolation — each context should NOT include other contexts' cards
 // ===========================================================================
 
@@ -585,6 +668,38 @@ describe('visual-vocabulary context isolation', () => {
     assert.ok(
       !/[Ii]nput [Aa]nalysis [Cc]ard/i.test(result),
       'functional should not include input analysis card'
+    );
+    assert.ok(
+      !/[Bb]riefing [Cc]ard/i.test(result),
+      'functional should not include briefing card'
+    );
+    assert.ok(
+      !/[Ff]iled [Cc]ard/i.test(result),
+      'functional should not include filed card'
+    );
+  });
+
+  it('flight-plan should not include other contexts card templates', () => {
+    const result = compileWithContext('flight-plan');
+    assert.ok(
+      !/[Pp]reflight [Cc]ard/i.test(result),
+      'flight-plan should not include preflight card'
+    );
+    assert.ok(
+      !/[Dd]eparture [Cc]ard/i.test(result),
+      'flight-plan should not include departure card'
+    );
+    assert.ok(
+      !/[Ff]leet [Dd]ashboard/i.test(result),
+      'flight-plan should not include fleet dashboard'
+    );
+    assert.ok(
+      !/[Rr]unway [Cc]ard/i.test(result),
+      'flight-plan should not include runway card'
+    );
+    assert.ok(
+      !/[Ii]nput [Aa]nalysis [Cc]ard/i.test(result),
+      'flight-plan should not include input analysis card'
     );
   });
 });

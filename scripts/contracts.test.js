@@ -1160,7 +1160,7 @@ describe('Contract: takeoff Step 3.5 passes lightweight PLAN_CONTEXT reference (
  * Command files that include the visual-vocabulary partial.
  * Each must contain the six gauge state labels in their generated output.
  */
-const VISUAL_VOCAB_COMMANDS = ['takeoff', 'ship', 'status-worktrees', 'squadron'];
+const VISUAL_VOCAB_COMMANDS = ['takeoff', 'ship', 'status-worktrees', 'squadron', 'flight-plan'];
 
 /**
  * The six canonical gauge state labels from the visual-vocabulary partial.
@@ -2818,6 +2818,47 @@ describe('Contract: flight-plan does not hardcode platform skill names outside P
       `${relative} contains ${occurrences} occurrences of "reaper:issue-tracker-planfile" but at most 1 is allowed (Phase 1 routing table only). ` +
       `Extra occurrences outside Phase 1 are platform-skill name hardcoding violations — ` +
       `use abstract operations (CREATE_ISSUE, CLOSE_ISSUE) and the loaded platform skill instead.`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: flight-plan contains visual vocabulary card templates
+// ---------------------------------------------------------------------------
+
+describe('Contract: flight-plan contains visual vocabulary card templates', () => {
+  const filePath = commandFilePath('flight-plan');
+  const relative = 'commands/flight-plan.md';
+
+  it(`${relative} exists`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found at ${filePath}`);
+  });
+
+  it(`${relative} contains briefing card template`, () => {
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /[Bb]riefing [Cc]ard/i.test(content),
+      `${relative} is missing the Briefing Card template from visual-vocabulary`
+    );
+  });
+
+  it(`${relative} contains filed card template`, () => {
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /[Ff]iled [Cc]ard/i.test(content),
+      `${relative} is missing the Filed Card template from visual-vocabulary`
+    );
+  });
+
+  it(`${relative} renders filed card in Phase 7 completion output`, () => {
+    const content = fs.readFileSync(filePath, 'utf8');
+    // Phase 7 contains the completion instructions; filed card should appear there
+    const phase7Start = content.indexOf('Phase 7');
+    assert.ok(phase7Start >= 0, `${relative} is missing Phase 7`);
+    const phase7Content = content.slice(phase7Start);
+    assert.ok(
+      /[Ff]iled [Cc]ard/i.test(phase7Content) || phase7Content.includes('FILED') || phase7Content.includes('LANDED'),
+      `${relative} Phase 7 should reference the Filed Card or LANDED gauge`
     );
   });
 });
