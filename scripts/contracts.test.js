@@ -3042,3 +3042,97 @@ describe('Contract: takeoff dirty-root escalation', () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Contract: takeoff quality gate config check (pre-flight advisory)
+// ---------------------------------------------------------------------------
+
+describe('Contract: takeoff quality gate config check', () => {
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
+
+  it(`${relative} has a Quality Gate Config Check section`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      hasSection(content, /Quality Gate Config Check/i),
+      `${relative} must contain a "## Quality Gate Config Check" section (pre-flight advisory for missing gate commands)`
+    );
+  });
+
+  it(`${relative} Quality Gate Config Check section appears before Preflight Announcement`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const configCheckIdx = content.indexOf('## Quality Gate Config Check');
+    const preflightIdx = content.indexOf('## Preflight Announcement');
+    assert.ok(
+      configCheckIdx !== -1,
+      `${relative} must contain "## Quality Gate Config Check"`
+    );
+    assert.ok(
+      preflightIdx !== -1,
+      `${relative} must contain "## Preflight Announcement"`
+    );
+    assert.ok(
+      configCheckIdx < preflightIdx,
+      `${relative} "## Quality Gate Config Check" must appear before "## Preflight Announcement" ` +
+        `(found at index ${configCheckIdx}, Preflight at ${preflightIdx})`
+    );
+  });
+
+  it(`${relative} Quality Gate Config Check section references configure-quality-gates`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const sectionStart = content.indexOf('## Quality Gate Config Check');
+    assert.ok(sectionStart !== -1, `${relative} must contain "## Quality Gate Config Check"`);
+
+    // Extract the section content up to the next ## heading
+    const rest = content.slice(sectionStart);
+    const nextHeadingMatch = rest.match(/\n## [^#]/);
+    const section = nextHeadingMatch
+      ? rest.slice(0, nextHeadingMatch.index)
+      : rest;
+
+    assert.ok(
+      section.includes('configure-quality-gates'),
+      `Quality Gate Config Check section must reference "/reaper:configure-quality-gates" command`
+    );
+  });
+
+  it(`${relative} Quality Gate Config Check section is non-blocking`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const sectionStart = content.indexOf('## Quality Gate Config Check');
+    assert.ok(sectionStart !== -1, `${relative} must contain "## Quality Gate Config Check"`);
+
+    const rest = content.slice(sectionStart);
+    const nextHeadingMatch = rest.match(/\n## [^#]/);
+    const section = nextHeadingMatch
+      ? rest.slice(0, nextHeadingMatch.index)
+      : rest;
+
+    assert.ok(
+      /non-blocking|continue|advisory/i.test(section),
+      `Quality Gate Config Check section must be non-blocking (takeoff continues regardless)`
+    );
+  });
+
+  it(`${relative} Quality Gate Config Check section requires no tool calls`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const sectionStart = content.indexOf('## Quality Gate Config Check');
+    assert.ok(sectionStart !== -1, `${relative} must contain "## Quality Gate Config Check"`);
+
+    const rest = content.slice(sectionStart);
+    const nextHeadingMatch = rest.match(/\n## [^#]/);
+    const section = nextHeadingMatch
+      ? rest.slice(0, nextHeadingMatch.index)
+      : rest;
+
+    // The check must not require Bash or Read tool calls — it is prompt-level only
+    assert.ok(
+      /loaded context|CLAUDE\.md|context/i.test(section),
+      `Quality Gate Config Check must operate on loaded context (no tool calls) — check should inspect CLAUDE.md or loaded context`
+    );
+  });
+});
