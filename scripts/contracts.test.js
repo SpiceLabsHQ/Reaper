@@ -3205,6 +3205,145 @@ describe('Contract: branch-manager does not contain stale Dual Authorization con
 });
 
 // ---------------------------------------------------------------------------
+// Contract: branch-manager large_multi_worktree merge isolation invariant
+// ---------------------------------------------------------------------------
+//
+// The large_multi_worktree merge step must NEVER use `git checkout` in the root
+// context. All merges must happen inside a temporary integration worktree so
+// that conflicts surface in ./trees/, not in the root workspace.
+//
+// Pattern enforced:
+//   git branch integration-temp feature/[TASK_ID]-review
+//   git worktree add ./trees/[TASK_ID]-integration integration-temp
+//   git -C ./trees/[TASK_ID]-integration merge feature/[TASK_ID]-[COMPONENT] --no-ff
+//   git branch -f feature/[TASK_ID]-review integration-temp
+//   git worktree remove ./trees/[TASK_ID]-integration && git branch -d integration-temp
+// ---------------------------------------------------------------------------
+
+describe('Contract: branch-manager large_multi_worktree merge uses isolated integration worktree', () => {
+  const filePath = agentFilePath('branch-manager');
+  const relative = 'agents/branch-manager.md';
+
+  // Helper: extract the large_multi_worktree Workflow section text
+  function getLargeMultiSection(content) {
+    const start = content.indexOf('large_multi_worktree Workflow');
+    if (start === -1) return '';
+    // Section ends at the next ## heading or end of file
+    const afterStart = content.slice(start);
+    const nextSection = afterStart.search(/\n## /);
+    return nextSection !== -1 ? afterStart.slice(0, nextSection) : afterStart;
+  }
+
+  it(`${relative} large_multi_worktree Workflow section exists`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('large_multi_worktree Workflow'),
+      `${relative} must contain a "large_multi_worktree Workflow" section`
+    );
+  });
+
+  it(`${relative} large_multi_worktree Workflow does not use bare 'git checkout' outside ./trees/ context`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getLargeMultiSection(content);
+    assert.ok(section.length > 0, `${relative} must have a large_multi_worktree Workflow section`);
+
+    // Only examine lines where 'git checkout' appears as an executed command, not as a
+    // prose prohibition. Command lines are those that start with 'git checkout' (after
+    // optional whitespace / backtick / shell-prompt markers) and are not describing a
+    // prohibition (i.e., the line does NOT contain "never", "not", "instead", "avoid").
+    const lines = section.split('\n');
+    const bareCheckoutLines = lines.filter((line) => {
+      // The line must contain 'git checkout' as a potential command
+      if (!/git checkout\b/.test(line)) return false;
+      // Skip lines that are prose prohibitions — they describe what NOT to do
+      if (/never|not|avoid|instead|prohibited/i.test(line)) return false;
+      // A command line starts with optional whitespace/backtick then 'git checkout'
+      // (after stripping list markers like "- " or "   ")
+      return /^\s*`?\s*git checkout\b/.test(line);
+    });
+    assert.strictEqual(
+      bareCheckoutLines.length,
+      0,
+      `${relative} large_multi_worktree Workflow must not execute bare 'git checkout' as a command. ` +
+      `Found: ${bareCheckoutLines.map((l) => l.trim()).join('; ')}`
+    );
+  });
+
+  it(`${relative} large_multi_worktree Workflow uses 'git worktree add' for integration worktree`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getLargeMultiSection(content);
+    assert.ok(section.length > 0, `${relative} must have a large_multi_worktree Workflow section`);
+    assert.ok(
+      /git worktree add.*integration/i.test(section),
+      `${relative} large_multi_worktree Workflow must use 'git worktree add' to create an integration worktree`
+    );
+  });
+
+  it(`${relative} large_multi_worktree Workflow runs merge via 'git -C ./trees/' (not in root)`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getLargeMultiSection(content);
+    assert.ok(section.length > 0, `${relative} must have a large_multi_worktree Workflow section`);
+    assert.ok(
+      /git -C \.\/trees\/.*merge/i.test(section),
+      `${relative} large_multi_worktree Workflow must run merge inside a worktree via 'git -C ./trees/...'`
+    );
+  });
+
+  it(`${relative} large_multi_worktree Workflow uses 'git branch -f' to advance review branch ref without checkout`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getLargeMultiSection(content);
+    assert.ok(section.length > 0, `${relative} must have a large_multi_worktree Workflow section`);
+    assert.ok(
+      /git branch -f/.test(section),
+      `${relative} large_multi_worktree Workflow must use 'git branch -f' to advance the review branch ref ` +
+      `without switching root's branch`
+    );
+  });
+
+  it(`${relative} large_multi_worktree Workflow cleans up integration worktree after merge`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getLargeMultiSection(content);
+    assert.ok(section.length > 0, `${relative} must have a large_multi_worktree Workflow section`);
+    assert.ok(
+      /worktree remove.*integration|git branch -d.*integration/i.test(section),
+      `${relative} large_multi_worktree Workflow must clean up the integration worktree and temp branch after merge`
+    );
+  });
+
+  it(`${relative} Safety Protocols rule #5 clarifies teardown navigation is distinct from merge operations`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // Rule 5 should now distinguish teardown (where root navigation is valid)
+    // from merge operations (which must always use isolated worktrees)
+    const safetySection = (() => {
+      const start = content.indexOf('Safety Protocols');
+      if (start === -1) return '';
+      const after = content.slice(start);
+      const next = after.search(/\n## /);
+      return next !== -1 ? after.slice(0, next) : after;
+    })();
+    assert.ok(
+      safetySection.length > 0,
+      `${relative} must contain a Safety Protocols section`
+    );
+    assert.ok(
+      /teardown|tear.?down/i.test(safetySection),
+      `${relative} Safety Protocols rule #5 must specifically mention teardown as the valid use case for root navigation`
+    );
+    assert.ok(
+      /never.*merge|merge.*never|merge.*isolation|isolation.*merge|not.*for.*merge|merge.*not/i.test(safetySection),
+      `${relative} Safety Protocols must clarify that root navigation is not for merge operations`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Contract: commands contain mission banner
 // ---------------------------------------------------------------------------
 
