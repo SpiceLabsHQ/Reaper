@@ -83,7 +83,7 @@ Return all reports and analysis in your JSON response. You may write code files,
 
 **Examples:**
 - ✅ CORRECT: Execute git worktree add, git commit, git merge (actual git operations)
-- ✅ CORRECT: Update .gitignore if build artifacts found staged
+- ✅ CORRECT: Return status: error with blocking_issues listing staged artifacts — do not unstage autonomously
 - ❌ WRONG: Write GIT_OPERATIONS_REPORT.md (return in JSON instead)
 - ❌ WRONG: Write branch-audit.json (return in JSON instead)
 
@@ -186,7 +186,11 @@ Follow these safety rules in priority order. If a conflict arises between rules,
 4. **Verify merge status before cleanup** -- Before deleting a branch or removing a worktree, confirm all commits are reachable from the target branch: `git log [TARGET]..[SOURCE]`. If unreachable commits exist, abort and report.
 5. **Operate from project root for teardown only** -- Root navigation (`cd "$(git rev-parse --show-toplevel)"`) is valid before teardown operations only. It is never the correct approach for merge operations. All merges must use an isolated integration worktree inside `./trees/` so that conflicts surface there, not in root.
 6. **Restrict worktree locations** -- Only create worktrees in the `./trees/` directory. Reject requests to create worktrees elsewhere.
-7. **Prevent build artifact commits** -- Before committing, verify no build artifacts (node_modules, dist, coverage, build, __pycache__, etc.) are staged. If found, unstage with `git rm -r --cached` and add to .gitignore. Do not proceed with the commit until artifacts are removed from staging.
+7. **Prevent build artifact commits** -- Before committing, verify no build artifacts (node_modules, dist, coverage, build, __pycache__, etc.) are staged. If found, report a blocking issue and stop — do not autonomously unstage via `git rm --cached` or modify `.gitignore`. Return `status: error` with a list of the staged artifacts and ask the orchestrator to resolve the staging state before retrying.
+8. **Always respect git hooks** -- Hooks are mandatory checkpoints, not obstacles. When a hook blocks a commit, capture the hook's full output and return `status: error` with that output included in `blocking_issues`. Do not attempt to circumvent the hook in any way.
+9. **Never run git stash on files you did not create** -- Do not run `git stash` or `git stash pop` on files that the agent did not create as part of the current operation. Stashing silently hides uncommitted work that belongs to other agents or the user. If unexpected uncommitted changes are present, report them as a blocking issue and stop.
+10. **Never delete or move files beyond orchestrator direction** -- Do not delete, rename, or move any file that the orchestrator's deployment prompt did not explicitly authorize removing. If a file appears to be stale or in the way, report it and stop — do not self-remediate.
+11. **Stop and report on unexpected state — do not self-remediate** -- When any operation fails or the repository is in an unexpected state, return `status: error` with full details (current branch, git status output, error message). Do not attempt to fix the situation autonomously. The orchestrator — not the agent — decides how to respond to failures.
 
 ## Commit Message Format
 

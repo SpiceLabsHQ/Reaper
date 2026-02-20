@@ -3344,6 +3344,200 @@ describe('Contract: branch-manager large_multi_worktree merge uses isolated inte
 });
 
 // ---------------------------------------------------------------------------
+// Contract: branch-manager stop-and-report doctrine and explicit prohibitions
+// ---------------------------------------------------------------------------
+//
+// The branch-manager must never autonomously self-remediate failures. When any
+// operation fails or the repo is in an unexpected state, the agent must stop
+// and return status: error with details — not attempt to fix the situation.
+//
+// Specific prohibitions enforced here:
+//   1. Hooks are mandatory: always respect git hooks, never circumvent them
+//   2. No git stash on files the agent did not create
+//   3. No autonomous file deletion or movement beyond orchestrator direction
+//   4. Safety Protocol #7 (staged artifact detection): report and stop, do not
+//      autonomously unstage (git rm --cached) or modify .gitignore
+//   5. Stop-and-report doctrine: return status: error on unexpected state
+// ---------------------------------------------------------------------------
+
+describe('Contract: branch-manager hook respect obligation', () => {
+  const filePath = agentFilePath('branch-manager');
+  const relative = 'agents/branch-manager.md';
+
+  it(`${relative} states the positive obligation to always respect git hooks`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const prose = stripCodeBlocks(content);
+    assert.ok(
+      /hooks are mandatory|always respect.*hook|respect git hook/i.test(prose),
+      `${relative} must state the positive obligation that git hooks are mandatory checkpoints to be respected`
+    );
+  });
+
+  it(`${relative} instructs capturing hook output and returning status: error when a hook blocks`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const prose = stripCodeBlocks(content);
+    assert.ok(
+      /hook.*block|hook.*output|hook.*status.*error|hook.*blocking_issues/i.test(prose),
+      `${relative} must instruct the agent to capture hook output and return status: error when a hook blocks a commit`
+    );
+  });
+
+  it(`${relative} states hook failure is a real failure to report`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const prose = stripCodeBlocks(content);
+    assert.ok(
+      /hook.*fail.*report|hook.*fail.*stop|hook failure.*real|pre-commit.*fail|hook.*block.*commit/i.test(prose),
+      `${relative} must state that hook failure is a real failure to be reported, not bypassed`
+    );
+  });
+});
+
+describe('Contract: branch-manager prohibits autonomous git stash', () => {
+  const filePath = agentFilePath('branch-manager');
+  const relative = 'agents/branch-manager.md';
+
+  it(`${relative} prohibits git stash on files the agent did not create`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const prose = stripCodeBlocks(content);
+    assert.ok(
+      /git stash/i.test(prose),
+      `${relative} must explicitly mention "git stash" as a prohibited operation`
+    );
+    const stashLines = prose
+      .split('\n')
+      .filter((line) => /git stash/i.test(line));
+    const hasProhibitionContext = stashLines.some((line) =>
+      /never|prohibit|not.*use|must not|forbidden|do not/i.test(line)
+    );
+    assert.ok(
+      hasProhibitionContext,
+      `${relative} must use "git stash" in a prohibition context — found lines: ${stashLines.map((l) => l.trim()).join('; ')}`
+    );
+  });
+
+  it(`${relative} prohibits git stash pop`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const prose = stripCodeBlocks(content);
+    assert.ok(
+      /git stash pop|stash.*pop/i.test(prose),
+      `${relative} must explicitly mention "git stash pop" as a prohibited operation`
+    );
+  });
+});
+
+describe('Contract: branch-manager prohibits autonomous file deletion and movement', () => {
+  const filePath = agentFilePath('branch-manager');
+  const relative = 'agents/branch-manager.md';
+
+  it(`${relative} prohibits deleting or moving files beyond orchestrator direction`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const prose = stripCodeBlocks(content);
+    assert.ok(
+      /never.*delete.*file|never.*move.*file|do not.*delete.*file|do not.*move.*file|prohibit.*delet|prohibit.*mov/i.test(prose),
+      `${relative} must explicitly prohibit deleting or moving files beyond what the orchestrator directed`
+    );
+  });
+});
+
+describe('Contract: branch-manager Safety Protocol #7 uses stop-and-report for staged artifacts', () => {
+  const filePath = agentFilePath('branch-manager');
+  const relative = 'agents/branch-manager.md';
+
+  // Helper: extract the Safety Protocols section
+  function getSafetySection(content) {
+    const start = content.indexOf('Safety Protocols');
+    if (start === -1) return '';
+    const after = content.slice(start);
+    const next = after.search(/\n## /);
+    return next !== -1 ? after.slice(0, next) : after;
+  }
+
+  it(`${relative} Safety Protocol for staged artifacts reports and stops — does not autonomously unstage`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const safetySection = getSafetySection(content);
+    assert.ok(safetySection.length > 0, `${relative} must contain a Safety Protocols section`);
+
+    // Must mention reporting / blocking on artifact discovery
+    assert.ok(
+      /report.*block|block.*report|stop.*report|report.*stop|blocking issue/i.test(safetySection),
+      `${relative} Safety Protocols staged artifact rule must require reporting a blocking issue and stopping`
+    );
+
+    // Must NOT instruct autonomous unstaging via git rm --cached as the resolution
+    // (it may mention it as the old behavior in a prohibition, but must not be the directive)
+    const lines = safetySection.split('\n');
+    const unstageDirectiveLines = lines.filter((line) => {
+      if (!/git rm.*--cached|git rm -r.*--cached/.test(line)) return false;
+      // Skip lines that are prohibitions or "old behavior" notes
+      if (/never|not|prohibit|do not|instead|old|was|removed|stop/i.test(line)) return false;
+      // A directive line starts with directive verbs or is in a code block context
+      return /unstage|remove.*staging|rm.*--cached/.test(line);
+    });
+    assert.strictEqual(
+      unstageDirectiveLines.length,
+      0,
+      `${relative} Safety Protocols must not instruct autonomous 'git rm --cached' as artifact remediation. ` +
+        `Found directive lines: ${unstageDirectiveLines.map((l) => l.trim()).join('; ')}`
+    );
+  });
+
+  it(`${relative} Safety Protocol for staged artifacts does not autonomously modify .gitignore`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const safetySection = getSafetySection(content);
+    assert.ok(safetySection.length > 0, `${relative} must contain a Safety Protocols section`);
+
+    // The safety section must not instruct adding to .gitignore as part of artifact remediation
+    const lines = safetySection.split('\n');
+    const gitignoreDirectiveLines = lines.filter((line) => {
+      if (!/.gitignore/.test(line)) return false;
+      // Skip prohibition lines
+      if (/never|not|prohibit|do not|instead|stop/i.test(line)) return false;
+      // A directive to add to .gitignore as resolution
+      return /add.*\.gitignore|\.gitignore.*add|update.*\.gitignore/.test(line);
+    });
+    assert.strictEqual(
+      gitignoreDirectiveLines.length,
+      0,
+      `${relative} Safety Protocols must not instruct autonomous .gitignore modification as artifact remediation. ` +
+        `Found directive lines: ${gitignoreDirectiveLines.map((l) => l.trim()).join('; ')}`
+    );
+  });
+});
+
+describe('Contract: branch-manager stop-and-report doctrine on unexpected state', () => {
+  const filePath = agentFilePath('branch-manager');
+  const relative = 'agents/branch-manager.md';
+
+  it(`${relative} requires returning status: error when operation fails or repo is in unexpected state`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const prose = stripCodeBlocks(content);
+    assert.ok(
+      /status.*error.*unexpected|unexpected.*state.*stop|fail.*stop.*report|stop.*and.*report|self.?remediat/i.test(prose),
+      `${relative} must contain a stop-and-report doctrine: on failure or unexpected state, return status: error — do not self-remediate`
+    );
+  });
+
+  it(`${relative} explicitly prohibits self-remediation`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const prose = stripCodeBlocks(content);
+    assert.ok(
+      /do not self.?remediat|never.*self.?remediat|self.?remediat.*prohibit|not.*attempt.*fix|do not.*attempt.*fix/i.test(prose),
+      `${relative} must explicitly prohibit self-remediation (the orchestrator, not the agent, decides how to respond to failures)`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Contract: commands contain mission banner
 // ---------------------------------------------------------------------------
 
