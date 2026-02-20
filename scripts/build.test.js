@@ -1976,6 +1976,120 @@ describe('output-requirements partial: orchestrator extraction rules', () => {
 });
 
 // ===========================================================================
+// branch-manager.ejs: authority model and strategy naming
+// ===========================================================================
+
+describe('branch-manager.ejs: pure executor authority model', () => {
+  const BRANCH_MANAGER_SRC = path.join(__dirname, '..', 'src', 'agents', 'branch-manager.ejs');
+
+  function readBranchManagerSrc() {
+    return fs.readFileSync(BRANCH_MANAGER_SRC, 'utf8');
+  }
+
+  it('should not contain "Dual Authorization" section', () => {
+    const content = readBranchManagerSrc();
+    assert.ok(
+      !content.includes('Dual Authorization'),
+      'branch-manager.ejs must not contain "Dual Authorization" — authorization belongs to the orchestrator'
+    );
+  });
+
+  it('should not contain "allow_main_merge" references', () => {
+    const content = readBranchManagerSrc();
+    assert.ok(
+      !content.includes('allow_main_merge'),
+      'branch-manager.ejs must not reference allow_main_merge flag'
+    );
+  });
+
+  it('should not contain contradictory "Feature branches merge to develop only" constraint', () => {
+    const content = readBranchManagerSrc();
+    assert.ok(
+      !content.includes('Feature branches merge to develop only'),
+      'branch-manager.ejs must not contain "Feature branches merge to develop only" — orchestrator decides merge targets'
+    );
+  });
+
+  it('should contain pure executor framing', () => {
+    const content = readBranchManagerSrc();
+    assert.ok(
+      content.includes('pure executor') || content.includes('pure-executor'),
+      'branch-manager.ejs must declare itself a pure executor — authorization decisions belong to the orchestrator'
+    );
+  });
+
+  it('should use "very_small_direct" strategy name in strategy table', () => {
+    const content = readBranchManagerSrc();
+    assert.ok(
+      content.includes('very_small_direct'),
+      'Strategy table must use "very_small_direct" naming to align with takeoff'
+    );
+  });
+
+  it('should use "medium_single_branch" strategy name in strategy table', () => {
+    const content = readBranchManagerSrc();
+    assert.ok(
+      content.includes('medium_single_branch'),
+      'Strategy table must use "medium_single_branch" naming to align with takeoff'
+    );
+  });
+
+  it('should use "large_multi_worktree" strategy name in strategy table', () => {
+    const content = readBranchManagerSrc();
+    assert.ok(
+      content.includes('large_multi_worktree'),
+      'Strategy table must use "large_multi_worktree" naming to align with takeoff'
+    );
+  });
+
+  it('should retain Strategy 2 (medium_single_branch) Workflow section', () => {
+    const content = readBranchManagerSrc();
+    // The workflow section describes single shared worktree approach
+    assert.ok(
+      content.includes('shared worktree') || content.includes('Shared worktree'),
+      'medium_single_branch workflow section must remain intact'
+    );
+  });
+
+  it('should retain Strategy 3 (large_multi_worktree) Workflow section', () => {
+    const content = readBranchManagerSrc();
+    // The workflow section describes review branch consolidation
+    assert.ok(
+      content.includes('review branch') || content.includes('Review branch'),
+      'large_multi_worktree workflow section must remain intact'
+    );
+  });
+
+  it('should not contain "dual_authorization_met" in JSON response format', () => {
+    const content = readBranchManagerSrc();
+    assert.ok(
+      !content.includes('dual_authorization_met'),
+      'JSON response format must not include dual_authorization_met field'
+    );
+  });
+
+  it('should contain precondition check for missing authorization evidence on commit/merge operations', () => {
+    const content = readBranchManagerSrc();
+    // Must instruct the agent to return an error when the deployment prompt
+    // lacks explicit confirmation that quality gates passed and user authorization
+    // was obtained — without re-adding Dual Authorization or allow_main_merge.
+    const hasMissingEvidence =
+      content.includes('missing authorization evidence') ||
+      content.includes('Missing authorization evidence');
+    const hasErrorResponse =
+      content.includes('status: error') || content.includes('"status": "error"');
+    assert.ok(
+      hasMissingEvidence,
+      'branch-manager.ejs must contain a precondition check for missing authorization evidence'
+    );
+    assert.ok(
+      hasErrorResponse,
+      'branch-manager.ejs must instruct the agent to return status: error when evidence is missing'
+    );
+  });
+});
+
+// ===========================================================================
 // work-unit-cleanup partial: background task cleanup instructions
 // ===========================================================================
 
