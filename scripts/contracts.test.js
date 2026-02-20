@@ -856,6 +856,7 @@ const ALL_COMMANDS = [
   'squadron',
   'claude-sync',
   'start',
+  'configure-quality-gates',
 ];
 
 /**
@@ -971,6 +972,16 @@ const COMMAND_SEMANTIC_CONTRACTS = {
       { pattern: /Mode 2/i, label: 'mode 2 input classification section' },
     ],
   },
+  'configure-quality-gates': {
+    label: 'configure-quality-gates command',
+    commands: () => ['configure-quality-gates'],
+    sections: [
+      { pattern: /detection/i, label: 'detection section' },
+      { pattern: /approval flow/i, label: 'approval flow section' },
+      { pattern: /claude\.md write/i, label: 'claude.md write section' },
+      { pattern: /commit/i, label: 'commit section' },
+    ],
+  },
 };
 
 /**
@@ -1012,6 +1023,7 @@ registerCommandSemanticSuite('flight-plan');
 registerCommandSemanticSuite('squadron');
 registerCommandSemanticSuite('claude-sync');
 registerCommandSemanticSuite('start');
+registerCommandSemanticSuite('configure-quality-gates');
 
 // ---------------------------------------------------------------------------
 // Contract: takeoff materializes PLAN_CONTEXT before Gate 2 dispatch
@@ -2822,6 +2834,7 @@ const PRIMARY_WORKFLOW_COMMANDS = [
   'status-worktrees',
   'start',
   'claude-sync',
+  'configure-quality-gates',
 ];
 
 describe('Contract: user communication contract included in all primary workflow commands', () => {

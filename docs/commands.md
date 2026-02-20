@@ -351,4 +351,59 @@ Reaper offers to apply high-priority suggestions directly to `CLAUDE.md`, create
 
 ---
 
+## /reaper:configure-quality-gates
+
+**Detect and configure quality gate test and lint commands for this project.**
+
+Scans the project to identify the test runner and linter in use, confirms the commands with you, and writes a `## Quality Gates` section to `CLAUDE.md`. Run this once per project so automated quality gate checks know which commands to execute.
+
+### Usage
+
+```
+/reaper:configure-quality-gates
+```
+
+No arguments. Everything is resolved by detection and interactive confirmation.
+
+### What happens
+
+1. **Detection.** Scans the project root for ecosystem configuration files and identifies candidate test and lint commands. Works through each ecosystem in order and collects every candidate found.
+2. **Existing configuration check.** If a `## Quality Gates` section already exists in `CLAUDE.md`, shows the current values and asks whether to keep them or update.
+3. **Approval flow.** Presents detected commands and asks you to confirm, enter custom commands, or skip lint. A final confirmation step shows the resolved commands before anything is written.
+4. **CLAUDE.md write.** Appends or updates the `## Quality Gates` section in `CLAUDE.md` with the confirmed commands. No other files are modified.
+5. **Commit.** Commits the change with `chore(config): add quality gate commands to CLAUDE.md`.
+
+### Supported ecosystems
+
+| Ecosystem | Detection | Test command | Lint command |
+|-----------|-----------|--------------|--------------|
+| JavaScript / TypeScript | `package.json` scripts | `npm test` or `test` script | `npm run lint` or `lint` script |
+| Python | `pytest.ini`, `pyproject.toml`, `setup.cfg` | `pytest` | `ruff check .` or `pylint .` |
+| Go | `go.mod` | `go test ./...` | `make lint` or `golangci-lint run` |
+| Rust | `Cargo.toml` | `cargo test` | `cargo clippy` |
+| Makefile fallback | `Makefile` with `test:` / `lint:` targets | `make test` | `make lint` |
+
+When multiple ecosystems are detected, all candidates are shown and the most specific (language-native over Makefile) is recommended.
+
+### CLAUDE.md format written
+
+```markdown
+## Quality Gates
+
+The following commands are used during automated quality gates:
+
+**Test command**: `<test-command>`
+**Lint command**: `<lint-command>`
+```
+
+Use `lint: skip` to suppress the missing-lint warning when the project has no linter.
+
+### Scope
+
+- Writes only to `CLAUDE.md` -- no other files are modified
+- Does not run the detected commands or validate that they work
+- Does not configure CI or any external system
+
+---
+
 [Back to README](../README.md)
