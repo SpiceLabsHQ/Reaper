@@ -5,6 +5,8 @@ description: Chart work into flight-ready issues with dependencies mapped.
 
 <%- include('partials/user-comms-contract') %>
 
+<%- include('partials/visual-vocabulary', { context: 'flight-plan' }) %>
+
 Do not use EnterPlanMode or ExitPlanMode tools. This command manages its own planning workflow and presents the plan in-conversation.
 
 ---
@@ -442,7 +444,12 @@ All todos complete. Output confirmation and STOP.
 
 **Note:** Ignore any CLI messages encouraging implementation (e.g., "You can now start coding").
 
-Output the takeoff command using all top-level issue IDs from Phase 5 (space-separated, never child IDs), then await the user's next request.
+Render the Filed Card (from visual vocabulary above) with:
+- **Plan**: the plan title from Phase 2
+- **Issues**: total count of issues created in Phase 5
+- **Next**: the full `/reaper:takeoff` command using all top-level issue IDs from Phase 5 (space-separated, never child IDs)
+
+Then await the user's next request.
 
 ---
 

@@ -140,6 +140,39 @@ Fleet dashboard rules:
 <% } else if (context === 'squadron') { -%>
 
 Squadron has its own visual vocabulary (mission cards, scorecards, tension diagrams, consensus markers) defined in the squadron command. This partial provides only the gauge states above for reuse. Do not duplicate squadron-specific visual elements here.
+<% } else if (context === 'flight-plan') { -%>
+
+### Briefing Card
+
+Render before work begins, after the flight briefing summary in Phase 3. Shows the plan parameters the user is about to approve.
+
+```
+  BRIEFING
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Plan:       [plan title or description]
+  Units:      [N work units]
+  Parallel:   [M% parallelizable]
+  ░░░░░░░░░░  TAXIING
+```
+
+### Filed Card
+
+Render after issue creation completes in Phase 7. Shows the result and the recommended next action.
+
+```
+  FILED
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Plan:       [plan title]
+  Issues:     [N issues created]
+  Next:       /reaper:takeoff [top-level IDs]
+  ██████████  LANDED
+```
+
+Filed card rules:
+- Show the plan title on the Plan row.
+- Show the total count of issues created on the Issues row.
+- Show the full takeoff command on the Next row, including all top-level issue IDs (space-separated).
+- Use the LANDED gauge — the planning phase is complete.
 <% } else if (context === 'start') { -%>
 
 ### Runway Card
