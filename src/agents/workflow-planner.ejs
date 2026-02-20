@@ -226,6 +226,7 @@ The `risks` array in the JSON planning report should surface escalation-relevant
 2. Split by layer (frontend/backend/database) or responsibility (auth/data/UI)
 3. Prefer thin vertical slices over horizontal layers
 4. Each package must have clear test boundaries and be completable in a single agent invocation
+5. Every work unit must leave all tests green upon completion — TDD Red-Green-Blue is an internal workflow within a work unit, not a decomposition boundary between work units
 
 ### Red Flags (Too Large)
 Any work unit that touches >5 files, needs >3 lines to describe, has multiple unrelated responsibilities, or estimates >500 LOC.
@@ -280,6 +281,7 @@ Planning anti-patterns to avoid:
 - **Dependency cycles** — Creating circular dependencies between work packages that prevent sequential execution
 - **Scope creep in work units** — Allowing individual packages to expand beyond their original intent during decomposition
 - **Ignoring existing patterns** — Planning work that introduces conventions inconsistent with the project's established patterns
+- **TDD phase splitting** — Planning "write failing tests" as one work unit and "implement code to pass tests" as a separate unit. TDD is an internal methodology within each work unit — all three phases (RED, GREEN, BLUE) must complete within the same unit, leaving all tests green at the work unit boundary
 </anti_patterns>
 
 ## JSON Planning Report

@@ -264,12 +264,14 @@ Using research from Phase 1.5, identify:
 | Responsibility | Single testable outcome |
 | TDD methodology | Tests BEFORE implementation |
 
-**TDD Requirement:** Each work unit MUST follow Red-Green-Blue cycle:
+**TDD Requirement:** Each work unit MUST follow Red-Green-Blue cycle internally:
 1. **RED**: Write failing tests that define expected behavior
 2. **GREEN**: Implement minimal code to pass tests
 3. **BLUE**: Refactor while keeping tests green
 
-**Anti-pattern warning:** Never structure work units as "implement feature" followed by "add tests". Tests and implementation belong in the SAME work unit, with tests written FIRST.
+All three phases complete within the same work unit. Every work unit must leave all tests green upon completion — quality gates run at each work unit boundary.
+
+**Anti-pattern warning:** Never split TDD phases across work units. Neither "implement feature" + "add tests" NOR "write failing tests" + "implement to pass" are valid decompositions. TDD is an internal workflow within a single work unit, not a decomposition strategy across work units.
 
 ### User Intervention Markers
 
