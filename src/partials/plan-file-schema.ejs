@@ -1,37 +1,4 @@
 ## Plan File
-<% if (typeof mode !== 'undefined' && mode === 'writer') { -%>
-
-### Path Convention
-
-Write the plan to: `$CLAUDE_PROJECT_DIR/.claude/plans/reaper-[semantic-name].md`
-
-Derive the semantic name from the planning request (2-4 words, lowercase, hyphenated).
-
-### Schema
-
-Create the plan file with this structure on first write:
-
-```markdown
-# Plan: [Title from input]
-
-## Input
-[Original user request - IMMUTABLE after initial write]
-
-## Research
-[Codebase research findings - progressively added]
-
-## Strategy
-[Selected strategy name, complexity score with breakdown, rationale for strategy choice]
-
-## Work Units
-| # | Title | Type | Status | Blocked By |
-[Table of decomposed work units with details below]
-
-## Dependencies
-[Mermaid flowchart showing execution order and blocking relationships]
-```
-
-<% } else { -%>
 
 ### Plan File Sections
 
@@ -51,4 +18,3 @@ When reading a plan file, extract sections in this order of importance:
 - **Plan with Research only**: Deploy reaper:workflow-planner with research as input context
 - **Plan with Research + Work Units**: Skip planner, extract work units directly
 - **Plan with Research + Work Units + Strategy**: Skip planner entirely, use provided strategy
-<% } -%>
