@@ -3649,3 +3649,61 @@ describe('Contract: commands contain mission banner', () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Contract: takeoff completion section references /reaper:ship as a PR option
+// ---------------------------------------------------------------------------
+
+describe('Contract: takeoff completion section references /reaper:ship', () => {
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
+
+  it(`${relative} completion control tower prompt mentions /reaper:ship`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('/reaper:ship'),
+      `${relative} completion section must mention /reaper:ship as an option for opening a PR`
+    );
+  });
+
+  it(`${relative} Response Handling table contains a row for PR-intent language`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // The table row must map PR-intent language to /reaper:ship
+    assert.ok(
+      content.includes('open a PR') || content.includes('create PR'),
+      `${relative} Response Handling table must include a row for PR-intent language ("open a PR" or "create PR")`
+    );
+  });
+
+  it(`${relative} Response Handling table maps PR-intent to /reaper:ship`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // Both the PR-intent language and /reaper:ship must appear in the same area
+    // (the Response Handling table section). Find the table and verify both are present.
+    const tableStart = content.indexOf('### Response Handling');
+    assert.ok(
+      tableStart !== -1,
+      `${relative} must contain a "### Response Handling" section`
+    );
+    const tableSection = content.slice(tableStart, tableStart + 2000);
+    assert.ok(
+      (tableSection.includes('open a PR') || tableSection.includes('create PR')) &&
+        tableSection.includes('/reaper:ship'),
+      `${relative} Response Handling table must map PR-intent language to /reaper:ship`
+    );
+  });
+
+  it(`${relative} existing merge-to-develop row is preserved`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const tableStart = content.indexOf('### Response Handling');
+    assert.ok(tableStart !== -1, `${relative} must contain "### Response Handling"`);
+    const tableSection = content.slice(tableStart, tableStart + 2000);
+    assert.ok(
+      tableSection.includes('merge') && tableSection.includes('develop'),
+      `${relative} Response Handling table must preserve the existing merge-to-develop row`
+    );
+  });
+});
