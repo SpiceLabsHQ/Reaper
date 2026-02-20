@@ -108,6 +108,9 @@ The user, and only the user, may override any of these rules explicitly.
 
 # Suggest CLAUDE.md updates after code changes
 /reaper:claude-sync
+
+# Detect test/lint runners and write Quality Gates section to CLAUDE.md
+/reaper:configure-quality-gates
 ```
 
 ### Task ID-Only Mode (takeoff)

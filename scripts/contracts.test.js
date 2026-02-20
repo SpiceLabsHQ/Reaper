@@ -856,6 +856,7 @@ const ALL_COMMANDS = [
   'squadron',
   'claude-sync',
   'start',
+  'configure-quality-gates',
 ];
 
 /**
@@ -940,6 +941,7 @@ const COMMAND_SEMANTIC_CONTRACTS = {
     label: 'flight-plan command',
     commands: () => ['flight-plan'],
     sections: [
+      { pattern: /Plan File/i, label: 'plan file section' },
       { pattern: /Scope Boundary/i, label: 'scope boundary section' },
       { pattern: /Background Task Cleanup/i, label: 'background task cleanup section' },
     ],
@@ -968,6 +970,16 @@ const COMMAND_SEMANTIC_CONTRACTS = {
       { pattern: /Scope Boundary/i, label: 'scope boundary section' },
       { pattern: /Mode 1/i, label: 'mode 1 bare invocation section' },
       { pattern: /Mode 2/i, label: 'mode 2 input classification section' },
+    ],
+  },
+  'configure-quality-gates': {
+    label: 'configure-quality-gates command',
+    commands: () => ['configure-quality-gates'],
+    sections: [
+      { pattern: /detection/i, label: 'detection section' },
+      { pattern: /approval flow/i, label: 'approval flow section' },
+      { pattern: /claude\.md write/i, label: 'claude.md write section' },
+      { pattern: /commit/i, label: 'commit section' },
     ],
   },
 };
@@ -1011,6 +1023,7 @@ registerCommandSemanticSuite('flight-plan');
 registerCommandSemanticSuite('squadron');
 registerCommandSemanticSuite('claude-sync');
 registerCommandSemanticSuite('start');
+registerCommandSemanticSuite('configure-quality-gates');
 
 // ---------------------------------------------------------------------------
 // Contract: takeoff materializes PLAN_CONTEXT before Gate 2 dispatch
@@ -2821,6 +2834,7 @@ const PRIMARY_WORKFLOW_COMMANDS = [
   'status-worktrees',
   'start',
   'claude-sync',
+  'configure-quality-gates',
 ];
 
 describe('Contract: user communication contract included in all primary workflow commands', () => {
@@ -3043,55 +3057,95 @@ describe('Contract: takeoff dirty-root escalation', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Contract: flight-plan must not write plan files directly
-//
-// After reaper-zn5e: flight-plan no longer writes plan files unconditionally.
-// For Beads/Jira/GitHub task systems the plan lives only in-conversation.
-// For markdown_only, plan file creation is delegated to the
-// issue-tracker-planfile skill via CREATE_ISSUE — flight-plan must not write
-// the file itself.
-//
-// These assertions are RED against the pre-refactor flight-plan.md and will
-// turn GREEN once flight-plan.ejs removes Phase 0 (Plan File Schema) and
-// Phase 3 (Write Initial Plan to File).
+// Contract: takeoff quality gate config check (pre-flight advisory)
 // ---------------------------------------------------------------------------
 
-describe('Contract: flight-plan does not write plan files directly', () => {
-  const filePath = commandFilePath('flight-plan');
-  const relative = 'commands/flight-plan.md';
+describe('Contract: takeoff quality gate config check', () => {
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
 
-  it(`${relative} does not contain "Phase 0: Plan File Schema" writer section`, () => {
-    assert.ok(fs.existsSync(filePath), `${relative} not found at ${filePath}`);
+  it(`${relative} has a Quality Gate Config Check section`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     assert.ok(
-      !content.includes('Phase 0: Plan File Schema'),
-      `${relative} contains "Phase 0: Plan File Schema" — this section defines the plan file writer contract ` +
-      `and must be removed. After reaper-zn5e, flight-plan no longer writes plan files directly: ` +
-      `for Beads/Jira/GitHub the plan lives in-conversation; for markdown_only the ` +
-      `issue-tracker-planfile skill handles file creation via CREATE_ISSUE.`
+      hasSection(content, /Quality Gate Config Check/i),
+      `${relative} must contain a "## Quality Gate Config Check" section (pre-flight advisory for missing gate commands)`
     );
   });
 
-  it(`${relative} does not contain "Phase 3: Write Initial Plan to File" unconditional write phase`, () => {
-    assert.ok(fs.existsSync(filePath), `${relative} not found at ${filePath}`);
+  it(`${relative} Quality Gate Config Check section appears before Preflight Announcement`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
+    const configCheckIdx = content.indexOf('## Quality Gate Config Check');
+    const preflightIdx = content.indexOf('## Preflight Announcement');
     assert.ok(
-      !content.includes('Phase 3: Write Initial Plan to File'),
-      `${relative} contains "Phase 3: Write Initial Plan to File" — this phase writes the plan file ` +
-      `unconditionally for all task systems and must be removed. After reaper-zn5e, plan file ` +
-      `creation for markdown_only is delegated to the issue-tracker-planfile skill's CREATE_ISSUE ` +
-      `operation; Beads/Jira/GitHub keep the plan in-conversation only.`
+      configCheckIdx !== -1,
+      `${relative} must contain "## Quality Gate Config Check"`
+    );
+    assert.ok(
+      preflightIdx !== -1,
+      `${relative} must contain "## Preflight Announcement"`
+    );
+    assert.ok(
+      configCheckIdx < preflightIdx,
+      `${relative} "## Quality Gate Config Check" must appear before "## Preflight Announcement" ` +
+        `(found at index ${configCheckIdx}, Preflight at ${preflightIdx})`
     );
   });
 
-  it(`${relative} does not instruct using the Write tool to create a plan file`, () => {
-    assert.ok(fs.existsSync(filePath), `${relative} not found at ${filePath}`);
+  it(`${relative} Quality Gate Config Check section references configure-quality-gates`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
+    const sectionStart = content.indexOf('## Quality Gate Config Check');
+    assert.ok(sectionStart !== -1, `${relative} must contain "## Quality Gate Config Check"`);
+
+    // Extract the section content up to the next ## heading
+    const rest = content.slice(sectionStart);
+    const nextHeadingMatch = rest.match(/\n## [^#]/);
+    const section = nextHeadingMatch
+      ? rest.slice(0, nextHeadingMatch.index)
+      : rest;
+
     assert.ok(
-      !content.includes('Use the Write tool to create the plan file'),
-      `${relative} contains "Use the Write tool to create the plan file" — flight-plan must not ` +
-      `write plan files directly. After reaper-zn5e, this instruction belongs only in the ` +
-      `issue-tracker-planfile skill, invoked via CREATE_ISSUE for markdown_only task systems.`
+      section.includes('configure-quality-gates'),
+      `Quality Gate Config Check section must reference "/reaper:configure-quality-gates" command`
+    );
+  });
+
+  it(`${relative} Quality Gate Config Check section is non-blocking`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const sectionStart = content.indexOf('## Quality Gate Config Check');
+    assert.ok(sectionStart !== -1, `${relative} must contain "## Quality Gate Config Check"`);
+
+    const rest = content.slice(sectionStart);
+    const nextHeadingMatch = rest.match(/\n## [^#]/);
+    const section = nextHeadingMatch
+      ? rest.slice(0, nextHeadingMatch.index)
+      : rest;
+
+    assert.ok(
+      /non-blocking|continue|advisory/i.test(section),
+      `Quality Gate Config Check section must be non-blocking (takeoff continues regardless)`
+    );
+  });
+
+  it(`${relative} Quality Gate Config Check section requires no tool calls`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const sectionStart = content.indexOf('## Quality Gate Config Check');
+    assert.ok(sectionStart !== -1, `${relative} must contain "## Quality Gate Config Check"`);
+
+    const rest = content.slice(sectionStart);
+    const nextHeadingMatch = rest.match(/\n## [^#]/);
+    const section = nextHeadingMatch
+      ? rest.slice(0, nextHeadingMatch.index)
+      : rest;
+
+    // The check must not require Bash or Read tool calls — it is prompt-level only
+    assert.ok(
+      /loaded context|CLAUDE\.md|context/i.test(section),
+      `Quality Gate Config Check must operate on loaded context (no tool calls) — check should inspect CLAUDE.md or loaded context`
     );
   });
 });

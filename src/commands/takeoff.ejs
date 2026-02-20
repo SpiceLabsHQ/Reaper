@@ -136,6 +136,27 @@ After strategy is determined from any source (workflow-planner, pre-planned dete
 
 This check applies regardless of which source determined the strategy. If the strategy is already `medium_single_branch` or `large_multi_worktree`, no override is needed.
 
+## Quality Gate Config Check
+
+Before announcing the preflight card, check whether your loaded context (CLAUDE.md or any imported files) contains explicit quality gate commands — specifically, a `## Quality Gates` section with `**Test command**:` and `**Lint command**:` fields.
+
+**If quality gate commands are found in context:**
+Use those commands directly when dispatching gate agents. Skip project config inference for test and lint commands.
+
+**If quality gate commands are NOT found in context:**
+Emit the following advisory warning card (non-blocking — takeoff continues regardless):
+
+```
+  ADVISORY
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Quality gate commands not configured for this project.
+  Run /reaper:configure-quality-gates to set them up.
+  Continuing with project config inference.
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+Then continue with project config inference as normal. This check requires no tool calls — it operates entirely on loaded context already in scope.
+
 ## Preflight Announcement
 
 After writing the plan to TodoWrite and before executing the first work unit, render a **Preflight Card** to the user. This gives the developer a clear snapshot of what is about to happen.
