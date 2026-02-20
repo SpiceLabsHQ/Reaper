@@ -20,17 +20,29 @@ Maps abstract task operations to `acli jira` CLI commands. See `acli jira --help
 | QUERY_DEPENDENCY_TREE | `acli jira workitem search --jql "issuekey in linkedIssuesOf(<key>)"` recursively |
 | CLOSE_ISSUE | `acli jira workitem update <key> --status="Done"` |
 
-## Hierarchy -- Epic Pattern
+## Hierarchy -- Parent/Child Pattern
 
-Jira uses a native parent-child hierarchy: **Epic > Story/Task > Sub-task**.
+Jira uses a native parent-child hierarchy: **Epic > Story/Task > Sub-task**. In Reaper's terminology, any issue that groups child work items is a **parent issue**, regardless of its Jira type.
+
+**Single-issue rule:** Plans with only a single issue do not require a parent issue. Only create a parent when there are multiple child work items to organize.
+
+**Creating a parent issue:**
+
+Use the Epic type to create a parent issue that groups multiple child work items:
+
+```bash
+acli jira workitem create --project=PROJ --type=Epic \
+  --title="Authentication overhaul" --description="Parent issue grouping auth work items."
+# Returns: PROJ-10
+```
 
 **CREATE_ISSUE with `parent`:**
 
 Determine the parent's issue type to choose the right creation pattern:
 
 ```bash
-# Parent is an Epic -- create Story/Task under it
-acli jira workitem create --project=PROJ --type=Story --epic=PROJ-10 \
+# Parent is an Epic -- create Story/Task under it using --epic or --parent
+acli jira workitem create --project=PROJ --type=Story --parent=PROJ-10 \
   --title="Implement login" --description="Details..."
 
 # Parent is a Story/Task -- create Sub-task under it
@@ -38,21 +50,11 @@ acli jira workitem create --project=PROJ --type=Sub-task --parent=PROJ-42 \
   --title="Add password validation" --description="Details..."
 ```
 
-**Creating an Epic:**
-
-```bash
-acli jira workitem create --project=PROJ --type=Epic \
-  --title="Authentication overhaul" --description="Epic description..."
-```
-
 **LIST_CHILDREN:**
 
 ```bash
-# Direct children of any issue
+# Direct children of any parent issue
 acli jira workitem search --jql "parent=PROJ-10"
-
-# Stories/Tasks under an Epic
-acli jira workitem search --jql "\"Epic Link\"=PROJ-10"
 ```
 
 ## Dependency -- Link Types

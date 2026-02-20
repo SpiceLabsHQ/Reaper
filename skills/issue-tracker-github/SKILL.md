@@ -57,7 +57,7 @@ Projects provide sprint/kanban views. Use project fields for status tracking ins
 
 ### Without GitHub Projects
 
-Use **tracking issues** as epic replacements. A tracking issue contains a task list in its body that references child issues:
+Use **tracking issues** as parent issue replacements. A tracking issue contains a task list in its body that references child issues:
 
 ```markdown
 ## Tasks
@@ -67,11 +67,23 @@ Use **tracking issues** as epic replacements. A tracking issue contains a task l
 - [x] #100 Write design doc
 ```
 
-GitHub renders task list progress automatically. Use labels for grouping (e.g., `epic:auth`, `phase:1`).
+GitHub renders task list progress automatically. Use labels for grouping (e.g., `feature:auth`, `phase:1`).
+
+**Single-issue rule:** Plans with only a single issue do not require a parent issue. Only create a parent when there are multiple child work items to organize.
 
 ## Hierarchy Pattern
 
 GitHub supports sub-issues via its GraphQL API (beta). Use this as the primary approach. Fall back to tracking issues for repos where sub-issues are not enabled.
+
+### Creating a Parent Issue
+
+A parent issue groups multiple child work items. Create one only when the plan has multiple child issues to organize.
+
+```bash
+# Create the parent issue (no sub-issue linking needed at this step)
+gh issue create --title "Authentication overhaul" --body "Parent issue tracking auth work items." --label "feature:auth"
+# Note the returned issue number (e.g., 42) -- use it when linking children below
+```
 
 ### Primary: Sub-Issues via API
 
@@ -79,9 +91,9 @@ GitHub supports sub-issues via its GraphQL API (beta). Use this as the primary a
 
 1. Create child issues first (batch all creates before linking):
    ```bash
-   gh issue create --title "Set up database schema" --body "..." --label "epic:auth"
-   gh issue create --title "Implement API endpoints" --body "..." --label "epic:auth"
-   gh issue create --title "Write tests" --body "..." --label "epic:auth"
+   gh issue create --title "Set up database schema" --body "..." --label "feature:auth"
+   gh issue create --title "Implement API endpoints" --body "..." --label "feature:auth"
+   gh issue create --title "Write tests" --body "..." --label "feature:auth"
    ```
 
 2. Bulk-link all children to the parent in one call:
@@ -101,11 +113,12 @@ Returns JSON array of `{number, title, state}` objects.
 
 ### Efficient Bulk Pattern
 
-When creating an epic with many children (e.g., flight-plan creating 5+ work units):
+When creating a parent issue with many children (e.g., flight-plan creating 5+ work units):
 
-1. **Create all issues** first with `gh issue create` (no linking yet)
-2. **Collect issue numbers** from the create output
-3. **Bulk-link** all children in a single script invocation:
+1. **Create the parent issue** first (no linking yet)
+2. **Create all child issues** with `gh issue create` (no linking yet)
+3. **Collect issue numbers** from the create output
+4. **Bulk-link** all children in a single script invocation:
    ```bash
    ${CLAUDE_PLUGIN_ROOT}/skills/issue-tracker-github/scripts/gh-link-sub-issues.sh 42 43 44 45 46 47
    ```
@@ -114,7 +127,7 @@ This is more efficient than interleaving creates and links — the script resolv
 
 ### Fallback: Tracking Issues
 
-For repos where sub-issues are not enabled, use a **tracking issue** with a task list in its body:
+For repos where sub-issues are not enabled, use a **tracking issue** (parent issue) with a task list in its body:
 
 ```markdown
 ## Tasks
@@ -124,13 +137,13 @@ For repos where sub-issues are not enabled, use a **tracking issue** with a task
 - [x] #100 Write design doc
 ```
 
-GitHub renders task list progress automatically. Use labels for grouping (e.g., `epic:auth`, `phase:1`).
+GitHub renders task list progress automatically. Use labels for grouping (e.g., `feature:auth`, `phase:1`).
 
 **CREATE_ISSUE with `parent` (tracking issue fallback):**
 
 1. Create the child issue:
    ```bash
-   gh issue create --title "Implement login" --body "Details..." --label "epic:auth"
+   gh issue create --title "Implement login" --body "Details..." --label "feature:auth"
    ```
 2. Append the new issue to the tracking issue's task list:
    ```bash

@@ -12,7 +12,7 @@ Do not use EnterPlanMode or ExitPlanMode tools. This command manages its own pla
 
 **Task**: [ARGUMENTS]
 
-Generate an execution plan with epic/issue structure for autonomous execution. After user approval, create issues in the detected task system.
+Generate an execution plan with parent/child issue structure for autonomous execution. After user approval, create issues in the detected task system.
 
 ---
 
@@ -30,7 +30,7 @@ After detecting TASK_SYSTEM, load the corresponding skill from the Platform Skil
 
 Classify the input (ARGUMENTS) as one of:
 <!-- user-comms: say "retrieving task details" not "FETCH_ISSUE" -->
-- **Existing epic ID** (e.g., `PROJ-123` or `repo-a3f`): Use FETCH_ISSUE to retrieve epic details. Validate the epic has no existing children via LIST_CHILDREN -- if children exist, stop and report the conflict.
+- **Existing parent issue ID** (e.g., `PROJ-123` or `repo-a3f`): Use FETCH_ISSUE to retrieve issue details. Validate the issue has no existing children via LIST_CHILDREN -- if children exist, stop and report the conflict.
 - **New description**: Detect the available task system using the detection heuristics above. Store the description as the planning request.
 
 ### Markdown-Only Mode Detection
@@ -39,7 +39,7 @@ Classify the input (ARGUMENTS) as one of:
 When no task system is detected, inform the user the plan file will be the primary deliverable. Update behavioral contract todo #2 to: "Finalize plan file as deliverable (no task system)".
 
 ### Validation
-- **Existing epic:** Must have no children (empty)
+- **Existing parent issue:** Must have no children (empty)
 - **New description:** Minimum 20 characters
 - **Ambiguous system:** Ask user preference if both available
 
@@ -136,7 +136,7 @@ If you must ask (rare): briefly restate the plan, ask the question, and offer a 
 ### Work Analysis
 
 Using research from Phase 1.5, identify:
-1. **Epic Definition:** Title, goal, scope boundaries, success criteria
+1. **Parent Issue Definition:** Title, goal, scope boundaries, success criteria (only needed when the plan contains multiple child work items)
 2. **Work Units:** Discrete issues following constraints below
 3. **Parallel Opportunities:** Units with no file overlap or dependencies
 4. **Dependencies:** Blocking relationships and critical path
@@ -208,7 +208,7 @@ If no ADR candidates are detected, leave `## Proposed ADRs` empty with the place
 
 Present a **flight briefing** to the user that summarizes the plan in-conversation before asking for approval. Include:
 
-1. **Epic title and goal** (one-liner)
+1. **Parent issue title and goal** (one-liner; omit if plan has only a single work item with no parent)
 2. **Work units summary** — for each unit: number, title, type, estimated hours, and whether it runs in parallel
 3. **Critical path** — which units are sequential blockers
 4. **Parallelization** — percentage of work that can run concurrently
@@ -295,14 +295,16 @@ For each work unit in the approved plan:
 
 <!-- user-comms: say "creating a task" not "CREATE_ISSUE" -->
 <!-- user-comms: say "updating the task" not "UPDATE_ISSUE" -->
-1. **Epic (create or update)**:
-   - If an existing epic was provided as input: UPDATE_ISSUE to refine its description
-   - Otherwise: CREATE_ISSUE with type=epic, title from plan, description from plan Input section
+1. **Parent issue (create or update)**:
+   - **Plans with only one issue do not need a parent issue.** Skip this step if the plan contains exactly one work item.
+   - If an existing parent issue was provided as input: UPDATE_ISSUE to refine its description
+   - Otherwise (multiple work items): CREATE_ISSUE with title from plan, description from plan Input section
 
 2. **Child issues** (one per work unit):
-   - CREATE_ISSUE with title, parent=EPIC_ID, and the TDD-structured description below
+   - If a parent issue was created: CREATE_ISSUE with title, parent=PARENT_ISSUE_ID, and the TDD-structured description below
+   - If no parent issue (single work item): CREATE_ISSUE with title and the TDD-structured description below (no parent)
    - For user intervention tasks: set assignee=user
-   - The `parent=EPIC_ID` parameter on CREATE_ISSUE establishes parent-child hierarchy. Do NOT use ADD_DEPENDENCY for this purpose.
+   - The `parent=PARENT_ISSUE_ID` parameter on CREATE_ISSUE establishes parent-child hierarchy. Do NOT use ADD_DEPENDENCY for this purpose.
 
 <!-- user-comms: say "linking a dependency" not "ADD_DEPENDENCY" -->
 3. **Dependencies** (from plan's dependency graph):
@@ -352,7 +354,7 @@ Task --subagent_type reaper:workflow-planner \
   --model opus \
   --prompt "MODE: VERIFICATION (not planning)
 
-EPIC: $EPIC_ID
+PARENT_ISSUE: $PARENT_ISSUE_ID (omit if plan has only one work item)
 TASK_SYSTEM: $TASK_SYSTEM
 CREATED_ISSUES: [list of issue IDs created in Phase 5]
 
@@ -366,7 +368,7 @@ Verify the created issues meet orchestratability criteria. Do NOT create new iss
 <!-- user-comms: say "checking dependencies" not "QUERY_DEPENDENCY_TREE" -->
 <!-- user-comms: say "retrieving task details" not "FETCH_ISSUE" -->
 VERIFICATION QUERIES (use abstract operations from the detected task system):
-- QUERY_DEPENDENCY_TREE from EPIC_ID (full hierarchy)
+- QUERY_DEPENDENCY_TREE from PARENT_ISSUE_ID (full hierarchy; skip if no parent issue)
 - FETCH_ISSUE for each child issue (details and acceptance criteria)
 
 VERIFICATION CRITERIA:
@@ -412,10 +414,10 @@ Parse reaper:workflow-planner JSON response:
 ### Confirmation Output
 
 After successful verification, present:
-- Epic ID and title
+- Parent issue ID and title (if one was created)
 - Table of created issues with verification status
 - Pre-flight check summary (detail sufficiency, cross-issue awareness, relationship appropriateness, orchestratability)
-- Recommended next step: `/clear` then `/reaper:takeoff <TOP_LEVEL_IDS>` — where `<TOP_LEVEL_IDS>` is the space-separated list of **all top-level issue IDs created in Phase 5** (i.e., every epic or root issue that has no parent). Never list child or sub-issue IDs here. If one epic was created: `/reaper:takeoff reaper-abc`. If three unrelated issues were created: `/reaper:takeoff reaper-abc reaper-def reaper-ghi`.
+- Recommended next step: `/clear` then `/reaper:takeoff <TOP_LEVEL_IDS>` — where `<TOP_LEVEL_IDS>` is the space-separated list of **all top-level issue IDs created in Phase 5** (i.e., every parent issue or standalone issue that has no parent). Never list child or sub-issue IDs here. If one parent issue was created: `/reaper:takeoff reaper-abc`. If three unrelated issues were created with no parent: `/reaper:takeoff reaper-abc reaper-def reaper-ghi`.
 
 Mark todo #3 complete.
 
