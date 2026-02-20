@@ -1,6 +1,18 @@
 ---
 description: Dispatch agents through quality gates until work lands on your desk.
 ---
+## Mission Header
+
+> **Opt-out**: If the target project's CLAUDE.md contains the line `Reaper: disable ASCII art`, output nothing — skip the header entirely.
+
+> **Render-once directive**: Render this header immediately as the first user-visible output of the command, before any tool calls or information gathering. Do not re-render it at any later point in the same session.
+
+```
+  REAPER // TAKEOFF
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  scanning mission parameters
+```
+
 
 <!-- user-comms-contract -->
 
