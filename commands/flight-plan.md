@@ -174,93 +174,46 @@ Sub-breakdowns are allowed. No task should mention worktrees, implementation, co
 
 ---
 
-## Phase 1.5: Codebase Research (Parallel Exploration)
+## Phase 1.5: Codebase Research (On-Demand Exploration)
 
-Before decomposing work, spawn parallel Explore agents to research the codebase. This research informs accurate work unit definitions in Phase 2.
+Explore agents are a fallback for when context is genuinely missing — not a routine step. Default to skipping this phase and proceeding directly to Phase 2.
 
-### When to Research
+### When to Skip (Default)
 
-Research is **required** when:
-- Planning involves existing codebase modifications
-- Feature touches multiple modules or systems
-- Integration points are unclear from the request
+Skip research entirely when:
+- The current session already contains relevant file paths, architecture context, or a detailed task description
+- The user provided a spec, plan file, or task file with sufficient detail
+- The request is a new standalone project, pure documentation, or configuration change
+- The affected files and integration points are obvious from the description
 
-Research is **skipped** when:
-- Creating a new standalone project from scratch
-- Request is purely documentation or configuration
-- User explicitly provides file lists and architecture details
+**When in doubt, skip and plan with what you have.** Assumptions can be noted in the plan and corrected during Phase 4 refinement.
 
-### Spawn Parallel Explore Agents
+### When to Research (Exception)
 
-Launch multiple Explore agents simultaneously, each targeting a specific research aspect:
+Spawn an Explore agent only when all of the following are true:
+- The change touches existing code (not a greenfield project)
+- The affected files or integration points are genuinely unclear
+- No sufficient context exists in the current session
+
+### Spawn a Focused Explore Agent
+
+When research is needed, spawn a **single** Explore agent targeting only the information required to define work unit scope:
 
 ```bash
-# Spawn research agents in parallel (all run concurrently)
 Task --subagent_type Explore \
-  --prompt "RESEARCH: Find files and patterns related to '$PLANNING_REQUEST'
+  --prompt "PLANNING RESEARCH for: '$PLANNING_REQUEST'
 
-  Search for:
-  - Files likely affected by this feature/change
-  - Existing implementations of similar functionality
-  - Test files that cover related code paths
+  Return only what is needed to scope the work units:
+  1. Which files are most likely to be modified?
+  2. Are there existing implementations of similar functionality to follow or extend?
+  3. What are the key integration points (shared utilities, APIs, or modules) that touch this area?
 
-  Output: JSON with { files: [...], patterns_found: [...], notes: string }"
-
-Task --subagent_type Explore \
-  --prompt "RESEARCH: Analyze architecture for '$PLANNING_REQUEST'
-
-  Investigate:
-  - Module structure in affected areas
-  - Design patterns currently in use
-  - Abstraction layers and boundaries
-
-  Output: JSON with { architecture: {...}, design_patterns: [...], boundaries: string }"
-
-Task --subagent_type Explore \
-  --prompt "RESEARCH: Identify dependencies and integration points for '$PLANNING_REQUEST'
-
-  Discover:
-  - Internal dependencies between modules
-  - External API/service integrations
-  - Shared utilities and helpers used
-  - Database/storage touchpoints
-
-  Output: JSON with { internal_deps: [...], external_integrations: [...], shared_utils: [...] }"
-```
-
-### Aggregate Research Findings
-
-After all Explore agents complete, aggregate their findings into a research summary:
-
-```markdown
-### Codebase Research Summary
-
-**Affected Files** (from file discovery):
-- [list of files likely to be modified]
-- [list of related test files]
-
-**Architecture Context** (from architecture analysis):
-- Current patterns: [patterns in use]
-- Module boundaries: [relevant boundaries]
-
-**Dependencies** (from integration analysis):
-- Internal: [module dependencies]
-- External: [API/service integrations]
-- Shared: [common utilities]
-
-**Planning Implications**:
-- [key insights that affect work unit decomposition]
-- [potential complexity areas identified]
-- [parallel work opportunities discovered]
+  Be concise. Output: JSON with { affected_files: [...], existing_patterns: [...], integration_points: [...] }"
 ```
 
 ### Use Research in Phase 2
 
-The research summary directly informs Phase 2 decomposition:
-- File lists help define work unit scope
-- Architecture context ensures pattern consistency
-- Dependencies reveal hidden blockers and integration needs
-- Parallel opportunities inform work groupings
+If research was run, use the findings to inform work unit scope, affected files, and dependency ordering. If research was skipped, proceed with context from the current session and note any assumptions.
 
 ---
 
