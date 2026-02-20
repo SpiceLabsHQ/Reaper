@@ -265,7 +265,10 @@ Do not delete this file — it is intentional project tooling, not a leftover ar
 
 1. **Edit the source template** in `src/` (e.g., `src/agents/bug-fixer.ejs`)
 2. **Run build**: `npm run build`
-3. **Verify output** in project root (e.g., `agents/bug-fixer.md`)
+3. **Review all build output for side effects**: Run `git diff agents/ commands/ skills/ hooks/` to inspect every generated file that changed — not just the intended target. Partials are shared; a single partial change can propagate to many tools. For each file that changed unexpectedly:
+   - Read the diff and determine whether the change is correct and intentional
+   - If the side effect is benign or easily corrected, fix it before continuing
+   - **If a side effect cannot be easily compensated for, stop immediately and alert the user** — do not proceed to commit
 4. **Run prompt review**: Always run `reaper:ai-prompt-engineer` as a quality gate after modifying any agent, skill, command, hook, or partial template. This agent audits prompts for anti-patterns, token waste, and model-specific best practices.
 5. **Commit both** source and generated files
 
