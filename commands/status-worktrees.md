@@ -1,6 +1,18 @@
 ---
 description: Radar sweep your parallel worktrees for progress and drift.
 ---
+## Mission Header
+
+> **Opt-out**: If the target project's CLAUDE.md contains the line `Reaper: disable ASCII art`, output nothing — skip the header entirely.
+
+> **Render-once directive**: Render this header immediately as the first user-visible output of the command, before any tool calls or information gathering. Do not re-render it at any later point in the same session.
+
+```
+  REAPER // STATUS
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  radar sweep of active worktrees
+```
+
 
 # Status of Worktrees for Tasks
 

@@ -3432,4 +3432,26 @@ describe('Contract: commands contain mission banner', () => {
       `${relative} is missing mission banner 'REAPER // CONFIGURE QUALITY GATES'`
     );
   });
+
+  it("commands/ship.md contains 'REAPER // SHIP'", () => {
+    const filePath = commandFilePath('ship');
+    const relative = 'commands/ship.md';
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('REAPER // SHIP'),
+      `${relative} is missing mission banner 'REAPER // SHIP'`
+    );
+  });
+
+  it("commands/status-worktrees.md contains 'REAPER // STATUS'", () => {
+    const filePath = commandFilePath('status-worktrees');
+    const relative = 'commands/status-worktrees.md';
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('REAPER // STATUS'),
+      `${relative} is missing mission banner 'REAPER // STATUS'`
+    );
+  });
 });
