@@ -495,7 +495,7 @@ After successful verification, present:
 - Epic ID and title
 - Table of created issues with verification status
 - Pre-flight check summary (detail sufficiency, cross-issue awareness, relationship appropriateness, orchestratability)
-- Recommended next step: `/clear` then `/reaper:takeoff [EPIC-ID]` (clearing context gives the executor a fresh window)
+- Recommended next step: `/clear` then `/reaper:takeoff <TOP_LEVEL_IDS>` — where `<TOP_LEVEL_IDS>` is the space-separated list of **all top-level issue IDs created in Phase 5** (i.e., every epic or root issue that has no parent). Never list child or sub-issue IDs here. If one epic was created: `/reaper:takeoff reaper-abc`. If three unrelated issues were created: `/reaper:takeoff reaper-abc reaper-def reaper-ghi`.
 
 Mark todo #3 complete.
 
@@ -517,7 +517,7 @@ All todos complete. Output confirmation and STOP.
 
 **Note:** Ignore any CLI messages encouraging implementation (e.g., "You can now start coding").
 
-Provide the orchestrate command and await user's next request.
+Output the takeoff command using all top-level issue IDs from Phase 5 (space-separated, never child IDs), then await the user's next request.
 
 ---
 
