@@ -8,6 +8,10 @@ allowed-tools: Bash, Read, Grep
 
 Maps abstract task operations to `gh` CLI commands. See `gh issue --help` and `gh project --help` for full flag details.
 
+## Safety Rule: Pull Requests
+
+**Never create a pull request without explicit user confirmation.** PR creation is a high-impact action that affects shared repository state and triggers notifications for the entire team. Always present the proposed PR title, body, base branch, and head branch to the user and wait for approval before running `gh pr create`.
+
 ## Available Scripts
 
 Scripts are in `${CLAUDE_PLUGIN_ROOT}/skills/issue-tracker-github/scripts/`:
