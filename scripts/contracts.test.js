@@ -3369,4 +3369,15 @@ describe('Contract: commands contain mission banner', () => {
       `${relative} is missing mission banner 'REAPER // FLIGHT PLAN'`
     );
   });
+
+  it("commands/claude-sync.md contains 'REAPER // CLAUDE SYNC'", () => {
+    const filePath = commandFilePath('claude-sync');
+    const relative = 'commands/claude-sync.md';
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('REAPER // CLAUDE SYNC'),
+      `${relative} is missing mission banner 'REAPER // CLAUDE SYNC'`
+    );
+  });
 });

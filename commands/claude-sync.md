@@ -1,6 +1,18 @@
 ---
 description: Surface changes since CLAUDE.md last touched down.
 ---
+## Mission Header
+
+> **Opt-out**: If the target project's CLAUDE.md contains the line `Reaper: disable ASCII art`, output nothing — skip the header entirely.
+
+> **Render-once directive**: Render this header immediately as the first user-visible output of the command, before any tool calls or information gathering. Do not re-render it at any later point in the same session.
+
+```
+  REAPER // CLAUDE SYNC
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  scanning commit history
+```
+
 
 # Synchronize CLAUDE.md with Recent Code Changes
 
@@ -333,15 +345,13 @@ After all 4 agents complete their analysis, aggregate their findings and present
 ### Report Structure
 
 ```markdown
-## 📋 CLAUDE.md Synchronization Report
+  SYNC REPORT
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Repository:    [repo name]
+  Analyzed:      [count] commits from [baseline short hash] ([date]) to present
+  CLAUDE.md:     [location or "not found"]
 
-**Repository:** [repo name]
-**Analyzed:** [count] commits from [baseline short hash] ([date]) to present
-**CLAUDE.md Status:** [location or "not found"]
-
----
-
-### 🏗️ Architecture Changes
+━━━ Architecture Changes ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 [Agent 1 findings - categorized by priority]
 
@@ -356,44 +366,34 @@ After all 4 agents complete their analysis, aggregate their findings and present
 
 [Repeat for each architecture finding]
 
----
-
-### 🌍 Environment & Infrastructure
+━━━ Environment & Infrastructure ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 [Agent 2 findings - categorized by priority]
 
 [Same format as above]
 
----
-
-### 🔧 Workflow & Tooling
+━━━ Workflow & Tooling ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 [Agent 3 findings - categorized by priority]
 
 [Same format as above]
 
----
-
-### 📦 Integrations & Dependencies
+━━━ Integrations & Dependencies ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 [Agent 4 findings - categorized by priority]
 
 [Same format as above]
 
----
-
-### 📌 Summary
+━━━ Summary ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 **Total Findings:** [count high], [count medium], [count low] priority
 
 **Priority Breakdown:**
-- 🔴 **High Priority** ([count]): Critical for LLM correctness - update CLAUDE.md immediately
-- 🟡 **Medium Priority** ([count]): Important context - should be documented
-- 🟢 **Low Priority** ([count]): Nice to have - optional documentation
+- **[HIGH]** ([count]): Critical for LLM correctness - update CLAUDE.md immediately
+- **[MEDIUM]** ([count]): Important context - should be documented
+- **[LOW]** ([count]): Nice to have - optional documentation
 
----
-
-### 💡 Recommendations
+━━━ Recommendations ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 1. **Immediate Actions**
    - Update root CLAUDE.md with [X] high-priority findings
@@ -410,9 +410,7 @@ After all 4 agents complete their analysis, aggregate their findings and present
    - Track architecture migrations (update when complete)
    - [Other ongoing patterns]
 
----
-
-### ✅ Next Steps
+━━━ Next Steps ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 I can help you with:
 
@@ -422,6 +420,16 @@ I can help you with:
 4. **Generate git commit** - Commit CLAUDE.md updates with proper message
 
 What would you like to do next?
+```
+
+After presenting the report, render a completion card:
+
+```
+  SYNC REPORT FILED
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Commits analyzed:  [count]
+  Findings:          [total finding count]
+  ██████████  LANDED
 ```
 
 ## Phase 7: Interactive Next Steps
