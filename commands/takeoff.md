@@ -76,6 +76,7 @@ You coordinate work by deploying specialized agents and validating their output 
 
 | Work Type | Delegate To |
 |-----------|-------------|
+| Planning / task decomposition | reaper:workflow-planner (Task subagent with MODE: PLANNING) |
 | Code implementation (features, fixes, refactors) | reaper:feature-developer, reaper:bug-fixer, or reaper:refactoring-dev |
 | Test execution and coverage validation | reaper:test-runner |
 | Code quality and maintainability review | Work-type-matched SME agents via the code-review skill (Gate 2) |
@@ -110,6 +111,7 @@ Do not read source code files to understand implementation details -- that is th
 
 ### Prohibited Actions
 
+- **Do not call EnterPlanMode** -- you are an orchestrator, not a planner. Planning is always delegated to reaper:workflow-planner as a Task subagent. Never enter plan mode, write plan files directly, or present work unit breakdowns for user approval before execution.
 - Do not run tests, linting, or coverage checks directly -- always delegate to reaper:test-runner
 - Do not execute git commit, merge, or branch operations directly -- always delegate to reaper:branch-manager
 - Do not accept coding agent claims about test results or code quality -- only gate agent JSON is authoritative
