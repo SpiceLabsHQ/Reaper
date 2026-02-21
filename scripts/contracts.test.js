@@ -2342,12 +2342,13 @@ describe('Contract: branch-manager medium_single_branch uses shared worktree wit
 });
 
 // ---------------------------------------------------------------------------
-// Contract: workflow-planner Strategy 2 mentions shared worktree
+// Contract: workflow-planner-planning skill Strategy 2 mentions shared worktree
+// (Content moved from agent to planning skill as part of refactor)
 // ---------------------------------------------------------------------------
 
-describe('Contract: workflow-planner medium_single_branch mentions shared worktree', () => {
-  const filePath = agentFilePath('workflow-planner');
-  const relative = 'agents/workflow-planner.md';
+describe('Contract: workflow-planner-planning skill medium_single_branch mentions shared worktree', () => {
+  const filePath = skillFilePath('workflow-planner-planning');
+  const relative = 'skills/workflow-planner-planning/SKILL.md';
 
   it(`${relative} Strategy 2 description mentions shared worktree`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
@@ -2883,12 +2884,13 @@ describe('Contract: flight-plan does not embed hardcoded completion templates', 
 });
 
 // ---------------------------------------------------------------------------
-// Contract: workflow-planner dirty-root safety check
+// Contract: workflow-planner-planning skill dirty-root safety check
+// (Content moved from agent to planning skill as part of refactor)
 // ---------------------------------------------------------------------------
 
-describe('Contract: workflow-planner dirty-root safety check', () => {
-  const filePath = agentFilePath('workflow-planner');
-  const relative = 'agents/workflow-planner.md';
+describe('Contract: workflow-planner-planning skill dirty-root safety check', () => {
+  const filePath = skillFilePath('workflow-planner-planning');
+  const relative = 'skills/workflow-planner-planning/SKILL.md';
 
   it(`${relative} contains "Dirty-Root Safety Check" section heading`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
@@ -3704,6 +3706,338 @@ describe('Contract: takeoff completion section references /reaper:ship', () => {
     assert.ok(
       tableSection.includes('merge') && tableSection.includes('develop'),
       `${relative} Response Handling table must preserve the existing merge-to-develop row`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: workflow-planner-planning skill
+// ---------------------------------------------------------------------------
+
+describe('workflow-planner-planning skill', () => {
+  const SKILL_NAME = 'workflow-planner-planning';
+  const filePath = skillFilePath(SKILL_NAME);
+  const relative = `skills/${SKILL_NAME}/SKILL.md`;
+
+  it(`${relative} exists`, () => {
+    assert.ok(
+      fs.existsSync(filePath),
+      `${relative} not found at ${filePath} — run npm run build to generate it`
+    );
+  });
+
+  it(`${relative} has valid YAML frontmatter`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const fm = extractFrontmatter(content);
+    assert.ok(fm !== null, `${relative} is missing YAML frontmatter (--- delimiters)`);
+  });
+
+  it(`${relative} frontmatter name === 'workflow-planner-planning'`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const fm = extractFrontmatter(content);
+    assert.ok(fm !== null, `${relative} is missing frontmatter`);
+    assert.ok(
+      /^name\s*:\s*workflow-planner-planning\s*$/m.test(fm),
+      `${relative} frontmatter "name" must be "workflow-planner-planning"`
+    );
+  });
+
+  it(`${relative} frontmatter context === 'fork'`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const fm = extractFrontmatter(content);
+    assert.ok(fm !== null, `${relative} is missing frontmatter`);
+    assert.ok(
+      /^context\s*:\s*fork\s*$/m.test(fm),
+      `${relative} frontmatter "context" must be "fork"`
+    );
+  });
+
+  it(`${relative} frontmatter agent === 'reaper:workflow-planner'`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const fm = extractFrontmatter(content);
+    assert.ok(fm !== null, `${relative} is missing frontmatter`);
+    assert.ok(
+      /^agent\s*:\s*reaper:workflow-planner\s*$/m.test(fm),
+      `${relative} frontmatter "agent" must be "reaper:workflow-planner"`
+    );
+  });
+
+  it(`${relative} body contains Strategy Selection section`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /Strategy Selection/i.test(content),
+      `${relative} must contain a "Strategy Selection" section`
+    );
+  });
+
+  it(`${relative} body contains JSON Planning Report section`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /JSON/i.test(content),
+      `${relative} must contain a JSON schema section`
+    );
+  });
+
+  it(`${relative} body contains Work Package section`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /Work Package/i.test(content),
+      `${relative} must contain a "Work Package" section`
+    );
+  });
+
+  it(`${relative} body contains Grounding instruction`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /[Gg]rounding/i.test(content),
+      `${relative} must contain grounding instruction`
+    );
+  });
+
+  it(`${relative} body contains Input Validation section`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /Input Validation/i.test(content),
+      `${relative} must contain an "Input Validation" section`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: workflow-planner-verification skill
+// ---------------------------------------------------------------------------
+
+describe('workflow-planner-verification skill', () => {
+  const SKILL_NAME = 'workflow-planner-verification';
+  const filePath = skillFilePath(SKILL_NAME);
+  const relative = `skills/${SKILL_NAME}/SKILL.md`;
+
+  it(`${relative} exists`, () => {
+    assert.ok(
+      fs.existsSync(filePath),
+      `${relative} not found at ${filePath} — run npm run build to generate it`
+    );
+  });
+
+  it(`${relative} has valid YAML frontmatter`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const fm = extractFrontmatter(content);
+    assert.ok(fm !== null, `${relative} is missing YAML frontmatter (--- delimiters)`);
+  });
+
+  it(`${relative} frontmatter name === 'workflow-planner-verification'`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const fm = extractFrontmatter(content);
+    assert.ok(fm !== null, `${relative} is missing frontmatter`);
+    assert.ok(
+      /^name\s*:\s*workflow-planner-verification\s*$/m.test(fm),
+      `${relative} frontmatter "name" must be "workflow-planner-verification"`
+    );
+  });
+
+  it(`${relative} frontmatter context === 'fork'`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const fm = extractFrontmatter(content);
+    assert.ok(fm !== null, `${relative} is missing frontmatter`);
+    assert.ok(
+      /^context\s*:\s*fork\s*$/m.test(fm),
+      `${relative} frontmatter "context" must be "fork"`
+    );
+  });
+
+  it(`${relative} frontmatter agent === 'reaper:workflow-planner'`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const fm = extractFrontmatter(content);
+    assert.ok(fm !== null, `${relative} is missing frontmatter`);
+    assert.ok(
+      /^agent\s*:\s*reaper:workflow-planner\s*$/m.test(fm),
+      `${relative} frontmatter "agent" must be "reaper:workflow-planner"`
+    );
+  });
+
+  it(`${relative} body contains verification criterion table`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /[Cc]riterion/i.test(content),
+      `${relative} must contain a criterion table for the 4 orchestratability criteria`
+    );
+  });
+
+  it(`${relative} body contains auto-fix protocol`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /[Aa]uto-[Ff]ix/i.test(content),
+      `${relative} must contain the auto-fix protocol`
+    );
+  });
+
+  it(`${relative} body contains verification workflow steps`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /[Vv]erification/i.test(content),
+      `${relative} must contain verification workflow steps`
+    );
+  });
+
+  it(`${relative} body contains JSON output schema`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /JSON/i.test(content),
+      `${relative} must contain a JSON output schema`
+    );
+  });
+
+  it(`${relative} body contains verification_mode field in JSON schema`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('verification_mode'),
+      `${relative} JSON schema must include "verification_mode" field`
+    );
+  });
+
+  it(`${relative} body contains Verification vs Planning comparison`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /[Pp]lanning/i.test(content),
+      `${relative} must contain Verification vs Planning comparison table`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: workflow-planner agent (refactored)
+// Validates that the agent is a thin routing layer after process extraction
+// ---------------------------------------------------------------------------
+
+describe('workflow-planner agent (refactored)', () => {
+  const filePath = agentFilePath('workflow-planner');
+  const relative = 'agents/workflow-planner.md';
+
+  it(`${relative} line count is less than 150`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const lineCount = content.split('\n').length;
+    assert.ok(
+      lineCount < 150,
+      `${relative} must be under 150 lines (currently ${lineCount}) — process content should live in skills`
+    );
+  });
+
+  it(`${relative} contains 'workflow-planner-planning' skill routing reference`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('workflow-planner-planning'),
+      `${relative} must reference the 'workflow-planner-planning' skill for routing`
+    );
+  });
+
+  it(`${relative} contains 'workflow-planner-verification' skill routing reference`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('workflow-planner-verification'),
+      `${relative} must reference the 'workflow-planner-verification' skill for routing`
+    );
+  });
+
+  it(`${relative} does NOT contain 'Scoring Rubric'`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      !content.includes('Scoring Rubric'),
+      `${relative} must NOT contain 'Scoring Rubric' — this process content belongs in the planning skill`
+    );
+  });
+
+  it(`${relative} does NOT contain 'Anti-Patterns'`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      !content.includes('Anti-Patterns'),
+      `${relative} must NOT contain 'Anti-Patterns' — this process content belongs in the planning skill`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: takeoff command: workflow-planner-planning skill invocation
+// ---------------------------------------------------------------------------
+
+describe('takeoff command: workflow-planner-planning skill invocation', () => {
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
+
+  it(`${relative} contains 'workflow-planner-planning' skill name`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('workflow-planner-planning'),
+      `${relative} must reference the 'workflow-planner-planning' skill for planning invocation`
+    );
+  });
+
+  it(`${relative} does NOT contain 'Task --subagent_type reaper:workflow-planner'`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      !content.includes('Task --subagent_type reaper:workflow-planner'),
+      `${relative} must NOT contain 'Task --subagent_type reaper:workflow-planner' — use Skill invocation instead`
+    );
+  });
+
+  it(`${relative} does NOT contain 'deploy reaper:workflow-planner'`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      !content.includes('deploy reaper:workflow-planner'),
+      `${relative} must NOT contain 'deploy reaper:workflow-planner' — use skill invocation language instead`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: flight-plan command: workflow-planner-verification skill invocation
+// ---------------------------------------------------------------------------
+
+describe('flight-plan command: workflow-planner-verification skill invocation', () => {
+  const filePath = path.join(COMMANDS_DIR, 'flight-plan.md');
+  const relative = 'commands/flight-plan.md';
+
+  it(`${relative} contains 'workflow-planner-verification' skill name`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('workflow-planner-verification'),
+      `${relative} must reference the 'workflow-planner-verification' skill for Phase 6 verification`
+    );
+  });
+
+  it(`${relative} does NOT contain 'Task --subagent_type reaper:workflow-planner'`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      !content.includes('Task --subagent_type reaper:workflow-planner'),
+      `${relative} must NOT contain 'Task --subagent_type reaper:workflow-planner' — use Skill invocation instead`
     );
   });
 });

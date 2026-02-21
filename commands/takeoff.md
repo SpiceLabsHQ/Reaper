@@ -330,8 +330,8 @@ When reading a plan file, extract sections in this order of importance:
 
 ### Adapting to Plan Completeness
 
-- **No plan file found**: Run the full workflow (deploy reaper:workflow-planner for analysis)
-- **Plan with Research only**: Deploy reaper:workflow-planner with research as input context
+- **No plan file found**: Run the full workflow (invoke the reaper:workflow-planner-planning skill for analysis)
+- **Plan with Research only**: Invoke the reaper:workflow-planner-planning skill with research as input context
 - **Plan with Research + Work Units**: Skip planner, extract work units directly
 - **Plan with Research + Work Units + Strategy**: Skip planner entirely, use provided strategy
 
@@ -382,19 +382,19 @@ Use the `worktree-manager` skill for all worktree operations (creation, status c
 
 When the plan file already contains Work Units and Strategy, skip the planner and use those directly.
 
-Otherwise, deploy reaper:workflow-planner to analyze the task and produce a strategy selection with work units. Pass the full implementation context (including any plan file research) as input.
+Otherwise, invoke the `reaper:workflow-planner-planning` skill (via the Skill tool) passing the task ID, the full implementation context, and any plan file research as arguments. The skill's fork-and-agent frontmatter handles agent selection automatically.
 
-If the plan file has Research but no Work Units, deploy the planner with the research as additional context so it does not repeat codebase investigation.
+If the plan file has Research but no Work Units, invoke the `reaper:workflow-planner-planning` skill with the research as additional context so it does not repeat codebase investigation.
 
 ## Work Package Validation
 
-After obtaining work units (from pre-planned extraction, plan file, or workflow-planner), validate each package:
+After obtaining work units (from pre-planned extraction, plan file, or workflow-planner-planning skill), validate each package:
 
 - Maximum 5 files per work unit
 - Maximum 500 lines of code per work unit
 - Maximum 2 hours estimated per work unit
 
-If any package exceeds these limits, redeploy reaper:workflow-planner with instructions to split the oversized packages into smaller, context-safe units.
+If any package exceeds these limits, re-invoke the `reaper:workflow-planner-planning` skill with instructions to split the oversized packages into smaller, context-safe units.
 
 ## TodoWrite Plan Persistence
 
@@ -938,7 +938,7 @@ For **medium_single_branch** and **very_small_direct** strategies: invoke the wo
 
 1. Parse inputs and query task system
 2. Discover plan file and extract context
-3. Detect pre-planned structure or deploy reaper:workflow-planner
+3. Detect pre-planned structure or invoke `reaper:workflow-planner-planning` skill
 4. Validate work package sizes
 5. Write plan to TodoWrite
 
