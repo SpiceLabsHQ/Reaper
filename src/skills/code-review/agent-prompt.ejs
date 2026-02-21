@@ -26,6 +26,10 @@ unless it causes functional failures, in which case flag it as blocking.
   another. Example: "Always emit JSON" followed by "Respond in prose."
   Functionally broken prompts are not style nits — contradictory instructions
   cause inconsistent agent behavior.
+- **Incomplete anti-pattern entries** (**blocking**): Any anti-pattern entry that is
+  missing a Detection Signal column or a Fix column. Both columns are required.
+  An entry without Detection Signal cannot be applied consistently; an entry
+  without Fix leaves reviewers without actionable guidance.
 
 ## Output Format Contract Validation
 
