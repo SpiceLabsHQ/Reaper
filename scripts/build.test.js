@@ -35,7 +35,11 @@ beforeEach(() => {
 
 describe('buildTemplateVars base variables', () => {
   it('should always return FILENAME matching input filename', () => {
-    const vars = buildTemplateVars('agents', 'bug-fixer', 'agents/bug-fixer.ejs');
+    const vars = buildTemplateVars(
+      'agents',
+      'bug-fixer',
+      'agents/bug-fixer.ejs'
+    );
     assert.strictEqual(vars.FILENAME, 'bug-fixer');
   });
 
@@ -52,7 +56,11 @@ describe('buildTemplateVars base variables', () => {
 
   it('should return BUILD_TIMESTAMP in ISO 8601 format', () => {
     const before = new Date().toISOString();
-    const vars = buildTemplateVars('agents', 'bug-fixer', 'agents/bug-fixer.ejs');
+    const vars = buildTemplateVars(
+      'agents',
+      'bug-fixer',
+      'agents/bug-fixer.ejs'
+    );
     const after = new Date().toISOString();
 
     assert.match(
@@ -84,22 +92,39 @@ describe('buildTemplateVars base variables', () => {
 // ===========================================================================
 
 describe('buildTemplateVars coding agents', () => {
-  const codingAgents = ['bug-fixer', 'feature-developer', 'refactoring-dev', 'integration-engineer'];
+  const codingAgents = [
+    'bug-fixer',
+    'feature-developer',
+    'refactoring-dev',
+    'integration-engineer',
+  ];
 
   for (const agent of codingAgents) {
     it(`should classify "${agent}" as IS_CODING_AGENT=true`, () => {
       const vars = buildTemplateVars('agents', agent, `agents/${agent}.ejs`);
-      assert.strictEqual(vars.IS_CODING_AGENT, true, `${agent} should be a coding agent`);
+      assert.strictEqual(
+        vars.IS_CODING_AGENT,
+        true,
+        `${agent} should be a coding agent`
+      );
     });
 
     it(`should set AGENT_TYPE="coding" for "${agent}"`, () => {
       const vars = buildTemplateVars('agents', agent, `agents/${agent}.ejs`);
-      assert.strictEqual(vars.AGENT_TYPE, 'coding', `${agent} AGENT_TYPE should be "coding"`);
+      assert.strictEqual(
+        vars.AGENT_TYPE,
+        'coding',
+        `${agent} AGENT_TYPE should be "coding"`
+      );
     });
 
     it(`should set HAS_GIT_PROHIBITIONS=true for "${agent}"`, () => {
       const vars = buildTemplateVars('agents', agent, `agents/${agent}.ejs`);
-      assert.strictEqual(vars.HAS_GIT_PROHIBITIONS, true, `${agent} should have git prohibitions`);
+      assert.strictEqual(
+        vars.HAS_GIT_PROHIBITIONS,
+        true,
+        `${agent} should have git prohibitions`
+      );
     });
 
     it(`should set IS_REVIEW_AGENT=false for "${agent}"`, () => {
@@ -129,13 +154,31 @@ describe('buildTemplateVars TDD agents', () => {
   }
 
   it('should set HAS_TDD=false for integration-engineer (coding but not TDD)', () => {
-    const vars = buildTemplateVars('agents', 'integration-engineer', 'agents/integration-engineer.ejs');
-    assert.strictEqual(vars.HAS_TDD, false, 'integration-engineer is coding but not TDD');
-    assert.strictEqual(vars.IS_CODING_AGENT, true, 'integration-engineer should still be coding agent');
+    const vars = buildTemplateVars(
+      'agents',
+      'integration-engineer',
+      'agents/integration-engineer.ejs'
+    );
+    assert.strictEqual(
+      vars.HAS_TDD,
+      false,
+      'integration-engineer is coding but not TDD'
+    );
+    assert.strictEqual(
+      vars.IS_CODING_AGENT,
+      true,
+      'integration-engineer should still be coding agent'
+    );
   });
 
   it('should set HAS_TDD=false for non-coding agents', () => {
-    const nonCoding = ['workflow-planner', 'test-runner', 'branch-manager', 'technical-writer', 'performance-engineer'];
+    const nonCoding = [
+      'workflow-planner',
+      'test-runner',
+      'branch-manager',
+      'technical-writer',
+      'performance-engineer',
+    ];
     for (const agent of nonCoding) {
       const vars = buildTemplateVars('agents', agent, `agents/${agent}.ejs`);
       assert.strictEqual(vars.HAS_TDD, false, `${agent} should not have TDD`);
@@ -153,7 +196,11 @@ describe('buildTemplateVars review agents', () => {
   for (const agent of reviewAgents) {
     it(`should classify "${agent}" as IS_REVIEW_AGENT=true`, () => {
       const vars = buildTemplateVars('agents', agent, `agents/${agent}.ejs`);
-      assert.strictEqual(vars.IS_REVIEW_AGENT, true, `${agent} should be a review agent`);
+      assert.strictEqual(
+        vars.IS_REVIEW_AGENT,
+        true,
+        `${agent} should be a review agent`
+      );
     });
 
     it(`should set AGENT_TYPE="review" for "${agent}"`, () => {
@@ -199,7 +246,11 @@ describe('buildTemplateVars planning agents', () => {
   for (const agent of planningAgents) {
     it(`should classify "${agent}" as IS_PLANNING_AGENT=true`, () => {
       const vars = buildTemplateVars('agents', agent, `agents/${agent}.ejs`);
-      assert.strictEqual(vars.IS_PLANNING_AGENT, true, `${agent} should be a planning agent`);
+      assert.strictEqual(
+        vars.IS_PLANNING_AGENT,
+        true,
+        `${agent} should be a planning agent`
+      );
     });
 
     it(`should set AGENT_TYPE="planning" for "${agent}"`, () => {
@@ -229,12 +280,20 @@ describe('buildTemplateVars planning agents', () => {
 // ===========================================================================
 
 describe('buildTemplateVars operations agents', () => {
-  const opsAgents = ['branch-manager', 'deployment-engineer', 'incident-responder'];
+  const opsAgents = [
+    'branch-manager',
+    'deployment-engineer',
+    'incident-responder',
+  ];
 
   for (const agent of opsAgents) {
     it(`should classify "${agent}" as IS_OPERATIONS_AGENT=true`, () => {
       const vars = buildTemplateVars('agents', agent, `agents/${agent}.ejs`);
-      assert.strictEqual(vars.IS_OPERATIONS_AGENT, true, `${agent} should be an operations agent`);
+      assert.strictEqual(
+        vars.IS_OPERATIONS_AGENT,
+        true,
+        `${agent} should be an operations agent`
+      );
     });
 
     it(`should set AGENT_TYPE="operations" for "${agent}"`, () => {
@@ -264,12 +323,20 @@ describe('buildTemplateVars operations agents', () => {
 // ===========================================================================
 
 describe('buildTemplateVars documentation agents', () => {
-  const docAgents = ['technical-writer', 'claude-agent-architect', 'ai-prompt-engineer'];
+  const docAgents = [
+    'technical-writer',
+    'claude-agent-architect',
+    'ai-prompt-engineer',
+  ];
 
   for (const agent of docAgents) {
     it(`should classify "${agent}" as IS_DOCUMENTATION_AGENT=true`, () => {
       const vars = buildTemplateVars('agents', agent, `agents/${agent}.ejs`);
-      assert.strictEqual(vars.IS_DOCUMENTATION_AGENT, true, `${agent} should be a documentation agent`);
+      assert.strictEqual(
+        vars.IS_DOCUMENTATION_AGENT,
+        true,
+        `${agent} should be a documentation agent`
+      );
     });
 
     it(`should set AGENT_TYPE="documentation" for "${agent}"`, () => {
@@ -295,17 +362,29 @@ describe('buildTemplateVars documentation agents', () => {
 
 describe('buildTemplateVars performance agents', () => {
   it('should classify "performance-engineer" as IS_PERFORMANCE_AGENT=true', () => {
-    const vars = buildTemplateVars('agents', 'performance-engineer', 'agents/performance-engineer.ejs');
+    const vars = buildTemplateVars(
+      'agents',
+      'performance-engineer',
+      'agents/performance-engineer.ejs'
+    );
     assert.strictEqual(vars.IS_PERFORMANCE_AGENT, true);
   });
 
   it('should set AGENT_TYPE="performance" for performance-engineer', () => {
-    const vars = buildTemplateVars('agents', 'performance-engineer', 'agents/performance-engineer.ejs');
+    const vars = buildTemplateVars(
+      'agents',
+      'performance-engineer',
+      'agents/performance-engineer.ejs'
+    );
     assert.strictEqual(vars.AGENT_TYPE, 'performance');
   });
 
   it('should set all other category flags to false for performance-engineer', () => {
-    const vars = buildTemplateVars('agents', 'performance-engineer', 'agents/performance-engineer.ejs');
+    const vars = buildTemplateVars(
+      'agents',
+      'performance-engineer',
+      'agents/performance-engineer.ejs'
+    );
     assert.strictEqual(vars.IS_CODING_AGENT, false);
     assert.strictEqual(vars.IS_REVIEW_AGENT, false);
     assert.strictEqual(vars.IS_PLANNING_AGENT, false);
@@ -350,12 +429,20 @@ describe('buildTemplateVars category mutual exclusivity', () => {
 
 describe('buildTemplateVars unknown agent names', () => {
   it('should set AGENT_TYPE to "unknown" for unrecognized agent name', () => {
-    const vars = buildTemplateVars('agents', 'nonexistent-agent', 'agents/nonexistent-agent.ejs');
+    const vars = buildTemplateVars(
+      'agents',
+      'nonexistent-agent',
+      'agents/nonexistent-agent.ejs'
+    );
     assert.strictEqual(vars.AGENT_TYPE, 'unknown');
   });
 
   it('should set all category flags to false for unknown agent', () => {
-    const vars = buildTemplateVars('agents', 'nonexistent-agent', 'agents/nonexistent-agent.ejs');
+    const vars = buildTemplateVars(
+      'agents',
+      'nonexistent-agent',
+      'agents/nonexistent-agent.ejs'
+    );
     assert.strictEqual(vars.IS_CODING_AGENT, false);
     assert.strictEqual(vars.IS_REVIEW_AGENT, false);
     assert.strictEqual(vars.IS_PLANNING_AGENT, false);
@@ -365,17 +452,29 @@ describe('buildTemplateVars unknown agent names', () => {
   });
 
   it('should set HAS_TDD=false for unknown agent', () => {
-    const vars = buildTemplateVars('agents', 'nonexistent-agent', 'agents/nonexistent-agent.ejs');
+    const vars = buildTemplateVars(
+      'agents',
+      'nonexistent-agent',
+      'agents/nonexistent-agent.ejs'
+    );
     assert.strictEqual(vars.HAS_TDD, false);
   });
 
   it('should set HAS_GIT_PROHIBITIONS=false for unknown agent', () => {
-    const vars = buildTemplateVars('agents', 'nonexistent-agent', 'agents/nonexistent-agent.ejs');
+    const vars = buildTemplateVars(
+      'agents',
+      'nonexistent-agent',
+      'agents/nonexistent-agent.ejs'
+    );
     assert.strictEqual(vars.HAS_GIT_PROHIBITIONS, false);
   });
 
   it('should still include AGENT_NAME for unknown agent', () => {
-    const vars = buildTemplateVars('agents', 'nonexistent-agent', 'agents/nonexistent-agent.ejs');
+    const vars = buildTemplateVars(
+      'agents',
+      'nonexistent-agent',
+      'agents/nonexistent-agent.ejs'
+    );
     assert.strictEqual(vars.AGENT_NAME, 'nonexistent-agent');
   });
 });
@@ -442,7 +541,11 @@ describe('buildTemplateVars non-agent source types', () => {
   });
 
   it('should NOT include agent-specific keys for commands source type', () => {
-    const vars = buildTemplateVars('commands', 'my-command', 'commands/my-command.ejs');
+    const vars = buildTemplateVars(
+      'commands',
+      'my-command',
+      'commands/my-command.ejs'
+    );
     for (const key of agentOnlyKeys) {
       assert.strictEqual(
         key in vars,
@@ -459,28 +562,48 @@ describe('buildTemplateVars non-agent source types', () => {
 
 describe('buildTemplateVars skills', () => {
   it('should set SKILL_NAME to the filename', () => {
-    const vars = buildTemplateVars('skills', 'code-formatter', 'skills/code-formatter.ejs');
+    const vars = buildTemplateVars(
+      'skills',
+      'code-formatter',
+      'skills/code-formatter.ejs'
+    );
     assert.strictEqual(vars.SKILL_NAME, 'code-formatter');
   });
 
   it('should set PARENT_SKILL to null for top-level skills', () => {
-    const vars = buildTemplateVars('skills', 'code-formatter', 'skills/code-formatter.ejs');
+    const vars = buildTemplateVars(
+      'skills',
+      'code-formatter',
+      'skills/code-formatter.ejs'
+    );
     assert.strictEqual(vars.PARENT_SKILL, null);
   });
 
   it('should set PARENT_SKILL for nested skill paths (3+ path segments)', () => {
-    const vars = buildTemplateVars('skills', 'takeoff', 'skills/orchestration/takeoff.ejs');
+    const vars = buildTemplateVars(
+      'skills',
+      'takeoff',
+      'skills/orchestration/takeoff.ejs'
+    );
     assert.strictEqual(vars.PARENT_SKILL, 'orchestration');
   });
 
   it('should set PARENT_SKILL to first subdirectory for deeply nested skills', () => {
-    const vars = buildTemplateVars('skills', 'deep', 'skills/spice/sub/deep.ejs');
+    const vars = buildTemplateVars(
+      'skills',
+      'deep',
+      'skills/spice/sub/deep.ejs'
+    );
     assert.strictEqual(vars.PARENT_SKILL, 'spice');
   });
 
   it('should NOT include hook-specific keys', () => {
     const vars = buildTemplateVars('skills', 'my-skill', 'skills/my-skill.ejs');
-    assert.strictEqual('HOOK_NAME' in vars, false, 'Skills should not have HOOK_NAME');
+    assert.strictEqual(
+      'HOOK_NAME' in vars,
+      false,
+      'Skills should not have HOOK_NAME'
+    );
   });
 });
 
@@ -490,14 +613,30 @@ describe('buildTemplateVars skills', () => {
 
 describe('buildTemplateVars hooks', () => {
   it('should set HOOK_NAME to the filename', () => {
-    const vars = buildTemplateVars('hooks', 'pre-commit', 'hooks/pre-commit.ejs');
+    const vars = buildTemplateVars(
+      'hooks',
+      'pre-commit',
+      'hooks/pre-commit.ejs'
+    );
     assert.strictEqual(vars.HOOK_NAME, 'pre-commit');
   });
 
   it('should NOT include skill-specific keys', () => {
-    const vars = buildTemplateVars('hooks', 'pre-commit', 'hooks/pre-commit.ejs');
-    assert.strictEqual('SKILL_NAME' in vars, false, 'Hooks should not have SKILL_NAME');
-    assert.strictEqual('PARENT_SKILL' in vars, false, 'Hooks should not have PARENT_SKILL');
+    const vars = buildTemplateVars(
+      'hooks',
+      'pre-commit',
+      'hooks/pre-commit.ejs'
+    );
+    assert.strictEqual(
+      'SKILL_NAME' in vars,
+      false,
+      'Hooks should not have SKILL_NAME'
+    );
+    assert.strictEqual(
+      'PARENT_SKILL' in vars,
+      false,
+      'Hooks should not have PARENT_SKILL'
+    );
   });
 });
 
@@ -507,7 +646,11 @@ describe('buildTemplateVars hooks', () => {
 
 describe('buildTemplateVars commands', () => {
   it('should only include base variables for commands', () => {
-    const vars = buildTemplateVars('commands', 'my-command', 'commands/my-command.ejs');
+    const vars = buildTemplateVars(
+      'commands',
+      'my-command',
+      'commands/my-command.ejs'
+    );
     const keys = Object.keys(vars);
     assert.deepStrictEqual(
       keys.sort(),
@@ -553,7 +696,8 @@ describe('TDD_AGENTS constant', () => {
 describe('parseFrontmatter', () => {
   describe('standard frontmatter', () => {
     it('should parse basic frontmatter with key-value pairs', () => {
-      const content = '---\ntitle: Hello\ndescription: World\n---\nBody content here';
+      const content =
+        '---\ntitle: Hello\ndescription: World\n---\nBody content here';
       const result = parseFrontmatter(content);
 
       assert.strictEqual(
@@ -587,7 +731,8 @@ describe('parseFrontmatter', () => {
     });
 
     it('should handle YAML with multiple lines', () => {
-      const yaml = 'name: test-agent\ndescription: A test fixture\nuser-invocable: true';
+      const yaml =
+        'name: test-agent\ndescription: A test fixture\nuser-invocable: true';
       const content = `---\n${yaml}\n---\nBody`;
       const result = parseFrontmatter(content);
 
@@ -635,11 +780,7 @@ describe('parseFrontmatter', () => {
         content,
         'frontmatter should be the entire content'
       );
-      assert.strictEqual(
-        result.body,
-        '',
-        'body should be an empty string'
-      );
+      assert.strictEqual(result.body, '', 'body should be an empty string');
     });
 
     it('should handle regex special characters in body', () => {
@@ -699,7 +840,6 @@ describe('getAgentType', () => {
     it('should return "review" for test-runner', () => {
       assert.strictEqual(getAgentType('test-runner'), 'review');
     });
-
   });
 
   describe('planning agents', () => {
@@ -764,7 +904,10 @@ describe('getAgentType', () => {
     });
 
     it('should return "documentation" for claude-agent-architect', () => {
-      assert.strictEqual(getAgentType('claude-agent-architect'), 'documentation');
+      assert.strictEqual(
+        getAgentType('claude-agent-architect'),
+        'documentation'
+      );
     });
 
     it('should return "documentation" for ai-prompt-engineer', () => {
@@ -818,7 +961,8 @@ describe('getAgentType', () => {
 describe('formatError', () => {
   it('should format a generic Error with message and stack', () => {
     const err = new Error('Something went wrong');
-    err.stack = 'Error: Something went wrong\n    at Object.<anonymous> (/tmp/test.js:10:5)';
+    err.stack =
+      'Error: Something went wrong\n    at Object.<anonymous> (/tmp/test.js:10:5)';
     const result = formatError(err, '/tmp/src/agents/test.ejs');
     assert.strictEqual(result, 'Something went wrong');
   });
@@ -838,7 +982,10 @@ describe('formatError', () => {
   });
 
   it('should handle a non-Error input (plain string)', () => {
-    const result = formatError('plain string error', '/tmp/src/agents/test.ejs');
+    const result = formatError(
+      'plain string error',
+      '/tmp/src/agents/test.ejs'
+    );
     assert.strictEqual(result, 'plain string error');
   });
 
@@ -959,7 +1106,11 @@ describe('compileTemplate', () => {
 
     const result = compileTemplate(template, {}, templatePath);
 
-    assert.strictEqual(result, '', 'Empty template should produce empty output');
+    assert.strictEqual(
+      result,
+      '',
+      'Empty template should produce empty output'
+    );
   });
 });
 
@@ -989,7 +1140,11 @@ describe('processFile', () => {
       'agents/simple.ejs'
     );
 
-    assert.strictEqual(result, true, 'processFile should return true on success');
+    assert.strictEqual(
+      result,
+      true,
+      'processFile should return true on success'
+    );
     assert.ok(
       fs.existsSync(outputPath),
       'Output file should be created on disk'
@@ -1272,9 +1427,20 @@ describe('findFiles', () => {
   it('should accumulate into a provided array', () => {
     const existing = ['/fake/path/existing.txt'];
     const result = findFiles(FIXTURES_DIR, existing);
-    assert.strictEqual(result, existing, 'Should return the same array reference');
-    assert.ok(result.length > 1, 'Should have added files to the existing array');
-    assert.strictEqual(result[0], '/fake/path/existing.txt', 'Should preserve existing entries');
+    assert.strictEqual(
+      result,
+      existing,
+      'Should return the same array reference'
+    );
+    assert.ok(
+      result.length > 1,
+      'Should have added files to the existing array'
+    );
+    assert.strictEqual(
+      result[0],
+      '/fake/path/existing.txt',
+      'Should preserve existing entries'
+    );
   });
 
   it('should handle readdirSync errors gracefully by returning accumulated files', () => {
@@ -1356,7 +1522,11 @@ describe('copyFile', () => {
 
     assert.strictEqual(result, false, 'copyFile should return false on error');
     assert.strictEqual(stats.errors, 1, 'stats.errors should be incremented');
-    assert.strictEqual(stats.errorMessages.length, 1, 'Should have one error message');
+    assert.strictEqual(
+      stats.errorMessages.length,
+      1,
+      'Should have one error message'
+    );
     assert.ok(
       stats.errorMessages[0].includes('nonexistent.xyz'),
       'Error message should include the relative path'
@@ -1384,7 +1554,12 @@ describe('copyFile', () => {
 
   it('should create the output directory if it does not exist', () => {
     const sourcePath = path.join(FIXTURES_DIR, 'simple.ejs');
-    const nestedOutput = path.join(TMP_OUTPUT_DIR, 'deep', 'nested', 'simple.ejs');
+    const nestedOutput = path.join(
+      TMP_OUTPUT_DIR,
+      'deep',
+      'nested',
+      'simple.ejs'
+    );
 
     const result = copyFile(sourcePath, nestedOutput, 'test/simple.ejs');
 
@@ -1444,7 +1619,11 @@ describe('buildType', () => {
 
     buildType('agents');
 
-    assert.strictEqual(stats.success, 1, 'One file should be processed successfully');
+    assert.strictEqual(
+      stats.success,
+      1,
+      'One file should be processed successfully'
+    );
     assert.ok(
       fs.existsSync(path.join(outputAgentsDir, 'test-agent.md')),
       'Output .md file should be created'
@@ -1455,23 +1634,31 @@ describe('buildType', () => {
     const srcAgentsDir = path.join(TMP_OUTPUT_DIR, 'src', 'agents');
     const outputAgentsDir = path.join(TMP_OUTPUT_DIR, 'out', 'agents');
     fs.mkdirSync(srcAgentsDir, { recursive: true });
-    fs.writeFileSync(
-      path.join(srcAgentsDir, 'readme.txt'),
-      'Plain text file'
-    );
+    fs.writeFileSync(path.join(srcAgentsDir, 'readme.txt'), 'Plain text file');
 
     config.srcDir = path.join(TMP_OUTPUT_DIR, 'src');
     config.rootDir = path.join(TMP_OUTPUT_DIR, 'out');
 
     buildType('agents');
 
-    assert.strictEqual(stats.success, 1, 'One file should be copied successfully');
+    assert.strictEqual(
+      stats.success,
+      1,
+      'One file should be copied successfully'
+    );
     assert.ok(
       fs.existsSync(path.join(outputAgentsDir, 'readme.txt')),
       'Non-EJS file should be copied'
     );
-    const content = fs.readFileSync(path.join(outputAgentsDir, 'readme.txt'), 'utf8');
-    assert.strictEqual(content, 'Plain text file', 'Content should be identical');
+    const content = fs.readFileSync(
+      path.join(outputAgentsDir, 'readme.txt'),
+      'utf8'
+    );
+    assert.strictEqual(
+      content,
+      'Plain text file',
+      'Content should be identical'
+    );
   });
 
   it('should copy nested static .sh files from skills/*/scripts/ subdirectories verbatim', () => {
@@ -1497,7 +1684,11 @@ describe('buildType', () => {
 
     buildType('skills');
 
-    assert.strictEqual(stats.success, 2, 'Both .sh files should be copied successfully');
+    assert.strictEqual(
+      stats.success,
+      2,
+      'Both .sh files should be copied successfully'
+    );
 
     const helperPath = path.join(outputScriptsDir, 'helper.sh');
     const setupPath = path.join(outputScriptsDir, 'setup.sh');
@@ -1558,7 +1749,11 @@ describe('build', () => {
 
     assert.strictEqual(stats.success, 0, 'stats.success should be reset');
     assert.strictEqual(stats.errors, 0, 'stats.errors should be reset');
-    assert.deepStrictEqual(stats.errorMessages, [], 'errorMessages should be reset');
+    assert.deepStrictEqual(
+      stats.errorMessages,
+      [],
+      'errorMessages should be reset'
+    );
   });
 
   it('should handle missing src directory gracefully', () => {
@@ -1576,8 +1771,14 @@ describe('build', () => {
     const srcSkillsDir = path.join(TMP_OUTPUT_DIR, 'src', 'skills');
     fs.mkdirSync(srcAgentsDir, { recursive: true });
     fs.mkdirSync(srcSkillsDir, { recursive: true });
-    fs.writeFileSync(path.join(srcAgentsDir, 'a.ejs'), 'Agent: <%= FILENAME %>');
-    fs.writeFileSync(path.join(srcSkillsDir, 's.ejs'), 'Skill: <%= FILENAME %>');
+    fs.writeFileSync(
+      path.join(srcAgentsDir, 'a.ejs'),
+      'Agent: <%= FILENAME %>'
+    );
+    fs.writeFileSync(
+      path.join(srcSkillsDir, 's.ejs'),
+      'Skill: <%= FILENAME %>'
+    );
 
     config.srcDir = path.join(TMP_OUTPUT_DIR, 'src');
     config.rootDir = path.join(TMP_OUTPUT_DIR, 'out');
@@ -1601,8 +1802,14 @@ describe('build', () => {
     const srcSkillsDir = path.join(TMP_OUTPUT_DIR, 'src', 'skills');
     fs.mkdirSync(srcAgentsDir, { recursive: true });
     fs.mkdirSync(srcSkillsDir, { recursive: true });
-    fs.writeFileSync(path.join(srcAgentsDir, 'a.ejs'), 'Agent: <%= FILENAME %>');
-    fs.writeFileSync(path.join(srcSkillsDir, 's.ejs'), 'Skill: <%= FILENAME %>');
+    fs.writeFileSync(
+      path.join(srcAgentsDir, 'a.ejs'),
+      'Agent: <%= FILENAME %>'
+    );
+    fs.writeFileSync(
+      path.join(srcSkillsDir, 's.ejs'),
+      'Skill: <%= FILENAME %>'
+    );
 
     config.srcDir = path.join(TMP_OUTPUT_DIR, 'src');
     config.rootDir = path.join(TMP_OUTPUT_DIR, 'out');
@@ -1616,7 +1823,10 @@ describe('build', () => {
   it('should track errors in stats when template compilation fails', () => {
     const srcAgentsDir = path.join(TMP_OUTPUT_DIR, 'src', 'agents');
     fs.mkdirSync(srcAgentsDir, { recursive: true });
-    fs.writeFileSync(path.join(srcAgentsDir, 'bad.ejs'), '<%= UNDEFINED_FUNC() %>');
+    fs.writeFileSync(
+      path.join(srcAgentsDir, 'bad.ejs'),
+      '<%= UNDEFINED_FUNC() %>'
+    );
 
     config.srcDir = path.join(TMP_OUTPUT_DIR, 'src');
     config.rootDir = path.join(TMP_OUTPUT_DIR, 'out');
@@ -1673,7 +1883,10 @@ describe('main', () => {
   it('should call process.exit(1) when build has errors', () => {
     const srcAgentsDir = path.join(TMP_OUTPUT_DIR, 'src', 'agents');
     fs.mkdirSync(srcAgentsDir, { recursive: true });
-    fs.writeFileSync(path.join(srcAgentsDir, 'bad.ejs'), '<%= UNDEFINED_FUNC() %>');
+    fs.writeFileSync(
+      path.join(srcAgentsDir, 'bad.ejs'),
+      '<%= UNDEFINED_FUNC() %>'
+    );
 
     config.srcDir = path.join(TMP_OUTPUT_DIR, 'src');
     config.rootDir = path.join(TMP_OUTPUT_DIR, 'out');
@@ -1685,7 +1898,11 @@ describe('main', () => {
       assert.fail('Expected process.exit to be called');
     } catch (err) {
       assert.strictEqual(err.name, 'ProcessExitError');
-      assert.strictEqual(err.code, 1, 'Should exit with code 1 on build errors');
+      assert.strictEqual(
+        err.code,
+        1,
+        'Should exit with code 1 on build errors'
+      );
     } finally {
       restore();
     }
@@ -1734,7 +1951,9 @@ describe('main', () => {
     let callCount = 0;
     fs.existsSync = (_p) => {
       callCount++;
-      if (callCount === 1) {return true;}
+      if (callCount === 1) {
+        return true;
+      }
       throw new Error('Catastrophic filesystem failure');
     };
     console.error = (...args) => errors.push(args.join(' '));
@@ -1765,7 +1984,11 @@ describe('main', () => {
 
 describe('output-requirements partial: orchestrator extraction rules', () => {
   const SRC_DIR = path.join(__dirname, '..', 'src');
-  const PARTIAL_PATH = path.join(SRC_DIR, 'partials', 'output-requirements.ejs');
+  const PARTIAL_PATH = path.join(
+    SRC_DIR,
+    'partials',
+    'output-requirements.ejs'
+  );
 
   /**
    * Renders the output-requirements partial with given parameters by wrapping
@@ -1815,7 +2038,8 @@ describe('output-requirements partial: orchestrator extraction rules', () => {
   it('should list gate agent extraction fields: all_checks_passed and blocking_issues', () => {
     const result = renderPartial({ isOrchestrator: true });
     assert.ok(
-      result.includes('all_checks_passed') && result.includes('blocking_issues'),
+      result.includes('all_checks_passed') &&
+        result.includes('blocking_issues'),
       'Gate agents row must list all_checks_passed and blocking_issues'
     );
   });
@@ -1845,7 +2069,10 @@ describe('output-requirements partial: orchestrator extraction rules', () => {
   });
 
   it('should preserve existing isReviewAgent=false behavior alongside isOrchestrator', () => {
-    const result = renderPartial({ isReviewAgent: false, isOrchestrator: true });
+    const result = renderPartial({
+      isReviewAgent: false,
+      isOrchestrator: true,
+    });
     assert.ok(
       result.includes('You may write code files'),
       'isReviewAgent=false branch should still render'
@@ -1874,7 +2101,13 @@ describe('output-requirements partial: orchestrator extraction rules', () => {
 // ===========================================================================
 
 describe('branch-manager.ejs: pure executor authority model', () => {
-  const BRANCH_MANAGER_SRC = path.join(__dirname, '..', 'src', 'agents', 'branch-manager.ejs');
+  const BRANCH_MANAGER_SRC = path.join(
+    __dirname,
+    '..',
+    'src',
+    'agents',
+    'branch-manager.ejs'
+  );
 
   function readBranchManagerSrc() {
     return fs.readFileSync(BRANCH_MANAGER_SRC, 'utf8');
@@ -1940,7 +2173,8 @@ describe('branch-manager.ejs: pure executor authority model', () => {
     const content = readBranchManagerSrc();
     // The workflow section describes single shared worktree approach
     assert.ok(
-      content.includes('shared worktree') || content.includes('Shared worktree'),
+      content.includes('shared worktree') ||
+        content.includes('Shared worktree'),
       'medium_single_branch workflow section must remain intact'
     );
   });
@@ -1971,7 +2205,8 @@ describe('branch-manager.ejs: pure executor authority model', () => {
       content.includes('missing authorization evidence') ||
       content.includes('Missing authorization evidence');
     const hasErrorResponse =
-      content.includes('status: error') || content.includes('"status": "error"');
+      content.includes('status: error') ||
+      content.includes('"status": "error"');
     assert.ok(
       hasMissingEvidence,
       'branch-manager.ejs must contain a precondition check for missing authorization evidence'
@@ -2003,10 +2238,7 @@ describe('work-unit-cleanup partial: background task cleanup', () => {
 
   it('should render without errors', () => {
     const result = renderPartial();
-    assert.ok(
-      result.length > 0,
-      'Partial should produce non-empty output'
-    );
+    assert.ok(result.length > 0, 'Partial should produce non-empty output');
   });
 
   it('should contain "## Background Task Cleanup" heading', () => {
@@ -2047,7 +2279,8 @@ describe('work-unit-cleanup partial: background task cleanup', () => {
   it('should include examples of what to stop', () => {
     const result = renderPartial();
     assert.ok(
-      result.includes('completed agents') || result.includes('finished test runs'),
+      result.includes('completed agents') ||
+        result.includes('finished test runs'),
       'Must give examples of tasks to stop (completed agents, finished test runs)'
     );
     assert.ok(
@@ -2071,8 +2304,10 @@ describe('work-unit-cleanup partial: background task cleanup', () => {
   it('should include error tolerance for TaskStop failures', () => {
     const result = renderPartial();
     assert.ok(
-      /log.*continue/i.test(result) || /fail.*not.*block/i.test(result) ||
-        /error.*continue/i.test(result) || /fail.*continue/i.test(result),
+      /log.*continue/i.test(result) ||
+        /fail.*not.*block/i.test(result) ||
+        /error.*continue/i.test(result) ||
+        /fail.*continue/i.test(result),
       'Must include error tolerance: TaskStop failures should log and continue, not block'
     );
   });
@@ -2084,7 +2319,11 @@ describe('work-unit-cleanup partial: background task cleanup', () => {
 
 describe('quality-gate-protocol partial: Commit on Pass section must not exist', () => {
   const SRC_DIR = path.join(__dirname, '..', 'src');
-  const PARTIAL_PATH = path.join(SRC_DIR, 'partials', 'quality-gate-protocol.ejs');
+  const PARTIAL_PATH = path.join(
+    SRC_DIR,
+    'partials',
+    'quality-gate-protocol.ejs'
+  );
 
   /**
    * Renders the quality-gate-protocol partial in orchestrator role mode.
@@ -2138,7 +2377,11 @@ describe('takeoff command: per-unit cycle has explicit branch-manager commit ste
     config.srcDir = SRC_DIR;
     const source = fs.readFileSync(COMMAND_PATH, 'utf8');
     const { body } = parseFrontmatter(source);
-    const vars = buildTemplateVars('commands', 'takeoff', 'commands/takeoff.ejs');
+    const vars = buildTemplateVars(
+      'commands',
+      'takeoff',
+      'commands/takeoff.ejs'
+    );
     return compileTemplate(body, vars, COMMAND_PATH);
   }
 
@@ -2150,15 +2393,22 @@ describe('takeoff command: per-unit cycle has explicit branch-manager commit ste
    */
   function extractPerUnitCycle(rendered) {
     const start = rendered.indexOf('### Per-Unit Cycle');
-    if (start === -1) {return '';}
+    if (start === -1) {
+      return '';
+    }
     // Find the next ### heading after the per-unit cycle section
     const afterStart = rendered.indexOf('###', start + 1);
-    return afterStart !== -1 ? rendered.slice(start, afterStart) : rendered.slice(start);
+    return afterStart !== -1
+      ? rendered.slice(start, afterStart)
+      : rendered.slice(start);
   }
 
   it('should render without errors', () => {
     const result = renderTakeoff();
-    assert.ok(result.length > 0, 'takeoff command should produce non-empty output');
+    assert.ok(
+      result.length > 0,
+      'takeoff command should produce non-empty output'
+    );
   });
 
   it('should NOT contain "### Commit on Pass" heading', () => {
@@ -2186,7 +2436,9 @@ describe('takeoff command: per-unit cycle has explicit branch-manager commit ste
     const result = renderTakeoff();
     const perUnitSection = extractPerUnitCycle(result);
     assert.ok(
-      /commit.only|do not merge.*develop|commit.*not.*merge/i.test(perUnitSection),
+      /commit.only|do not merge.*develop|commit.*not.*merge/i.test(
+        perUnitSection
+      ),
       'Per-unit commit step must explicitly say commit only, do not merge to develop'
     );
   });
@@ -2215,7 +2467,13 @@ describe('takeoff command: per-unit cycle has explicit branch-manager commit ste
 // ===========================================================================
 
 describe('no-commits-policy.ejs: strategy naming uses new identifiers', () => {
-  const NO_COMMITS_SRC = path.join(__dirname, '..', 'src', 'partials', 'no-commits-policy.ejs');
+  const NO_COMMITS_SRC = path.join(
+    __dirname,
+    '..',
+    'src',
+    'partials',
+    'no-commits-policy.ejs'
+  );
 
   function readSrc() {
     return fs.readFileSync(NO_COMMITS_SRC, 'utf8');
@@ -2283,7 +2541,13 @@ describe('no-commits-policy.ejs: strategy naming uses new identifiers', () => {
 // ===========================================================================
 
 describe('orchestrator-role-boundary.ejs: commit freely example removed', () => {
-  const ORCH_ROLE_SRC = path.join(__dirname, '..', 'src', 'partials', 'orchestrator-role-boundary.ejs');
+  const ORCH_ROLE_SRC = path.join(
+    __dirname,
+    '..',
+    'src',
+    'partials',
+    'orchestrator-role-boundary.ejs'
+  );
 
   function readSrc() {
     return fs.readFileSync(ORCH_ROLE_SRC, 'utf8');

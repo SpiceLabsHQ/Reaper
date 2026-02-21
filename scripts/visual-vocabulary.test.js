@@ -88,7 +88,10 @@ describe('visual-vocabulary gauge states', () => {
   for (const context of VALID_CONTEXTS) {
     it(`should include all six gauge states for context: ${context}`, () => {
       const result = compileWithContext(context);
-      assert.ok(result.includes('LANDED'), `Missing LANDED state in ${context}`);
+      assert.ok(
+        result.includes('LANDED'),
+        `Missing LANDED state in ${context}`
+      );
       assert.ok(
         result.includes('IN FLIGHT'),
         `Missing IN FLIGHT state in ${context}`
@@ -234,7 +237,10 @@ describe('visual-vocabulary TAKING OFF gauge details', () => {
     const taxiingIndex = result.indexOf('TAXIING');
 
     assert.ok(inFlightIndex >= 0, 'IN FLIGHT should be present in functional');
-    assert.ok(takingOffIndex >= 0, 'TAKING OFF should be present in functional');
+    assert.ok(
+      takingOffIndex >= 0,
+      'TAKING OFF should be present in functional'
+    );
     assert.ok(taxiingIndex >= 0, 'TAXIING should be present in functional');
 
     assert.ok(
@@ -280,7 +286,9 @@ describe('visual-vocabulary fleet dashboard sort order', () => {
     // In fleet dashboard, the sort rule text should include TAKING OFF
     // Sort: FAULT first, then IN FLIGHT, then TAKING OFF, then ON APPROACH, then TAXIING, then LANDED
     assert.ok(
-      result.includes('FAULT first, then IN FLIGHT, then TAKING OFF, then ON APPROACH, then TAXIING, then LANDED'),
+      result.includes(
+        'FAULT first, then IN FLIGHT, then TAKING OFF, then ON APPROACH, then TAXIING, then LANDED'
+      ),
       'Sort order rule should list: FAULT first, then IN FLIGHT, then TAKING OFF, then ON APPROACH, then TAXIING, then LANDED'
     );
   });
@@ -555,24 +563,20 @@ describe('visual-vocabulary flight-plan context', () => {
 
   it('should include plan title field in filed card', () => {
     const result = compileWithContext('flight-plan');
-    assert.ok(
-      result.includes('Plan'),
-      'filed card should show plan title'
-    );
+    assert.ok(result.includes('Plan'), 'filed card should show plan title');
   });
 
   it('should include issue count field in filed card', () => {
     const result = compileWithContext('flight-plan');
-    assert.ok(
-      result.includes('Issues'),
-      'filed card should show issue count'
-    );
+    assert.ok(result.includes('Issues'), 'filed card should show issue count');
   });
 
   it('should include takeoff command hint in filed card', () => {
     const result = compileWithContext('flight-plan');
     assert.ok(
-      result.includes('takeoff') || result.includes('Takeoff') || result.includes('TAKEOFF'),
+      result.includes('takeoff') ||
+        result.includes('Takeoff') ||
+        result.includes('TAKEOFF'),
       'filed card should include takeoff command hint'
     );
   });
@@ -713,7 +717,10 @@ describe('visual-vocabulary Gate Panel uses gate statuses not gauge states', () 
     const result = compileWithContext('takeoff');
     // Extract the Gate Panel section (between "GATE RESULTS" and the next ### or end)
     const gatePanelStart = result.indexOf('GATE RESULTS');
-    assert.ok(gatePanelStart >= 0, 'Gate Panel should contain GATE RESULTS header');
+    assert.ok(
+      gatePanelStart >= 0,
+      'Gate Panel should contain GATE RESULTS header'
+    );
 
     const gatePanelEnd = result.indexOf('###', gatePanelStart);
     const gateSection =
@@ -739,7 +746,10 @@ describe('visual-vocabulary Gate Panel uses gate statuses not gauge states', () 
   it('should NOT use gauge states (LANDED, IN FLIGHT, TAXIING) in the Gate Panel example', () => {
     const result = compileWithContext('takeoff');
     const gatePanelStart = result.indexOf('GATE RESULTS');
-    assert.ok(gatePanelStart >= 0, 'Gate Panel should contain GATE RESULTS header');
+    assert.ok(
+      gatePanelStart >= 0,
+      'Gate Panel should contain GATE RESULTS header'
+    );
 
     const gatePanelEnd = result.indexOf('###', gatePanelStart);
     const gateSection =

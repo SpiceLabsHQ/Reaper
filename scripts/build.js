@@ -55,7 +55,12 @@ const AGENT_TYPES = {
     'compliance-architect',
   ],
   operations: ['branch-manager', 'deployment-engineer', 'incident-responder'],
-  documentation: ['technical-writer', 'claude-agent-architect', 'ai-prompt-engineer', 'principal-engineer'],
+  documentation: [
+    'technical-writer',
+    'claude-agent-architect',
+    'ai-prompt-engineer',
+    'principal-engineer',
+  ],
   performance: ['performance-engineer'],
 };
 
@@ -235,8 +240,7 @@ function buildTemplateVars(sourceType, filename, relativePath) {
     vars.IS_REVIEW_AGENT = AGENT_TYPES.review.includes(filename);
     vars.IS_PLANNING_AGENT = AGENT_TYPES.planning.includes(filename);
     vars.IS_OPERATIONS_AGENT = AGENT_TYPES.operations.includes(filename);
-    vars.IS_DOCUMENTATION_AGENT =
-      AGENT_TYPES.documentation.includes(filename);
+    vars.IS_DOCUMENTATION_AGENT = AGENT_TYPES.documentation.includes(filename);
     vars.IS_PERFORMANCE_AGENT = AGENT_TYPES.performance.includes(filename);
   }
 

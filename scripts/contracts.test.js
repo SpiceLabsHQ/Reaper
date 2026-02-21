@@ -17,10 +17,7 @@ const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
-const {
-  AGENT_TYPES,
-  TDD_AGENTS,
-} = require('./build');
+const { AGENT_TYPES, TDD_AGENTS } = require('./build');
 
 // ---------------------------------------------------------------------------
 // Paths — resolved relative to this file's parent (scripts/) then up to root
@@ -44,7 +41,9 @@ const HOOKS_FILE = path.join(ROOT, 'hooks', 'hooks.json');
  */
 function collectFiles(dir, predicate) {
   const results = [];
-  if (!fs.existsSync(dir)) {return results;}
+  if (!fs.existsSync(dir)) {
+    return results;
+  }
 
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   for (const entry of entries) {
@@ -129,8 +128,13 @@ const UNDEFINED_LEAK_PATTERNS = [
 // ---------------------------------------------------------------------------
 
 const agentFiles = collectFiles(AGENTS_DIR, (name) => name.endsWith('.md'));
-const skillDefinitionFiles = collectFiles(SKILLS_DIR, (name) => name === 'SKILL.md');
-const allSkillMdFiles = collectFiles(SKILLS_DIR, (name) => name.endsWith('.md'));
+const skillDefinitionFiles = collectFiles(
+  SKILLS_DIR,
+  (name) => name === 'SKILL.md'
+);
+const allSkillMdFiles = collectFiles(SKILLS_DIR, (name) =>
+  name.endsWith('.md')
+);
 const allGeneratedMdFiles = [...agentFiles, ...allSkillMdFiles];
 
 // ---------------------------------------------------------------------------
@@ -149,7 +153,10 @@ describe('Contract: agent frontmatter', () => {
     it(`${relative} has valid YAML frontmatter`, () => {
       const content = fs.readFileSync(filePath, 'utf8');
       const fm = extractFrontmatter(content);
-      assert.ok(fm !== null, `${relative} is missing YAML frontmatter (--- delimiters)`);
+      assert.ok(
+        fm !== null,
+        `${relative} is missing YAML frontmatter (--- delimiters)`
+      );
     });
 
     it(`${relative} frontmatter contains "name" field`, () => {
@@ -190,7 +197,10 @@ describe('Contract: skill frontmatter', () => {
     it(`${relative} has valid YAML frontmatter`, () => {
       const content = fs.readFileSync(filePath, 'utf8');
       const fm = extractFrontmatter(content);
-      assert.ok(fm !== null, `${relative} is missing YAML frontmatter (--- delimiters)`);
+      assert.ok(
+        fm !== null,
+        `${relative} is missing YAML frontmatter (--- delimiters)`
+      );
     });
 
     it(`${relative} frontmatter contains "name" field`, () => {
@@ -548,10 +558,7 @@ describe('Contract: hooks.json structure', () => {
 
     for (const category of categories) {
       const entries = parsed.hooks[category];
-      assert.ok(
-        Array.isArray(entries),
-        `hooks.${category} must be an array`
-      );
+      assert.ok(Array.isArray(entries), `hooks.${category} must be an array`);
 
       for (let i = 0; i < entries.length; i++) {
         const entry = entries[i];
@@ -571,10 +578,7 @@ describe('Contract: hooks.json structure', () => {
           Object.prototype.hasOwnProperty.call(entry, 'hooks'),
           `${loc} is missing "hooks" property`
         );
-        assert.ok(
-          Array.isArray(entry.hooks),
-          `${loc}.hooks must be an array`
-        );
+        assert.ok(Array.isArray(entry.hooks), `${loc}.hooks must be an array`);
       }
     }
   });
@@ -744,8 +748,14 @@ const SEMANTIC_CONTRACTS = {
     agents: () => AGENT_TYPES.coding,
     sections: [
       { pattern: /TDD/, label: 'TDD protocol section' },
-      { pattern: /GIT OPERATION PROHIBITIONS/i, label: 'git prohibitions section' },
-      { pattern: /Pre-Output Verification/i, label: 'pre-output verification section' },
+      {
+        pattern: /GIT OPERATION PROHIBITIONS/i,
+        label: 'git prohibitions section',
+      },
+      {
+        pattern: /Pre-Output Verification/i,
+        label: 'pre-output verification section',
+      },
     ],
   },
   review: {
@@ -759,9 +769,7 @@ const SEMANTIC_CONTRACTS = {
   planning: {
     label: 'planning agents',
     agents: () => AGENT_TYPES.planning,
-    sections: [
-      { pattern: /^## Scope/, label: 'scope boundary section' },
-    ],
+    sections: [{ pattern: /^## Scope/, label: 'scope boundary section' }],
   },
 };
 
@@ -908,7 +916,10 @@ const COMMAND_SEMANTIC_CONTRACTS = {
     sections: [
       { pattern: /Scope Boundary/i, label: 'scope boundary section' },
       { pattern: /Error Handling/i, label: 'error handling section' },
-      { pattern: /Background Task Cleanup/i, label: 'background task cleanup section' },
+      {
+        pattern: /Background Task Cleanup/i,
+        label: 'background task cleanup section',
+      },
     ],
   },
   takeoff: {
@@ -917,7 +928,10 @@ const COMMAND_SEMANTIC_CONTRACTS = {
     sections: [
       { pattern: /Orchestrator Role/i, label: 'orchestrator role section' },
       { pattern: /Quality Gate/i, label: 'quality gate section' },
-      { pattern: /Background Task Cleanup/i, label: 'background task cleanup section' },
+      {
+        pattern: /Background Task Cleanup/i,
+        label: 'background task cleanup section',
+      },
     ],
   },
   'status-worktrees': {
@@ -933,7 +947,10 @@ const COMMAND_SEMANTIC_CONTRACTS = {
     commands: () => ['flight-plan'],
     sections: [
       { pattern: /Scope Boundary/i, label: 'scope boundary section' },
-      { pattern: /Background Task Cleanup/i, label: 'background task cleanup section' },
+      {
+        pattern: /Background Task Cleanup/i,
+        label: 'background task cleanup section',
+      },
     ],
   },
   squadron: {
@@ -942,14 +959,20 @@ const COMMAND_SEMANTIC_CONTRACTS = {
     sections: [
       { pattern: /PHASE 1/i, label: 'phase 1 section' },
       { pattern: /Error Handling/i, label: 'error handling section' },
-      { pattern: /Background Task Cleanup/i, label: 'background task cleanup section' },
+      {
+        pattern: /Background Task Cleanup/i,
+        label: 'background task cleanup section',
+      },
     ],
   },
   'claude-sync': {
     label: 'claude-sync command',
     commands: () => ['claude-sync'],
     sections: [
-      { pattern: /Pre-Flight Validation/i, label: 'pre-flight validation section' },
+      {
+        pattern: /Pre-Flight Validation/i,
+        label: 'pre-flight validation section',
+      },
       { pattern: /Important Notes/i, label: 'important notes section' },
     ],
   },
@@ -1056,10 +1079,7 @@ describe('Contract: takeoff PLAN_CONTEXT materialization', () => {
     const content = fs.readFileSync(filePath, 'utf8');
     const planContextIdx = content.indexOf('PLAN_CONTEXT');
     const step4Idx = content.indexOf('### Step 4: Deploy Gates');
-    assert.ok(
-      planContextIdx !== -1,
-      `${relative} must contain PLAN_CONTEXT`
-    );
+    assert.ok(planContextIdx !== -1, `${relative} must contain PLAN_CONTEXT`);
     assert.ok(
       step4Idx !== -1,
       `${relative} must contain "### Step 4: Deploy Gates"`
@@ -1075,10 +1095,12 @@ describe('Contract: takeoff PLAN_CONTEXT materialization', () => {
     const content = fs.readFileSync(filePath, 'utf8');
     // Graceful degradation means omitting PLAN_CONTEXT with a warning, not failing the gate
     assert.ok(
-      /warn|omit|skip|not found/i.test(content.slice(
-        content.indexOf('PLAN_CONTEXT'),
-        content.indexOf('PLAN_CONTEXT') + 2000
-      )),
+      /warn|omit|skip|not found/i.test(
+        content.slice(
+          content.indexOf('PLAN_CONTEXT'),
+          content.indexOf('PLAN_CONTEXT') + 2000
+        )
+      ),
       `${relative} must document graceful degradation (warn/omit) when PLAN_CONTEXT cannot be resolved`
     );
   });
@@ -1151,12 +1173,25 @@ describe('Contract: takeoff Step 3.5 passes lightweight PLAN_CONTEXT reference (
  * Command files that include the visual-vocabulary partial.
  * Each must contain the six gauge state labels in their generated output.
  */
-const VISUAL_VOCAB_COMMANDS = ['takeoff', 'ship', 'status-worktrees', 'squadron', 'flight-plan'];
+const VISUAL_VOCAB_COMMANDS = [
+  'takeoff',
+  'ship',
+  'status-worktrees',
+  'squadron',
+  'flight-plan',
+];
 
 /**
  * The six canonical gauge state labels from the visual-vocabulary partial.
  */
-const GAUGE_STATES = ['LANDED', 'ON APPROACH', 'IN FLIGHT', 'TAKING OFF', 'TAXIING', 'FAULT'];
+const GAUGE_STATES = [
+  'LANDED',
+  'ON APPROACH',
+  'IN FLIGHT',
+  'TAKING OFF',
+  'TAXIING',
+  'FAULT',
+];
 
 describe('Contract: command files contain visual vocabulary gauge states', () => {
   assert.ok(
@@ -1219,10 +1254,7 @@ describe('Contract: status-worktrees contains fleet dashboard elements', () => {
   const relative = 'commands/status-worktrees.md';
 
   it(`${relative} exists`, () => {
-    assert.ok(
-      fs.existsSync(filePath),
-      `${relative} not found at ${filePath}`
-    );
+    assert.ok(fs.existsSync(filePath), `${relative} not found at ${filePath}`);
   });
 
   it(`${relative} contains fleet dashboard reference`, () => {
@@ -1396,13 +1428,18 @@ describe('Contract: takeoff Per-Unit Cycle TAKING OFF announcement', () => {
   function extractPerUnitCycle(content) {
     const startMarker = '### Per-Unit Cycle';
     const startIndex = content.indexOf(startMarker);
-    if (startIndex === -1) {return '';}
+    if (startIndex === -1) {
+      return '';
+    }
 
     // Find the next ## or ### heading after the Per-Unit Cycle section
     const rest = content.slice(startIndex + startMarker.length);
     const nextSectionMatch = rest.match(/\n##[# ]/);
     if (nextSectionMatch) {
-      return content.slice(startIndex, startIndex + startMarker.length + nextSectionMatch.index);
+      return content.slice(
+        startIndex,
+        startIndex + startMarker.length + nextSectionMatch.index
+      );
     }
     return content.slice(startIndex);
   }
@@ -1427,12 +1464,11 @@ describe('Contract: takeoff Per-Unit Cycle TAKING OFF announcement', () => {
     const perUnitSection = extractPerUnitCycle(content);
 
     const takingOffIndex = perUnitSection.indexOf('TAKING OFF');
-    const deployIndex = perUnitSection.indexOf('Deploy the specified coding agent');
-
-    assert.ok(
-      takingOffIndex >= 0,
-      `Per-Unit Cycle must contain TAKING OFF`
+    const deployIndex = perUnitSection.indexOf(
+      'Deploy the specified coding agent'
     );
+
+    assert.ok(takingOffIndex >= 0, `Per-Unit Cycle must contain TAKING OFF`);
     assert.ok(
       deployIndex >= 0,
       `Per-Unit Cycle must contain coding agent deployment step`
@@ -1502,10 +1538,7 @@ describe('Contract: squadron output respects scope boundary', () => {
   const relative = 'commands/squadron.md';
 
   it(`${relative} must not contain "Five Keys" (CLAUDE.md scope boundary)`, () => {
-    assert.ok(
-      fs.existsSync(filePath),
-      `${relative} not found at ${filePath}`
-    );
+    assert.ok(fs.existsSync(filePath), `${relative} not found at ${filePath}`);
     const content = fs.readFileSync(filePath, 'utf8');
     assert.ok(
       !content.includes('Five Keys'),
@@ -1530,7 +1563,9 @@ describe('Contract: agent deployment template is compressed (5 fields)', () => {
   function extractDeploymentSection(content) {
     const startMarker = '## Agent Deployment Template';
     const startIndex = content.indexOf(startMarker);
-    if (startIndex === -1) {return '';}
+    if (startIndex === -1) {
+      return '';
+    }
 
     const rest = content.slice(startIndex + startMarker.length);
     const nextSectionMatch = rest.match(/\n## [^#]/);
@@ -1587,7 +1622,13 @@ describe('Contract: agent deployment template is compressed (5 fields)', () => {
     assert.ok(codeBlockMatch, `deployment template must have a code block`);
     const codeBlock = codeBlockMatch[0];
 
-    const expectedFields = ['TASK:', 'WORKTREE:', 'BRIEF:', 'SCOPE:', 'RESTRICTION:'];
+    const expectedFields = [
+      'TASK:',
+      'WORKTREE:',
+      'BRIEF:',
+      'SCOPE:',
+      'RESTRICTION:',
+    ];
     for (const field of expectedFields) {
       assert.ok(
         codeBlock.includes(field),
@@ -1647,7 +1688,9 @@ describe('Contract: takeoff iteration rules include resume-based retry pattern',
   function extractIterationRules(content) {
     const startMarker = '### Iteration Rules';
     const startIndex = content.indexOf(startMarker);
-    if (startIndex === -1) {return '';}
+    if (startIndex === -1) {
+      return '';
+    }
 
     const rest = content.slice(startIndex + startMarker.length);
     const nextSectionMatch = rest.match(/\n###? [^#]/);
@@ -1696,7 +1739,8 @@ describe('Contract: takeoff iteration rules include resume-based retry pattern',
     const section = extractIterationRules(content);
     // Decision table must have conditions for resume, fresh deployment, and escalation
     assert.ok(
-      section.includes('agent_id available') || section.includes('agent_id') && section.includes('Resume'),
+      section.includes('agent_id available') ||
+        (section.includes('agent_id') && section.includes('Resume')),
       `Iteration Rules must include a resume-vs-fresh decision table`
     );
     assert.ok(
@@ -1821,7 +1865,10 @@ describe('Contract: code-review skill', () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const fm = extractFrontmatter(content);
-    assert.ok(fm !== null, `${relative} is missing YAML frontmatter (--- delimiters)`);
+    assert.ok(
+      fm !== null,
+      `${relative} is missing YAML frontmatter (--- delimiters)`
+    );
     assert.ok(
       frontmatterHasField(fm, 'name'),
       `${relative} frontmatter is missing required "name" field`
@@ -1914,7 +1961,12 @@ const VALID_GATE2_AGENTS = [
 ];
 
 describe('Contract: gate profile correctness — all 10 work types and valid Gate 2 agents', () => {
-  const sourcePath = path.join(ROOT, 'src', 'partials', 'quality-gate-protocol.ejs');
+  const sourcePath = path.join(
+    ROOT,
+    'src',
+    'partials',
+    'quality-gate-protocol.ejs'
+  );
   const sourceRelative = 'src/partials/quality-gate-protocol.ejs';
 
   it(`${sourceRelative} exists`, () => {
@@ -1945,13 +1997,21 @@ describe('Contract: gate profile correctness — all 10 work types and valid Gat
     // Parse table data rows (skip header and separator rows).
     const tableRows = content.split('\n').filter((line) => {
       // Table data rows start and end with | and contain at least 3 cells
-      if (!line.startsWith('|') || !line.endsWith('|')) {return false;}
+      if (!line.startsWith('|') || !line.endsWith('|')) {
+        return false;
+      }
       const cells = line.split('|').slice(1, -1);
-      if (cells.length < 3) {return false;}
+      if (cells.length < 3) {
+        return false;
+      }
       // Skip separator rows (only dashes/spaces)
-      if (/^[\s|-]+$/.test(line)) {return false;}
+      if (/^[\s|-]+$/.test(line)) {
+        return false;
+      }
       // Skip header row
-      if (line.includes('Gate 2 (parallel)')) {return false;}
+      if (line.includes('Gate 2 (parallel)')) {
+        return false;
+      }
       // Skip rows without a reaper: agent in column 2 (Gate 2 column)
       return cells[2] && cells[2].includes('reaper:');
     });
@@ -2030,10 +2090,19 @@ const WORK_TYPE_PATTERN_CASES = [
 ];
 
 describe('Contract: work-type detection pattern descriptions are present', () => {
-  const sourcePath = path.join(ROOT, 'src', 'partials', 'quality-gate-protocol.ejs');
+  const sourcePath = path.join(
+    ROOT,
+    'src',
+    'partials',
+    'quality-gate-protocol.ejs'
+  );
   const sourceRelative = 'src/partials/quality-gate-protocol.ejs';
 
-  for (const { examplePath, workType, patternHint } of WORK_TYPE_PATTERN_CASES) {
+  for (const {
+    examplePath,
+    workType,
+    patternHint,
+  } of WORK_TYPE_PATTERN_CASES) {
     it(`pattern table describes "${patternHint}" → "${workType}" (example: ${examplePath})`, () => {
       assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
       const content = fs.readFileSync(sourcePath, 'utf8');
@@ -2177,7 +2246,12 @@ describe('Contract: SME agent sources do not contain gate-specific schema defini
 // ---------------------------------------------------------------------------
 
 describe('Contract: no-commits-policy — all strategies direct branch-manager to commit', () => {
-  const sourcePath = path.join(ROOT, 'src', 'partials', 'no-commits-policy.ejs');
+  const sourcePath = path.join(
+    ROOT,
+    'src',
+    'partials',
+    'no-commits-policy.ejs'
+  );
   const sourceRelative = 'src/partials/no-commits-policy.ejs';
 
   it(`${sourceRelative} Strategy 1 & 2 directs orchestrator to deploy branch-manager (not manual user commit)`, () => {
@@ -2196,9 +2270,13 @@ describe('Contract: no-commits-policy — all strategies direct branch-manager t
     const content = fs.readFileSync(sourcePath, 'utf8');
 
     // very_small_direct & medium_single_branch line must reference branch-manager
-    const strategyLine = content.split('\n').find(
-      (line) => line.includes('very_small_direct') && line.includes('medium_single_branch')
-    );
+    const strategyLine = content
+      .split('\n')
+      .find(
+        (line) =>
+          line.includes('very_small_direct') &&
+          line.includes('medium_single_branch')
+      );
     assert.ok(
       strategyLine !== undefined,
       `${sourceRelative} must have a line referencing "very_small_direct" and "medium_single_branch"`
@@ -2213,7 +2291,9 @@ describe('Contract: no-commits-policy — all strategies direct branch-manager t
     assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
     const content = fs.readFileSync(sourcePath, 'utf8');
 
-    const strategyLine = content.split('\n').find((line) => line.includes('large_multi_worktree'));
+    const strategyLine = content
+      .split('\n')
+      .find((line) => line.includes('large_multi_worktree'));
     assert.ok(
       strategyLine !== undefined,
       `${sourceRelative} must have a line referencing "large_multi_worktree"`
@@ -2247,9 +2327,14 @@ describe('Contract: branch-manager medium_single_branch uses shared worktree wit
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     // medium_single_branch row must mention worktree creation
-    const tableRows = content.split('\n').filter((line) =>
-      line.startsWith('|') && line.includes('medium_single_branch') && line.includes('worktree')
-    );
+    const tableRows = content
+      .split('\n')
+      .filter(
+        (line) =>
+          line.startsWith('|') &&
+          line.includes('medium_single_branch') &&
+          line.includes('worktree')
+      );
     assert.ok(
       tableRows.length > 0,
       `${relative} Strategy-Based Authority table must have a medium_single_branch row referencing worktree`
@@ -2271,7 +2356,7 @@ describe('Contract: branch-manager medium_single_branch uses shared worktree wit
     // The row should NOT say "None" for commits column when worktree is present
     // It should reference commits or branch-manager committing
     assert.ok(
-      !(/\|\s*None\s*\|.*\|\s*None\s*\|/.test(strategy2Row)),
+      !/\|\s*None\s*\|.*\|\s*None\s*\|/.test(strategy2Row),
       `${relative} medium_single_branch row must not have None for both Commits and Merges when using worktree`
     );
   });
@@ -2289,12 +2374,16 @@ describe('Contract: branch-manager medium_single_branch uses shared worktree wit
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const s2Start = content.indexOf('medium_single_branch Workflow');
-    assert.ok(s2Start !== -1, `${relative} must contain medium_single_branch Workflow`);
+    assert.ok(
+      s2Start !== -1,
+      `${relative} must contain medium_single_branch Workflow`
+    );
     // The section should end before the next ## heading or large_multi_worktree Workflow
     const s3Start = content.indexOf('large_multi_worktree Workflow');
-    const section = s3Start !== -1
-      ? content.slice(s2Start, s3Start)
-      : content.slice(s2Start, s2Start + 2000);
+    const section =
+      s3Start !== -1
+        ? content.slice(s2Start, s3Start)
+        : content.slice(s2Start, s2Start + 2000);
     assert.ok(
       /worktree/i.test(section),
       `${relative} medium_single_branch Workflow must describe creating a shared worktree`
@@ -2305,13 +2394,19 @@ describe('Contract: branch-manager medium_single_branch uses shared worktree wit
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const s2Start = content.indexOf('medium_single_branch Workflow');
-    assert.ok(s2Start !== -1, `${relative} must contain medium_single_branch Workflow`);
-    const s3Start = content.indexOf('large_multi_worktree Workflow');
-    const section = s3Start !== -1
-      ? content.slice(s2Start, s3Start)
-      : content.slice(s2Start, s2Start + 2000);
     assert.ok(
-      /no commit|without commit|no.*commit|uncommitted|never commit/i.test(section),
+      s2Start !== -1,
+      `${relative} must contain medium_single_branch Workflow`
+    );
+    const s3Start = content.indexOf('large_multi_worktree Workflow');
+    const section =
+      s3Start !== -1
+        ? content.slice(s2Start, s3Start)
+        : content.slice(s2Start, s2Start + 2000);
+    assert.ok(
+      /no commit|without commit|no.*commit|uncommitted|never commit/i.test(
+        section
+      ),
       `${relative} medium_single_branch Workflow must state that coding agents work without committing`
     );
   });
@@ -2320,11 +2415,15 @@ describe('Contract: branch-manager medium_single_branch uses shared worktree wit
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const s2Start = content.indexOf('medium_single_branch Workflow');
-    assert.ok(s2Start !== -1, `${relative} must contain medium_single_branch Workflow`);
+    assert.ok(
+      s2Start !== -1,
+      `${relative} must contain medium_single_branch Workflow`
+    );
     const s3Start = content.indexOf('large_multi_worktree Workflow');
-    const section = s3Start !== -1
-      ? content.slice(s2Start, s3Start)
-      : content.slice(s2Start, s2Start + 2000);
+    const section =
+      s3Start !== -1
+        ? content.slice(s2Start, s3Start)
+        : content.slice(s2Start, s2Start + 2000);
     assert.ok(
       /branch-manager.*commit|commit.*branch-manager/i.test(section),
       `${relative} medium_single_branch Workflow must state that branch-manager commits after quality gates pass`
@@ -2350,9 +2449,10 @@ describe('Contract: workflow-planner-planning skill medium_single_branch mention
       `${relative} must contain "Strategy 2: Medium Single Branch" section`
     );
     const s3Start = content.indexOf('Strategy 3: Large Multi-Worktree');
-    const section = s3Start !== -1
-      ? content.slice(s2Start, s3Start)
-      : content.slice(s2Start, s2Start + 2000);
+    const section =
+      s3Start !== -1
+        ? content.slice(s2Start, s3Start)
+        : content.slice(s2Start, s2Start + 2000);
     assert.ok(
       /shared worktree|single.*worktree|worktree.*shared/i.test(section),
       `${relative} Strategy 2 description must mention a shared worktree`
@@ -2365,7 +2465,12 @@ describe('Contract: workflow-planner-planning skill medium_single_branch mention
 // ---------------------------------------------------------------------------
 
 describe('Contract: file-conflict-detection partial acknowledges worktree-based isolation', () => {
-  const sourcePath = path.join(ROOT, 'src', 'partials', 'file-conflict-detection.ejs');
+  const sourcePath = path.join(
+    ROOT,
+    'src',
+    'partials',
+    'file-conflict-detection.ejs'
+  );
   const sourceRelative = 'src/partials/file-conflict-detection.ejs';
 
   it(`${sourceRelative} heading no longer implies branch-only model`, () => {
@@ -2394,7 +2499,12 @@ describe('Contract: file-conflict-detection partial acknowledges worktree-based 
 // ---------------------------------------------------------------------------
 
 describe('Contract: todowrite-plan-protocol cleanup note covers both strategies', () => {
-  const sourcePath = path.join(ROOT, 'src', 'partials', 'todowrite-plan-protocol.ejs');
+  const sourcePath = path.join(
+    ROOT,
+    'src',
+    'partials',
+    'todowrite-plan-protocol.ejs'
+  );
   const sourceRelative = 'src/partials/todowrite-plan-protocol.ejs';
 
   it(`${sourceRelative} cleanup note covers medium_single_branch`, () => {
@@ -2451,12 +2561,17 @@ describe('Contract: todowrite-plan-protocol cleanup note covers both strategies'
 function extractStrategyNotes(content) {
   const startMarker = '### Strategy Notes';
   const startIndex = content.indexOf(startMarker);
-  if (startIndex === -1) {return '';}
+  if (startIndex === -1) {
+    return '';
+  }
 
   const rest = content.slice(startIndex + startMarker.length);
   const nextSectionMatch = rest.match(/\n###? /);
   if (nextSectionMatch) {
-    return content.slice(startIndex, startIndex + startMarker.length + nextSectionMatch.index);
+    return content.slice(
+      startIndex,
+      startIndex + startMarker.length + nextSectionMatch.index
+    );
   }
   return content.slice(startIndex);
 }
@@ -2474,7 +2589,9 @@ function extractStrategyNotes(content) {
 function extractFullPerUnitCycle(content) {
   const startMarker = '### Per-Unit Cycle';
   const startIndex = content.indexOf(startMarker);
-  if (startIndex === -1) {return '';}
+  if (startIndex === -1) {
+    return '';
+  }
 
   // Use "### Continuation Rule" as the end boundary, which comes after
   // the work-unit-cleanup partial's heading and the remaining numbered steps.
@@ -2488,7 +2605,10 @@ function extractFullPerUnitCycle(content) {
   const rest = content.slice(startIndex + startMarker.length);
   const nextSectionMatch = rest.match(/\n## [^#]/);
   if (nextSectionMatch) {
-    return content.slice(startIndex, startIndex + startMarker.length + nextSectionMatch.index);
+    return content.slice(
+      startIndex,
+      startIndex + startMarker.length + nextSectionMatch.index
+    );
   }
   return content.slice(startIndex);
 }
@@ -2502,12 +2622,17 @@ function extractFullPerUnitCycle(content) {
 function extractWorktreeCleanupSection(content) {
   const startMarker = '## Worktree Cleanup';
   const startIndex = content.indexOf(startMarker);
-  if (startIndex === -1) {return '';}
+  if (startIndex === -1) {
+    return '';
+  }
 
   const rest = content.slice(startIndex + startMarker.length);
   const nextSectionMatch = rest.match(/\n## [^#]/);
   if (nextSectionMatch) {
-    return content.slice(startIndex, startIndex + startMarker.length + nextSectionMatch.index);
+    return content.slice(
+      startIndex,
+      startIndex + startMarker.length + nextSectionMatch.index
+    );
   }
   return content.slice(startIndex);
 }
@@ -2547,7 +2672,10 @@ describe('Contract: takeoff strategy descriptions require feature branch and wor
     const strategyNotes = extractStrategyNotes(content);
     const lines = strategyNotes.split('\n');
     const vsdLine = lines.find((l) => l.includes('very_small_direct'));
-    assert.ok(vsdLine !== undefined, `Strategy Notes must have a very_small_direct bullet`);
+    assert.ok(
+      vsdLine !== undefined,
+      `Strategy Notes must have a very_small_direct bullet`
+    );
     assert.ok(
       /worktree/i.test(vsdLine),
       `very_small_direct description must mention worktree setup (found: "${vsdLine.trim()}")`
@@ -2576,7 +2704,10 @@ describe('Contract: takeoff strategy descriptions require feature branch and wor
     const strategyNotes = extractStrategyNotes(content);
     const lines = strategyNotes.split('\n');
     const msbLine = lines.find((l) => l.includes('medium_single_branch'));
-    assert.ok(msbLine !== undefined, `Strategy Notes must have a medium_single_branch bullet`);
+    assert.ok(
+      msbLine !== undefined,
+      `Strategy Notes must have a medium_single_branch bullet`
+    );
     assert.ok(
       /feature branch/i.test(msbLine),
       `medium_single_branch description must mention feature branch (found: "${msbLine.trim()}")`
@@ -2589,7 +2720,10 @@ describe('Contract: takeoff strategy descriptions require feature branch and wor
     const strategyNotes = extractStrategyNotes(content);
     const lines = strategyNotes.split('\n');
     const vsdLine = lines.find((l) => l.includes('very_small_direct'));
-    assert.ok(vsdLine !== undefined, `Strategy Notes must have a very_small_direct bullet`);
+    assert.ok(
+      vsdLine !== undefined,
+      `Strategy Notes must have a very_small_direct bullet`
+    );
     assert.ok(
       /worktree-manager|branch-manager/i.test(vsdLine),
       `very_small_direct description must reference worktree-manager or branch-manager for worktree setup (found: "${vsdLine.trim()}")`
@@ -2608,7 +2742,8 @@ describe('Contract: takeoff work-unit-cleanup partial appears exactly once', () 
   it(`${sourceRelative} includes work-unit-cleanup partial exactly once`, () => {
     assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
     const content = fs.readFileSync(sourcePath, 'utf8');
-    const matches = content.match(/include\(['"]partials\/work-unit-cleanup['"]/g) || [];
+    const matches =
+      content.match(/include\(['"]partials\/work-unit-cleanup['"]/g) || [];
     assert.strictEqual(
       matches.length,
       1,
@@ -2630,7 +2765,10 @@ describe('Contract: takeoff Per-Unit Cycle issue lifecycle', () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const perUnitSection = extractFullPerUnitCycle(content);
-    assert.ok(perUnitSection.length > 0, `${relative} must contain a Per-Unit Cycle section`);
+    assert.ok(
+      perUnitSection.length > 0,
+      `${relative} must contain a Per-Unit Cycle section`
+    );
 
     // Step 1 is between "1." and "2." in the numbered list
     const step1Match = perUnitSection.match(/1\.([\s\S]*?)(?=\n\d+\.)/);
@@ -2661,15 +2799,21 @@ describe('Contract: takeoff Per-Unit Cycle issue lifecycle', () => {
 
     // The close issue step must NOT be restricted to pre-planned only
     // It should say "any tracked issue" or similar inclusive language
-    const closeLine = perUnitSection.split('\n').find(
-      (l) => l.includes('CLOSE_ISSUE') || (l.includes('close') && l.includes('issue'))
-    );
+    const closeLine = perUnitSection
+      .split('\n')
+      .find(
+        (l) =>
+          l.includes('CLOSE_ISSUE') ||
+          (l.includes('close') && l.includes('issue'))
+      );
     assert.ok(
       closeLine !== undefined,
       `Per-Unit Cycle must have a step referencing CLOSE_ISSUE`
     );
     assert.ok(
-      !/\bpre-planned child issue only\b|only pre-planned|if this is a pre-planned/i.test(closeLine),
+      !/\bpre-planned child issue only\b|only pre-planned|if this is a pre-planned/i.test(
+        closeLine
+      ),
       `Per-Unit Cycle CLOSE_ISSUE must not be restricted to pre-planned child issues only (found: "${closeLine.trim()}")`
     );
     assert.ok(
@@ -2692,8 +2836,11 @@ describe('Contract: takeoff worktree cleanup strategy', () => {
     const content = fs.readFileSync(filePath, 'utf8');
     const perUnitSection = extractFullPerUnitCycle(content);
     assert.ok(
-      /large_multi_worktree.*worktree|worktree.*large_multi_worktree/i.test(perUnitSection) ||
-        (perUnitSection.includes('large_multi_worktree') && /remove.*worktree|worktree.*remov/i.test(perUnitSection)),
+      /large_multi_worktree.*worktree|worktree.*large_multi_worktree/i.test(
+        perUnitSection
+      ) ||
+        (perUnitSection.includes('large_multi_worktree') &&
+          /remove.*worktree|worktree.*remov/i.test(perUnitSection)),
       `Per-Unit Cycle must mention worktree removal for large_multi_worktree strategy`
     );
   });
@@ -2713,7 +2860,9 @@ describe('Contract: takeoff worktree cleanup strategy', () => {
     const content = fs.readFileSync(filePath, 'utf8');
     const perUnitSection = extractFullPerUnitCycle(content);
     assert.ok(
-      /reference|still.*reference|no other.*reference|other.*unit/i.test(perUnitSection),
+      /reference|still.*reference|no other.*reference|other.*unit/i.test(
+        perUnitSection
+      ),
       `Per-Unit Cycle large_multi_worktree worktree removal must include a reference check before removing`
     );
   });
@@ -2779,7 +2928,10 @@ describe('Contract: user communication contract included in all primary workflow
     const relative = `commands/${commandName}.md`;
 
     it(`${relative} includes user-comms-contract partial`, () => {
-      assert.ok(fs.existsSync(filePath), `${relative} not found at ${filePath}`);
+      assert.ok(
+        fs.existsSync(filePath),
+        `${relative} not found at ${filePath}`
+      );
       const content = fs.readFileSync(filePath, 'utf8');
       assert.ok(
         content.includes(USER_COMMS_SENTINEL),
@@ -2804,12 +2956,13 @@ describe('Contract: flight-plan does not hardcode platform skill names outside P
     // The Phase 1 routing table is the only legitimate place to name this skill.
     // Count total occurrences — exactly one is expected (the table row in Phase 1).
     // Any additional occurrence means the skill has leaked into later phases (scope boundary violation).
-    const occurrences = (content.match(/reaper:issue-tracker-planfile/g) || []).length;
+    const occurrences = (content.match(/reaper:issue-tracker-planfile/g) || [])
+      .length;
     assert.ok(
       occurrences <= 1,
       `${relative} contains ${occurrences} occurrences of "reaper:issue-tracker-planfile" but at most 1 is allowed (Phase 1 routing table only). ` +
-      `Extra occurrences outside Phase 1 are platform-skill name hardcoding violations — ` +
-      `use abstract operations (CREATE_ISSUE, CLOSE_ISSUE) and the loaded platform skill instead.`
+        `Extra occurrences outside Phase 1 are platform-skill name hardcoding violations — ` +
+        `use abstract operations (CREATE_ISSUE, CLOSE_ISSUE) and the loaded platform skill instead.`
     );
   });
 });
@@ -2849,7 +3002,9 @@ describe('Contract: flight-plan contains visual vocabulary card templates', () =
     assert.ok(phase7Start >= 0, `${relative} is missing Phase 7`);
     const phase7Content = content.slice(phase7Start);
     assert.ok(
-      /[Ff]iled [Cc]ard/i.test(phase7Content) || phase7Content.includes('FILED') || phase7Content.includes('LANDED'),
+      /[Ff]iled [Cc]ard/i.test(phase7Content) ||
+        phase7Content.includes('FILED') ||
+        phase7Content.includes('LANDED'),
       `${relative} Phase 7 should reference the Filed Card or LANDED gauge`
     );
   });
@@ -2869,7 +3024,7 @@ describe('Contract: flight-plan does not embed hardcoded completion templates', 
     assert.ok(
       !content.includes('Plan Complete (Markdown Mode)'),
       `${relative} contains "Plan Complete (Markdown Mode)" — this is a hardcoded platform-specific completion template. ` +
-      `Output templates belong in the platform skill (reaper:issue-tracker-planfile), not in the command file.`
+        `Output templates belong in the platform skill (reaper:issue-tracker-planfile), not in the command file.`
     );
   });
 });
@@ -2906,8 +3061,9 @@ describe('Contract: workflow-planner-planning skill dirty-root safety check', ()
     const content = fs.readFileSync(filePath, 'utf8');
     // The section must co-locate uncommitted/dirty language with medium_single_branch escalation
     assert.ok(
-      /uncommitted[\s\S]{0,300}medium_single_branch|medium_single_branch[\s\S]{0,300}uncommitted/
-        .test(content),
+      /uncommitted[\s\S]{0,300}medium_single_branch|medium_single_branch[\s\S]{0,300}uncommitted/.test(
+        content
+      ),
       `${relative} must describe escalating to medium_single_branch when root has uncommitted changes`
     );
   });
@@ -2950,12 +3106,17 @@ describe('Contract: takeoff dirty-root escalation', () => {
   function extractDirtyRootSection(content) {
     const startMarker = '## Dirty-Root Escalation';
     const startIndex = content.indexOf(startMarker);
-    if (startIndex === -1) {return '';}
+    if (startIndex === -1) {
+      return '';
+    }
 
     const rest = content.slice(startIndex + startMarker.length);
     const nextSectionMatch = rest.match(/\n## [^#]/);
     if (nextSectionMatch) {
-      return content.slice(startIndex, startIndex + startMarker.length + nextSectionMatch.index);
+      return content.slice(
+        startIndex,
+        startIndex + startMarker.length + nextSectionMatch.index
+      );
     }
     return content.slice(startIndex);
   }
@@ -2985,7 +3146,8 @@ describe('Contract: takeoff dirty-root escalation', () => {
     const content = fs.readFileSync(filePath, 'utf8');
     const section = extractDirtyRootSection(content);
     assert.ok(
-      section.includes('very_small_direct') && section.includes('medium_single_branch'),
+      section.includes('very_small_direct') &&
+        section.includes('medium_single_branch'),
       `${relative} Dirty-Root Escalation must reference both very_small_direct (trigger condition) and medium_single_branch (escalation target)`
     );
   });
@@ -2996,8 +3158,9 @@ describe('Contract: takeoff dirty-root escalation', () => {
     const section = extractDirtyRootSection(content);
     // The escalation message must include "uncommitted changes" and "medium_single_branch"
     assert.ok(
-      /uncommitted changes[\s\S]{0,200}medium_single_branch|medium_single_branch[\s\S]{0,200}uncommitted changes/
-        .test(section),
+      /uncommitted changes[\s\S]{0,200}medium_single_branch|medium_single_branch[\s\S]{0,200}uncommitted changes/.test(
+        section
+      ),
       `${relative} Dirty-Root Escalation must include a user-facing message containing "uncommitted changes" co-located with "medium_single_branch"`
     );
   });
@@ -3075,7 +3238,10 @@ describe('Contract: takeoff quality gate config check', () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const sectionStart = content.indexOf('## Quality Gate Config Check');
-    assert.ok(sectionStart !== -1, `${relative} must contain "## Quality Gate Config Check"`);
+    assert.ok(
+      sectionStart !== -1,
+      `${relative} must contain "## Quality Gate Config Check"`
+    );
 
     // Extract the section content up to the next ## heading
     const rest = content.slice(sectionStart);
@@ -3094,7 +3260,10 @@ describe('Contract: takeoff quality gate config check', () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const sectionStart = content.indexOf('## Quality Gate Config Check');
-    assert.ok(sectionStart !== -1, `${relative} must contain "## Quality Gate Config Check"`);
+    assert.ok(
+      sectionStart !== -1,
+      `${relative} must contain "## Quality Gate Config Check"`
+    );
 
     const rest = content.slice(sectionStart);
     const nextHeadingMatch = rest.match(/\n## [^#]/);
@@ -3112,7 +3281,10 @@ describe('Contract: takeoff quality gate config check', () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const sectionStart = content.indexOf('## Quality Gate Config Check');
-    assert.ok(sectionStart !== -1, `${relative} must contain "## Quality Gate Config Check"`);
+    assert.ok(
+      sectionStart !== -1,
+      `${relative} must contain "## Quality Gate Config Check"`
+    );
 
     const rest = content.slice(sectionStart);
     const nextHeadingMatch = rest.match(/\n## [^#]/);
@@ -3145,7 +3317,9 @@ describe('Contract: takeoff Per-Unit Cycle has branch-manager commit step after 
       `${relative} must contain a Per-Unit Cycle section`
     );
     assert.ok(
-      /branch-manager.*commit|commit.*branch-manager|deploy.*branch-manager.*commit|branch-manager.*to commit/i.test(perUnitSection),
+      /branch-manager.*commit|commit.*branch-manager|deploy.*branch-manager.*commit|branch-manager.*to commit/i.test(
+        perUnitSection
+      ),
       `Per-Unit Cycle must include a step deploying reaper:branch-manager to commit after gates pass`
     );
   });
@@ -3174,8 +3348,12 @@ describe('Contract: takeoff Per-Unit Cycle has branch-manager commit step after 
       `${relative} must contain a Per-Unit Cycle section`
     );
     // The commit step must appear after "quality gates" or "gates pass"
-    const commitIdx = perUnitSection.search(/branch-manager.*commit|commit.*branch-manager/i);
-    const gatesIdx = perUnitSection.search(/quality gate|Run quality|gate.*pass/i);
+    const commitIdx = perUnitSection.search(
+      /branch-manager.*commit|commit.*branch-manager/i
+    );
+    const gatesIdx = perUnitSection.search(
+      /quality gate|Run quality|gate.*pass/i
+    );
     assert.ok(
       commitIdx !== -1,
       `Per-Unit Cycle must contain a branch-manager commit step`
@@ -3261,7 +3439,9 @@ describe('Contract: branch-manager large_multi_worktree merge uses isolated inte
   // Helper: extract the large_multi_worktree Workflow section text
   function getLargeMultiSection(content) {
     const start = content.indexOf('large_multi_worktree Workflow');
-    if (start === -1) {return '';}
+    if (start === -1) {
+      return '';
+    }
     // Section ends at the next ## heading or end of file
     const afterStart = content.slice(start);
     const nextSection = afterStart.search(/\n## /);
@@ -3281,7 +3461,10 @@ describe('Contract: branch-manager large_multi_worktree merge uses isolated inte
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const section = getLargeMultiSection(content);
-    assert.ok(section.length > 0, `${relative} must have a large_multi_worktree Workflow section`);
+    assert.ok(
+      section.length > 0,
+      `${relative} must have a large_multi_worktree Workflow section`
+    );
 
     // Only examine lines where 'git checkout' appears as an executed command, not as a
     // prose prohibition. Command lines are those that start with 'git checkout' (after
@@ -3290,9 +3473,13 @@ describe('Contract: branch-manager large_multi_worktree merge uses isolated inte
     const lines = section.split('\n');
     const bareCheckoutLines = lines.filter((line) => {
       // The line must contain 'git checkout' as a potential command
-      if (!/git checkout\b/.test(line)) {return false;}
+      if (!/git checkout\b/.test(line)) {
+        return false;
+      }
       // Skip lines that are prose prohibitions — they describe what NOT to do
-      if (/never|not|avoid|instead|prohibited/i.test(line)) {return false;}
+      if (/never|not|avoid|instead|prohibited/i.test(line)) {
+        return false;
+      }
       // A command line starts with optional whitespace/backtick then 'git checkout'
       // (after stripping list markers like "- " or "   ")
       return /^\s*`?\s*git checkout\b/.test(line);
@@ -3301,7 +3488,7 @@ describe('Contract: branch-manager large_multi_worktree merge uses isolated inte
       bareCheckoutLines.length,
       0,
       `${relative} large_multi_worktree Workflow must not execute bare 'git checkout' as a command. ` +
-      `Found: ${bareCheckoutLines.map((l) => l.trim()).join('; ')}`
+        `Found: ${bareCheckoutLines.map((l) => l.trim()).join('; ')}`
     );
   });
 
@@ -3309,7 +3496,10 @@ describe('Contract: branch-manager large_multi_worktree merge uses isolated inte
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const section = getLargeMultiSection(content);
-    assert.ok(section.length > 0, `${relative} must have a large_multi_worktree Workflow section`);
+    assert.ok(
+      section.length > 0,
+      `${relative} must have a large_multi_worktree Workflow section`
+    );
     assert.ok(
       /git worktree add.*integration/i.test(section),
       `${relative} large_multi_worktree Workflow must use 'git worktree add' to create an integration worktree`
@@ -3320,7 +3510,10 @@ describe('Contract: branch-manager large_multi_worktree merge uses isolated inte
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const section = getLargeMultiSection(content);
-    assert.ok(section.length > 0, `${relative} must have a large_multi_worktree Workflow section`);
+    assert.ok(
+      section.length > 0,
+      `${relative} must have a large_multi_worktree Workflow section`
+    );
     assert.ok(
       /git -C \.\/trees\/.*merge/i.test(section),
       `${relative} large_multi_worktree Workflow must run merge inside a worktree via 'git -C ./trees/...'`
@@ -3331,11 +3524,14 @@ describe('Contract: branch-manager large_multi_worktree merge uses isolated inte
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const section = getLargeMultiSection(content);
-    assert.ok(section.length > 0, `${relative} must have a large_multi_worktree Workflow section`);
+    assert.ok(
+      section.length > 0,
+      `${relative} must have a large_multi_worktree Workflow section`
+    );
     assert.ok(
       /git branch -f/.test(section),
       `${relative} large_multi_worktree Workflow must use 'git branch -f' to advance the review branch ref ` +
-      `without switching root's branch`
+        `without switching root's branch`
     );
   });
 
@@ -3343,7 +3539,10 @@ describe('Contract: branch-manager large_multi_worktree merge uses isolated inte
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const section = getLargeMultiSection(content);
-    assert.ok(section.length > 0, `${relative} must have a large_multi_worktree Workflow section`);
+    assert.ok(
+      section.length > 0,
+      `${relative} must have a large_multi_worktree Workflow section`
+    );
     assert.ok(
       /worktree remove.*integration|git branch -d.*integration/i.test(section),
       `${relative} large_multi_worktree Workflow must clean up the integration worktree and temp branch after merge`
@@ -3357,7 +3556,9 @@ describe('Contract: branch-manager large_multi_worktree merge uses isolated inte
     // from merge operations (which must always use isolated worktrees)
     const safetySection = (() => {
       const start = content.indexOf('Safety Protocols');
-      if (start === -1) {return '';}
+      if (start === -1) {
+        return '';
+      }
       const after = content.slice(start);
       const next = after.search(/\n## /);
       return next !== -1 ? after.slice(0, next) : after;
@@ -3371,7 +3572,9 @@ describe('Contract: branch-manager large_multi_worktree merge uses isolated inte
       `${relative} Safety Protocols rule #5 must specifically mention teardown as the valid use case for root navigation`
     );
     assert.ok(
-      /never.*merge|merge.*never|merge.*isolation|isolation.*merge|not.*for.*merge|merge.*not/i.test(safetySection),
+      /never.*merge|merge.*never|merge.*isolation|isolation.*merge|not.*for.*merge|merge.*not/i.test(
+        safetySection
+      ),
       `${relative} Safety Protocols must clarify that root navigation is not for merge operations`
     );
   });
@@ -3413,7 +3616,9 @@ describe('Contract: branch-manager hook respect obligation', () => {
     const content = fs.readFileSync(filePath, 'utf8');
     const prose = stripCodeBlocks(content);
     assert.ok(
-      /hook.*block|hook.*output|hook.*status.*error|hook.*blocking_issues/i.test(prose),
+      /hook.*block|hook.*output|hook.*status.*error|hook.*blocking_issues/i.test(
+        prose
+      ),
       `${relative} must instruct the agent to capture hook output and return status: error when a hook blocks a commit`
     );
   });
@@ -3423,7 +3628,9 @@ describe('Contract: branch-manager hook respect obligation', () => {
     const content = fs.readFileSync(filePath, 'utf8');
     const prose = stripCodeBlocks(content);
     assert.ok(
-      /hook.*fail.*report|hook.*fail.*stop|hook failure.*real|pre-commit.*fail|hook.*block.*commit/i.test(prose),
+      /hook.*fail.*report|hook.*fail.*stop|hook failure.*real|pre-commit.*fail|hook.*block.*commit/i.test(
+        prose
+      ),
       `${relative} must state that hook failure is a real failure to be reported, not bypassed`
     );
   });
@@ -3473,7 +3680,9 @@ describe('Contract: branch-manager prohibits autonomous file deletion and moveme
     const content = fs.readFileSync(filePath, 'utf8');
     const prose = stripCodeBlocks(content);
     assert.ok(
-      /never.*delete.*file|never.*move.*file|do not.*delete.*file|do not.*move.*file|prohibit.*delet|prohibit.*mov/i.test(prose),
+      /never.*delete.*file|never.*move.*file|do not.*delete.*file|do not.*move.*file|prohibit.*delet|prohibit.*mov/i.test(
+        prose
+      ),
       `${relative} must explicitly prohibit deleting or moving files beyond what the orchestrator directed`
     );
   });
@@ -3486,7 +3695,9 @@ describe('Contract: branch-manager Safety Protocol #7 uses stop-and-report for s
   // Helper: extract the Safety Protocols section
   function getSafetySection(content) {
     const start = content.indexOf('Safety Protocols');
-    if (start === -1) {return '';}
+    if (start === -1) {
+      return '';
+    }
     const after = content.slice(start);
     const next = after.search(/\n## /);
     return next !== -1 ? after.slice(0, next) : after;
@@ -3496,11 +3707,16 @@ describe('Contract: branch-manager Safety Protocol #7 uses stop-and-report for s
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const safetySection = getSafetySection(content);
-    assert.ok(safetySection.length > 0, `${relative} must contain a Safety Protocols section`);
+    assert.ok(
+      safetySection.length > 0,
+      `${relative} must contain a Safety Protocols section`
+    );
 
     // Must mention reporting / blocking on artifact discovery
     assert.ok(
-      /report.*block|block.*report|stop.*report|report.*stop|blocking issue/i.test(safetySection),
+      /report.*block|block.*report|stop.*report|report.*stop|blocking issue/i.test(
+        safetySection
+      ),
       `${relative} Safety Protocols staged artifact rule must require reporting a blocking issue and stopping`
     );
 
@@ -3508,9 +3724,15 @@ describe('Contract: branch-manager Safety Protocol #7 uses stop-and-report for s
     // (it may mention it as the old behavior in a prohibition, but must not be the directive)
     const lines = safetySection.split('\n');
     const unstageDirectiveLines = lines.filter((line) => {
-      if (!/git rm.*--cached|git rm -r.*--cached/.test(line)) {return false;}
+      if (!/git rm.*--cached|git rm -r.*--cached/.test(line)) {
+        return false;
+      }
       // Skip lines that are prohibitions or "old behavior" notes
-      if (/never|not|prohibit|do not|instead|old|was|removed|stop/i.test(line)) {return false;}
+      if (
+        /never|not|prohibit|do not|instead|old|was|removed|stop/i.test(line)
+      ) {
+        return false;
+      }
       // A directive line starts with directive verbs or is in a code block context
       return /unstage|remove.*staging|rm.*--cached/.test(line);
     });
@@ -3526,14 +3748,21 @@ describe('Contract: branch-manager Safety Protocol #7 uses stop-and-report for s
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const safetySection = getSafetySection(content);
-    assert.ok(safetySection.length > 0, `${relative} must contain a Safety Protocols section`);
+    assert.ok(
+      safetySection.length > 0,
+      `${relative} must contain a Safety Protocols section`
+    );
 
     // The safety section must not instruct adding to .gitignore as part of artifact remediation
     const lines = safetySection.split('\n');
     const gitignoreDirectiveLines = lines.filter((line) => {
-      if (!/.gitignore/.test(line)) {return false;}
+      if (!/.gitignore/.test(line)) {
+        return false;
+      }
       // Skip prohibition lines
-      if (/never|not|prohibit|do not|instead|stop/i.test(line)) {return false;}
+      if (/never|not|prohibit|do not|instead|stop/i.test(line)) {
+        return false;
+      }
       // A directive to add to .gitignore as resolution
       return /add.*\.gitignore|\.gitignore.*add|update.*\.gitignore/.test(line);
     });
@@ -3555,7 +3784,9 @@ describe('Contract: branch-manager stop-and-report doctrine on unexpected state'
     const content = fs.readFileSync(filePath, 'utf8');
     const prose = stripCodeBlocks(content);
     assert.ok(
-      /status.*error.*unexpected|unexpected.*state.*stop|fail.*stop.*report|stop.*and.*report|self.?remediat/i.test(prose),
+      /status.*error.*unexpected|unexpected.*state.*stop|fail.*stop.*report|stop.*and.*report|self.?remediat/i.test(
+        prose
+      ),
       `${relative} must contain a stop-and-report doctrine: on failure or unexpected state, return status: error — do not self-remediate`
     );
   });
@@ -3565,7 +3796,9 @@ describe('Contract: branch-manager stop-and-report doctrine on unexpected state'
     const content = fs.readFileSync(filePath, 'utf8');
     const prose = stripCodeBlocks(content);
     assert.ok(
-      /do not self.?remediat|never.*self.?remediat|self.?remediat.*prohibit|not.*attempt.*fix|do not.*attempt.*fix/i.test(prose),
+      /do not self.?remediat|never.*self.?remediat|self.?remediat.*prohibit|not.*attempt.*fix|do not.*attempt.*fix/i.test(
+        prose
+      ),
       `${relative} must explicitly prohibit self-remediation (the orchestrator, not the agent, decides how to respond to failures)`
     );
   });
@@ -3682,7 +3915,8 @@ describe('Contract: takeoff completion section references /reaper:ship', () => {
     );
     const tableSection = content.slice(tableStart, tableStart + 2000);
     assert.ok(
-      (tableSection.includes('open a PR') || tableSection.includes('create PR')) &&
+      (tableSection.includes('open a PR') ||
+        tableSection.includes('create PR')) &&
         tableSection.includes('/reaper:ship'),
       `${relative} Response Handling table must map PR-intent language to /reaper:ship`
     );
@@ -3692,7 +3926,10 @@ describe('Contract: takeoff completion section references /reaper:ship', () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const tableStart = content.indexOf('### Response Handling');
-    assert.ok(tableStart !== -1, `${relative} must contain "### Response Handling"`);
+    assert.ok(
+      tableStart !== -1,
+      `${relative} must contain "### Response Handling"`
+    );
     const tableSection = content.slice(tableStart, tableStart + 2000);
     assert.ok(
       tableSection.includes('merge') && tableSection.includes('develop'),
@@ -3721,7 +3958,10 @@ describe('workflow-planner-planning skill', () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const fm = extractFrontmatter(content);
-    assert.ok(fm !== null, `${relative} is missing YAML frontmatter (--- delimiters)`);
+    assert.ok(
+      fm !== null,
+      `${relative} is missing YAML frontmatter (--- delimiters)`
+    );
   });
 
   it(`${relative} frontmatter name === 'workflow-planner-planning'`, () => {
@@ -3801,7 +4041,10 @@ describe('workflow-planner-verification skill', () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const fm = extractFrontmatter(content);
-    assert.ok(fm !== null, `${relative} is missing YAML frontmatter (--- delimiters)`);
+    assert.ok(
+      fm !== null,
+      `${relative} is missing YAML frontmatter (--- delimiters)`
+    );
   });
 
   it(`${relative} frontmatter name === 'workflow-planner-verification'`, () => {
@@ -3938,7 +4181,8 @@ describe('takeoff command: workflow-planner Task subagent dispatch', () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     assert.ok(
-      content.includes('reaper:workflow-planner') && content.includes('MODE: PLANNING'),
+      content.includes('reaper:workflow-planner') &&
+        content.includes('MODE: PLANNING'),
       `${relative} must dispatch 'reaper:workflow-planner' as a Task subagent with 'MODE: PLANNING'`
     );
   });
@@ -3965,7 +4209,10 @@ describe('takeoff command: workflow-planner Task subagent dispatch', () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     assert.ok(
-      !content.includes('via the Skill tool') && !content.includes('fork-and-agent frontmatter handles agent selection automatically'),
+      !content.includes('via the Skill tool') &&
+        !content.includes(
+          'fork-and-agent frontmatter handles agent selection automatically'
+        ),
       `${relative} must NOT contain Skill-based invocation language for workflow-planner`
     );
   });
@@ -3983,7 +4230,8 @@ describe('flight-plan command: workflow-planner Task subagent dispatch (Phase 6)
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     assert.ok(
-      content.includes('reaper:workflow-planner') && content.includes('MODE: VERIFICATION'),
+      content.includes('reaper:workflow-planner') &&
+        content.includes('MODE: VERIFICATION'),
       `${relative} must dispatch reaper:workflow-planner as a Task subagent with MODE: VERIFICATION for Phase 6`
     );
   });
@@ -4026,7 +4274,9 @@ describe('Contract: Gate 2 partial failure — combine blocking_issues and re-ru
   function extractParallelDeploymentPattern(content) {
     const startMarker = '### Parallel Deployment Pattern';
     const startIndex = content.indexOf(startMarker);
-    if (startIndex === -1) {return '';}
+    if (startIndex === -1) {
+      return '';
+    }
 
     // Ends at the next ### or ## heading
     const rest = content.slice(startIndex + startMarker.length);
@@ -4043,7 +4293,12 @@ describe('Contract: Gate 2 partial failure — combine blocking_issues and re-ru
   const takeoffPath = path.join(COMMANDS_DIR, 'takeoff.md');
   const takeoffRelative = 'commands/takeoff.md';
 
-  const sourcePath = path.join(ROOT, 'src', 'partials', 'quality-gate-protocol.ejs');
+  const sourcePath = path.join(
+    ROOT,
+    'src',
+    'partials',
+    'quality-gate-protocol.ejs'
+  );
   const sourceRelative = 'src/partials/quality-gate-protocol.ejs';
 
   // ------------------------------------------------------------------
@@ -4158,7 +4413,12 @@ describe('Contract: Gate 2 partial failure — combine blocking_issues and re-ru
 // ---------------------------------------------------------------------------
 
 describe('Contract: quality-gate-protocol union semantics — 3-work-type deduplication', () => {
-  const sourcePath = path.join(ROOT, 'src', 'partials', 'quality-gate-protocol.ejs');
+  const sourcePath = path.join(
+    ROOT,
+    'src',
+    'partials',
+    'quality-gate-protocol.ejs'
+  );
   const sourceRelative = 'src/partials/quality-gate-protocol.ejs';
 
   /**
@@ -4192,7 +4452,10 @@ describe('Contract: quality-gate-protocol union semantics — 3-work-type dedupl
         }
         continue;
       }
-      if (line.includes('Gate 1 (blocking)') && line.includes('Gate 2 (parallel)')) {
+      if (
+        line.includes('Gate 1 (blocking)') &&
+        line.includes('Gate 2 (parallel)')
+      ) {
         if (tableFound) {
           // A second table header — stop to avoid reading the short-name summary table.
           break;
@@ -4202,16 +4465,25 @@ describe('Contract: quality-gate-protocol union semantics — 3-work-type dedupl
         continue;
       }
       // Skip separator row
-      if (/^[\s|:-]+$/.test(line)) {continue;}
-      if (!inTable) {continue;}
+      if (/^[\s|:-]+$/.test(line)) {
+        continue;
+      }
+      if (!inTable) {
+        continue;
+      }
 
       // Parse a data row: | work_type | gate1 | gate2 |
-      const cells = line.split('|').slice(1, -1).map((c) => c.trim());
-      if (cells.length < 3) {continue;}
+      const cells = line
+        .split('|')
+        .slice(1, -1)
+        .map((c) => c.trim());
+      if (cells.length < 3) {
+        continue;
+      }
 
       const workType = cells[0].replace(/`/g, '');
-      const gate1Agents = (cells[1].match(/reaper:[a-z-]+/g) || []);
-      const gate2Agents = (cells[2].match(/reaper:[a-z-]+/g) || []);
+      const gate1Agents = cells[1].match(/reaper:[a-z-]+/g) || [];
+      const gate2Agents = cells[2].match(/reaper:[a-z-]+/g) || [];
 
       profiles.set(workType, { gate1: gate1Agents, gate2: gate2Agents });
     }
@@ -4237,9 +4509,15 @@ describe('Contract: quality-gate-protocol union semantics — 3-work-type dedupl
 
     for (const wt of workTypes) {
       const profile = profiles.get(wt);
-      if (!profile) {continue;}
-      for (const a of profile.gate1) {gate1Set.add(a);}
-      for (const a of profile.gate2) {gate2Set.add(a);}
+      if (!profile) {
+        continue;
+      }
+      for (const a of profile.gate1) {
+        gate1Set.add(a);
+      }
+      for (const a of profile.gate2) {
+        gate2Set.add(a);
+      }
     }
 
     return {
@@ -4269,7 +4547,11 @@ describe('Contract: quality-gate-protocol union semantics — 3-work-type dedupl
     const content = fs.readFileSync(sourcePath, 'utf8');
     const profiles = parseGateProfileTable(content);
 
-    const workTypes = ['application_code', 'database_migration', 'documentation'];
+    const workTypes = [
+      'application_code',
+      'database_migration',
+      'documentation',
+    ];
     const union = computeUnion(profiles, workTypes);
 
     // Gate 1: only application_code contributes reaper:test-runner;
@@ -4291,7 +4573,11 @@ describe('Contract: quality-gate-protocol union semantics — 3-work-type dedupl
     const content = fs.readFileSync(sourcePath, 'utf8');
     const profiles = parseGateProfileTable(content);
 
-    const workTypes = ['application_code', 'database_migration', 'documentation'];
+    const workTypes = [
+      'application_code',
+      'database_migration',
+      'documentation',
+    ];
     const union = computeUnion(profiles, workTypes);
 
     const uniqueGate1 = [...new Set(union.gate1)];
@@ -4307,7 +4593,11 @@ describe('Contract: quality-gate-protocol union semantics — 3-work-type dedupl
     const content = fs.readFileSync(sourcePath, 'utf8');
     const profiles = parseGateProfileTable(content);
 
-    const workTypes = ['application_code', 'database_migration', 'documentation'];
+    const workTypes = [
+      'application_code',
+      'database_migration',
+      'documentation',
+    ];
     const union = computeUnion(profiles, workTypes);
 
     // application_code contributes: reaper:principal-engineer, reaper:security-auditor
@@ -4334,7 +4624,11 @@ describe('Contract: quality-gate-protocol union semantics — 3-work-type dedupl
     const content = fs.readFileSync(sourcePath, 'utf8');
     const profiles = parseGateProfileTable(content);
 
-    const workTypes = ['application_code', 'database_migration', 'documentation'];
+    const workTypes = [
+      'application_code',
+      'database_migration',
+      'documentation',
+    ];
     const union = computeUnion(profiles, workTypes);
 
     const uniqueGate2 = [...new Set(union.gate2)];
@@ -4350,7 +4644,11 @@ describe('Contract: quality-gate-protocol union semantics — 3-work-type dedupl
     const content = fs.readFileSync(sourcePath, 'utf8');
     const profiles = parseGateProfileTable(content);
 
-    const workTypes = ['application_code', 'database_migration', 'documentation'];
+    const workTypes = [
+      'application_code',
+      'database_migration',
+      'documentation',
+    ];
     const union = computeUnion(profiles, workTypes);
 
     assert.strictEqual(
@@ -4386,7 +4684,9 @@ describe('Contract: branch-manager syncs root working tree index after advancing
   // Helper: extract the large_multi_worktree Workflow section text
   function getLargeMultiSection(content) {
     const start = content.indexOf('large_multi_worktree Workflow');
-    if (start === -1) {return '';}
+    if (start === -1) {
+      return '';
+    }
     const afterStart = content.slice(start);
     const nextSection = afterStart.search(/\n## /);
     return nextSection !== -1 ? afterStart.slice(0, nextSection) : afterStart;
@@ -4396,7 +4696,10 @@ describe('Contract: branch-manager syncs root working tree index after advancing
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const section = getLargeMultiSection(content);
-    assert.ok(section.length > 0, `${relative} must contain a large_multi_worktree Workflow section`);
+    assert.ok(
+      section.length > 0,
+      `${relative} must contain a large_multi_worktree Workflow section`
+    );
     assert.ok(
       /git reset --mixed HEAD/.test(section),
       `${relative} large_multi_worktree Workflow must include 'git reset --mixed HEAD' to sync the root index after advancing the develop ref`
@@ -4407,13 +4710,19 @@ describe('Contract: branch-manager syncs root working tree index after advancing
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const section = getLargeMultiSection(content);
-    assert.ok(section.length > 0, `${relative} must contain a large_multi_worktree Workflow section`);
+    assert.ok(
+      section.length > 0,
+      `${relative} must contain a large_multi_worktree Workflow section`
+    );
 
     // The reset must reference the root working tree — either via 'git -C' with root path
     // or with an explicit comment/instruction stating it runs in root (not in trees/)
     assert.ok(
-      /root.*git reset --mixed|git reset --mixed.*root|git -C.*root.*reset --mixed|reset --mixed HEAD.*root/i.test(section) ||
-      (/git reset --mixed HEAD/.test(section) && /root working tree|root.{0,30}index|index.{0,30}root/i.test(section)),
+      /root.*git reset --mixed|git reset --mixed.*root|git -C.*root.*reset --mixed|reset --mixed HEAD.*root/i.test(
+        section
+      ) ||
+        (/git reset --mixed HEAD/.test(section) &&
+          /root working tree|root.{0,30}index|index.{0,30}root/i.test(section)),
       `${relative} large_multi_worktree Workflow must clarify that 'git reset --mixed HEAD' runs in the root working tree to sync the index`
     );
   });
@@ -4422,11 +4731,16 @@ describe('Contract: branch-manager syncs root working tree index after advancing
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const section = getLargeMultiSection(content);
-    assert.ok(section.length > 0, `${relative} must contain a large_multi_worktree Workflow section`);
+    assert.ok(
+      section.length > 0,
+      `${relative} must contain a large_multi_worktree Workflow section`
+    );
 
     // The workflow must explain why the reset is needed: to sync the root index
     assert.ok(
-      /sync.*index|index.*sync|stale.*index|index.*stale|root.*index|index.*root/i.test(section),
+      /sync.*index|index.*sync|stale.*index|index.*stale|root.*index|index.*root/i.test(
+        section
+      ),
       `${relative} large_multi_worktree Workflow must explain that 'git reset --mixed HEAD' syncs the root index ` +
         `after the develop ref is advanced`
     );
