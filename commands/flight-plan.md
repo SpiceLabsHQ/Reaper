@@ -532,27 +532,29 @@ Files: [estimated files from plan]
 
 ---
 
-## Phase 6: Issue Quality Review (Forked Subagent Verification)
+## Phase 6: Issue Quality Review (Isolated Subagent Verification)
 
 **Note:** This phase is skipped when `TASK_SYSTEM` is `markdown_only`.
 
 Update todo #3 to `in_progress`.
 
-### Invoke workflow-planner-verification Skill
+### Dispatch Verification Subagent
 
-The skill inherits the agent's fork context (full parent session: conversation history, research results, cached file reads, refinement context) and handles agent selection automatically via its frontmatter.
+Deploy `reaper:workflow-planner` as an isolated Task subagent with `MODE: VERIFICATION`. The subagent will internally load and run the `reaper:workflow-planner-verification` skill via its Skill tool.
 
 ```
-Skill: reaper:workflow-planner-verification
-Arguments:
-  PARENT_ISSUE_ID: $PARENT_ISSUE_ID (omit if plan has only one work item)
-  TASK_SYSTEM: $TASK_SYSTEM
-  CREATED_ISSUES: [list of issue IDs created in Phase 5]
+Task(
+  subagent_type: "reaper:workflow-planner",
+  prompt: "MODE: VERIFICATION
+PARENT_ISSUE_ID: $PARENT_ISSUE_ID (omit if plan has only one work item)
+TASK_SYSTEM: $TASK_SYSTEM
+CREATED_ISSUES: [list of issue IDs created in Phase 5]"
+)
 ```
 
 ### Handling Verification Results
 
-Parse workflow-planner-verification JSON response:
+Parse the returned JSON from the workflow-planner-verification subagent:
 - **all_checks_passed: true** → Proceed to Phase 7 confirmation
 - **auto_fixed: true** → Fixes applied, verification passed
 - **requires_user_input: true** → Present blocking_issues to user after 2 failed iterations
