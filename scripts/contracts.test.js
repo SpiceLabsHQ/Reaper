@@ -4041,3 +4041,231 @@ describe('flight-plan command: workflow-planner-verification skill invocation', 
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Contract: quality-gate-protocol union semantics — 3-work-type deduplication
+//
+// When a changeset spans application_code + database_migration + documentation,
+// the union of those three profiles must produce exactly one Gate 1 agent
+// (reaper:test-runner, from application_code) and a deduplicated Gate 2 set
+// containing all four unique reviewers from the three profiles.
+//
+// Gate profile lookup (from quality-gate-protocol.ejs):
+//   application_code  → Gate 1: reaper:test-runner
+//                        Gate 2: reaper:principal-engineer, reaper:security-auditor
+//   database_migration → Gate 1: --
+//                        Gate 2: reaper:database-architect
+//   documentation      → Gate 1: --
+//                        Gate 2: reaper:technical-writer
+//
+// Union result:
+//   Gate 1 (deduped): reaper:test-runner (exactly 1; only application_code contributes)
+//   Gate 2 (deduped): reaper:principal-engineer, reaper:security-auditor,
+//                     reaper:database-architect, reaper:technical-writer (4 unique agents)
+// ---------------------------------------------------------------------------
+
+describe('Contract: quality-gate-protocol union semantics — 3-work-type deduplication', () => {
+  const sourcePath = path.join(ROOT, 'src', 'partials', 'quality-gate-protocol.ejs');
+  const sourceRelative = 'src/partials/quality-gate-protocol.ejs';
+
+  /**
+   * Parses the first gate profile lookup table from the quality-gate-protocol source.
+   *
+   * Only the primary table (inside the orchestrator role block) uses fully-qualified
+   * "reaper:agent-name" references. A second summary table uses short names and must
+   * be skipped — we stop parsing after the first table exits.
+   *
+   * Returns a map of workType -> { gate1: string[], gate2: string[] } where
+   * each array contains the fully-qualified reaper: agent names listed in that column.
+   * A '--' or empty value yields an empty array.
+   *
+   * @param {string} content - Full EJS source content
+   * @returns {Map<string, { gate1: string[], gate2: string[] }>}
+   */
+  function parseGateProfileTable(content) {
+    const profiles = new Map();
+
+    const lines = content.split('\n');
+    // Locate the primary table: header row contains "Gate 1 (blocking)" and "Gate 2 (parallel)"
+    // Stop parsing as soon as we leave the first table (so the summary table doesn't overwrite).
+    let inTable = false;
+    let tableFound = false;
+
+    for (const line of lines) {
+      if (!line.startsWith('|')) {
+        if (inTable) {
+          // First table just ended — stop processing to avoid the summary table.
+          break;
+        }
+        continue;
+      }
+      if (line.includes('Gate 1 (blocking)') && line.includes('Gate 2 (parallel)')) {
+        if (tableFound) {
+          // A second table header — stop to avoid reading the short-name summary table.
+          break;
+        }
+        inTable = true;
+        tableFound = true;
+        continue;
+      }
+      // Skip separator row
+      if (/^[\s|:-]+$/.test(line)) continue;
+      if (!inTable) continue;
+
+      // Parse a data row: | work_type | gate1 | gate2 |
+      const cells = line.split('|').slice(1, -1).map((c) => c.trim());
+      if (cells.length < 3) continue;
+
+      const workType = cells[0].replace(/`/g, '');
+      const gate1Agents = (cells[1].match(/reaper:[a-z-]+/g) || []);
+      const gate2Agents = (cells[2].match(/reaper:[a-z-]+/g) || []);
+
+      profiles.set(workType, { gate1: gate1Agents, gate2: gate2Agents });
+    }
+
+    return profiles;
+  }
+
+  /**
+   * Computes the union gate profile for a set of work types, applying the
+   * deduplication rules documented in the "Union Semantics for Mixed Changesets"
+   * section of quality-gate-protocol.ejs:
+   *
+   *   1. Collect all unique Gate 1 agents across matching profiles.
+   *   2. Collect all unique Gate 2 agents across matching profiles (deduplicated).
+   *
+   * @param {Map<string, { gate1: string[], gate2: string[] }>} profiles
+   * @param {string[]} workTypes
+   * @returns {{ gate1: string[], gate2: string[] }}
+   */
+  function computeUnion(profiles, workTypes) {
+    const gate1Set = new Set();
+    const gate2Set = new Set();
+
+    for (const wt of workTypes) {
+      const profile = profiles.get(wt);
+      if (!profile) continue;
+      for (const a of profile.gate1) gate1Set.add(a);
+      for (const a of profile.gate2) gate2Set.add(a);
+    }
+
+    return {
+      gate1: [...gate1Set],
+      gate2: [...gate2Set],
+    };
+  }
+
+  it(`${sourceRelative} exists`, () => {
+    assert.ok(
+      fs.existsSync(sourcePath),
+      `${sourceRelative} not found at ${sourcePath}`
+    );
+  });
+
+  it(`${sourceRelative} documents union semantics section`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    assert.ok(
+      content.includes('Union Semantics'),
+      `${sourceRelative} must contain a "Union Semantics" section describing how mixed changesets are handled`
+    );
+  });
+
+  it('union of application_code + database_migration + documentation yields exactly one Gate 1 agent', () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    const profiles = parseGateProfileTable(content);
+
+    const workTypes = ['application_code', 'database_migration', 'documentation'];
+    const union = computeUnion(profiles, workTypes);
+
+    // Gate 1: only application_code contributes reaper:test-runner;
+    // database_migration and documentation have no Gate 1 agents.
+    assert.strictEqual(
+      union.gate1.length,
+      1,
+      `Union Gate 1 must have exactly 1 agent (no duplicates). Got: [${union.gate1.join(', ')}]`
+    );
+    assert.strictEqual(
+      union.gate1[0],
+      'reaper:test-runner',
+      `Union Gate 1 must be reaper:test-runner (the sole Gate 1 contributor)`
+    );
+  });
+
+  it('union of application_code + database_migration + documentation Gate 1 has no duplicates', () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    const profiles = parseGateProfileTable(content);
+
+    const workTypes = ['application_code', 'database_migration', 'documentation'];
+    const union = computeUnion(profiles, workTypes);
+
+    const uniqueGate1 = [...new Set(union.gate1)];
+    assert.strictEqual(
+      union.gate1.length,
+      uniqueGate1.length,
+      `Union Gate 1 must have no duplicate agents. Got: [${union.gate1.join(', ')}]`
+    );
+  });
+
+  it('union of application_code + database_migration + documentation Gate 2 contains all required agents', () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    const profiles = parseGateProfileTable(content);
+
+    const workTypes = ['application_code', 'database_migration', 'documentation'];
+    const union = computeUnion(profiles, workTypes);
+
+    // application_code contributes: reaper:principal-engineer, reaper:security-auditor
+    // database_migration contributes: reaper:database-architect
+    // documentation contributes: reaper:technical-writer
+    const expectedGate2 = [
+      'reaper:principal-engineer',
+      'reaper:security-auditor',
+      'reaper:database-architect',
+      'reaper:technical-writer',
+    ];
+
+    for (const agent of expectedGate2) {
+      assert.ok(
+        union.gate2.includes(agent),
+        `Union Gate 2 must include ${agent} (contributed by its respective work type). ` +
+          `Got: [${union.gate2.join(', ')}]`
+      );
+    }
+  });
+
+  it('union of application_code + database_migration + documentation Gate 2 has no duplicate agents', () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    const profiles = parseGateProfileTable(content);
+
+    const workTypes = ['application_code', 'database_migration', 'documentation'];
+    const union = computeUnion(profiles, workTypes);
+
+    const uniqueGate2 = [...new Set(union.gate2)];
+    assert.strictEqual(
+      union.gate2.length,
+      uniqueGate2.length,
+      `Union Gate 2 must have no duplicate agents. Got: [${union.gate2.join(', ')}]`
+    );
+  });
+
+  it('union of application_code + database_migration + documentation Gate 2 has exactly 4 unique agents', () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    const profiles = parseGateProfileTable(content);
+
+    const workTypes = ['application_code', 'database_migration', 'documentation'];
+    const union = computeUnion(profiles, workTypes);
+
+    assert.strictEqual(
+      union.gate2.length,
+      4,
+      `Union Gate 2 must have exactly 4 unique agents ` +
+        `(principal-engineer + security-auditor + database-architect + technical-writer). ` +
+        `Got ${union.gate2.length}: [${union.gate2.join(', ')}]`
+    );
+  });
+});
