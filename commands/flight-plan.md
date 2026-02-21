@@ -563,7 +563,7 @@ After successful verification, present:
 - Parent issue ID and title (if one was created)
 - Table of created issues with verification status
 - Pre-flight check summary (detail sufficiency, cross-issue awareness, relationship appropriateness, orchestratability)
-- Recommended next step: `/clear` then `/reaper:takeoff <TOP_LEVEL_IDS>` — where `<TOP_LEVEL_IDS>` is the space-separated list of **all top-level issue IDs created in Phase 5** (i.e., every parent issue or standalone issue that has no parent). Never list child or sub-issue IDs here. If one parent issue was created: `/reaper:takeoff reaper-abc`. If three unrelated issues were created with no parent: `/reaper:takeoff reaper-abc reaper-def reaper-ghi`.
+- Recommended next step: `/clear` then `/reaper:takeoff <TOP_LEVEL_IDS>` — where `<TOP_LEVEL_IDS>` is the space-separated list of **all top-level issue IDs created in Phase 5** (i.e., every issue that has no parent). Never list IDs of issues that were created with a parent reference. If one parent issue was created: `/reaper:takeoff reaper-abc`. If one standalone issue was created (no parent): `/reaper:takeoff reaper-abc`. If three unrelated issues were created with no parent: `/reaper:takeoff reaper-abc reaper-def reaper-ghi`.
 
 Mark todo #3 complete.
 
@@ -601,7 +601,7 @@ Render the Filed Card (from visual vocabulary above) with:
 - **Plan**: the plan title from Phase 2
 - **Issues**: total count of issues created in Phase 5
 
-Then output the following, substituting the actual top-level issue IDs from Phase 5 (space-separated, never child IDs):
+Then output the following, substituting the actual top-level issue IDs from Phase 5 (space-separated; never IDs of issues that were created with a parent reference):
 
 Before launching:
 
