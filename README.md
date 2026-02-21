@@ -16,7 +16,7 @@ Reaper is a Claude Code plugin that turns Claude into a caffeine-addicted air tr
 
 ## Installation
 
-**Prerequisites**: [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)
+**Prerequisites**: [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) · Node.js 22+
 
 ```bash
 claude plugin marketplace add SpiceLabsHQ/claude-marketplace

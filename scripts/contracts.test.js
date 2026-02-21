@@ -24,6 +24,7 @@ const { AGENT_TYPES, TDD_AGENTS } = require('./build');
 // ---------------------------------------------------------------------------
 
 const ROOT = path.resolve(__dirname, '..');
+const PACKAGE_JSON = path.join(ROOT, 'package.json');
 const AGENTS_DIR = path.join(ROOT, 'agents');
 const COMMANDS_DIR = path.join(ROOT, 'commands');
 const SKILLS_DIR = path.join(ROOT, 'skills');
@@ -4743,6 +4744,39 @@ describe('Contract: branch-manager syncs root working tree index after advancing
       ),
       `${relative} large_multi_worktree Workflow must explain that 'git reset --mixed HEAD' syncs the root index ` +
         `after the develop ref is advanced`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: package.json engines field
+// ---------------------------------------------------------------------------
+
+describe('Contract: package.json engines field', () => {
+  it('package.json declares engines.node >= 22', () => {
+    assert.ok(fs.existsSync(PACKAGE_JSON), 'package.json not found');
+    const pkg = JSON.parse(fs.readFileSync(PACKAGE_JSON, 'utf8'));
+    assert.ok(
+      pkg.engines !== undefined,
+      'package.json must have an "engines" field to enforce the Node.js version requirement'
+    );
+    assert.ok(
+      typeof pkg.engines.node === 'string',
+      'package.json engines.node must be a string'
+    );
+    assert.ok(
+      />=\s*22/.test(pkg.engines.node),
+      `package.json engines.node must require Node.js >= 22; got "${pkg.engines.node}"`
+    );
+  });
+
+  it('README.md documents Node 22+ as a prerequisite', () => {
+    const readmePath = path.join(ROOT, 'README.md');
+    assert.ok(fs.existsSync(readmePath), 'README.md not found');
+    const content = fs.readFileSync(readmePath, 'utf8');
+    assert.ok(
+      /node(?:\.js)?\s*(?:v?22|>=\s*22|22\+)/i.test(content),
+      'README.md must document the Node.js 22+ prerequisite'
     );
   });
 });

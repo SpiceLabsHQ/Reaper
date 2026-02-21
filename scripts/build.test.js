@@ -76,9 +76,15 @@ describe('buildTemplateVars base variables', () => {
   });
 
   it('should include base variables for all source types', () => {
-    const sourceTypes = ['agents', 'skills', 'hooks', 'commands'];
-    for (const st of sourceTypes) {
-      const vars = buildTemplateVars(st, 'test-name', `${st}/test-name.ejs`);
+    // Use a classified agent name for the agents type; other types accept any name
+    const cases = [
+      { st: 'agents', name: 'bug-fixer' },
+      { st: 'skills', name: 'test-name' },
+      { st: 'hooks', name: 'test-name' },
+      { st: 'commands', name: 'test-name' },
+    ];
+    for (const { st, name } of cases) {
+      const vars = buildTemplateVars(st, name, `${st}/${name}.ejs`);
       assert.ok('FILENAME' in vars, `${st} should have FILENAME`);
       assert.ok('SOURCE_TYPE' in vars, `${st} should have SOURCE_TYPE`);
       assert.ok('RELATIVE_PATH' in vars, `${st} should have RELATIVE_PATH`);
@@ -428,54 +434,54 @@ describe('buildTemplateVars category mutual exclusivity', () => {
 // ===========================================================================
 
 describe('buildTemplateVars unknown agent names', () => {
-  it('should set AGENT_TYPE to "unknown" for unrecognized agent name', () => {
-    const vars = buildTemplateVars(
-      'agents',
-      'nonexistent-agent',
-      'agents/nonexistent-agent.ejs'
+  it('should throw when agent filename has no AGENT_TYPES classification', () => {
+    assert.throws(
+      () =>
+        buildTemplateVars(
+          'agents',
+          'nonexistent-agent',
+          'agents/nonexistent-agent.ejs'
+        ),
+      (err) => {
+        assert.ok(
+          err.message.includes('nonexistent-agent'),
+          'Error should name the unclassified file'
+        );
+        assert.ok(
+          err.message.includes('AGENT_TYPES'),
+          'Error should point to AGENT_TYPES as the fix location'
+        );
+        return true;
+      },
+      'buildTemplateVars should throw for unclassified agent filenames'
     );
-    assert.strictEqual(vars.AGENT_TYPE, 'unknown');
   });
 
-  it('should set all category flags to false for unknown agent', () => {
-    const vars = buildTemplateVars(
-      'agents',
-      'nonexistent-agent',
-      'agents/nonexistent-agent.ejs'
+  it('should throw for empty string agent filename', () => {
+    assert.throws(
+      () => buildTemplateVars('agents', '', 'agents/.ejs'),
+      (err) => {
+        assert.ok(
+          err.message.includes('AGENT_TYPES'),
+          'Error should point to AGENT_TYPES as the fix location'
+        );
+        return true;
+      },
+      'buildTemplateVars should throw for empty agent filename'
     );
-    assert.strictEqual(vars.IS_CODING_AGENT, false);
-    assert.strictEqual(vars.IS_REVIEW_AGENT, false);
-    assert.strictEqual(vars.IS_PLANNING_AGENT, false);
-    assert.strictEqual(vars.IS_OPERATIONS_AGENT, false);
-    assert.strictEqual(vars.IS_DOCUMENTATION_AGENT, false);
-    assert.strictEqual(vars.IS_PERFORMANCE_AGENT, false);
   });
 
-  it('should set HAS_TDD=false for unknown agent', () => {
-    const vars = buildTemplateVars(
-      'agents',
-      'nonexistent-agent',
-      'agents/nonexistent-agent.ejs'
+  it('should NOT throw for unclassified names when sourceType is not agents', () => {
+    // Non-agent source types are not validated against AGENT_TYPES
+    assert.doesNotThrow(() =>
+      buildTemplateVars('skills', 'nonexistent-agent', 'skills/nonexistent-agent.ejs')
     );
-    assert.strictEqual(vars.HAS_TDD, false);
-  });
-
-  it('should set HAS_GIT_PROHIBITIONS=false for unknown agent', () => {
-    const vars = buildTemplateVars(
-      'agents',
-      'nonexistent-agent',
-      'agents/nonexistent-agent.ejs'
+    assert.doesNotThrow(() =>
+      buildTemplateVars('hooks', 'nonexistent-agent', 'hooks/nonexistent-agent.ejs')
     );
-    assert.strictEqual(vars.HAS_GIT_PROHIBITIONS, false);
-  });
-
-  it('should still include AGENT_NAME for unknown agent', () => {
-    const vars = buildTemplateVars(
-      'agents',
-      'nonexistent-agent',
-      'agents/nonexistent-agent.ejs'
+    assert.doesNotThrow(() =>
+      buildTemplateVars('commands', 'nonexistent-agent', 'commands/nonexistent-agent.ejs')
     );
-    assert.strictEqual(vars.AGENT_NAME, 'nonexistent-agent');
   });
 });
 
@@ -484,13 +490,17 @@ describe('buildTemplateVars unknown agent names', () => {
 // ===========================================================================
 
 describe('buildTemplateVars empty filename', () => {
-  it('should handle empty string filename for agents source type', () => {
-    const vars = buildTemplateVars('agents', '', 'agents/.ejs');
-    assert.strictEqual(vars.FILENAME, '');
-    assert.strictEqual(vars.AGENT_NAME, '');
-    assert.strictEqual(vars.AGENT_TYPE, 'unknown');
-    assert.strictEqual(vars.HAS_TDD, false);
-    assert.strictEqual(vars.IS_CODING_AGENT, false);
+  it('should throw for empty string filename for agents source type (no AGENT_TYPES classification)', () => {
+    assert.throws(
+      () => buildTemplateVars('agents', '', 'agents/.ejs'),
+      (err) => {
+        assert.ok(
+          err.message.includes('AGENT_TYPES'),
+          'Error should point to AGENT_TYPES as the fix location'
+        );
+        return true;
+      }
+    );
   });
 
   it('should handle empty string filename for skills source type', () => {
@@ -1136,8 +1146,8 @@ describe('processFile', () => {
     const result = processFile(
       sourcePath,
       outputPath,
-      'agents',
-      'agents/simple.ejs'
+      'skills',
+      'skills/simple.ejs'
     );
 
     assert.strictEqual(
@@ -1156,8 +1166,8 @@ describe('processFile', () => {
       'Output should contain compiled template with FILENAME=simple'
     );
     assert.ok(
-      content.includes('Type is agents.'),
-      'Output should contain compiled template with SOURCE_TYPE=agents'
+      content.includes('Type is skills.'),
+      'Output should contain compiled template with SOURCE_TYPE=skills'
     );
   });
 
@@ -1168,8 +1178,8 @@ describe('processFile', () => {
     const result = processFile(
       sourcePath,
       outputPath,
-      'agents',
-      'agents/with-frontmatter.ejs'
+      'skills',
+      'skills/with-frontmatter.ejs'
     );
 
     assert.strictEqual(result, true, 'processFile should return true');
@@ -1240,7 +1250,7 @@ describe('processFile', () => {
 
     assert.strictEqual(stats.success, 0, 'stats.success should start at 0');
 
-    processFile(sourcePath, outputPath, 'agents', 'agents/simple.ejs');
+    processFile(sourcePath, outputPath, 'skills', 'skills/simple.ejs');
 
     assert.strictEqual(
       stats.success,
@@ -1258,8 +1268,8 @@ describe('processFile', () => {
     const result = processFile(
       sourcePath,
       outputPath,
-      'agents',
-      'agents/invalid.ejs'
+      'skills',
+      'skills/invalid.ejs'
     );
 
     assert.strictEqual(result, false, 'processFile should return false');
@@ -1284,7 +1294,7 @@ describe('processFile', () => {
       'Nested output directory should not exist before test'
     );
 
-    processFile(sourcePath, outputPath, 'agents', 'agents/simple.ejs');
+    processFile(sourcePath, outputPath, 'skills', 'skills/simple.ejs');
 
     assert.ok(
       fs.existsSync(nestedOutputDir),
@@ -1293,6 +1303,49 @@ describe('processFile', () => {
     assert.ok(
       fs.existsSync(outputPath),
       'Output file should exist in the newly created directory'
+    );
+  });
+
+  it('should return false and record a clear error when agent filename has no AGENT_TYPES classification', () => {
+    // Create a temp EJS file named after an unclassified agent
+    const srcDir = path.join(TMP_OUTPUT_DIR, 'src_agents');
+    fs.mkdirSync(srcDir, { recursive: true });
+    const sourcePath = path.join(srcDir, 'mystery-agent.ejs');
+    fs.writeFileSync(sourcePath, 'Hello <%= FILENAME %>');
+    const outputPath = path.join(TMP_OUTPUT_DIR, 'mystery-agent.md');
+
+    const result = processFile(
+      sourcePath,
+      outputPath,
+      'agents',
+      'agents/mystery-agent.ejs'
+    );
+
+    assert.strictEqual(
+      result,
+      false,
+      'processFile should return false for unclassified agent'
+    );
+    assert.strictEqual(
+      stats.errors,
+      1,
+      'stats.errors should be incremented'
+    );
+    assert.ok(
+      stats.errorMessages.length > 0,
+      'stats.errorMessages should contain an entry'
+    );
+    assert.ok(
+      stats.errorMessages[0].includes('mystery-agent'),
+      'Error message should name the unclassified file'
+    );
+    assert.ok(
+      stats.errorMessages[0].includes('AGENT_TYPES'),
+      'Error message should point to AGENT_TYPES as the fix location'
+    );
+    assert.ok(
+      !fs.existsSync(outputPath),
+      'Output file should NOT be written for unclassified agent'
     );
   });
 });
@@ -1605,12 +1658,12 @@ describe('buildType', () => {
   });
 
   it('should process EJS files and produce output', () => {
-    // Create a minimal src structure
+    // Create a minimal src structure using a classified agent name
     const srcAgentsDir = path.join(TMP_OUTPUT_DIR, 'src', 'agents');
     const outputAgentsDir = path.join(TMP_OUTPUT_DIR, 'out', 'agents');
     fs.mkdirSync(srcAgentsDir, { recursive: true });
     fs.writeFileSync(
-      path.join(srcAgentsDir, 'test-agent.ejs'),
+      path.join(srcAgentsDir, 'bug-fixer.ejs'),
       'Hello <%= FILENAME %>'
     );
 
@@ -1625,7 +1678,7 @@ describe('buildType', () => {
       'One file should be processed successfully'
     );
     assert.ok(
-      fs.existsSync(path.join(outputAgentsDir, 'test-agent.md')),
+      fs.existsSync(path.join(outputAgentsDir, 'bug-fixer.md')),
       'Output .md file should be created'
     );
   });
@@ -1771,8 +1824,9 @@ describe('build', () => {
     const srcSkillsDir = path.join(TMP_OUTPUT_DIR, 'src', 'skills');
     fs.mkdirSync(srcAgentsDir, { recursive: true });
     fs.mkdirSync(srcSkillsDir, { recursive: true });
+    // Use a classified agent name so AGENT_TYPES validation passes
     fs.writeFileSync(
-      path.join(srcAgentsDir, 'a.ejs'),
+      path.join(srcAgentsDir, 'bug-fixer.ejs'),
       'Agent: <%= FILENAME %>'
     );
     fs.writeFileSync(
@@ -1788,7 +1842,7 @@ describe('build', () => {
 
     assert.strictEqual(stats.success, 1, 'Only one type should be built');
     assert.ok(
-      fs.existsSync(path.join(TMP_OUTPUT_DIR, 'out', 'agents', 'a.md')),
+      fs.existsSync(path.join(TMP_OUTPUT_DIR, 'out', 'agents', 'bug-fixer.md')),
       'Agent file should be built'
     );
     assert.ok(
@@ -1802,8 +1856,9 @@ describe('build', () => {
     const srcSkillsDir = path.join(TMP_OUTPUT_DIR, 'src', 'skills');
     fs.mkdirSync(srcAgentsDir, { recursive: true });
     fs.mkdirSync(srcSkillsDir, { recursive: true });
+    // Use a classified agent name so AGENT_TYPES validation passes
     fs.writeFileSync(
-      path.join(srcAgentsDir, 'a.ejs'),
+      path.join(srcAgentsDir, 'bug-fixer.ejs'),
       'Agent: <%= FILENAME %>'
     );
     fs.writeFileSync(
@@ -1821,16 +1876,18 @@ describe('build', () => {
   });
 
   it('should track errors in stats when template compilation fails', () => {
-    const srcAgentsDir = path.join(TMP_OUTPUT_DIR, 'src', 'agents');
-    fs.mkdirSync(srcAgentsDir, { recursive: true });
+    // Use a skills source type so AGENT_TYPES validation is not involved;
+    // this test focuses on EJS compilation failure tracking
+    const srcSkillsDir = path.join(TMP_OUTPUT_DIR, 'src', 'skills');
+    fs.mkdirSync(srcSkillsDir, { recursive: true });
     fs.writeFileSync(
-      path.join(srcAgentsDir, 'bad.ejs'),
+      path.join(srcSkillsDir, 'bad.ejs'),
       '<%= UNDEFINED_FUNC() %>'
     );
 
     config.srcDir = path.join(TMP_OUTPUT_DIR, 'src');
     config.rootDir = path.join(TMP_OUTPUT_DIR, 'out');
-    config.type = 'agents';
+    config.type = 'skills';
 
     build();
 

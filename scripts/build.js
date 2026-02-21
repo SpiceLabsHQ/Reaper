@@ -232,8 +232,14 @@ function buildTemplateVars(sourceType, filename, relativePath) {
 
   // Agent-specific variables
   if (sourceType === 'agents') {
+    const agentType = getAgentType(filename);
+    if (agentType === 'unknown') {
+      throw new Error(
+        `Agent "${filename}" has no AGENT_TYPES classification. Add it to AGENT_TYPES in build.js or rename the file.`
+      );
+    }
     vars.AGENT_NAME = filename;
-    vars.AGENT_TYPE = getAgentType(filename);
+    vars.AGENT_TYPE = agentType;
     vars.HAS_TDD = TDD_AGENTS.includes(filename);
     vars.HAS_GIT_PROHIBITIONS = AGENT_TYPES.coding.includes(filename);
     vars.IS_CODING_AGENT = AGENT_TYPES.coding.includes(filename);

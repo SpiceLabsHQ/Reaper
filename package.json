@@ -26,6 +26,9 @@
     "url": "https://github.com/SpiceLabsHQ/Reaper/issues"
   },
   "homepage": "https://github.com/SpiceLabsHQ/Reaper#readme",
+  "engines": {
+    "node": ">=22"
+  },
   "overrides": {
     "fast-xml-parser": ">=5.3.4"
   },
