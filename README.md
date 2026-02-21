@@ -141,6 +141,10 @@ A PostToolUse hook formats code on every file write. It detects your project's f
 
 Full formatter list: [docs/auto-formatting.md](docs/auto-formatting.md)
 
+### Customization
+
+To disable Reaper's ASCII art and box-drawing output, add the line `Reaper: disable ASCII art` to your target project's `CLAUDE.md` -- Reaper will fall back to plain text status labels everywhere.
+
 ### Agents
 
 24 specialized agents. You never hire them directly -- the orchestrator dispatches the right ones based on task complexity, type, and phase. Planners, developers, reviewers, security auditors, incident responders, and more.

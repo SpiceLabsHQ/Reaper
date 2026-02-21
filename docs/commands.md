@@ -406,4 +406,10 @@ Use `lint: skip` to suppress the missing-lint warning when the project has no li
 
 ---
 
+## Customization
+
+To disable Reaper's ASCII art and box-drawing output across all commands, add the line `Reaper: disable ASCII art` to your target project's `CLAUDE.md` -- Reaper will fall back to plain text status labels everywhere.
+
+---
+
 [Back to README](../README.md)
