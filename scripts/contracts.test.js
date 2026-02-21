@@ -44,7 +44,7 @@ const HOOKS_FILE = path.join(ROOT, 'hooks', 'hooks.json');
  */
 function collectFiles(dir, predicate) {
   const results = [];
-  if (!fs.existsSync(dir)) return results;
+  if (!fs.existsSync(dir)) {return results;}
 
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   for (const entry of entries) {
@@ -505,9 +505,9 @@ describe('Contract: hooks.json structure', () => {
     );
 
     const raw = fs.readFileSync(HOOKS_FILE, 'utf8');
-    let parsed;
+    let _parsed;
     assert.doesNotThrow(() => {
-      parsed = JSON.parse(raw);
+      _parsed = JSON.parse(raw);
     }, `hooks.json is not valid JSON`);
   });
 
@@ -1396,7 +1396,7 @@ describe('Contract: takeoff Per-Unit Cycle TAKING OFF announcement', () => {
   function extractPerUnitCycle(content) {
     const startMarker = '### Per-Unit Cycle';
     const startIndex = content.indexOf(startMarker);
-    if (startIndex === -1) return '';
+    if (startIndex === -1) {return '';}
 
     // Find the next ## or ### heading after the Per-Unit Cycle section
     const rest = content.slice(startIndex + startMarker.length);
@@ -1530,7 +1530,7 @@ describe('Contract: agent deployment template is compressed (5 fields)', () => {
   function extractDeploymentSection(content) {
     const startMarker = '## Agent Deployment Template';
     const startIndex = content.indexOf(startMarker);
-    if (startIndex === -1) return '';
+    if (startIndex === -1) {return '';}
 
     const rest = content.slice(startIndex + startMarker.length);
     const nextSectionMatch = rest.match(/\n## [^#]/);
@@ -1647,7 +1647,7 @@ describe('Contract: takeoff iteration rules include resume-based retry pattern',
   function extractIterationRules(content) {
     const startMarker = '### Iteration Rules';
     const startIndex = content.indexOf(startMarker);
-    if (startIndex === -1) return '';
+    if (startIndex === -1) {return '';}
 
     const rest = content.slice(startIndex + startMarker.length);
     const nextSectionMatch = rest.match(/\n###? [^#]/);
@@ -1945,13 +1945,13 @@ describe('Contract: gate profile correctness — all 10 work types and valid Gat
     // Parse table data rows (skip header and separator rows).
     const tableRows = content.split('\n').filter((line) => {
       // Table data rows start and end with | and contain at least 3 cells
-      if (!line.startsWith('|') || !line.endsWith('|')) return false;
+      if (!line.startsWith('|') || !line.endsWith('|')) {return false;}
       const cells = line.split('|').slice(1, -1);
-      if (cells.length < 3) return false;
+      if (cells.length < 3) {return false;}
       // Skip separator rows (only dashes/spaces)
-      if (/^[\s|-]+$/.test(line)) return false;
+      if (/^[\s|-]+$/.test(line)) {return false;}
       // Skip header row
-      if (line.includes('Gate 2 (parallel)')) return false;
+      if (line.includes('Gate 2 (parallel)')) {return false;}
       // Skip rows without a reaper: agent in column 2 (Gate 2 column)
       return cells[2] && cells[2].includes('reaper:');
     });
@@ -2451,7 +2451,7 @@ describe('Contract: todowrite-plan-protocol cleanup note covers both strategies'
 function extractStrategyNotes(content) {
   const startMarker = '### Strategy Notes';
   const startIndex = content.indexOf(startMarker);
-  if (startIndex === -1) return '';
+  if (startIndex === -1) {return '';}
 
   const rest = content.slice(startIndex + startMarker.length);
   const nextSectionMatch = rest.match(/\n###? /);
@@ -2474,7 +2474,7 @@ function extractStrategyNotes(content) {
 function extractFullPerUnitCycle(content) {
   const startMarker = '### Per-Unit Cycle';
   const startIndex = content.indexOf(startMarker);
-  if (startIndex === -1) return '';
+  if (startIndex === -1) {return '';}
 
   // Use "### Continuation Rule" as the end boundary, which comes after
   // the work-unit-cleanup partial's heading and the remaining numbered steps.
@@ -2502,7 +2502,7 @@ function extractFullPerUnitCycle(content) {
 function extractWorktreeCleanupSection(content) {
   const startMarker = '## Worktree Cleanup';
   const startIndex = content.indexOf(startMarker);
-  if (startIndex === -1) return '';
+  if (startIndex === -1) {return '';}
 
   const rest = content.slice(startIndex + startMarker.length);
   const nextSectionMatch = rest.match(/\n## [^#]/);
@@ -2950,7 +2950,7 @@ describe('Contract: takeoff dirty-root escalation', () => {
   function extractDirtyRootSection(content) {
     const startMarker = '## Dirty-Root Escalation';
     const startIndex = content.indexOf(startMarker);
-    if (startIndex === -1) return '';
+    if (startIndex === -1) {return '';}
 
     const rest = content.slice(startIndex + startMarker.length);
     const nextSectionMatch = rest.match(/\n## [^#]/);
@@ -3261,7 +3261,7 @@ describe('Contract: branch-manager large_multi_worktree merge uses isolated inte
   // Helper: extract the large_multi_worktree Workflow section text
   function getLargeMultiSection(content) {
     const start = content.indexOf('large_multi_worktree Workflow');
-    if (start === -1) return '';
+    if (start === -1) {return '';}
     // Section ends at the next ## heading or end of file
     const afterStart = content.slice(start);
     const nextSection = afterStart.search(/\n## /);
@@ -3290,9 +3290,9 @@ describe('Contract: branch-manager large_multi_worktree merge uses isolated inte
     const lines = section.split('\n');
     const bareCheckoutLines = lines.filter((line) => {
       // The line must contain 'git checkout' as a potential command
-      if (!/git checkout\b/.test(line)) return false;
+      if (!/git checkout\b/.test(line)) {return false;}
       // Skip lines that are prose prohibitions — they describe what NOT to do
-      if (/never|not|avoid|instead|prohibited/i.test(line)) return false;
+      if (/never|not|avoid|instead|prohibited/i.test(line)) {return false;}
       // A command line starts with optional whitespace/backtick then 'git checkout'
       // (after stripping list markers like "- " or "   ")
       return /^\s*`?\s*git checkout\b/.test(line);
@@ -3357,7 +3357,7 @@ describe('Contract: branch-manager large_multi_worktree merge uses isolated inte
     // from merge operations (which must always use isolated worktrees)
     const safetySection = (() => {
       const start = content.indexOf('Safety Protocols');
-      if (start === -1) return '';
+      if (start === -1) {return '';}
       const after = content.slice(start);
       const next = after.search(/\n## /);
       return next !== -1 ? after.slice(0, next) : after;
@@ -3486,7 +3486,7 @@ describe('Contract: branch-manager Safety Protocol #7 uses stop-and-report for s
   // Helper: extract the Safety Protocols section
   function getSafetySection(content) {
     const start = content.indexOf('Safety Protocols');
-    if (start === -1) return '';
+    if (start === -1) {return '';}
     const after = content.slice(start);
     const next = after.search(/\n## /);
     return next !== -1 ? after.slice(0, next) : after;
@@ -3508,9 +3508,9 @@ describe('Contract: branch-manager Safety Protocol #7 uses stop-and-report for s
     // (it may mention it as the old behavior in a prohibition, but must not be the directive)
     const lines = safetySection.split('\n');
     const unstageDirectiveLines = lines.filter((line) => {
-      if (!/git rm.*--cached|git rm -r.*--cached/.test(line)) return false;
+      if (!/git rm.*--cached|git rm -r.*--cached/.test(line)) {return false;}
       // Skip lines that are prohibitions or "old behavior" notes
-      if (/never|not|prohibit|do not|instead|old|was|removed|stop/i.test(line)) return false;
+      if (/never|not|prohibit|do not|instead|old|was|removed|stop/i.test(line)) {return false;}
       // A directive line starts with directive verbs or is in a code block context
       return /unstage|remove.*staging|rm.*--cached/.test(line);
     });
@@ -3531,9 +3531,9 @@ describe('Contract: branch-manager Safety Protocol #7 uses stop-and-report for s
     // The safety section must not instruct adding to .gitignore as part of artifact remediation
     const lines = safetySection.split('\n');
     const gitignoreDirectiveLines = lines.filter((line) => {
-      if (!/.gitignore/.test(line)) return false;
+      if (!/.gitignore/.test(line)) {return false;}
       // Skip prohibition lines
-      if (/never|not|prohibit|do not|instead|stop/i.test(line)) return false;
+      if (/never|not|prohibit|do not|instead|stop/i.test(line)) {return false;}
       // A directive to add to .gitignore as resolution
       return /add.*\.gitignore|\.gitignore.*add|update.*\.gitignore/.test(line);
     });
@@ -4026,7 +4026,7 @@ describe('Contract: Gate 2 partial failure — combine blocking_issues and re-ru
   function extractParallelDeploymentPattern(content) {
     const startMarker = '### Parallel Deployment Pattern';
     const startIndex = content.indexOf(startMarker);
-    if (startIndex === -1) return '';
+    if (startIndex === -1) {return '';}
 
     // Ends at the next ### or ## heading
     const rest = content.slice(startIndex + startMarker.length);
@@ -4202,12 +4202,12 @@ describe('Contract: quality-gate-protocol union semantics — 3-work-type dedupl
         continue;
       }
       // Skip separator row
-      if (/^[\s|:-]+$/.test(line)) continue;
-      if (!inTable) continue;
+      if (/^[\s|:-]+$/.test(line)) {continue;}
+      if (!inTable) {continue;}
 
       // Parse a data row: | work_type | gate1 | gate2 |
       const cells = line.split('|').slice(1, -1).map((c) => c.trim());
-      if (cells.length < 3) continue;
+      if (cells.length < 3) {continue;}
 
       const workType = cells[0].replace(/`/g, '');
       const gate1Agents = (cells[1].match(/reaper:[a-z-]+/g) || []);
@@ -4237,9 +4237,9 @@ describe('Contract: quality-gate-protocol union semantics — 3-work-type dedupl
 
     for (const wt of workTypes) {
       const profile = profiles.get(wt);
-      if (!profile) continue;
-      for (const a of profile.gate1) gate1Set.add(a);
-      for (const a of profile.gate2) gate2Set.add(a);
+      if (!profile) {continue;}
+      for (const a of profile.gate1) {gate1Set.add(a);}
+      for (const a of profile.gate2) {gate2Set.add(a);}
     }
 
     return {
@@ -4386,7 +4386,7 @@ describe('Contract: branch-manager syncs root working tree index after advancing
   // Helper: extract the large_multi_worktree Workflow section text
   function getLargeMultiSection(content) {
     const start = content.indexOf('large_multi_worktree Workflow');
-    if (start === -1) return '';
+    if (start === -1) {return '';}
     const afterStart = content.slice(start);
     const nextSection = afterStart.search(/\n## /);
     return nextSection !== -1 ? afterStart.slice(0, nextSection) : afterStart;

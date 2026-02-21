@@ -123,7 +123,7 @@ function loadEjs() {
   if (ejs === null) {
     try {
       ejs = require('ejs');
-    } catch (err) {
+    } catch (_err) {
       console.error(
         'Error: EJS module not found. Please run: npm install ejs --save-dev'
       );
@@ -357,7 +357,7 @@ function processFile(sourcePath, outputPath, sourceType, relativePath) {
  * @param {string} sourcePath - Path to the source file
  * @returns {string} Formatted error message
  */
-function formatError(err, sourcePath) {
+function formatError(err, _sourcePath) {
   if (err.message && err.message.includes('ejs:')) {
     // EJS error with line number
     return err.message;
@@ -556,7 +556,7 @@ function watchFiles() {
 function loadChokidar() {
   try {
     return require('chokidar');
-  } catch (err) {
+  } catch (_err) {
     console.error(
       'Error: chokidar module not found. For watch mode, please run: npm install chokidar --save-dev'
     );

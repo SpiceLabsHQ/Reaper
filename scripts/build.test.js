@@ -1695,7 +1695,7 @@ describe('main', () => {
     // Mock fs.existsSync to throw an unexpected error during build
     const originalExistsSync = fs.existsSync;
     let callCount = 0;
-    fs.existsSync = (p) => {
+    fs.existsSync = (_p) => {
       callCount++;
       // Let the first call through (config.srcDir check in build()),
       // then throw on second call
@@ -1732,9 +1732,9 @@ describe('main', () => {
     const errors = [];
 
     let callCount = 0;
-    fs.existsSync = (p) => {
+    fs.existsSync = (_p) => {
       callCount++;
-      if (callCount === 1) return true;
+      if (callCount === 1) {return true;}
       throw new Error('Catastrophic filesystem failure');
     };
     console.error = (...args) => errors.push(args.join(' '));
@@ -2150,7 +2150,7 @@ describe('takeoff command: per-unit cycle has explicit branch-manager commit ste
    */
   function extractPerUnitCycle(rendered) {
     const start = rendered.indexOf('### Per-Unit Cycle');
-    if (start === -1) return '';
+    if (start === -1) {return '';}
     // Find the next ### heading after the per-unit cycle section
     const afterStart = rendered.indexOf('###', start + 1);
     return afterStart !== -1 ? rendered.slice(start, afterStart) : rendered.slice(start);

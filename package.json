@@ -6,6 +6,7 @@
   "scripts": {
     "build": "node scripts/build.js",
     "build:watch": "node scripts/build.js --watch",
+    "lint": "eslint scripts/",
     "test": "node --test scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js scripts/visual-vocabulary.test.js scripts/contracts.test.js",
     "test:coverage": "node --test --experimental-test-coverage --test-coverage-lines=70 --test-coverage-branches=70 --test-coverage-functions=70 scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js scripts/visual-vocabulary.test.js scripts/contracts.test.js",
     "prepare": "husky",
@@ -27,8 +28,10 @@
   "devDependencies": {
     "@commitlint/cli": "^20.3.0",
     "@commitlint/config-conventional": "^20.3.0",
+    "@eslint/js": "^10.0.1",
     "commit-and-tag-version": "^12.6.1",
     "ejs": "^3.1.9",
+    "eslint": "^10.0.1",
     "husky": "^9.1.7"
   }
 }
