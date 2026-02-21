@@ -48,7 +48,7 @@ A single command kicks off the full arc -- planning, implementation, testing, re
 
 > **New to Reaper?** Run `/reaper:start` — it'll ask what you're trying to do and point you to the right command.
 
-## Three Commands
+## Core Commands
 
 Each builds on the last.
 
@@ -111,6 +111,24 @@ Token-heavy by design -- use when getting the decision wrong costs more than get
 
 You get structured recommendations and explicit trade-offs, not a vague summary. Feed the output into a `/reaper:flight-plan` when you are ready to act on it.
 
+### When it is ready: `/reaper:ship`
+
+Commit, push, and open a pull request for a completed worktree.
+
+After `/reaper:takeoff` finishes and you have reviewed the output, hand the worktree path to `/reaper:ship`. It runs the pre-commit hook, creates a conventional commit with the task reference, pushes the branch, and opens a PR -- all in one step.
+
+```
+> /reaper:ship ./trees/PROJ-42-webhook-retry
+
+ Committing: feat(webhooks): add retry with exponential backoff
+ Pushing feature/PROJ-42-webhook-retry
+ PR opened: github.com/org/repo/pull/88
+
+  Done. Worktree cleaned up.
+```
+
+Use `/reaper:status-worktrees` at any point to see which worktrees are active and what state each one is in.
+
 ---
 
 ## Under the Hood
@@ -129,7 +147,7 @@ The workflow planner scores every task and selects the right isolation level.
 
 ### Quality Gates
 
-Claude gets picky so you don't have to be. Every task passes through a test runner, code reviewer, and security auditor before you see it. If a gate fails, work returns to the code agent automatically -- up to three iterations before escalating to you.
+Claude gets picky so you don't have to be. Every task passes through a test runner, a work-type-matched SME code reviewer, and a security auditor before you see it. If a gate fails, work returns to the code agent automatically -- up to three iterations before escalating to you.
 
 You never see half-finished work.
 
@@ -153,7 +171,7 @@ Full agent catalog: [docs/agents.md](docs/agents.md)
 
 ### Skills
 
-8 reusable behavior modules that agents load at runtime. Skills handle code review (with work-type-matched specialty files), workflow planning, and issue tracker integration across Beads, Jira, GitHub Issues, and local plan files. You never invoke skills directly -- agents and commands load them automatically.
+8 reusable behavior modules that agents load at runtime. Skills handle code review (routing to work-type-matched SME reviewers), workflow planning, and issue tracker integration across Beads, Jira, GitHub Issues, and local plan files. You never invoke skills directly -- agents and commands load them automatically.
 
 Full skill catalog: [docs/skills.md](docs/skills.md)
 
@@ -213,6 +231,8 @@ Want to contribute back? Open an issue, show us what you have got. If it fits ho
 - SOLID principles
 - Conventional commits with task reference
 - 70%+ test coverage
+
+Reaper develops itself using its own workflow: every feature and fix starts with `/reaper:flight-plan` to break the work into tracked tasks, gets executed via `/reaper:takeoff`, and lands only after passing the full quality gate sequence -- test runner, SME code reviewer, and security auditor. If it is good enough to ship your code, it is good enough to ship its own.
 
 Take it somewhere we would never expect. We are flattered either way.
 
