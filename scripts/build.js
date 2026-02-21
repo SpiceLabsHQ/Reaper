@@ -55,7 +55,12 @@ const AGENT_TYPES = {
     'compliance-architect',
   ],
   operations: ['branch-manager', 'deployment-engineer', 'incident-responder'],
-  documentation: ['technical-writer', 'claude-agent-architect', 'ai-prompt-engineer', 'principal-engineer'],
+  documentation: [
+    'technical-writer',
+    'claude-agent-architect',
+    'ai-prompt-engineer',
+    'principal-engineer',
+  ],
   performance: ['performance-engineer'],
 };
 
@@ -123,7 +128,7 @@ function loadEjs() {
   if (ejs === null) {
     try {
       ejs = require('ejs');
-    } catch (err) {
+    } catch (_err) {
       console.error(
         'Error: EJS module not found. Please run: npm install ejs --save-dev'
       );
@@ -235,8 +240,7 @@ function buildTemplateVars(sourceType, filename, relativePath) {
     vars.IS_REVIEW_AGENT = AGENT_TYPES.review.includes(filename);
     vars.IS_PLANNING_AGENT = AGENT_TYPES.planning.includes(filename);
     vars.IS_OPERATIONS_AGENT = AGENT_TYPES.operations.includes(filename);
-    vars.IS_DOCUMENTATION_AGENT =
-      AGENT_TYPES.documentation.includes(filename);
+    vars.IS_DOCUMENTATION_AGENT = AGENT_TYPES.documentation.includes(filename);
     vars.IS_PERFORMANCE_AGENT = AGENT_TYPES.performance.includes(filename);
   }
 
@@ -357,7 +361,7 @@ function processFile(sourcePath, outputPath, sourceType, relativePath) {
  * @param {string} sourcePath - Path to the source file
  * @returns {string} Formatted error message
  */
-function formatError(err, sourcePath) {
+function formatError(err, _sourcePath) {
   if (err.message && err.message.includes('ejs:')) {
     // EJS error with line number
     return err.message;
@@ -556,7 +560,7 @@ function watchFiles() {
 function loadChokidar() {
   try {
     return require('chokidar');
-  } catch (err) {
+  } catch (_err) {
     console.error(
       'Error: chokidar module not found. For watch mode, please run: npm install chokidar --save-dev'
     );

@@ -9,7 +9,11 @@ const assert = require('node:assert/strict');
  */
 const commitlintConfig = require('../commitlint.config');
 const beadsRefPlugin = commitlintConfig.plugins.find(
-  (plugin) => plugin && typeof plugin === 'object' && plugin.rules && plugin.rules['beads-ref']
+  (plugin) =>
+    plugin &&
+    typeof plugin === 'object' &&
+    plugin.rules &&
+    plugin.rules['beads-ref']
 );
 const beadsRefRule = beadsRefPlugin.rules['beads-ref'];
 

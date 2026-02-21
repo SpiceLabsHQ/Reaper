@@ -40,7 +40,8 @@ const PANEL_KEYWORD_AGENTS = [
   'workflow-planner.ejs',
 ];
 
-const EXPECTED_COMMENT = '<!-- Used by /reaper:squadron to auto-select experts -->';
+const EXPECTED_COMMENT =
+  '<!-- Used by /reaper:squadron to auto-select experts -->';
 const EXPECTED_HEADER = '## Panel Selection Keywords';
 
 // ---------------------------------------------------------------------------
@@ -69,7 +70,9 @@ describe('Contract: Panel Selection Keywords headers in agent templates', () => 
     it(`${filename} has the HTML comment above the header`, () => {
       const content = fs.readFileSync(filePath, 'utf8');
       const lines = content.split('\n');
-      const headerIndex = lines.findIndex((line) => line.trim() === EXPECTED_HEADER);
+      const headerIndex = lines.findIndex(
+        (line) => line.trim() === EXPECTED_HEADER
+      );
       assert.ok(
         headerIndex > 0,
         `${filename} is missing the header "${EXPECTED_HEADER}"`
@@ -103,11 +106,16 @@ describe('Contract: Panel Selection Keywords headers in agent templates', () => 
 
 describe('Contract: zero "huddle" references across all agent templates', () => {
   it('no agent template in src/agents/ contains "huddle" (case-insensitive)', () => {
-    const allAgentFiles = fs.readdirSync(AGENTS_SRC_DIR).filter((f) => f.endsWith('.ejs'));
+    const allAgentFiles = fs
+      .readdirSync(AGENTS_SRC_DIR)
+      .filter((f) => f.endsWith('.ejs'));
     const violations = [];
 
     for (const filename of allAgentFiles) {
-      const content = fs.readFileSync(path.join(AGENTS_SRC_DIR, filename), 'utf8');
+      const content = fs.readFileSync(
+        path.join(AGENTS_SRC_DIR, filename),
+        'utf8'
+      );
       if (/huddle/i.test(content)) {
         violations.push(filename);
       }

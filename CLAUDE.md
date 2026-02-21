@@ -231,7 +231,7 @@ bd sync                    # Sync with git remote
 The following commands are used during automated quality gates:
 
 **Test command**: `npm run test:coverage`
-**Lint command**: `skip`
+**Lint command**: `npm run lint`
 
 ## Reference
 
