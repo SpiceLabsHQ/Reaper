@@ -2342,12 +2342,13 @@ describe('Contract: branch-manager medium_single_branch uses shared worktree wit
 });
 
 // ---------------------------------------------------------------------------
-// Contract: workflow-planner Strategy 2 mentions shared worktree
+// Contract: workflow-planner-planning skill Strategy 2 mentions shared worktree
+// (Content moved from agent to planning skill as part of refactor)
 // ---------------------------------------------------------------------------
 
-describe('Contract: workflow-planner medium_single_branch mentions shared worktree', () => {
-  const filePath = agentFilePath('workflow-planner');
-  const relative = 'agents/workflow-planner.md';
+describe('Contract: workflow-planner-planning skill medium_single_branch mentions shared worktree', () => {
+  const filePath = skillFilePath('workflow-planner-planning');
+  const relative = 'skills/workflow-planner-planning/SKILL.md';
 
   it(`${relative} Strategy 2 description mentions shared worktree`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
@@ -2883,12 +2884,13 @@ describe('Contract: flight-plan does not embed hardcoded completion templates', 
 });
 
 // ---------------------------------------------------------------------------
-// Contract: workflow-planner dirty-root safety check
+// Contract: workflow-planner-planning skill dirty-root safety check
+// (Content moved from agent to planning skill as part of refactor)
 // ---------------------------------------------------------------------------
 
-describe('Contract: workflow-planner dirty-root safety check', () => {
-  const filePath = agentFilePath('workflow-planner');
-  const relative = 'agents/workflow-planner.md';
+describe('Contract: workflow-planner-planning skill dirty-root safety check', () => {
+  const filePath = skillFilePath('workflow-planner-planning');
+  const relative = 'skills/workflow-planner-planning/SKILL.md';
 
   it(`${relative} contains "Dirty-Root Safety Check" section heading`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
@@ -3917,6 +3919,62 @@ describe('workflow-planner-verification skill', () => {
     assert.ok(
       /[Pp]lanning/i.test(content),
       `${relative} must contain Verification vs Planning comparison table`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: workflow-planner agent (refactored)
+// Validates that the agent is a thin routing layer after process extraction
+// ---------------------------------------------------------------------------
+
+describe('workflow-planner agent (refactored)', () => {
+  const filePath = agentFilePath('workflow-planner');
+  const relative = 'agents/workflow-planner.md';
+
+  it(`${relative} line count is less than 150`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const lineCount = content.split('\n').length;
+    assert.ok(
+      lineCount < 150,
+      `${relative} must be under 150 lines (currently ${lineCount}) — process content should live in skills`
+    );
+  });
+
+  it(`${relative} contains 'workflow-planner-planning' skill routing reference`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('workflow-planner-planning'),
+      `${relative} must reference the 'workflow-planner-planning' skill for routing`
+    );
+  });
+
+  it(`${relative} contains 'workflow-planner-verification' skill routing reference`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('workflow-planner-verification'),
+      `${relative} must reference the 'workflow-planner-verification' skill for routing`
+    );
+  });
+
+  it(`${relative} does NOT contain 'Scoring Rubric'`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      !content.includes('Scoring Rubric'),
+      `${relative} must NOT contain 'Scoring Rubric' — this process content belongs in the planning skill`
+    );
+  });
+
+  it(`${relative} does NOT contain 'Anti-Patterns'`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      !content.includes('Anti-Patterns'),
+      `${relative} must NOT contain 'Anti-Patterns' — this process content belongs in the planning skill`
     );
   });
 });
