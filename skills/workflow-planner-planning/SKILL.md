@@ -1,8 +1,6 @@
 ---
 name: workflow-planner-planning
 description: Planning process skill for workflow-planner. Handles grounding, input validation, strategy selection, and work package decomposition. Always executes within reaper:workflow-planner.
-context: fork
-agent: reaper:workflow-planner
 allowed-tools: Read, Glob, Grep, WebFetch, WebSearch, Bash(bd show:*), Bash(bd dep tree:*), Bash(bd dep:*), Bash(bd list:*), Bash(bd update:*), Bash(bd create:*), Bash(bd close:*), Bash(acli jira workitem view:*), Bash(acli jira workitem search:*), Bash(acli jira workitem update:*), Bash(gh issue:*), Bash(gh project:*), Bash(gh api:*)
 ---
 

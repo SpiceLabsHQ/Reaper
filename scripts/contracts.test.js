@@ -3735,28 +3735,6 @@ describe('workflow-planner-planning skill', () => {
     );
   });
 
-  it(`${relative} frontmatter context === 'fork'`, () => {
-    assert.ok(fs.existsSync(filePath), `${relative} not found`);
-    const content = fs.readFileSync(filePath, 'utf8');
-    const fm = extractFrontmatter(content);
-    assert.ok(fm !== null, `${relative} is missing frontmatter`);
-    assert.ok(
-      /^context\s*:\s*fork\s*$/m.test(fm),
-      `${relative} frontmatter "context" must be "fork"`
-    );
-  });
-
-  it(`${relative} frontmatter agent === 'reaper:workflow-planner'`, () => {
-    assert.ok(fs.existsSync(filePath), `${relative} not found`);
-    const content = fs.readFileSync(filePath, 'utf8');
-    const fm = extractFrontmatter(content);
-    assert.ok(fm !== null, `${relative} is missing frontmatter`);
-    assert.ok(
-      /^agent\s*:\s*reaper:workflow-planner\s*$/m.test(fm),
-      `${relative} frontmatter "agent" must be "reaper:workflow-planner"`
-    );
-  });
-
   it(`${relative} body contains Strategy Selection section`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
@@ -3834,28 +3812,6 @@ describe('workflow-planner-verification skill', () => {
     assert.ok(
       /^name\s*:\s*workflow-planner-verification\s*$/m.test(fm),
       `${relative} frontmatter "name" must be "workflow-planner-verification"`
-    );
-  });
-
-  it(`${relative} frontmatter context === 'fork'`, () => {
-    assert.ok(fs.existsSync(filePath), `${relative} not found`);
-    const content = fs.readFileSync(filePath, 'utf8');
-    const fm = extractFrontmatter(content);
-    assert.ok(fm !== null, `${relative} is missing frontmatter`);
-    assert.ok(
-      /^context\s*:\s*fork\s*$/m.test(fm),
-      `${relative} frontmatter "context" must be "fork"`
-    );
-  });
-
-  it(`${relative} frontmatter agent === 'reaper:workflow-planner'`, () => {
-    assert.ok(fs.existsSync(filePath), `${relative} not found`);
-    const content = fs.readFileSync(filePath, 'utf8');
-    const fm = extractFrontmatter(content);
-    assert.ok(fm !== null, `${relative} is missing frontmatter`);
-    assert.ok(
-      /^agent\s*:\s*reaper:workflow-planner\s*$/m.test(fm),
-      `${relative} frontmatter "agent" must be "reaper:workflow-planner"`
     );
   });
 

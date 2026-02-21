@@ -1,8 +1,6 @@
 ---
 name: workflow-planner-verification
 description: Verification process skill for workflow-planner. Reviews existing issues against orchestratability criteria and auto-fixes problems. Always executes within reaper:workflow-planner.
-context: fork
-agent: reaper:workflow-planner
 allowed-tools: Read, Glob, Grep, Bash(bd show:*), Bash(bd dep tree:*), Bash(bd dep:*), Bash(bd list:*), Bash(bd update:*), Bash(acli jira workitem view:*), Bash(acli jira workitem search:*), Bash(acli jira workitem update:*), Bash(gh issue:*), Bash(gh project:*), Bash(gh api:*)
 ---
 
