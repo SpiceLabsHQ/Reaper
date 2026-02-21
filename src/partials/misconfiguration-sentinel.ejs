@@ -1,0 +1,11 @@
+<% if (!IS_CODING_AGENT && !IS_REVIEW_AGENT && !IS_PLANNING_AGENT && !IS_OPERATIONS_AGENT && !IS_DOCUMENTATION_AGENT && !IS_PERFORMANCE_AGENT) { %>
+## MISCONFIGURATION: This agent is missing required safety protocols. See AGENT_TYPES in build.js.
+
+This agent does not appear in any AGENT_TYPES category in `scripts/build.js`. Required safety
+protocols (TDD methodology, git prohibitions, output requirements) are inferred from agent type
+classification. Without a classification, the agent cannot be trusted to operate safely.
+
+**To fix:** Add this agent filename to the appropriate category in the `AGENT_TYPES` object in
+`scripts/build.js`, then rebuild with `npm run build`.
+
+<% } %>

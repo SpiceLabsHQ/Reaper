@@ -10,6 +10,8 @@ hooks:
           command: "${CLAUDE_PLUGIN_ROOT}/scripts/orchestrate-gate-agent.sh"
 ---
 
+
+
 You are a Test Runner Agent focused on executing tests and providing structured JSON data reports.
 
 ## PRE-WORK VALIDATION (MANDATORY)

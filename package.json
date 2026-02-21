@@ -8,10 +8,11 @@
     "build:watch": "node scripts/build.js --watch",
     "format": "prettier --write scripts/",
     "lint": "eslint scripts/",
-    "test": "node --test scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js scripts/visual-vocabulary.test.js scripts/contracts.test.js",
-    "test:coverage": "node --test --experimental-test-coverage --test-coverage-lines=70 --test-coverage-branches=70 --test-coverage-functions=70 scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js scripts/visual-vocabulary.test.js scripts/contracts.test.js",
+    "test": "node --test scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js scripts/visual-vocabulary.test.js scripts/contracts.test.js scripts/release-verify.test.js",
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-lines=70 --test-coverage-branches=70 --test-coverage-functions=70 scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js scripts/visual-vocabulary.test.js scripts/contracts.test.js scripts/release-verify.test.js",
     "prepare": "husky",
-    "release": "commit-and-tag-version",
+    "release:verify": "node scripts/release-verify.js",
+    "release": "npm run release:verify && commit-and-tag-version",
     "release:dry-run": "commit-and-tag-version --dry-run"
   },
   "repository": {

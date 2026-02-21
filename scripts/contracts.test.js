@@ -17,7 +17,7 @@ const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
-const { AGENT_TYPES, TDD_AGENTS } = require('./build');
+const { AGENT_TYPES, TDD_AGENTS, compileTemplate, config } = require('./build');
 
 // ---------------------------------------------------------------------------
 // Paths — resolved relative to this file's parent (scripts/) then up to root
@@ -4746,6 +4746,173 @@ describe('Contract: branch-manager syncs root working tree index after advancing
         `after the develop ref is advanced`
     );
   });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: misconfiguration sentinel — renders only for unclassified agents
+// ---------------------------------------------------------------------------
+
+/**
+ * The unique marker string that the misconfiguration sentinel must emit.
+ * Contracts test for exact presence/absence of this token.
+ */
+const SENTINEL_MARKER = 'MISCONFIGURATION';
+
+/**
+ * Renders the misconfiguration-sentinel partial with the given classification
+ * flags by wrapping it in a synthetic EJS template.
+ * @param {Object} flags - Classification flags (IS_CODING_AGENT, etc.)
+ * @returns {string} Rendered output
+ */
+function renderSentinel(flags) {
+  const SRC_DIR = path.join(__dirname, '..', 'src');
+  const PARTIAL_PATH = path.join(
+    SRC_DIR,
+    'partials',
+    'misconfiguration-sentinel.ejs'
+  );
+  config.srcDir = SRC_DIR;
+  const wrapper = `<%- include('partials/misconfiguration-sentinel') %>`;
+  return compileTemplate(wrapper, flags, PARTIAL_PATH);
+}
+
+describe('Contract: misconfiguration sentinel — synthetic rendering', () => {
+  it('renders MISCONFIGURATION marker when all classification flags are false', () => {
+    const result = renderSentinel({
+      IS_CODING_AGENT: false,
+      IS_REVIEW_AGENT: false,
+      IS_PLANNING_AGENT: false,
+      IS_OPERATIONS_AGENT: false,
+      IS_DOCUMENTATION_AGENT: false,
+      IS_PERFORMANCE_AGENT: false,
+    });
+    assert.ok(
+      result.includes(SENTINEL_MARKER),
+      'Sentinel must render MISCONFIGURATION marker when all classification flags are false'
+    );
+  });
+
+  it('does NOT render MISCONFIGURATION marker when IS_CODING_AGENT is true', () => {
+    const result = renderSentinel({
+      IS_CODING_AGENT: true,
+      IS_REVIEW_AGENT: false,
+      IS_PLANNING_AGENT: false,
+      IS_OPERATIONS_AGENT: false,
+      IS_DOCUMENTATION_AGENT: false,
+      IS_PERFORMANCE_AGENT: false,
+    });
+    assert.ok(
+      !result.includes(SENTINEL_MARKER),
+      'Sentinel must NOT render MISCONFIGURATION marker when IS_CODING_AGENT is true'
+    );
+  });
+
+  it('does NOT render MISCONFIGURATION marker when IS_REVIEW_AGENT is true', () => {
+    const result = renderSentinel({
+      IS_CODING_AGENT: false,
+      IS_REVIEW_AGENT: true,
+      IS_PLANNING_AGENT: false,
+      IS_OPERATIONS_AGENT: false,
+      IS_DOCUMENTATION_AGENT: false,
+      IS_PERFORMANCE_AGENT: false,
+    });
+    assert.ok(
+      !result.includes(SENTINEL_MARKER),
+      'Sentinel must NOT render MISCONFIGURATION marker when IS_REVIEW_AGENT is true'
+    );
+  });
+
+  it('does NOT render MISCONFIGURATION marker when IS_PLANNING_AGENT is true', () => {
+    const result = renderSentinel({
+      IS_CODING_AGENT: false,
+      IS_REVIEW_AGENT: false,
+      IS_PLANNING_AGENT: true,
+      IS_OPERATIONS_AGENT: false,
+      IS_DOCUMENTATION_AGENT: false,
+      IS_PERFORMANCE_AGENT: false,
+    });
+    assert.ok(
+      !result.includes(SENTINEL_MARKER),
+      'Sentinel must NOT render MISCONFIGURATION marker when IS_PLANNING_AGENT is true'
+    );
+  });
+
+  it('does NOT render MISCONFIGURATION marker when IS_OPERATIONS_AGENT is true', () => {
+    const result = renderSentinel({
+      IS_CODING_AGENT: false,
+      IS_REVIEW_AGENT: false,
+      IS_PLANNING_AGENT: false,
+      IS_OPERATIONS_AGENT: true,
+      IS_DOCUMENTATION_AGENT: false,
+      IS_PERFORMANCE_AGENT: false,
+    });
+    assert.ok(
+      !result.includes(SENTINEL_MARKER),
+      'Sentinel must NOT render MISCONFIGURATION marker when IS_OPERATIONS_AGENT is true'
+    );
+  });
+
+  it('does NOT render MISCONFIGURATION marker when IS_DOCUMENTATION_AGENT is true', () => {
+    const result = renderSentinel({
+      IS_CODING_AGENT: false,
+      IS_REVIEW_AGENT: false,
+      IS_PLANNING_AGENT: false,
+      IS_OPERATIONS_AGENT: false,
+      IS_DOCUMENTATION_AGENT: true,
+      IS_PERFORMANCE_AGENT: false,
+    });
+    assert.ok(
+      !result.includes(SENTINEL_MARKER),
+      'Sentinel must NOT render MISCONFIGURATION marker when IS_DOCUMENTATION_AGENT is true'
+    );
+  });
+
+  it('does NOT render MISCONFIGURATION marker when IS_PERFORMANCE_AGENT is true', () => {
+    const result = renderSentinel({
+      IS_CODING_AGENT: false,
+      IS_REVIEW_AGENT: false,
+      IS_PLANNING_AGENT: false,
+      IS_OPERATIONS_AGENT: false,
+      IS_DOCUMENTATION_AGENT: false,
+      IS_PERFORMANCE_AGENT: true,
+    });
+    assert.ok(
+      !result.includes(SENTINEL_MARKER),
+      'Sentinel must NOT render MISCONFIGURATION marker when IS_PERFORMANCE_AGENT is true'
+    );
+  });
+
+  it('sentinel content references AGENT_TYPES in build.js', () => {
+    const result = renderSentinel({
+      IS_CODING_AGENT: false,
+      IS_REVIEW_AGENT: false,
+      IS_PLANNING_AGENT: false,
+      IS_OPERATIONS_AGENT: false,
+      IS_DOCUMENTATION_AGENT: false,
+      IS_PERFORMANCE_AGENT: false,
+    });
+    assert.ok(
+      result.includes('AGENT_TYPES'),
+      'Sentinel warning must reference AGENT_TYPES in build.js so developers know how to fix it'
+    );
+  });
+});
+
+describe('Contract: misconfiguration sentinel — all generated agents are sentinel-free', () => {
+  assert.ok(agentFiles.length > 0, 'Expected at least one agent .md file');
+
+  for (const filePath of agentFiles) {
+    const relative = path.relative(ROOT, filePath);
+
+    it(`${relative} does not contain MISCONFIGURATION sentinel`, () => {
+      const content = fs.readFileSync(filePath, 'utf8');
+      assert.ok(
+        !content.includes(SENTINEL_MARKER),
+        `${relative} must NOT contain the MISCONFIGURATION sentinel — ` +
+          `add the agent filename to the appropriate AGENT_TYPES array in build.js`
+      );
+    });
+  }
 });
 
 // ---------------------------------------------------------------------------
