@@ -5,7 +5,6 @@ const path = require('path');
 
 const {
   parseArgs,
-  GATE_CAPABLE_AGENTS,
   buildTemplateVars,
   getAgentType,
   parseFrontmatter,
@@ -28,105 +27,6 @@ const FIXTURES_DIR = path.join(__dirname, 'fixtures');
 
 beforeEach(() => {
   resetBuildState();
-});
-
-// ===========================================================================
-// GATE_CAPABLE_AGENTS constant validation
-// ===========================================================================
-
-describe('GATE_CAPABLE_AGENTS', () => {
-  it('should be exported as an array', () => {
-    assert.ok(
-      Array.isArray(GATE_CAPABLE_AGENTS),
-      'GATE_CAPABLE_AGENTS should be an array'
-    );
-  });
-
-  it('should contain the expected gate-capable agents', () => {
-    const expected = [
-      'ai-prompt-engineer',
-      'security-auditor',
-      'deployment-engineer',
-      'principal-engineer',
-    ];
-    assert.deepStrictEqual(
-      GATE_CAPABLE_AGENTS.slice().sort(),
-      expected.slice().sort(),
-      'GATE_CAPABLE_AGENTS should contain exactly the four gate-capable agents'
-    );
-  });
-
-  it('should only contain agents that exist in AGENT_TYPES', () => {
-    const allAgents = Object.values(AGENT_TYPES).flat();
-    for (const agent of GATE_CAPABLE_AGENTS) {
-      assert.ok(
-        allAgents.includes(agent),
-        `Gate-capable agent "${agent}" should exist in AGENT_TYPES`
-      );
-    }
-  });
-});
-
-// ===========================================================================
-// buildTemplateVars — gateCapable flag
-// ===========================================================================
-
-describe('buildTemplateVars gateCapable', () => {
-  it('should set gateCapable to true for gate-capable agents', () => {
-    const gateAgents = [
-      'ai-prompt-engineer',
-      'security-auditor',
-      'deployment-engineer',
-      'principal-engineer',
-    ];
-
-    for (const agent of gateAgents) {
-      const vars = buildTemplateVars('agents', agent, `agents/${agent}.ejs`);
-      assert.strictEqual(
-        vars.gateCapable,
-        true,
-        `Agent "${agent}" should have gateCapable: true`
-      );
-    }
-  });
-
-  it('should set gateCapable to false for non-gate-capable agents', () => {
-    const nonGateAgents = [
-      'bug-fixer',
-      'feature-developer',
-      'refactoring-dev',
-      'workflow-planner',
-      'test-runner',
-      'branch-manager',
-    ];
-
-    for (const agent of nonGateAgents) {
-      const vars = buildTemplateVars('agents', agent, `agents/${agent}.ejs`);
-      assert.strictEqual(
-        vars.gateCapable,
-        false,
-        `Agent "${agent}" should have gateCapable: false`
-      );
-    }
-  });
-
-  it('should not set gateCapable for non-agent source types', () => {
-    const vars = buildTemplateVars('skills', 'some-skill', 'skills/some-skill.ejs');
-    assert.strictEqual(
-      vars.gateCapable,
-      undefined,
-      'Skills should not have gateCapable property'
-    );
-  });
-
-  it('should not set gateCapable for hooks source type', () => {
-    const vars = buildTemplateVars('hooks', 'some-hook', 'hooks/some-hook.ejs');
-    assert.strictEqual(
-      vars.gateCapable,
-      undefined,
-      'Hooks should not have gateCapable property'
-    );
-  });
 });
 
 // ===========================================================================
@@ -474,11 +374,6 @@ describe('buildTemplateVars unknown agent names', () => {
     assert.strictEqual(vars.HAS_GIT_PROHIBITIONS, false);
   });
 
-  it('should set gateCapable=false for unknown agent', () => {
-    const vars = buildTemplateVars('agents', 'nonexistent-agent', 'agents/nonexistent-agent.ejs');
-    assert.strictEqual(vars.gateCapable, false);
-  });
-
   it('should still include AGENT_NAME for unknown agent', () => {
     const vars = buildTemplateVars('agents', 'nonexistent-agent', 'agents/nonexistent-agent.ejs');
     assert.strictEqual(vars.AGENT_NAME, 'nonexistent-agent');
@@ -522,7 +417,6 @@ describe('buildTemplateVars non-agent source types', () => {
     'IS_OPERATIONS_AGENT',
     'IS_DOCUMENTATION_AGENT',
     'IS_PERFORMANCE_AGENT',
-    'gateCapable',
   ];
 
   it('should NOT include agent-specific keys for skills source type', () => {
