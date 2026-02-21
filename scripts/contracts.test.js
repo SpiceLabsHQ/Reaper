@@ -3809,3 +3809,114 @@ describe('workflow-planner-planning skill', () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Contract: workflow-planner-verification skill
+// ---------------------------------------------------------------------------
+
+describe('workflow-planner-verification skill', () => {
+  const SKILL_NAME = 'workflow-planner-verification';
+  const filePath = skillFilePath(SKILL_NAME);
+  const relative = `skills/${SKILL_NAME}/SKILL.md`;
+
+  it(`${relative} exists`, () => {
+    assert.ok(
+      fs.existsSync(filePath),
+      `${relative} not found at ${filePath} — run npm run build to generate it`
+    );
+  });
+
+  it(`${relative} has valid YAML frontmatter`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const fm = extractFrontmatter(content);
+    assert.ok(fm !== null, `${relative} is missing YAML frontmatter (--- delimiters)`);
+  });
+
+  it(`${relative} frontmatter name === 'workflow-planner-verification'`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const fm = extractFrontmatter(content);
+    assert.ok(fm !== null, `${relative} is missing frontmatter`);
+    assert.ok(
+      /^name\s*:\s*workflow-planner-verification\s*$/m.test(fm),
+      `${relative} frontmatter "name" must be "workflow-planner-verification"`
+    );
+  });
+
+  it(`${relative} frontmatter context === 'fork'`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const fm = extractFrontmatter(content);
+    assert.ok(fm !== null, `${relative} is missing frontmatter`);
+    assert.ok(
+      /^context\s*:\s*fork\s*$/m.test(fm),
+      `${relative} frontmatter "context" must be "fork"`
+    );
+  });
+
+  it(`${relative} frontmatter agent === 'reaper:workflow-planner'`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const fm = extractFrontmatter(content);
+    assert.ok(fm !== null, `${relative} is missing frontmatter`);
+    assert.ok(
+      /^agent\s*:\s*reaper:workflow-planner\s*$/m.test(fm),
+      `${relative} frontmatter "agent" must be "reaper:workflow-planner"`
+    );
+  });
+
+  it(`${relative} body contains verification criterion table`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /[Cc]riterion/i.test(content),
+      `${relative} must contain a criterion table for the 4 orchestratability criteria`
+    );
+  });
+
+  it(`${relative} body contains auto-fix protocol`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /[Aa]uto-[Ff]ix/i.test(content),
+      `${relative} must contain the auto-fix protocol`
+    );
+  });
+
+  it(`${relative} body contains verification workflow steps`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /[Vv]erification/i.test(content),
+      `${relative} must contain verification workflow steps`
+    );
+  });
+
+  it(`${relative} body contains JSON output schema`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /JSON/i.test(content),
+      `${relative} must contain a JSON output schema`
+    );
+  });
+
+  it(`${relative} body contains verification_mode field in JSON schema`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('verification_mode'),
+      `${relative} JSON schema must include "verification_mode" field`
+    );
+  });
+
+  it(`${relative} body contains Verification vs Planning comparison`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /[Pp]lanning/i.test(content),
+      `${relative} must contain Verification vs Planning comparison table`
+    );
+  });
+});
