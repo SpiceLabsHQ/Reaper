@@ -14,7 +14,7 @@ When reading a plan file, extract sections in this order of importance:
 
 ### Adapting to Plan Completeness
 
-- **No plan file found**: Run the full workflow (deploy reaper:workflow-planner for analysis)
-- **Plan with Research only**: Deploy reaper:workflow-planner with research as input context
+- **No plan file found**: Run the full workflow (invoke the reaper:workflow-planner-planning skill for analysis)
+- **Plan with Research only**: Invoke the reaper:workflow-planner-planning skill with research as input context
 - **Plan with Research + Work Units**: Skip planner, extract work units directly
 - **Plan with Research + Work Units + Strategy**: Skip planner entirely, use provided strategy

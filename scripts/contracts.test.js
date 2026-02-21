@@ -3978,3 +3978,39 @@ describe('workflow-planner agent (refactored)', () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Contract: takeoff command: workflow-planner-planning skill invocation
+// ---------------------------------------------------------------------------
+
+describe('takeoff command: workflow-planner-planning skill invocation', () => {
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
+
+  it(`${relative} contains 'workflow-planner-planning' skill name`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('workflow-planner-planning'),
+      `${relative} must reference the 'workflow-planner-planning' skill for planning invocation`
+    );
+  });
+
+  it(`${relative} does NOT contain 'Task --subagent_type reaper:workflow-planner'`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      !content.includes('Task --subagent_type reaper:workflow-planner'),
+      `${relative} must NOT contain 'Task --subagent_type reaper:workflow-planner' — use Skill invocation instead`
+    );
+  });
+
+  it(`${relative} does NOT contain 'deploy reaper:workflow-planner'`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      !content.includes('deploy reaper:workflow-planner'),
+      `${relative} must NOT contain 'deploy reaper:workflow-planner' — use skill invocation language instead`
+    );
+  });
+});
