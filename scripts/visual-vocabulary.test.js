@@ -577,13 +577,13 @@ describe('visual-vocabulary flight-plan context', () => {
     );
   });
 
-  it('should include LANDED gauge in filed card', () => {
+  it('should include FILED gauge in filed card', () => {
     const result = compileWithContext('flight-plan');
-    // The filed card should show LANDED state (plan is complete)
+    // The filed card should show FILED state (plan has been filed, ready for takeoff)
     const filedCardSection = result.split(/[Ff]iled [Cc]ard/)[1] || '';
     assert.ok(
-      filedCardSection.includes('LANDED') || result.includes('██████████'),
-      'filed card should include LANDED gauge'
+      filedCardSection.includes('FILED') || result.includes('██████████'),
+      'filed card should include FILED gauge'
     );
   });
 

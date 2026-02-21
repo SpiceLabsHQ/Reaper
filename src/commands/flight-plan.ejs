@@ -399,7 +399,13 @@ All todos complete. Output confirmation and STOP.
 Render the Filed Card (from visual vocabulary above) with:
 - **Plan**: the plan title from Phase 2
 - **Issues**: total count of issues created in Phase 5
-- **Next**: the full `/reaper:takeoff` command using all top-level issue IDs from Phase 5 (space-separated, never child IDs)
+
+Then output the following, substituting the actual top-level issue IDs from Phase 5 (space-separated, never child IDs):
+
+Before launching:
+
+1. **/clear** — clears this planning context so takeoff starts fresh
+2. **/reaper:takeoff [top-level IDs]** — begins autonomous execution
 
 Then await the user's next request.
 

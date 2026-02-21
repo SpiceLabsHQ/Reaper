@@ -115,22 +115,21 @@ Render before work begins, after the flight briefing summary in Phase 3. Shows t
 
 ### Filed Card
 
-Render after issue creation completes in Phase 7. Shows the result and the recommended next action.
+Render after issue creation completes in Phase 7. Shows the result summary only — next steps appear below the card as plain text.
 
 ```
-  FILED
+  FLIGHT PLAN
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   Plan:       [plan title]
   Issues:     [N issues created]
-  Next:       /reaper:takeoff [top-level IDs]
-  ██████████  LANDED
+  ██████████  FILED
 ```
 
 Filed card rules:
 - Show the plan title on the Plan row.
 - Show the total count of issues created on the Issues row.
-- Show the full takeoff command on the Next row, including all top-level issue IDs (space-separated).
-- Use the LANDED gauge — the planning phase is complete.
+- Use the FILED gauge — the plan has been filed, ready for takeoff.
+- Do not include a Next row in the card — the takeoff instructions appear below it.
 
 
 Do not use EnterPlanMode or ExitPlanMode tools. This command manages its own planning workflow and presents the plan in-conversation.
@@ -601,7 +600,13 @@ All todos complete. Output confirmation and STOP.
 Render the Filed Card (from visual vocabulary above) with:
 - **Plan**: the plan title from Phase 2
 - **Issues**: total count of issues created in Phase 5
-- **Next**: the full `/reaper:takeoff` command using all top-level issue IDs from Phase 5 (space-separated, never child IDs)
+
+Then output the following, substituting the actual top-level issue IDs from Phase 5 (space-separated, never child IDs):
+
+Before launching:
+
+1. **/clear** — clears this planning context so takeoff starts fresh
+2. **/reaper:takeoff [top-level IDs]** — begins autonomous execution
 
 Then await the user's next request.
 
