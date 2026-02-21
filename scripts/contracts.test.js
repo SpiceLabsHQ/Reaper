@@ -20,7 +20,6 @@ const path = require('path');
 const {
   AGENT_TYPES,
   TDD_AGENTS,
-  GATE_CAPABLE_AGENTS,
 } = require('./build');
 
 // ---------------------------------------------------------------------------
@@ -757,13 +756,6 @@ const SEMANTIC_CONTRACTS = {
       { pattern: /Required JSON/i, label: 'required JSON schema section' },
     ],
   },
-  gateCapable: {
-    label: 'gate-capable agents',
-    agents: () => GATE_CAPABLE_AGENTS,
-    sections: [
-      { pattern: /GATE_MODE/, label: 'GATE_MODE section' },
-    ],
-  },
   planning: {
     label: 'planning agents',
     agents: () => AGENT_TYPES.planning,
@@ -806,7 +798,6 @@ function registerSemanticSuite(key) {
 // Register all semantic contract suites
 registerSemanticSuite('coding');
 registerSemanticSuite('review');
-registerSemanticSuite('gateCapable');
 registerSemanticSuite('planning');
 
 // ---------------------------------------------------------------------------
