@@ -4041,3 +4041,141 @@ describe('flight-plan command: workflow-planner-verification skill invocation', 
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Contract: Gate 2 partial failure — orchestrator combines blocking_issues
+// and re-runs both Gate 2 agents after coding agent addresses issues
+//
+// Scenario: security-auditor passes, code-review SME fails (or vice versa).
+// The orchestrator must NOT treat the passing agent's verdict as final and
+// only retry the failing agent. Instead:
+//   1. Collect blocking_issues from EVERY Gate 2 agent (pass AND fail).
+//   2. Give the coding agent the COMBINED list before remediation.
+//   3. Re-deploy ALL Gate 2 agents in a single parallel message on retry.
+//
+// Source of truth: src/partials/quality-gate-protocol.ejs
+//   "If either fails, combine `blocking_issues` from both before redeploying
+//    the coding agent."
+// ---------------------------------------------------------------------------
+
+describe('Contract: Gate 2 partial failure — combine blocking_issues and re-run both agents', () => {
+  /**
+   * The Parallel Deployment Pattern section in commands/takeoff.md contains
+   * the orchestrator-role rendering of quality-gate-protocol.ejs.
+   * We extract it to focus assertions on the Gate 2 retry behaviour.
+   *
+   * @param {string} content - Full takeoff.md content
+   * @returns {string} The Parallel Deployment Pattern section text
+   */
+  function extractParallelDeploymentPattern(content) {
+    const startMarker = '### Parallel Deployment Pattern';
+    const startIndex = content.indexOf(startMarker);
+    if (startIndex === -1) return '';
+
+    // Ends at the next ### or ## heading
+    const rest = content.slice(startIndex + startMarker.length);
+    const nextSectionMatch = rest.match(/\n###? /);
+    if (nextSectionMatch) {
+      return content.slice(
+        startIndex,
+        startIndex + startMarker.length + nextSectionMatch.index
+      );
+    }
+    return content.slice(startIndex);
+  }
+
+  const takeoffPath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const takeoffRelative = 'commands/takeoff.md';
+
+  const sourcePath = path.join(ROOT, 'src', 'partials', 'quality-gate-protocol.ejs');
+  const sourceRelative = 'src/partials/quality-gate-protocol.ejs';
+
+  // ------------------------------------------------------------------
+  // AC1: blocking_issues from both Gate 2 agents are combined before retry
+  // ------------------------------------------------------------------
+
+  it(`${sourceRelative} Parallel Deployment Pattern instructs combining blocking_issues from both agents`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    // The partial must contain language that says to combine blocking_issues
+    // from BOTH Gate 2 agents when either one fails — not just from the failing agent.
+    assert.ok(
+      /combine.*blocking_issues|blocking_issues.*combine/i.test(content),
+      `${sourceRelative} Parallel Deployment Pattern must instruct combining blocking_issues from both Gate 2 agents ` +
+        `when one fails (e.g. "combine blocking_issues from both before redeploying")`
+    );
+  });
+
+  it(`${takeoffRelative} Parallel Deployment Pattern instructs combining blocking_issues from both agents`, () => {
+    assert.ok(fs.existsSync(takeoffPath), `${takeoffRelative} not found`);
+    const content = fs.readFileSync(takeoffPath, 'utf8');
+    const section = extractParallelDeploymentPattern(content);
+    assert.ok(
+      section.length > 0,
+      `${takeoffRelative} must contain a "### Parallel Deployment Pattern" section`
+    );
+    // The rendered orchestrator output must preserve the combine instruction
+    assert.ok(
+      /combine.*blocking_issues|blocking_issues.*combine/i.test(section),
+      `${takeoffRelative} Parallel Deployment Pattern must instruct combining blocking_issues from both Gate 2 agents ` +
+        `when one fails — found section:\n${section.slice(0, 400)}`
+    );
+  });
+
+  // ------------------------------------------------------------------
+  // AC2: after retry, both Gate 2 agents re-run (not just the failed one)
+  // ------------------------------------------------------------------
+
+  it(`${sourceRelative} Parallel Deployment Pattern deploys Gate 2 agents in a single message (not individually)`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    // The partial must require deploying Gate 2 agents together in one message,
+    // which ensures both re-run on retry (not just the failed agent).
+    assert.ok(
+      /single message|simultaneously/i.test(content),
+      `${sourceRelative} must require deploying Gate 2 agents in a single message (simultaneously), ` +
+        `ensuring both agents re-run on retry — not just the failing one`
+    );
+  });
+
+  it(`${takeoffRelative} Parallel Deployment Pattern deploys Gate 2 agents in a single message on retry`, () => {
+    assert.ok(fs.existsSync(takeoffPath), `${takeoffRelative} not found`);
+    const content = fs.readFileSync(takeoffPath, 'utf8');
+    const section = extractParallelDeploymentPattern(content);
+    assert.ok(
+      section.length > 0,
+      `${takeoffRelative} must contain a "### Parallel Deployment Pattern" section`
+    );
+    // Rendered output must preserve the single-message deployment requirement
+    assert.ok(
+      /single message|simultaneously/i.test(section),
+      `${takeoffRelative} Parallel Deployment Pattern must specify deploying Gate 2 agents in a single message — ` +
+        `this guarantees both agents re-run together on retry, not sequentially or individually`
+    );
+  });
+
+  // ------------------------------------------------------------------
+  // AC3: the "re-run failed gate only" iteration rule does not apply
+  // within Gate 2 — partial failure still triggers a full Gate 2 re-run
+  // ------------------------------------------------------------------
+
+  it(`${sourceRelative} Iteration Rules "re-run failed gate" applies to Gate 1 vs Gate 2, not within Gate 2`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+
+    // The Iteration Rules section says "re-run the failed gate (not all gates)".
+    // This refers to not repeating Gate 1 when Gate 2 fails — it does NOT mean
+    // running only the failing Gate 2 agent. The Parallel Deployment Pattern
+    // overrides this for within-Gate-2 behaviour by requiring a combined re-run.
+    // Both sections must coexist in the same source file.
+    assert.ok(
+      content.includes('re-run the failed gate'),
+      `${sourceRelative} must contain the "re-run the failed gate" iteration rule (for Gate 1 vs Gate 2 sequencing)`
+    );
+    assert.ok(
+      /combine.*blocking_issues|blocking_issues.*combine/i.test(content),
+      `${sourceRelative} must also contain the combining instruction for within-Gate-2 partial failure — ` +
+        `both rules must coexist: "re-run failed gate" (inter-gate) and "combine blocking_issues" (intra-Gate-2)`
+    );
+  });
+});
