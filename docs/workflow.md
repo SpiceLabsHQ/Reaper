@@ -66,7 +66,7 @@ Takeoff is where the work gets done. It runs five phases in sequence, looping ov
 
 The orchestrator parses your input (a task ID, a description, or both), queries the task system for details, and searches `.claude/plans/` for a matching plan file from a prior `/reaper:flight-plan` session.
 
-If the task has pre-planned child issues with acceptance criteria, those become the work units directly. Otherwise, `reaper:workflow-planner` is deployed to assess complexity, select a strategy, and decompose the task.
+If the task has pre-planned child issues with acceptance criteria, those become the work units directly. Otherwise, `reaper:workflow-planner` is deployed and immediately routes to the `reaper:workflow-planner-planning` skill, which assesses complexity, selects a concurrency strategy, and decomposes the task into dependency-ordered work packages.
 
 ### Phase 2: Implement
 
@@ -110,7 +110,9 @@ No code lands on your main branch without your explicit approval.
 
 ## Complexity Strategies
 
-The `workflow-planner` scores every task across five dimensions and selects an isolation strategy. You do not choose a strategy -- Reaper selects the right one automatically based on what the work requires.
+When `reaper:workflow-planner` is invoked for a new task, it routes to the `reaper:workflow-planner-planning` skill. That skill scores the task across five dimensions and selects an isolation strategy. You do not choose a strategy -- Reaper selects the right one automatically based on what the work requires.
+
+> **Architecture note**: `workflow-planner` is a routing agent. Its two operational modes -- planning and verification -- live in dedicated skills (`reaper:workflow-planner-planning` and `reaper:workflow-planner-verification`). Each skill declares `agent: reaper:workflow-planner` in its frontmatter so the Claude Code runtime selects the correct executor automatically. See [ADR-0015](adr/0015-workflow-planner-process-extraction.md) for the rationale.
 
 ### Scoring Dimensions
 
@@ -247,7 +249,7 @@ Flight-plan presents a briefing: work unit count, parallelization percentage, cr
 
 After approval, issues are created in Beads, Jira, or as a markdown plan file. Each issue includes the objective, TDD approach, acceptance criteria, and estimated file scope. Dependencies are set so that `reaper:takeoff` can determine execution order automatically.
 
-A verification step runs after creation: `reaper:workflow-planner` in verification mode checks that every issue has sufficient detail, correct cross-references, appropriate dependency types, and clear scope boundaries. Issues that fail verification are auto-fixed (up to two iterations).
+A verification step runs after creation: `reaper:workflow-planner` routes to the `reaper:workflow-planner-verification` skill, which checks that every issue has sufficient detail, correct cross-references, appropriate dependency types, and clear scope boundaries. Issues that fail verification are auto-fixed (up to two iterations).
 
 ## Self-Learning
 
