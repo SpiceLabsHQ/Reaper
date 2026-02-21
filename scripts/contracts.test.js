@@ -3707,3 +3707,105 @@ describe('Contract: takeoff completion section references /reaper:ship', () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Contract: workflow-planner-planning skill
+// ---------------------------------------------------------------------------
+
+describe('workflow-planner-planning skill', () => {
+  const SKILL_NAME = 'workflow-planner-planning';
+  const filePath = skillFilePath(SKILL_NAME);
+  const relative = `skills/${SKILL_NAME}/SKILL.md`;
+
+  it(`${relative} exists`, () => {
+    assert.ok(
+      fs.existsSync(filePath),
+      `${relative} not found at ${filePath} — run npm run build to generate it`
+    );
+  });
+
+  it(`${relative} has valid YAML frontmatter`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const fm = extractFrontmatter(content);
+    assert.ok(fm !== null, `${relative} is missing YAML frontmatter (--- delimiters)`);
+  });
+
+  it(`${relative} frontmatter name === 'workflow-planner-planning'`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const fm = extractFrontmatter(content);
+    assert.ok(fm !== null, `${relative} is missing frontmatter`);
+    assert.ok(
+      /^name\s*:\s*workflow-planner-planning\s*$/m.test(fm),
+      `${relative} frontmatter "name" must be "workflow-planner-planning"`
+    );
+  });
+
+  it(`${relative} frontmatter context === 'fork'`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const fm = extractFrontmatter(content);
+    assert.ok(fm !== null, `${relative} is missing frontmatter`);
+    assert.ok(
+      /^context\s*:\s*fork\s*$/m.test(fm),
+      `${relative} frontmatter "context" must be "fork"`
+    );
+  });
+
+  it(`${relative} frontmatter agent === 'reaper:workflow-planner'`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const fm = extractFrontmatter(content);
+    assert.ok(fm !== null, `${relative} is missing frontmatter`);
+    assert.ok(
+      /^agent\s*:\s*reaper:workflow-planner\s*$/m.test(fm),
+      `${relative} frontmatter "agent" must be "reaper:workflow-planner"`
+    );
+  });
+
+  it(`${relative} body contains Strategy Selection section`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /Strategy Selection/i.test(content),
+      `${relative} must contain a "Strategy Selection" section`
+    );
+  });
+
+  it(`${relative} body contains JSON Planning Report section`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /JSON/i.test(content),
+      `${relative} must contain a JSON schema section`
+    );
+  });
+
+  it(`${relative} body contains Work Package section`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /Work Package/i.test(content),
+      `${relative} must contain a "Work Package" section`
+    );
+  });
+
+  it(`${relative} body contains Grounding instruction`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /[Gg]rounding/i.test(content),
+      `${relative} must contain grounding instruction`
+    );
+  });
+
+  it(`${relative} body contains Input Validation section`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /Input Validation/i.test(content),
+      `${relative} must contain an "Input Validation" section`
+    );
+  });
+});
