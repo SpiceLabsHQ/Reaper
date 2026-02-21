@@ -55,7 +55,7 @@ After detecting task system, create three core tasks via TaskCreate with blockin
 
 1. **TaskCreate**: "Show plan for user approval" → set `in_progress`
 2. **TaskCreate**: "Create issues in [Beads|Jira|Markdown]" (dynamic system name)
-3. **TaskCreate**: "Launch reaper:workflow-planner subagent to verify issues"
+3. **TaskCreate**: "Run workflow-planner-verification skill to verify issues"
 
 Then establish blockers via TaskUpdate:
 - Task #2 `addBlockedBy: [#1]` — cannot create issues until plan is approved
@@ -349,69 +349,21 @@ Files: [estimated files from plan]
 
 Update todo #3 to `in_progress`.
 
-### Deploy Forked reaper:workflow-planner for Verification
+### Invoke workflow-planner-verification Skill
 
-The verification subagent is forked (inherits full parent session context: conversation history, research results, cached file reads, refinement context). This allows a minimal prompt.
+The skill inherits the agent's fork context (full parent session: conversation history, research results, cached file reads, refinement context) and handles agent selection automatically via its frontmatter.
 
-```bash
-# Fork pattern: subagent inherits full parent session context
-Task --subagent_type reaper:workflow-planner \
-  --model opus \
-  --prompt "MODE: VERIFICATION (not planning)
-
-PARENT_ISSUE: $PARENT_ISSUE_ID (omit if plan has only one work item)
-TASK_SYSTEM: $TASK_SYSTEM
-CREATED_ISSUES: [list of issue IDs created in Phase 5]
-
-You have full access to this session's context:
-- The original planning request and user clarifications
-- Research findings from Phase 1.5 Explore agents
-- Any refinements made during Phase 4 iterations
-
-Verify the created issues meet orchestratability criteria. Do NOT create new issues.
-
-<!-- user-comms: say "checking dependencies" not "QUERY_DEPENDENCY_TREE" -->
-<!-- user-comms: say "retrieving task details" not "FETCH_ISSUE" -->
-VERIFICATION QUERIES (use abstract operations from the detected task system):
-- QUERY_DEPENDENCY_TREE from PARENT_ISSUE_ID (full hierarchy; skip if no parent issue)
-- FETCH_ISSUE for each child issue (details and acceptance criteria)
-
-VERIFICATION CRITERIA:
-
-1. **Issue Detail Sufficiency**
-   - Clear objective (what needs to be done)
-   - Affected files/components (reference research findings if needed)
-   - Acceptance criteria present
-   - Size within limits (≤5 files, ≤500 LOC)
-
-2. **Cross-Issue Awareness**
-   - Related issues reference each other
-   - File overlap documented (use research findings)
-   - No duplicate work between issues
-
-3. **Relationship Appropriateness**
-   - parent-child for hierarchy
-   - blocks ONLY for true execution order
-   - No circular dependencies
-
-4. **Orchestratability**
-   - reaper:takeoff can determine execution order
-   - Parallel opportunities documented
-   - Scope boundaries clear
-
-AUTO-FIX PROTOCOL:
-For each failing check, use UPDATE_ISSUE to fix directly. Add missing acceptance criteria, cross-references, file scope. Remove inappropriate blockers.
-
-Max 2 fix iterations.
-
-OUTPUT: JSON with verification_mode, issues_verified, verification_results, validation_status"
 ```
-
-**Note:** The prompt is intentionally concise. The forked subagent can access the full planning conversation without explicit repetition.
+Skill: reaper:workflow-planner-verification
+Arguments:
+  PARENT_ISSUE_ID: $PARENT_ISSUE_ID (omit if plan has only one work item)
+  TASK_SYSTEM: $TASK_SYSTEM
+  CREATED_ISSUES: [list of issue IDs created in Phase 5]
+```
 
 ### Handling Verification Results
 
-Parse reaper:workflow-planner JSON response:
+Parse workflow-planner-verification JSON response:
 - **all_checks_passed: true** → Proceed to Phase 7 confirmation
 - **auto_fixed: true** → Fixes applied, verification passed
 - **requires_user_input: true** → Present blocking_issues to user after 2 failed iterations

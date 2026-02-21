@@ -4014,3 +4014,30 @@ describe('takeoff command: workflow-planner-planning skill invocation', () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Contract: flight-plan command: workflow-planner-verification skill invocation
+// ---------------------------------------------------------------------------
+
+describe('flight-plan command: workflow-planner-verification skill invocation', () => {
+  const filePath = path.join(COMMANDS_DIR, 'flight-plan.md');
+  const relative = 'commands/flight-plan.md';
+
+  it(`${relative} contains 'workflow-planner-verification' skill name`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('workflow-planner-verification'),
+      `${relative} must reference the 'workflow-planner-verification' skill for Phase 6 verification`
+    );
+  });
+
+  it(`${relative} does NOT contain 'Task --subagent_type reaper:workflow-planner'`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      !content.includes('Task --subagent_type reaper:workflow-planner'),
+      `${relative} must NOT contain 'Task --subagent_type reaper:workflow-planner' — use Skill invocation instead`
+    );
+  });
+});
