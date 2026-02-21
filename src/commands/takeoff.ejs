@@ -111,19 +111,19 @@ Use the `worktree-manager` skill for all worktree operations (creation, status c
 
 When the plan file already contains Work Units and Strategy, skip the planner and use those directly.
 
-Otherwise, invoke the `reaper:workflow-planner-planning` skill (via the Skill tool) passing the task ID, the full implementation context, and any plan file research as arguments. The skill's fork-and-agent frontmatter handles agent selection automatically.
+Otherwise, dispatch `reaper:workflow-planner` as a Task subagent with `MODE: PLANNING`, passing the task ID, the full implementation context, and any plan file research as arguments. Capture the returned `agent_id` as `WORKFLOW_PLANNER_SESSION_ID`.
 
-If the plan file has Research but no Work Units, invoke the `reaper:workflow-planner-planning` skill with the research as additional context so it does not repeat codebase investigation.
+If the plan file has Research but no Work Units, dispatch `reaper:workflow-planner` with `MODE: PLANNING` and include the research as additional context so it does not repeat codebase investigation.
 
 ## Work Package Validation
 
-After obtaining work units (from pre-planned extraction, plan file, or workflow-planner-planning skill), validate each package:
+After obtaining work units (from pre-planned extraction, plan file, or workflow-planner), validate each package:
 
 - Maximum 5 files per work unit
 - Maximum 500 lines of code per work unit
 - Maximum 2 hours estimated per work unit
 
-If any package exceeds these limits, re-invoke the `reaper:workflow-planner-planning` skill with instructions to split the oversized packages into smaller, context-safe units.
+If any package exceeds these limits, use `Task --resume WORKFLOW_PLANNER_SESSION_ID` with instructions to split the oversized packages into smaller, context-safe units.
 
 <%- include('partials/todowrite-plan-protocol') %>
 
@@ -408,7 +408,7 @@ For **medium_single_branch** and **very_small_direct** strategies: invoke the wo
 
 1. Parse inputs and query task system
 2. Discover plan file and extract context
-3. Detect pre-planned structure or invoke `reaper:workflow-planner-planning` skill
+3. Detect pre-planned structure or dispatch `reaper:workflow-planner` as Task subagent with `MODE: PLANNING`
 4. Validate work package sizes
 5. Write plan to TodoWrite
 

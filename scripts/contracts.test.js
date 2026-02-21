@@ -3927,64 +3927,73 @@ describe('workflow-planner agent (refactored)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Contract: takeoff command: workflow-planner-planning skill invocation
+// Contract: takeoff command: workflow-planner Task subagent dispatch
 // ---------------------------------------------------------------------------
 
-describe('takeoff command: workflow-planner-planning skill invocation', () => {
+describe('takeoff command: workflow-planner Task subagent dispatch', () => {
   const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
   const relative = 'commands/takeoff.md';
 
-  it(`${relative} contains 'workflow-planner-planning' skill name`, () => {
+  it(`${relative} dispatches reaper:workflow-planner as Task subagent with MODE: PLANNING`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     assert.ok(
-      content.includes('workflow-planner-planning'),
-      `${relative} must reference the 'workflow-planner-planning' skill for planning invocation`
+      content.includes('reaper:workflow-planner') && content.includes('MODE: PLANNING'),
+      `${relative} must dispatch 'reaper:workflow-planner' as a Task subagent with 'MODE: PLANNING'`
     );
   });
 
-  it(`${relative} does NOT contain 'Task --subagent_type reaper:workflow-planner'`, () => {
+  it(`${relative} captures WORKFLOW_PLANNER_SESSION_ID from Task result`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     assert.ok(
-      !content.includes('Task --subagent_type reaper:workflow-planner'),
-      `${relative} must NOT contain 'Task --subagent_type reaper:workflow-planner' — use Skill invocation instead`
+      content.includes('WORKFLOW_PLANNER_SESSION_ID'),
+      `${relative} must capture 'WORKFLOW_PLANNER_SESSION_ID' from the Task result agent_id`
     );
   });
 
-  it(`${relative} does NOT contain 'deploy reaper:workflow-planner'`, () => {
+  it(`${relative} uses Task --resume WORKFLOW_PLANNER_SESSION_ID for oversized package re-invocation`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     assert.ok(
-      !content.includes('deploy reaper:workflow-planner'),
-      `${relative} must NOT contain 'deploy reaper:workflow-planner' — use skill invocation language instead`
+      content.includes('Task --resume WORKFLOW_PLANNER_SESSION_ID'),
+      `${relative} must use 'Task --resume WORKFLOW_PLANNER_SESSION_ID' for re-invocation on oversized packages`
+    );
+  });
+
+  it(`${relative} does NOT use Skill-based invocation language for workflow-planner`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      !content.includes('via the Skill tool') && !content.includes('fork-and-agent frontmatter handles agent selection automatically'),
+      `${relative} must NOT contain Skill-based invocation language for workflow-planner`
     );
   });
 });
 
 // ---------------------------------------------------------------------------
-// Contract: flight-plan command: workflow-planner-verification skill invocation
+// Contract: flight-plan command: workflow-planner Task subagent dispatch (Phase 6)
 // ---------------------------------------------------------------------------
 
-describe('flight-plan command: workflow-planner-verification skill invocation', () => {
+describe('flight-plan command: workflow-planner Task subagent dispatch (Phase 6)', () => {
   const filePath = path.join(COMMANDS_DIR, 'flight-plan.md');
   const relative = 'commands/flight-plan.md';
 
-  it(`${relative} contains 'workflow-planner-verification' skill name`, () => {
+  it(`${relative} dispatches reaper:workflow-planner as Task subagent with MODE: VERIFICATION`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('reaper:workflow-planner') && content.includes('MODE: VERIFICATION'),
+      `${relative} must dispatch reaper:workflow-planner as a Task subagent with MODE: VERIFICATION for Phase 6`
+    );
+  });
+
+  it(`${relative} references 'workflow-planner-verification' skill name`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     assert.ok(
       content.includes('workflow-planner-verification'),
-      `${relative} must reference the 'workflow-planner-verification' skill for Phase 6 verification`
-    );
-  });
-
-  it(`${relative} does NOT contain 'Task --subagent_type reaper:workflow-planner'`, () => {
-    assert.ok(fs.existsSync(filePath), `${relative} not found`);
-    const content = fs.readFileSync(filePath, 'utf8');
-    assert.ok(
-      !content.includes('Task --subagent_type reaper:workflow-planner'),
-      `${relative} must NOT contain 'Task --subagent_type reaper:workflow-planner' — use Skill invocation instead`
+      `${relative} must reference the 'workflow-planner-verification' skill (loaded internally by the subagent)`
     );
   });
 });
