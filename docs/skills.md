@@ -80,7 +80,13 @@ The workflow planner skills implement the two modes of `reaper:workflow-planner`
 
 Issue tracker skills abstract over four task management platforms. Reaper uses them to create, update, and query work items during planning and execution. The orchestrator detects which platform is in use and loads the matching skill automatically.
 
-**Detection order**: Beads (`bd` CLI available) → Jira (`acli jira` available, `PROJ-` IDs present) → GitHub Issues (`gh` CLI available, GitHub remote detected) → Plan file (fallback when no tracker is detected).
+**Detection**: Reaper scans the last 10 git commits (`git log --format="%B" -10`) for issue reference patterns and counts matches per system. The system with the highest count wins. Equal counts or no matches fall back to the plan file (`markdown_only`).
+
+| System | Pattern matched in commit bodies |
+|--------|----------------------------------|
+| Beads | `Ref: reaper-a3f`, `Closes myapp-bc12` (lowercase ID with hex suffix) |
+| Jira | `Ref: PROJ-123`, `Fixes ENG-456` (uppercase project key + number) |
+| GitHub Issues | `Fixes #456`, `Closes #42` (bare `#N` references) |
 
 All four skills expose the same abstract operations:
 
