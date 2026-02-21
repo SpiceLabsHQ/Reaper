@@ -147,6 +147,12 @@ Full formatter list: [docs/auto-formatting.md](docs/auto-formatting.md)
 
 Full agent catalog: [docs/agents.md](docs/agents.md)
 
+### Skills
+
+8 reusable behavior modules that agents load at runtime. Skills handle code review (with work-type-matched specialty files), workflow planning, and issue tracker integration across Beads, Jira, GitHub Issues, and local plan files. You never invoke skills directly -- agents and commands load them automatically.
+
+Full skill catalog: [docs/skills.md](docs/skills.md)
+
 ### Workflow
 
 The full orchestration lifecycle -- from `/reaper:flight-plan` through quality gates to `/reaper:ship` -- documented step by step with examples.
