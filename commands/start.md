@@ -1,5 +1,5 @@
 ---
-description: Not sure where to start? This command helps you find the right workflow.
+description: Use when the user is uncertain how to approach a development task — whether to explore design trade-offs, decompose a feature into a plan, or execute a specific task directly. Do not invoke for general how-to questions, advice requests, or help with a specific tool or technology.
 ---
 
 # Start: Find Your Workflow
