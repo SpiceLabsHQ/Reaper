@@ -1,3 +1,6 @@
+# Lint check (fail fast before tests)
+npm run lint
+
 # Run unit tests (excludes contract tests — those run post-build)
 node --test scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js scripts/visual-vocabulary.test.js
 
