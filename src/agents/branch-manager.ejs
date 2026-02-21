@@ -141,6 +141,10 @@ medium_single_branch uses a single shared worktree for all coding agents. Branch
      # Cleanup integration worktree and temp branch
      git worktree remove ./trees/[TASK_ID]-integration
      git branch -d [TASK_ID]-integration-temp
+     # Sync the root working tree index: git branch -f advances the ref but leaves the
+     # root index stale (pointing at the old HEAD). Run git reset --mixed HEAD in the root
+     # to sync the index without discarding untracked files.
+     git -C "$(git rev-parse --show-toplevel)" reset --mixed HEAD
      ```
    - If the merge produces conflicts, they surface inside `./trees/[TASK_ID]-integration`, not in root
    - Teardown component worktree (verify from project root — never teardown from inside the worktree)

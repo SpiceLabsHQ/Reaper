@@ -4167,6 +4167,9 @@ describe('Contract: Gate 2 partial failure — combine blocking_issues and re-ru
       /combine.*blocking_issues|blocking_issues.*combine/i.test(content),
       `${sourceRelative} must also contain the combining instruction for within-Gate-2 partial failure — ` +
         `both rules must coexist: "re-run failed gate" (inter-gate) and "combine blocking_issues" (intra-Gate-2)`
+    );
+  });
+});
 
 // Contract: quality-gate-protocol union semantics — 3-work-type deduplication
 //
@@ -4391,6 +4394,76 @@ describe('Contract: quality-gate-protocol union semantics — 3-work-type dedupl
       `Union Gate 2 must have exactly 4 unique agents ` +
         `(principal-engineer + security-auditor + database-architect + technical-writer). ` +
         `Got ${union.gate2.length}: [${union.gate2.join(', ')}]`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: branch-manager syncs root working tree index after advancing develop ref
+// ---------------------------------------------------------------------------
+//
+// When branch-manager advances the develop ref using `git branch -f` (or
+// `git update-ref`) from inside an integration worktree, the root working
+// tree's index still points at the old HEAD. This leaves the root in a state
+// where `git status` shows dozens of phantom staged changes.
+//
+// The fix: after advancing the develop ref, branch-manager must run
+//   git reset --mixed HEAD
+// in the ROOT working tree (not the integration worktree) to bring the index
+// back in sync with the new develop HEAD. Using --mixed preserves untracked
+// files and only resets the index.
+// ---------------------------------------------------------------------------
+
+describe('Contract: branch-manager syncs root working tree index after advancing develop ref', () => {
+  const filePath = agentFilePath('branch-manager');
+  const relative = 'agents/branch-manager.md';
+
+  // Helper: extract the large_multi_worktree Workflow section text
+  function getLargeMultiSection(content) {
+    const start = content.indexOf('large_multi_worktree Workflow');
+    if (start === -1) return '';
+    const afterStart = content.slice(start);
+    const nextSection = afterStart.search(/\n## /);
+    return nextSection !== -1 ? afterStart.slice(0, nextSection) : afterStart;
+  }
+
+  it(`${relative} large_multi_worktree Workflow includes 'git reset --mixed HEAD' step in root after advancing ref`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getLargeMultiSection(content);
+    assert.ok(section.length > 0, `${relative} must contain a large_multi_worktree Workflow section`);
+    assert.ok(
+      /git reset --mixed HEAD/.test(section),
+      `${relative} large_multi_worktree Workflow must include 'git reset --mixed HEAD' to sync the root index after advancing the develop ref`
+    );
+  });
+
+  it(`${relative} large_multi_worktree Workflow runs 'git reset --mixed HEAD' in root (not integration worktree)`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getLargeMultiSection(content);
+    assert.ok(section.length > 0, `${relative} must contain a large_multi_worktree Workflow section`);
+
+    // The reset must reference the root working tree — either via 'git -C' with root path
+    // or with an explicit comment/instruction stating it runs in root (not in trees/)
+    assert.ok(
+      /root.*git reset --mixed|git reset --mixed.*root|git -C.*root.*reset --mixed|reset --mixed HEAD.*root/i.test(section) ||
+      (/git reset --mixed HEAD/.test(section) && /root working tree|root.{0,30}index|index.{0,30}root/i.test(section)),
+      `${relative} large_multi_worktree Workflow must clarify that 'git reset --mixed HEAD' runs in the root working tree to sync the index`
+    );
+  });
+
+  it(`${relative} large_multi_worktree Workflow states the purpose: sync index after ref advancement`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getLargeMultiSection(content);
+    assert.ok(section.length > 0, `${relative} must contain a large_multi_worktree Workflow section`);
+
+    // The workflow must explain why the reset is needed: to sync the root index
+    assert.ok(
+      /sync.*index|index.*sync|stale.*index|index.*stale|root.*index|index.*root/i.test(section),
+      `${relative} large_multi_worktree Workflow must explain that 'git reset --mixed HEAD' syncs the root index ` +
+        `after the develop ref is advanced`
     );
   });
 });
