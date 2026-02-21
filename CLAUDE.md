@@ -195,6 +195,7 @@ Do not delete this file — it is intentional project tooling, not a leftover ar
    - Read the diff and determine whether the change is correct and intentional
    - If the side effect is benign or easily corrected, fix it before continuing
    - **If a side effect cannot be easily compensated for, stop immediately and alert the user** — do not proceed to commit
+   - **When renaming or replacing an agent/skill reference in a command**: search all `src/partials/` for the old name — partials are included by multiple commands and may carry stale references that survive a command-only edit
 4. **Run prompt review**: Always run `reaper:ai-prompt-engineer` as a quality gate after modifying any agent, skill, command, hook, or partial template. This agent audits prompts for anti-patterns, token waste, and model-specific best practices.
 5. **Commit both** source and generated files
 
