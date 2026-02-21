@@ -238,9 +238,6 @@ function buildTemplateVars(sourceType, filename, relativePath) {
     vars.IS_DOCUMENTATION_AGENT =
       AGENT_TYPES.documentation.includes(filename);
     vars.IS_PERFORMANCE_AGENT = AGENT_TYPES.performance.includes(filename);
-    // Transitional bridge: gateCapable is always false while EJS templates still
-    // reference <% if (gateCapable) { %>. Remove once reaper-3w4s.2 cleans templates.
-    vars.gateCapable = false;
   }
 
   // Skill-specific variables
