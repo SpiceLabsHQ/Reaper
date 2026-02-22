@@ -29,17 +29,17 @@ Quality validation uses a 2-gate sequential pipeline:
 
 Nine profiles map each work type to the appropriate gate agents:
 
-| Work Type | Gate 1 | Gate 2 |
-|-----------|--------|--------|
-| `application_code` | reaper:test-runner | SME reviewer (reaper:feature-developer), reaper:security-auditor |
-| `infrastructure_config` | -- | SME reviewer (reaper:cloud-architect), reaper:security-auditor |
-| `database_migration` | -- | SME reviewer (reaper:database-architect) |
-| `api_specification` | -- | SME reviewer (reaper:api-designer) |
-| `agent_prompt` | -- | reaper:ai-prompt-engineer, SME reviewer (reaper:ai-prompt-engineer) |
-| `documentation` | -- | SME reviewer (reaper:technical-writer) |
-| `ci_cd_pipeline` | -- | SME reviewer (reaper:deployment-engineer), reaper:security-auditor |
-| `test_code` | reaper:test-runner | SME reviewer (reaper:feature-developer) |
-| `configuration` | -- | SME reviewer (reaper:feature-developer), reaper:security-auditor |
+| Work Type               | Gate 1             | Gate 2                                                              |
+| ----------------------- | ------------------ | ------------------------------------------------------------------- |
+| `application_code`      | reaper:test-runner | SME reviewer (reaper:feature-developer), reaper:security-auditor    |
+| `infrastructure_config` | --                 | SME reviewer (reaper:cloud-architect), reaper:security-auditor      |
+| `database_migration`    | --                 | SME reviewer (reaper:database-architect)                            |
+| `api_specification`     | --                 | SME reviewer (reaper:api-designer)                                  |
+| `agent_prompt`          | --                 | reaper:ai-prompt-engineer, SME reviewer (reaper:ai-prompt-engineer) |
+| `documentation`         | --                 | SME reviewer (reaper:technical-writer)                              |
+| `ci_cd_pipeline`        | --                 | SME reviewer (reaper:deployment-engineer), reaper:security-auditor  |
+| `test_code`             | reaper:test-runner | SME reviewer (reaper:feature-developer)                             |
+| `configuration`         | --                 | SME reviewer (reaper:feature-developer), reaper:security-auditor    |
 
 SME reviewer resolves to the listed `reviewer_agent` for that work type. Each SME runs the universal `code-review` skill with an optional specialty file for domain-specific checks.
 
@@ -55,6 +55,7 @@ When a changeset spans multiple work types, compute the union of all matching pr
 4. Deploy the union set through the standard gate sequence
 
 **Example:** A changeset touching `src/auth.ts` (application_code) and `terraform/main.tf` (infrastructure_config) produces:
+
 - Gate 1: reaper:test-runner (from application_code; infrastructure_config has no Gate 1)
 - Gate 2: SME reviewer (reaper:feature-developer) + reaper:security-auditor (union of both profiles; security-auditor deduplicated)
 
@@ -62,13 +63,13 @@ When a changeset spans multiple work types, compute the union of all matching pr
 
 Each gate agent has its own iteration limit before escalating to the user:
 
-| Gate Agent | Max Iterations | Rationale |
-|------------|---------------|-----------|
-| reaper:test-runner | 3 | Most likely to need iteration (test failures, coverage gaps) |
-| SME reviewer (via code-review skill) | 1 | SME reviewers perform one focused pass per iteration |
-| reaper:security-auditor | 1 | Security issues require careful one-pass remediation |
-| reaper:ai-prompt-engineer | 1 | Prompt quality review is typically one-pass |
-| reaper:deployment-engineer | 1 | Pipeline validation is typically one-pass |
+| Gate Agent                           | Max Iterations | Rationale                                                    |
+| ------------------------------------ | -------------- | ------------------------------------------------------------ |
+| reaper:test-runner                   | 3              | Most likely to need iteration (test failures, coverage gaps) |
+| SME reviewer (via code-review skill) | 1              | SME reviewers perform one focused pass per iteration         |
+| reaper:security-auditor              | 1              | Security issues require careful one-pass remediation         |
+| reaper:ai-prompt-engineer            | 1              | Prompt quality review is typically one-pass                  |
+| reaper:deployment-engineer           | 1              | Pipeline validation is typically one-pass                    |
 
 ### Resume-Based Retry
 
@@ -81,6 +82,7 @@ This requires the orchestrator to store agent IDs for the duration of the gate c
 ## Consequences
 
 **Positive:**
+
 - Lower per-invocation token cost because only relevant gate agents run for each work type
 - SME alignment: domain experts validate their own work type rather than a generalist reviewing everything
 - Resume-based retry reduces iteration cost by an order of magnitude compared to full redeployment
@@ -88,6 +90,7 @@ This requires the orchestrator to store agent IDs for the duration of the gate c
 - Gate 1 blocking prevents wasting Gate 2 tokens on functionally broken code
 
 **Negative / Risks:**
+
 - Profile maintenance burden: nine profiles must stay accurate as agents are added, removed, or renamed
 - Union semantics add orchestrator complexity, particularly for changesets spanning three or more work types
 - Resume requires capturing and storing agent IDs across gate iterations, adding state management to the orchestrator

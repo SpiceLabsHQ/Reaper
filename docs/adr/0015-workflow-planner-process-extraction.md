@@ -11,9 +11,9 @@
 
 ADR-0002 established that SME agents should be pure domain experts — process belongs in skills, domain judgment belongs in agents. It explicitly excluded execution utilities from this principle:
 
-> *Coding agents (bug-fixer, feature-developer, refactoring-dev) and execution utilities (branch-manager, test-runner, workflow-planner, incident-responder) legitimately embed process in their definitions because execution is their function.*
+> _Coding agents (bug-fixer, feature-developer, refactoring-dev) and execution utilities (branch-manager, test-runner, workflow-planner, incident-responder) legitimately embed process in their definitions because execution is their function._
 
-This exclusion was correct at the time. For a single-purpose execution utility, the agent *is* the process. Separating them adds indirection without benefit.
+This exclusion was correct at the time. For a single-purpose execution utility, the agent _is_ the process. Separating them adds indirection without benefit.
 
 `workflow-planner` has since outgrown that assumption. The agent now handles two distinct operational modes:
 
@@ -43,7 +43,7 @@ This capability is relevant to skills extracted from workflow-planner because th
 - **`reaper:workflow-plan`** — the planning process: decomposing requirements, selecting a concurrency strategy, writing the planfile
 - **`reaper:workflow-verify`** — the verification process: reading a completed planfile, assessing unit completion, producing a merge recommendation
 
-The agent definition no longer contains step-by-step process instructions for either mode. It describes how the workflow-planner *thinks* — not what it should do in a given invocation. This brings workflow-planner into alignment with the process-in-skills principle ADR-0002 established for SME agents, reversing the exclusion that no longer reflects the agent's structure.
+The agent definition no longer contains step-by-step process instructions for either mode. It describes how the workflow-planner _thinks_ — not what it should do in a given invocation. This brings workflow-planner into alignment with the process-in-skills principle ADR-0002 established for SME agents, reversing the exclusion that no longer reflects the agent's structure.
 
 ### Decision 2: Executor-prescribing skills use context: fork + agent frontmatter
 

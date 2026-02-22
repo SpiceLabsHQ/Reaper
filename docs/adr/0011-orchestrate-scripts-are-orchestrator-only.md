@@ -47,12 +47,14 @@ Scripts must be minimal. Each script should say exactly what the orchestrator ne
 ## Consequences
 
 **Positive:**
+
 - The purpose of each script is unambiguous: orchestration instructions for takeoff, nothing else
 - Contributors cannot accidentally write agent-facing content into scripts that agents will never read
 - Minimal scripts are easier to audit and maintain; their behavior is apparent at a glance
 - The orchestrator receives a focused signal rather than a stream it must filter
 
 **Negative / Risks:**
+
 - The constraint is enforced by convention, not by tooling; a contributor unfamiliar with the hook lifecycle could still add non-orchestration content without immediate breakage
 - Legitimate needs for richer orchestrator context (e.g., agent-class-specific state passing) must find a different mechanism — these scripts are not the right vehicle
 

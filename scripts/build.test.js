@@ -476,13 +476,25 @@ describe('buildTemplateVars unknown agent names', () => {
   it('should NOT throw for unclassified names when sourceType is not agents', () => {
     // Non-agent source types are not validated against AGENT_TYPES
     assert.doesNotThrow(() =>
-      buildTemplateVars('skills', 'nonexistent-agent', 'skills/nonexistent-agent.ejs')
+      buildTemplateVars(
+        'skills',
+        'nonexistent-agent',
+        'skills/nonexistent-agent.ejs'
+      )
     );
     assert.doesNotThrow(() =>
-      buildTemplateVars('hooks', 'nonexistent-agent', 'hooks/nonexistent-agent.ejs')
+      buildTemplateVars(
+        'hooks',
+        'nonexistent-agent',
+        'hooks/nonexistent-agent.ejs'
+      )
     );
     assert.doesNotThrow(() =>
-      buildTemplateVars('commands', 'nonexistent-agent', 'commands/nonexistent-agent.ejs')
+      buildTemplateVars(
+        'commands',
+        'nonexistent-agent',
+        'commands/nonexistent-agent.ejs'
+      )
     );
   });
 });
@@ -1328,11 +1340,7 @@ describe('processFile', () => {
       false,
       'processFile should return false for unclassified agent'
     );
-    assert.strictEqual(
-      stats.errors,
-      1,
-      'stats.errors should be incremented'
-    );
+    assert.strictEqual(stats.errors, 1, 'stats.errors should be incremented');
     assert.ok(
       stats.errorMessages.length > 0,
       'stats.errorMessages should contain an entry'

@@ -1,3 +1,7 @@
+# Format all files and re-stage to prevent working tree drift
+npx prettier --write .
+git add -u
+
 # Lint check (fail fast before tests)
 npm run lint
 

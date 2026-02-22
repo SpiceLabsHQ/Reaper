@@ -7,7 +7,7 @@
 
 ## Context
 
-ADR-0010 established that coding agents are prohibited from writing to git history and that `reaper:branch-manager` is the sole agent authorized to commit and merge. That decision addressed *which agent* may commit. This ADR addresses the follow-up question: *who decides when and where* to commit.
+ADR-0010 established that coding agents are prohibited from writing to git history and that `reaper:branch-manager` is the sole agent authorized to commit and merge. That decision addressed _which agent_ may commit. This ADR addresses the follow-up question: _who decides when and where_ to commit.
 
 The original branch-manager implementation contained a "Dual Authorization" section that required two conditions before allowing commits or merges to protected branches:
 
@@ -22,7 +22,7 @@ Analysis of the full codebase revealed three problems:
 
 **`allow_main_merge` was never set.** No orchestrator command ever passed `allow_main_merge: true` to branch-manager. The flag existed as an escape hatch for a scenario that never occurred in practice. It added complexity to the branch-manager prompt without providing value.
 
-**Commit timing was misplaced.** The shared `quality-gate-protocol.ejs` partial contained a "Commit on Pass" section that directed the orchestrator to commit after each individual gate passed. In a multi-gate pipeline (Gate 1: test-runner, Gate 2: principal-engineer + security-auditor), this produced per-gate commits -- one commit after test-runner passed, another after the Gate 2 reviewers passed. The correct behavior is per-unit commits: a single commit after *all* gates for a work unit complete. Since `quality-gate-protocol.ejs` is a shared partial consumed by both orchestrator commands and non-orchestrator agents, embedding commit logic there forced commit decisions into a context that lacked full pipeline awareness.
+**Commit timing was misplaced.** The shared `quality-gate-protocol.ejs` partial contained a "Commit on Pass" section that directed the orchestrator to commit after each individual gate passed. In a multi-gate pipeline (Gate 1: test-runner, Gate 2: principal-engineer + security-auditor), this produced per-gate commits -- one commit after test-runner passed, another after the Gate 2 reviewers passed. The correct behavior is per-unit commits: a single commit after _all_ gates for a work unit complete. Since `quality-gate-protocol.ejs` is a shared partial consumed by both orchestrator commands and non-orchestrator agents, embedding commit logic there forced commit decisions into a context that lacked full pipeline awareness.
 
 ---
 
@@ -57,6 +57,7 @@ All executor agents -- branch-manager today, and any future executor agents -- a
 ## Consequences
 
 **Positive:**
+
 - Dead code eliminated: Dual Authorization and `allow_main_merge` no longer bloat the branch-manager prompt with unused logic
 - Single source of truth for commit timing: takeoff's per-unit cycle is the one place that decides when commits happen, replacing scattered commit logic across shared partials
 - Per-unit commits instead of per-gate commits: a work unit produces one commit after all gates pass, not multiple intermediate commits after individual gates
@@ -64,6 +65,7 @@ All executor agents -- branch-manager today, and any future executor agents -- a
 - Simpler extension: future executor agents follow the same pattern without needing to duplicate authorization protocols
 
 **Negative / Risks:**
+
 - Orchestrator must be correct: since executors no longer independently verify authorization, a buggy orchestrator could direct a commit or merge that should not happen. The lightweight precondition check (missing confirmation = error) mitigates the most obvious case, but the orchestrator bears more responsibility.
 - Commit logic is less discoverable: moving commit decisions from a shared partial to a specific command (takeoff) means developers looking at quality-gate-protocol will not see when commits happen. The partial's removal of "Commit on Pass" must be understood in context of takeoff's per-unit cycle.
 

@@ -68,6 +68,7 @@ All future branch-manager merge steps must follow this pattern. Direct `git chec
 ## Consequences
 
 **Positive:**
+
 - Root working tree stability: the user's checked-out branch, uncommitted changes, open editors, and running processes are never disturbed by merge operations
 - Conflict isolation: merge conflicts surface in a disposable worktree that can be cleaned up without affecting root
 - No stash/unstash choreography: the agent does not need to remember to stash uncommitted root changes before merging and restore them afterward -- a sequence that is error-prone and has no recovery path if the agent forgets
@@ -75,6 +76,7 @@ All future branch-manager merge steps must follow this pattern. Direct `git chec
 - Ref advancement without checkout: `git branch -f` updates the review branch pointer without switching any working tree, making the operation atomic from the user's perspective
 
 **Negative / Risks:**
+
 - Extra git operations per merge: each merge requires creating a temp branch, adding a worktree, performing the merge, advancing the ref, removing the worktree, and deleting the temp branch -- six operations versus two for a conventional checkout-merge
 - Temporary branch cleanup: if the agent crashes between step 2 and step 5, a stale temp branch and orphaned worktree remain. The agent's teardown safety rules (backup refs, verify from root) mitigate this, but manual cleanup may be required after unrecoverable failures
 - Pattern complexity: developers contributing to the branch-manager template must understand why direct checkout is prohibited and follow the isolated merge pattern. The ADR and in-template documentation provide this context, but the pattern is less intuitive than a simple checkout-merge

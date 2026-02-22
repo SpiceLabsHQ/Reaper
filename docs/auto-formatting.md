@@ -16,21 +16,21 @@ No configuration is required. The hook uses whatever formatters your project alr
 
 ## Supported Formatters
 
-| Language | Extension(s) | Formatter | How it's detected |
-|----------|-------------|-----------|-------------------|
-| PHP (Laravel) | `.php`, `.blade.php` | Pint | `vendor/bin/pint` exists |
-| PHP | `.php`, `.blade.php` | PHP-CS-Fixer | `vendor/bin/php-cs-fixer` or `php-cs-fixer` on PATH |
-| Python | `.py` | Ruff | `ruff` on PATH |
-| Python | `.py` | Black | `black` on PATH |
-| Go | `.go` | gofmt | `gofmt` on PATH |
-| Rust | `.rs` | rustfmt | `rustfmt` on PATH |
-| Ruby | `.rb` | RuboCop | `rubocop` on PATH |
-| Swift | `.swift` | SwiftFormat | `swiftformat` on PATH |
-| Kotlin | `.kt`, `.kts` | ktlint | `ktlint` on PATH |
-| Dart | `.dart` | dart format | `dart` on PATH |
-| JS/TS/CSS/HTML | all other extensions | Prettier | Config file in project root |
-| JS/TS | all other extensions | Biome | `biome.json` or `biome.jsonc` in project root |
-| JS/TS | all other extensions | ESLint | Config file in project root |
+| Language       | Extension(s)         | Formatter    | How it's detected                                   |
+| -------------- | -------------------- | ------------ | --------------------------------------------------- |
+| PHP (Laravel)  | `.php`, `.blade.php` | Pint         | `vendor/bin/pint` exists                            |
+| PHP            | `.php`, `.blade.php` | PHP-CS-Fixer | `vendor/bin/php-cs-fixer` or `php-cs-fixer` on PATH |
+| Python         | `.py`                | Ruff         | `ruff` on PATH                                      |
+| Python         | `.py`                | Black        | `black` on PATH                                     |
+| Go             | `.go`                | gofmt        | `gofmt` on PATH                                     |
+| Rust           | `.rs`                | rustfmt      | `rustfmt` on PATH                                   |
+| Ruby           | `.rb`                | RuboCop      | `rubocop` on PATH                                   |
+| Swift          | `.swift`             | SwiftFormat  | `swiftformat` on PATH                               |
+| Kotlin         | `.kt`, `.kts`        | ktlint       | `ktlint` on PATH                                    |
+| Dart           | `.dart`              | dart format  | `dart` on PATH                                      |
+| JS/TS/CSS/HTML | all other extensions | Prettier     | Config file in project root                         |
+| JS/TS          | all other extensions | Biome        | `biome.json` or `biome.jsonc` in project root       |
+| JS/TS          | all other extensions | ESLint       | Config file in project root                         |
 
 ### Prettier config detection
 
@@ -81,11 +81,13 @@ If no `Reaper: formatter-allowlist` line is present in `CLAUDE.md`, the hook run
 ### Example allowlist configurations
 
 Allow only Prettier and Ruff:
+
 ```
 Reaper: formatter-allowlist prettier,ruff
 ```
 
 Allow only Pint (Laravel PHP):
+
 ```
 Reaper: formatter-allowlist pint
 ```

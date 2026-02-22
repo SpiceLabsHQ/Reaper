@@ -23,15 +23,15 @@ We introduce an abstract task operations layer that separates orchestration logi
 
 Seven operations cover all task interactions required by orchestration commands:
 
-| Operation | Purpose |
-|-----------|---------|
-| FETCH_ISSUE | Retrieve a single issue by ID (title, description, status, acceptance criteria) |
-| LIST_CHILDREN | List direct child issues of a parent (one level deep) |
-| CREATE_ISSUE | Create a new issue with title, description, and optional `parent` |
-| UPDATE_ISSUE | Modify an existing issue (status, description, assignee) |
-| ADD_DEPENDENCY | Create a `blocks` or `related` dependency between two sibling issues |
-| QUERY_DEPENDENCY_TREE | Recursively retrieve the full dependency graph from a root issue |
-| CLOSE_ISSUE | Mark an issue as completed/closed |
+| Operation             | Purpose                                                                         |
+| --------------------- | ------------------------------------------------------------------------------- |
+| FETCH_ISSUE           | Retrieve a single issue by ID (title, description, status, acceptance criteria) |
+| LIST_CHILDREN         | List direct child issues of a parent (one level deep)                           |
+| CREATE_ISSUE          | Create a new issue with title, description, and optional `parent`               |
+| UPDATE_ISSUE          | Modify an existing issue (status, description, assignee)                        |
+| ADD_DEPENDENCY        | Create a `blocks` or `related` dependency between two sibling issues            |
+| QUERY_DEPENDENCY_TREE | Recursively retrieve the full dependency graph from a root issue                |
+| CLOSE_ISSUE           | Mark an issue as completed/closed                                               |
 
 ### Hierarchy via Parent Parameter
 
@@ -43,15 +43,16 @@ The active task system is detected automatically from commit history. No configu
 
 Run `git log --format="%B" -10` and scan commit bodies for issue reference patterns:
 
-| System | Pattern | Examples |
-|--------|---------|----------|
-| Beads | `(Ref\|Closes\|Resolves):?\s+[a-z][a-z0-9]*-[a-f0-9]{2,}` | `Ref: reaper-a3f`, `Closes myapp-bc12` |
-| Jira | `(Ref\|Fixes\|Closes\|Resolves):?\s+[A-Z]{2,}-\d+` | `Ref: PROJ-123`, `Fixes ENG-456` |
-| GitHub Issues | `(Fixes\|Closes\|Resolves):?\s+#\d+` | `Fixes #456`, `Closes #42` |
+| System        | Pattern                                                   | Examples                               |
+| ------------- | --------------------------------------------------------- | -------------------------------------- |
+| Beads         | `(Ref\|Closes\|Resolves):?\s+[a-z][a-z0-9]*-[a-f0-9]{2,}` | `Ref: reaper-a3f`, `Closes myapp-bc12` |
+| Jira          | `(Ref\|Fixes\|Closes\|Resolves):?\s+[A-Z]{2,}-\d+`        | `Ref: PROJ-123`, `Fixes ENG-456`       |
+| GitHub Issues | `(Fixes\|Closes\|Resolves):?\s+#\d+`                      | `Fixes #456`, `Closes #42`             |
 
 **Mixed/ambiguous rule:** If multiple systems match, the system with the highest count wins. Equal counts fall back to `markdown_only`.
 
 **Fallback chain:**
+
 - Commit patterns found (1+ match in last 10 commits) with single system: use that system
 - Mixed patterns: highest count wins; tie = `markdown_only`
 - No patterns found: `markdown_only`
@@ -60,11 +61,11 @@ Run `git log --format="%B" -10` and scan commit bodies for issue reference patte
 
 After detection, the orchestration command loads the corresponding skill for platform-specific command mappings:
 
-| TASK_SYSTEM | Skill |
-|-------------|-------|
-| Beads | `reaper:issue-tracker-beads` |
-| Jira | `reaper:issue-tracker-jira` |
-| GitHub | `reaper:issue-tracker-github` |
+| TASK_SYSTEM   | Skill                           |
+| ------------- | ------------------------------- |
+| Beads         | `reaper:issue-tracker-beads`    |
+| Jira          | `reaper:issue-tracker-jira`     |
+| GitHub        | `reaper:issue-tracker-github`   |
 | markdown_only | `reaper:issue-tracker-planfile` |
 
 Each skill translates all seven abstract operations into platform-specific commands. The orchestration command never sees `bd create` or `gh issue create` — it sees CREATE_ISSUE, and the loaded skill handles the rest.
@@ -78,6 +79,7 @@ For projects without any task system, `reaper:issue-tracker-planfile` maps all a
 ## Consequences
 
 **Positive:**
+
 - Reaper works with any tracker or with no tracker at all
 - Zero-config detection via commit history eliminates setup friction
 - New trackers are added by writing a skill, not by modifying orchestration commands
@@ -86,6 +88,7 @@ For projects without any task system, `reaper:issue-tracker-planfile` maps all a
 - The `parent` parameter convention produces consistent hierarchy across all platforms
 
 **Negative / Risks:**
+
 - Detection edge cases: new repositories with no commits default to `markdown_only`, which may surprise teams that have a tracker configured but no commit history yet
 - Mixed systems in a monorepo (e.g., some teams use Jira, others use GitHub Issues) can produce incorrect detection; the highest-count heuristic is a best guess, not a guarantee
 - Detection runs at every invocation, adding latency to the critical path of every orchestration command

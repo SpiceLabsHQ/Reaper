@@ -72,6 +72,7 @@ A pre-commit hook runs the build and stages generated files before every commit.
 ## Consequences
 
 **Positive:**
+
 - Single source of truth for shared content — one edit propagates to all consumers
 - Contract tests catch build regressions before they reach production
 - New agents compose from existing partials in minutes rather than hours of copy-paste
@@ -79,6 +80,7 @@ A pre-commit hook runs the build and stages generated files before every commit.
 - The pre-commit hook eliminates the class of bugs where source and generated files diverge
 
 **Negative / Risks:**
+
 - Contributors must learn to edit source templates in `src/`, never generated files at the root — violating this produces changes that are silently overwritten on the next build
 - The pre-commit hook adds build time to every commit (a few seconds in practice)
 - The "never edit generated files" discipline requires documentation and enforcement; the contract tests catch EJS residue but cannot detect a contributor who edits a generated file and skips the hook
@@ -95,4 +97,3 @@ A pre-commit hook runs the build and stages generated files before every commit.
 **Handlebars or Mustache** — Similar template composition with `{{> partial}}` syntax. Rejected because Handlebars is intentionally logic-less — it lacks conditionals and loops without registering helpers. Several Reaper partials require parameterization (e.g., `visual-vocabulary.ejs` accepts a context parameter that changes its output). EJS handles this natively; Handlebars would require custom helper registration for each parameterized partial.
 
 **No build step with inline duplication** — Accept duplication as a cost and manage it through discipline and code review. Fastest to start, zero tooling overhead. Rejected because discipline does not scale: as the number of files grows, the probability that a shared-section change misses one consumer approaches certainty. The build system converts a discipline problem into a mechanical guarantee.
-

@@ -2076,14 +2076,20 @@ function parseOrchestratorGateTable(content) {
     const cells = line.split('|').slice(1, -1);
     if (cells.length < 3) return false;
     if (/^[\s|-]+$/.test(line)) return false;
-    if (line.includes('Gate 2 (parallel)') || line.includes('Gate 1 (blocking)'))
+    if (
+      line.includes('Gate 2 (parallel)') ||
+      line.includes('Gate 1 (blocking)')
+    )
       return false;
     return true;
   });
 
   const map = new Map();
   for (const row of tableRows) {
-    const cells = row.split('|').slice(1, -1).map((c) => c.trim());
+    const cells = row
+      .split('|')
+      .slice(1, -1)
+      .map((c) => c.trim());
     // Column 0: work type (strip backticks), Column 2: Gate 2 agents
     const workType = cells[0].replace(/`/g, '');
     if (workType && cells[2]) {
@@ -4879,7 +4885,9 @@ describe('Contract: branch-manager Step 0 pre-merge root check and Step 8 post-m
       `${relative} must contain a large_multi_worktree Workflow section`
     );
     assert.ok(
-      /git -C.*\$ROOT.*status --porcelain|git -C.*ROOT.*status --porcelain/i.test(section),
+      /git -C.*\$ROOT.*status --porcelain|git -C.*ROOT.*status --porcelain/i.test(
+        section
+      ),
       `${relative} large_multi_worktree Workflow must run 'git -C "$ROOT" status --porcelain' ` +
         `before the merge to detect uncommitted root changes (Step 0)`
     );
@@ -4897,8 +4905,7 @@ describe('Contract: branch-manager Step 0 pre-merge root check and Step 8 post-m
     assert.ok(
       /ROOT_STATUS.*uncommitted|uncommitted.*ROOT_STATUS|root has uncommitted|Hard-fail.*uncommitted|uncommitted.*hard.fail/i.test(
         section
-      ) ||
-        /if \[ -n "\$ROOT_STATUS" \]/.test(section),
+      ) || /if \[ -n "\$ROOT_STATUS" \]/.test(section),
       `${relative} large_multi_worktree Workflow must hard-fail when root has uncommitted changes (Step 0 — Protocol #11)`
     );
   });
@@ -4915,8 +4922,7 @@ describe('Contract: branch-manager Step 0 pre-merge root check and Step 8 post-m
     assert.ok(
       /advisory.*warning|WARNING.*root.*review|root.*checked out.*review|review branch.*warning/i.test(
         section
-      ) ||
-        /ROOT_BRANCH.*review|warning.*ref will advance/i.test(section),
+      ) || /ROOT_BRANCH.*review|warning.*ref will advance/i.test(section),
       `${relative} large_multi_worktree Workflow must emit an advisory warning (not error) when root is on the review branch (Step 0)`
     );
   });
@@ -4938,8 +4944,7 @@ describe('Contract: branch-manager Step 0 pre-merge root check and Step 8 post-m
     assert.ok(
       /status:error.*Protocol #11|Protocol #11.*status:error|dirty after.*cleanup|dirty after merge cleanup/i.test(
         section
-      ) ||
-        /if \[ -n "\$POST_STATUS" \]/.test(section),
+      ) || /if \[ -n "\$POST_STATUS" \]/.test(section),
       `${relative} large_multi_worktree Workflow must return status:error per Protocol #11 if root is dirty after cleanup (Step 8)`
     );
   });

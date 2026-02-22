@@ -25,7 +25,7 @@ Neither failure was caught mechanically. Correctness required a reviewer to hold
 
 ### What Determines Structural Need
 
-The squadron analysis produced a key insight: the complexity that drives structural requirements is not what an agent *does* but how many distinct output *contracts* it must honor. An agent that produces sophisticated analysis but always produces the same kind of output — same processing flow, same output schema — has one contract. An agent that changes its processing logic and output format based on invocation context has multiple contracts.
+The squadron analysis produced a key insight: the complexity that drives structural requirements is not what an agent _does_ but how many distinct output _contracts_ it must honor. An agent that produces sophisticated analysis but always produces the same kind of output — same processing flow, same output schema — has one contract. An agent that changes its processing logic and output format based on invocation context has multiple contracts.
 
 Contract count is observable from the agent source without subjective judgment. It can be grepped. It cannot be argued away by appeals to the agent's sophistication or perceived importance.
 

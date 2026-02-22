@@ -25,14 +25,14 @@ The code review skill implements Reaper's Gate 2 review protocol. It is loaded b
 
 **Specialty files** (loaded by work type):
 
-| Work Type | Specialty File | Domain Checks |
-|-----------|---------------|---------------|
-| `application_code`, `test_code` | `skills/code-review/application-code.md` | SOLID principles, test coverage patterns, interface contracts |
-| `database_migration` | `skills/code-review/database-migration.md` | Migration safety, rollback strategy, index impact |
-| `agent_prompt` | `skills/code-review/agent-prompt.md` | Prompt anti-patterns, token efficiency, model-specific guidance |
-| `documentation` | `skills/code-review/documentation.md` | Accuracy, completeness, link validity |
-| `architecture_review` | `skills/code-review/architecture-review.md` | System-level concerns, ADR alignment, cross-cutting impact |
-| `infrastructure_config`, `api_specification`, `ci_cd_pipeline`, `configuration` | (none) | Universal steps only |
+| Work Type                                                                       | Specialty File                              | Domain Checks                                                   |
+| ------------------------------------------------------------------------------- | ------------------------------------------- | --------------------------------------------------------------- |
+| `application_code`, `test_code`                                                 | `skills/code-review/application-code.md`    | SOLID principles, test coverage patterns, interface contracts   |
+| `database_migration`                                                            | `skills/code-review/database-migration.md`  | Migration safety, rollback strategy, index impact               |
+| `agent_prompt`                                                                  | `skills/code-review/agent-prompt.md`        | Prompt anti-patterns, token efficiency, model-specific guidance |
+| `documentation`                                                                 | `skills/code-review/documentation.md`       | Accuracy, completeness, link validity                           |
+| `architecture_review`                                                           | `skills/code-review/architecture-review.md` | System-level concerns, ADR alignment, cross-cutting impact      |
+| `infrastructure_config`, `api_specification`, `ci_cd_pipeline`, `configuration` | (none)                                      | Universal steps only                                            |
 
 When no specialty file applies (or `WORK_TYPE` is absent), the universal steps are sufficient. The review still produces a complete verdict.
 
@@ -67,12 +67,12 @@ The workflow planner skills implement the two modes of `reaper:workflow-planner`
 
 **Four criteria checked for each issue**:
 
-| Criterion | What passes | What fails | Auto-fixed? |
-|-----------|-------------|------------|-------------|
-| Detail sufficiency | Clear objective, file hints, acceptance criteria, bounded size, `work_type` set | Vague objective, no file hints, missing AC | Yes -- appends missing details |
-| Cross-issue awareness | Related issues reference each other, file overlaps documented | No cross-references, overlap undocumented | Yes -- adds cross-references |
-| Relationship appropriateness | Hierarchy via parent-child, blocking only for execution order | Flat with inappropriate blockers, circular deps | Yes -- removes inappropriate blockers |
-| Orchestratability | Determinable execution order, visible parallel groups, clear scope | Ambiguous deps, everything serial, open-ended scope | Yes -- adds execution hints |
+| Criterion                    | What passes                                                                     | What fails                                          | Auto-fixed?                           |
+| ---------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------- |
+| Detail sufficiency           | Clear objective, file hints, acceptance criteria, bounded size, `work_type` set | Vague objective, no file hints, missing AC          | Yes -- appends missing details        |
+| Cross-issue awareness        | Related issues reference each other, file overlaps documented                   | No cross-references, overlap undocumented           | Yes -- adds cross-references          |
+| Relationship appropriateness | Hierarchy via parent-child, blocking only for execution order                   | Flat with inappropriate blockers, circular deps     | Yes -- removes inappropriate blockers |
+| Orchestratability            | Determinable execution order, visible parallel groups, clear scope              | Ambiguous deps, everything serial, open-ended scope | Yes -- adds execution hints           |
 
 ---
 
@@ -82,23 +82,23 @@ Issue tracker skills abstract over four task management platforms. Reaper uses t
 
 **Detection**: Reaper scans the last 10 git commits (`git log --format="%B" -10`) for issue reference patterns and counts matches per system. The system with the highest count wins. Equal counts or no matches fall back to the plan file (`markdown_only`).
 
-| System | Pattern matched in commit bodies |
-|--------|----------------------------------|
-| Beads | `Ref: reaper-a3f`, `Closes myapp-bc12` (lowercase ID with hex suffix) |
-| Jira | `Ref: PROJ-123`, `Fixes ENG-456` (uppercase project key + number) |
-| GitHub Issues | `Fixes #456`, `Closes #42` (bare `#N` references) |
+| System        | Pattern matched in commit bodies                                      |
+| ------------- | --------------------------------------------------------------------- |
+| Beads         | `Ref: reaper-a3f`, `Closes myapp-bc12` (lowercase ID with hex suffix) |
+| Jira          | `Ref: PROJ-123`, `Fixes ENG-456` (uppercase project key + number)     |
+| GitHub Issues | `Fixes #456`, `Closes #42` (bare `#N` references)                     |
 
 All four skills expose the same abstract operations:
 
-| Operation | What it does |
-|-----------|-------------|
-| `FETCH_ISSUE` | Retrieve issue details (title, description, acceptance criteria, status) |
-| `LIST_CHILDREN` | List sub-issues or child work items |
-| `CREATE_ISSUE` | Create a new issue, optionally under a parent |
-| `UPDATE_ISSUE` | Update status, assignee, priority, or description |
-| `ADD_DEPENDENCY` | Record a blocking or informational relationship between issues |
-| `QUERY_DEPENDENCY_TREE` | Retrieve the full dependency graph from a root issue |
-| `CLOSE_ISSUE` | Mark an issue as complete |
+| Operation               | What it does                                                             |
+| ----------------------- | ------------------------------------------------------------------------ |
+| `FETCH_ISSUE`           | Retrieve issue details (title, description, acceptance criteria, status) |
+| `LIST_CHILDREN`         | List sub-issues or child work items                                      |
+| `CREATE_ISSUE`          | Create a new issue, optionally under a parent                            |
+| `UPDATE_ISSUE`          | Update status, assignee, priority, or description                        |
+| `ADD_DEPENDENCY`        | Record a blocking or informational relationship between issues           |
+| `QUERY_DEPENDENCY_TREE` | Retrieve the full dependency graph from a root issue                     |
+| `CLOSE_ISSUE`           | Mark an issue as complete                                                |
 
 ### `issue-tracker-beads`
 
@@ -175,11 +175,11 @@ The worktree-manager skill provides safe git worktree lifecycle management. It i
 
 **Available scripts** (located at `skills/worktree-manager/scripts/`):
 
-| Script | Purpose |
-|--------|---------|
-| `worktree-create.sh` | Create a new worktree with a feature branch off `develop` |
-| `worktree-list.sh` | List all worktrees with optional JSON output and verbose status |
-| `worktree-status.sh` | Check health of a specific worktree |
+| Script                | Purpose                                                                 |
+| --------------------- | ----------------------------------------------------------------------- |
+| `worktree-create.sh`  | Create a new worktree with a feature branch off `develop`               |
+| `worktree-list.sh`    | List all worktrees with optional JSON output and verbose status         |
+| `worktree-status.sh`  | Check health of a specific worktree                                     |
 | `worktree-cleanup.sh` | Safely remove a worktree; requires `--keep-branch` or `--delete-branch` |
 
 **CWD safety rule**: The cleanup script must be run from the project root, not from inside the worktree being removed. The skill's instructions enforce this pattern:

@@ -443,7 +443,9 @@ function printTokenSummary() {
   console.log(separator);
 
   for (const [name, count] of entries) {
-    console.log(`${name.padEnd(nameWidth)} │ ${String(count).padStart(countWidth)}`);
+    console.log(
+      `${name.padEnd(nameWidth)} │ ${String(count).padStart(countWidth)}`
+    );
   }
 
   console.log('');

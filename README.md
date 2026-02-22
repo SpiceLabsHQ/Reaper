@@ -42,7 +42,7 @@ A single command kicks off the full arc -- planning, implementation, testing, re
   Ready for your review. Say "ship it" when you're happy.
 ```
 
-*Stylized output. Actual formatting varies by terminal and task complexity.*
+_Stylized output. Actual formatting varies by terminal and task complexity._
 
 ---
 
@@ -139,11 +139,11 @@ Reaper is opinionated about how work gets done. These subsystems run automatical
 
 The workflow planner scores every task and selects the right isolation level.
 
-| Strategy | Complexity | Environment |
-|----------|------------|-------------|
-| Small Direct | Low | Current branch |
-| Medium Branch | Medium | Feature branch |
-| Large Multi-Worktree | High | Isolated `./trees/` worktrees |
+| Strategy             | Complexity | Environment                   |
+| -------------------- | ---------- | ----------------------------- |
+| Small Direct         | Low        | Current branch                |
+| Medium Branch        | Medium     | Feature branch                |
+| Large Multi-Worktree | High       | Isolated `./trees/` worktrees |
 
 ### Quality Gates
 
@@ -197,7 +197,7 @@ If you need Claude to fix a typo or bang out a quick script, you do not need an 
 
 ### The token conversation
 
-Reaper's subagent architecture spins up focused agents for each phase of work. Each agent boots with its own context -- that costs tokens upfront. For a small bug fix, that overhead is not worth it. For a real work package -- a feature with tests, review, and security audit -- focused agents produce better results *and* avoid the context bloat that tanks quality in long single-agent sessions.
+Reaper's subagent architecture spins up focused agents for each phase of work. Each agent boots with its own context -- that costs tokens upfront. For a small bug fix, that overhead is not worth it. For a real work package -- a feature with tests, review, and security audit -- focused agents produce better results _and_ avoid the context bloat that tanks quality in long single-agent sessions.
 
 More tokens per task. Fewer tasks that need to be redone. That is the tradeoff.
 
@@ -215,7 +215,7 @@ Our team has never hit a usage limit while using this tool. Your mileage may var
 - **Consistency** -- TDD, SOLID principles, and security audit on every task. Not just when someone remembers.
 - **Steerability** -- You approve the plan. You approve the output. You control the process. It is not a black box.
 
-This is not always the most token-efficient way to write code. It is the most *reliable* way to get code that is ready for production.
+This is not always the most token-efficient way to write code. It is the most _reliable_ way to get code that is ready for production.
 
 ---
 

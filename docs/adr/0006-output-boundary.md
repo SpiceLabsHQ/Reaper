@@ -48,6 +48,7 @@ A contract test in `scripts/contracts.test.js` validates that generated output f
 ## Consequences
 
 **Positive:**
+
 - Reaper's internal design values remain internal; they shape how Reaper is built without leaking into what Reaper builds for others
 - Generated output is portable to any project regardless of its conventions — no Reaper-specific assumptions embedded
 - Third-party agents can be added to the roster without inheriting Reaper-specific language or design philosophy
@@ -55,6 +56,7 @@ A contract test in `scripts/contracts.test.js` validates that generated output f
 - The three-tier model gives contributors a clear structural rule rather than requiring case-by-case judgment about tone
 
 **Negative / Risks:**
+
 - Contributors must internalize the three-tier model; new authors may default to a single voice and require correction
 - Content near tier boundaries requires careful authoring discipline — orchestration commands that both present UI to the user (Tier 1) and generate agent prompts (Tier 2) must cleanly separate the two concerns within a single file
 - The Fun key is explicitly disallowed in Tier 2 and Tier 3, which represents a large portion of the codebase; contributors who enjoy the voice may feel constrained when writing agent prompts

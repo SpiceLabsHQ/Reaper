@@ -93,23 +93,23 @@ Takeoff works autonomously through the full cycle without asking permission at e
 
 Takeoff selects a strategy based on the number of work units:
 
-| Work units | Strategy | Behavior |
-|------------|----------|----------|
-| 1 | `very_small_direct` | Single agent, no worktree isolation |
-| 2--4 | `medium_single_branch` | Sequential or parallel agents on one branch |
-| 5+ | `large_multi_worktree` | Each agent gets its own worktree, merged at the end |
+| Work units | Strategy               | Behavior                                            |
+| ---------- | ---------------------- | --------------------------------------------------- |
+| 1          | `very_small_direct`    | Single agent, no worktree isolation                 |
+| 2--4       | `medium_single_branch` | Sequential or parallel agents on one branch         |
+| 5+         | `large_multi_worktree` | Each agent gets its own worktree, merged at the end |
 
 ### Quality gate profiles
 
 Different file types trigger different gate agents:
 
-| Work type | Gate 1 (blocking) | Gate 2 (parallel) |
-|-----------|-------------------|-------------------|
-| Application code | test-runner | SME reviewer (feature-developer), security-auditor |
-| Infrastructure config | -- | SME reviewer (cloud-architect), security-auditor |
-| Database migrations | -- | SME reviewer (database-architect) |
-| Agent prompts | -- | ai-prompt-engineer, SME reviewer (ai-prompt-engineer) |
-| Documentation | -- | SME reviewer (technical-writer) |
+| Work type             | Gate 1 (blocking) | Gate 2 (parallel)                                     |
+| --------------------- | ----------------- | ----------------------------------------------------- |
+| Application code      | test-runner       | SME reviewer (feature-developer), security-auditor    |
+| Infrastructure config | --                | SME reviewer (cloud-architect), security-auditor      |
+| Database migrations   | --                | SME reviewer (database-architect)                     |
+| Agent prompts         | --                | ai-prompt-engineer, SME reviewer (ai-prompt-engineer) |
+| Documentation         | --                | SME reviewer (technical-writer)                       |
 
 Mixed changesets run the union of all matching profiles.
 
@@ -117,11 +117,11 @@ Mixed changesets run the union of all matching profiles.
 
 Reaper presents a "Touchdown" summary and waits for your response:
 
-| Your response | What happens |
-|---------------|--------------|
+| Your response         | What happens                                                 |
+| --------------------- | ------------------------------------------------------------ |
 | Feedback or questions | Reaper addresses concerns, re-runs gates if changes are made |
-| "looks good" | Reaper asks to confirm merge |
-| "merge" / "ship it" | Reaper merges to the target branch |
+| "looks good"          | Reaper asks to confirm merge                                 |
+| "merge" / "ship it"   | Reaper merges to the target branch                           |
 
 ---
 
@@ -207,22 +207,22 @@ A concept description (minimum 20 characters) describing the design question or 
 
 Squadron draws from the full Reaper agent roster. Selection is automatic based on concept keywords:
 
-| Domain | Agent | Triggered by |
-|--------|-------|-------------|
-| API Design | api-designer | api, endpoint, rest, graphql, webhook, grpc |
-| Database | database-architect | database, schema, migration, sql, nosql, sharding |
-| Cloud | cloud-architect | cloud, aws, gcp, azure, kubernetes, terraform |
-| Security | security-auditor | auth, oauth, jwt, encryption, compliance, rbac |
-| Event-Driven | event-architect | event, kafka, rabbitmq, cqrs, saga, pub/sub |
-| Frontend | frontend-architect | ui, react, vue, component, state management, ssr |
-| Performance | performance-engineer | latency, cache, bottleneck, load test, throughput |
-| Observability | observability-architect | monitoring, alerting, slo, tracing, metrics |
-| Data | data-engineer | etl, pipeline, data warehouse, streaming, dbt |
-| Testing | test-strategist | test pyramid, contract testing, e2e, chaos |
-| Compliance | compliance-architect | gdpr, hipaa, pci, soc2, data residency |
-| Deployment | deployment-engineer | ci/cd, blue-green, canary, rollback |
-| Integration | integration-engineer | third-party, stripe, external api |
-| Resilience | incident-responder | circuit breaker, blast radius, disaster recovery |
+| Domain        | Agent                   | Triggered by                                      |
+| ------------- | ----------------------- | ------------------------------------------------- |
+| API Design    | api-designer            | api, endpoint, rest, graphql, webhook, grpc       |
+| Database      | database-architect      | database, schema, migration, sql, nosql, sharding |
+| Cloud         | cloud-architect         | cloud, aws, gcp, azure, kubernetes, terraform     |
+| Security      | security-auditor        | auth, oauth, jwt, encryption, compliance, rbac    |
+| Event-Driven  | event-architect         | event, kafka, rabbitmq, cqrs, saga, pub/sub       |
+| Frontend      | frontend-architect      | ui, react, vue, component, state management, ssr  |
+| Performance   | performance-engineer    | latency, cache, bottleneck, load test, throughput |
+| Observability | observability-architect | monitoring, alerting, slo, tracing, metrics       |
+| Data          | data-engineer           | etl, pipeline, data warehouse, streaming, dbt     |
+| Testing       | test-strategist         | test pyramid, contract testing, e2e, chaos        |
+| Compliance    | compliance-architect    | gdpr, hipaa, pci, soc2, data residency            |
+| Deployment    | deployment-engineer     | ci/cd, blue-green, canary, rollback               |
+| Integration   | integration-engineer    | third-party, stripe, external api                 |
+| Resilience    | incident-responder      | circuit breaker, blast radius, disaster recovery  |
 
 Non-Reaper agents (from other plugins or built-in types) are also candidates when relevant.
 
@@ -248,10 +248,10 @@ The "last mile" command. Takes uncommitted work in a worktree, generates convent
 
 ### Arguments
 
-| Position | Meaning | Default |
-|----------|---------|---------|
-| 1 | Worktree path | Auto-detected (session context, cwd, or single worktree under `./trees/`) |
-| 2 | Target branch | `develop` |
+| Position | Meaning       | Default                                                                   |
+| -------- | ------------- | ------------------------------------------------------------------------- |
+| 1        | Worktree path | Auto-detected (session context, cwd, or single worktree under `./trees/`) |
+| 2        | Target branch | `develop`                                                                 |
 
 If multiple worktrees exist and none is specified, Reaper lists them and asks which one to ship.
 
@@ -290,9 +290,9 @@ Monitor progress across isolated worktrees. Shows implementation status, uncommi
 
 ### Arguments
 
-| Position | Meaning | Default |
-|----------|---------|---------|
-| 1 | Task ID filter | All worktrees |
+| Position | Meaning        | Default       |
+| -------- | -------------- | ------------- |
+| 1        | Task ID filter | All worktrees |
 
 ### Output
 
@@ -375,13 +375,13 @@ No arguments. Everything is resolved by detection and interactive confirmation.
 
 ### Supported ecosystems
 
-| Ecosystem | Detection | Test command | Lint command |
-|-----------|-----------|--------------|--------------|
-| JavaScript / TypeScript | `package.json` scripts | `npm test` or `test` script | `npm run lint` or `lint` script |
-| Python | `pytest.ini`, `pyproject.toml`, `setup.cfg` | `pytest` | `ruff check .` or `pylint .` |
-| Go | `go.mod` | `go test ./...` | `make lint` or `golangci-lint run` |
-| Rust | `Cargo.toml` | `cargo test` | `cargo clippy` |
-| Makefile fallback | `Makefile` with `test:` / `lint:` targets | `make test` | `make lint` |
+| Ecosystem               | Detection                                   | Test command                | Lint command                       |
+| ----------------------- | ------------------------------------------- | --------------------------- | ---------------------------------- |
+| JavaScript / TypeScript | `package.json` scripts                      | `npm test` or `test` script | `npm run lint` or `lint` script    |
+| Python                  | `pytest.ini`, `pyproject.toml`, `setup.cfg` | `pytest`                    | `ruff check .` or `pylint .`       |
+| Go                      | `go.mod`                                    | `go test ./...`             | `make lint` or `golangci-lint run` |
+| Rust                    | `Cargo.toml`                                | `cargo test`                | `cargo clippy`                     |
+| Makefile fallback       | `Makefile` with `test:` / `lint:` targets   | `make test`                 | `make lint`                        |
 
 When multiple ecosystems are detected, all candidates are shown and the most specific (language-native over Makefile) is recommended.
 

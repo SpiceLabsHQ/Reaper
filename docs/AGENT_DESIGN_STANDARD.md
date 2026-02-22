@@ -20,12 +20,12 @@ Structure serves the agent. Too little structure and the agent hallucinates its 
 
 This is the single most important rule in the standard. Violations always manifest the same way: a developer adds Tier 2 structure (decision tables, EXIT conditions, mode routing) to a single-mode agent because the agent "feels important" or "does complex work." The result is an agent burdened with scaffolding it never uses, which dilutes the signal of the actual instructions.
 
-| Common Cargo-Culting Mistake | Correct Approach |
-|---|---|
-| Adding a mode-selection table to a single-mode agent | Tier 1 has no mode table — it does one thing |
-| Adding EXIT conditions for modes that don't exist | EXIT conditions are per-mode; single-mode agents have one exit path |
-| Splitting a single flow into "modes" to justify more structure | If the agent genuinely has one flow, it is Tier 1 |
-| Using Tier 3's mode-switching protocol for a two-mode agent | Tier 2's decision table is sufficient; no switching protocol needed |
+| Common Cargo-Culting Mistake                                   | Correct Approach                                                    |
+| -------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Adding a mode-selection table to a single-mode agent           | Tier 1 has no mode table — it does one thing                        |
+| Adding EXIT conditions for modes that don't exist              | EXIT conditions are per-mode; single-mode agents have one exit path |
+| Splitting a single flow into "modes" to justify more structure | If the agent genuinely has one flow, it is Tier 1                   |
+| Using Tier 3's mode-switching protocol for a two-mode agent    | Tier 2's decision table is sufficient; no switching protocol needed |
 
 **A Tier 1 agent that produces sophisticated output is still Tier 1.** The `security-auditor` produces a structured multi-tool scan with severity classification. It is Tier 1 because it has one operational mode: scan and report. The `branch-manager` accepts many operation types (setup, commit, merge, teardown, audit) but they all flow through the same single-executor pattern — it is also Tier 1. `workflow-planner` has two modes (planning and verification) that differ in processing logic and output contract — it is Tier 2.
 
@@ -42,6 +42,7 @@ This is the single most important rule in the standard. Violations always manife
 **Gate Mode behavior:** Embed gate criteria inline. Because the agent has only one mode, gate criteria are part of that mode's definition. No external skill injection is required.
 
 **Examples:**
+
 - `reaper:technical-writer` — generates documentation
 - `reaper:security-auditor` — scans and reports security findings
 - `reaper:branch-manager` — pure executor for git write operations; operation types (setup, commit, merge, teardown, audit) vary by input but share one processing flow and one output contract
@@ -70,6 +71,7 @@ Without this justification, 2+ distinct operational modes automatically require 
 **Gate Mode behavior:** Receive gate criteria via code-review skill injection. The agent's two modes (normal operation vs. gate evaluation) have different output contracts, so gate criteria are delivered externally to prevent criteria drift when the quality bar changes.
 
 **Examples:**
+
 - `reaper:workflow-planner` — planning mode (default) vs. verification mode (`MODE: VERIFICATION`); different skills are loaded, producing different output contracts
 - `reaper:ai-prompt-engineer` in gate-capable builds — normal prompting advisor vs. gate evaluator
 - `reaper:code-review` (skill-injected) — review mode vs. gate mode
@@ -106,6 +108,7 @@ Every mode must declare its EXIT conditions explicitly. Ambiguous exits cause ag
 ```
 
 Accepted exit triggers:
+
 - Missing required input for this mode
 - Input present but invalid (fails format or range check)
 - Dependency not available (tool missing, file not found)
@@ -122,8 +125,8 @@ Mode selection must be expressed as a table, not prose. Prose mode-selection log
 ```markdown
 ## Mode Selection
 
-| Signal | Mode | Required Inputs |
-|--------|------|-----------------|
+| Signal                    | Mode        | Required Inputs    |
+| ------------------------- | ----------- | ------------------ |
 | [how to detect this mode] | [Mode Name] | [what is required] |
 | [how to detect this mode] | [Mode Name] | [what is required] |
 ```
@@ -137,9 +140,9 @@ Anti-patterns listed in a Tier 2 agent must use the three-column format: Detecti
 **Required format:**
 
 ```markdown
-| Anti-Pattern | Detection Signal | Fix |
-|---|---|---|
-| [name] | [observable signal in input/output] | [specific corrective action] |
+| Anti-Pattern | Detection Signal                    | Fix                          |
+| ------------ | ----------------------------------- | ---------------------------- |
+| [name]       | [observable signal in input/output] | [specific corrective action] |
 ```
 
 **Rationale:** An agent auditing for anti-patterns cannot act on a description alone. The Detection Signal tells it what pattern to match; the Fix tells it what to emit in the report. Without both, the agent either misses the anti-pattern or reports it without actionable guidance.
@@ -175,14 +178,14 @@ grep -l "your-section-content" src/agents/*.ejs | wc -l
 
 **Existing partials that satisfy this criterion:**
 
-| Partial | Used By |
-|---|---|
-| `pre-work-validation-coding` | feature-developer, bug-fixer, refactoring-dev, branch-manager |
-| `pre-work-validation-security` | security-auditor |
-| `output-requirements` | All agents with JSON output contracts |
-| `tdd-testing-protocol` | feature-developer, bug-fixer, refactoring-dev |
-| `quality-gate-protocol` | Agents that participate in gate pipeline |
-| `artifact-cleanup-coding` | All coding agents |
+| Partial                        | Used By                                                       |
+| ------------------------------ | ------------------------------------------------------------- |
+| `pre-work-validation-coding`   | feature-developer, bug-fixer, refactoring-dev, branch-manager |
+| `pre-work-validation-security` | security-auditor                                              |
+| `output-requirements`          | All agents with JSON output contracts                         |
+| `tdd-testing-protocol`         | feature-developer, bug-fixer, refactoring-dev                 |
+| `quality-gate-protocol`        | Agents that participate in gate pipeline                      |
+| `artifact-cleanup-coding`      | All coding agents                                             |
 
 ---
 
@@ -203,17 +206,19 @@ You are [role description]. [One sentence on primary responsibility and approach
 
 [OPTIONAL — only if input type variation needs declaration:]
 <%# TIER-JUSTIFICATION: This agent is classified Tier 1 despite having [N] input types
-    because all input types follow the same processing flow and output contract.
-    Mode count justification: [explain] %>
+because all input types follow the same processing flow and output contract.
+Mode count justification: [explain] %>
 
 <scope_boundaries>
 
 ## Scope
 
 **In scope:**
+
 - [What this agent owns]
 
 **Not in scope:**
+
 - [What this agent does not own, and who does own it]
 
 </scope_boundaries>
@@ -248,11 +253,11 @@ Gate Mode is when an agent operates as a quality gate, evaluating a work product
 
 ### When to Embed vs. Inject
 
-| Tier | Gate Mode Approach | Rationale |
-|---|---|---|
-| Tier 1 | Embed gate criteria inline (inside `<% if (gateCapable) { %>` block) | Single-mode agents can absorb gate criteria as a behavioral extension of their one mode |
-| Tier 2 | Receive criteria via code-review skill injection | Two-mode agents already context-switch; gate criteria belong in the external skill to prevent the agent's own prompt from drifting when criteria change |
-| Tier 3 | Receive criteria via skill injection | Multi-mode agents have enough complexity; externalizing gate criteria keeps the agent focused on orchestration |
+| Tier   | Gate Mode Approach                                                   | Rationale                                                                                                                                               |
+| ------ | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tier 1 | Embed gate criteria inline (inside `<% if (gateCapable) { %>` block) | Single-mode agents can absorb gate criteria as a behavioral extension of their one mode                                                                 |
+| Tier 2 | Receive criteria via code-review skill injection                     | Two-mode agents already context-switch; gate criteria belong in the external skill to prevent the agent's own prompt from drifting when criteria change |
+| Tier 3 | Receive criteria via skill injection                                 | Multi-mode agents have enough complexity; externalizing gate criteria keeps the agent focused on orchestration                                          |
 
 ### Gate Mode Output Contract
 

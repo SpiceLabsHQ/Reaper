@@ -28,27 +28,28 @@ These are **Reaper's internal design values**. They guide every decision in Reap
 
 ### Where Voice Applies
 
-| Context | Voice |
-|---------|-------|
-| User-facing commands/skills | Personality and themed language encouraged |
-| Agent prompts | Clinical, precise, no personality |
-| Generated output for target projects | Neutral best practices only |
+| Context                              | Voice                                      |
+| ------------------------------------ | ------------------------------------------ |
+| User-facing commands/skills          | Personality and themed language encouraged |
+| Agent prompts                        | Clinical, precise, no personality          |
+| Generated output for target projects | Neutral best practices only                |
 
 ## Agent Selection Matrix (Main Agents Only)
 
 Use specialized agents for all development work. Subagents: skip this section.
 
-| Task Type | Agent | When to Use |
-|-----------|-------|-------------|
-| Planning | `reaper:workflow-planner` | 3+ steps, multi-component features, parallel work analysis |
-| Bug Fixing | `reaper:bug-fixer` | All bug reports and issues |
-| New Features | `reaper:feature-developer` | All new functionality |
-| Git Operations | `reaper:branch-manager` | Worktree setup, merges, cleanup |
-| Testing | `reaper:test-runner` | Quality validation (mandatory before merge) |
-| Code Review | SME via code-review skill (automatic) | Work-type-matched reviewer; see gate profile table |
-| Security | `reaper:security-auditor` | Security analysis |
+| Task Type      | Agent                                 | When to Use                                                |
+| -------------- | ------------------------------------- | ---------------------------------------------------------- |
+| Planning       | `reaper:workflow-planner`             | 3+ steps, multi-component features, parallel work analysis |
+| Bug Fixing     | `reaper:bug-fixer`                    | All bug reports and issues                                 |
+| New Features   | `reaper:feature-developer`            | All new functionality                                      |
+| Git Operations | `reaper:branch-manager`               | Worktree setup, merges, cleanup                            |
+| Testing        | `reaper:test-runner`                  | Quality validation (mandatory before merge)                |
+| Code Review    | SME via code-review skill (automatic) | Work-type-matched reviewer; see gate profile table         |
+| Security       | `reaper:security-auditor`             | Security analysis                                          |
 
 **Workflow phases:**
+
 1. **Plan** (mandatory for 3+ steps): `reaper:workflow-planner`
 2. **Implement**: `reaper:bug-fixer` or `reaper:feature-developer`
 3. **Validate** (mandatory): `reaper:test-runner` then SME reviewer (via code-review skill) + `reaper:security-auditor`
@@ -70,15 +71,15 @@ The user, and only the user, may override any of these rules explicitly.
 
 Typical flow: `flight-plan` -> approve -> `/clear` -> `takeoff`
 
-| Command | Purpose |
-|---------|---------|
-| `/reaper:start [desc]` | Orientation / getting started |
-| `/reaper:flight-plan <desc>` | Plan with work breakdown |
-| `/reaper:takeoff <TASK-ID\|desc>` | Execute task autonomously |
-| `/reaper:ship <worktree>` | Commit, push, open PR |
-| `/reaper:squadron <question>` | Collaborative design session |
-| `/reaper:status-worktrees` | Check worktree status |
-| `/reaper:claude-sync` | Suggest CLAUDE.md updates |
+| Command                           | Purpose                          |
+| --------------------------------- | -------------------------------- |
+| `/reaper:start [desc]`            | Orientation / getting started    |
+| `/reaper:flight-plan <desc>`      | Plan with work breakdown         |
+| `/reaper:takeoff <TASK-ID\|desc>` | Execute task autonomously        |
+| `/reaper:ship <worktree>`         | Commit, push, open PR            |
+| `/reaper:squadron <question>`     | Collaborative design session     |
+| `/reaper:status-worktrees`        | Check worktree status            |
+| `/reaper:claude-sync`             | Suggest CLAUDE.md updates        |
 | `/reaper:configure-quality-gates` | Detect runners, write QG section |
 
 Takeoff auto-fetches details: Beads (`reaper-xxx`) via `bd show`, Jira (`PROJ-123`) via `acli jira workitem view`. Description-only also works.
@@ -129,6 +130,7 @@ Use `bd list` to find issue IDs, or `bd create` to create one.
 All work in `./trees/` worktrees, never root. Prefer `reaper:branch-manager` for setup/teardown.
 
 Manual fallback:
+
 ```bash
 git worktree add ./trees/TASK-ID-desc -b feature/TASK-ID-desc develop
 git -C ./trees/TASK-ID-desc status
@@ -237,13 +239,13 @@ The following commands are used during automated quality gates:
 
 ### Agent Categories
 
-| Category | Agents |
-|----------|--------|
-| Planning | reaper:workflow-planner, reaper:api-designer, reaper:cloud-architect, reaper:database-architect, reaper:event-architect, reaper:observability-architect, reaper:frontend-architect, reaper:data-engineer, reaper:test-strategist, reaper:compliance-architect |
-| Development | reaper:feature-developer, reaper:bug-fixer, reaper:refactoring-dev, reaper:branch-manager |
-| Quality | reaper:test-runner, reaper:security-auditor, reaper:performance-engineer (Gate 2 code review uses SME routing via code-review skill) |
-| Ops | reaper:deployment-engineer, reaper:integration-engineer, reaper:incident-responder |
-| Craft | reaper:technical-writer, reaper:claude-agent-architect, reaper:ai-prompt-engineer, reaper:principal-engineer |
+| Category    | Agents                                                                                                                                                                                                                                                        |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Planning    | reaper:workflow-planner, reaper:api-designer, reaper:cloud-architect, reaper:database-architect, reaper:event-architect, reaper:observability-architect, reaper:frontend-architect, reaper:data-engineer, reaper:test-strategist, reaper:compliance-architect |
+| Development | reaper:feature-developer, reaper:bug-fixer, reaper:refactoring-dev, reaper:branch-manager                                                                                                                                                                     |
+| Quality     | reaper:test-runner, reaper:security-auditor, reaper:performance-engineer (Gate 2 code review uses SME routing via code-review skill)                                                                                                                          |
+| Ops         | reaper:deployment-engineer, reaper:integration-engineer, reaper:incident-responder                                                                                                                                                                            |
+| Craft       | reaper:technical-writer, reaper:claude-agent-architect, reaper:ai-prompt-engineer, reaper:principal-engineer                                                                                                                                                  |
 
 ### Agent Naming Convention
 

@@ -21,7 +21,10 @@ const beadsRefPlugin = {
     'beads-ref': ({ type, raw }) => {
       // Chore commits are exempt
       if (type === 'chore') {
-        return [true, 'Chore commits are exempt from Beads reference requirement'];
+        return [
+          true,
+          'Chore commits are exempt from Beads reference requirement',
+        ];
       }
 
       // Check for Ref: footer with Beads issue ID pattern (reaper-xxx)

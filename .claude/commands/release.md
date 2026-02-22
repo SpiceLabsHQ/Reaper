@@ -5,6 +5,7 @@ description: Release workflow - merges develop to main, bumps version, and pushe
 # Release Workflow
 
 This project uses `commit-and-tag-version` for releases following git-flow. The release process:
+
 1. Merges `develop` → `main`
 2. Runs `npm run release` (bumps version in package.json and plugin.json, updates CHANGELOG.md, commits, tags)
 3. Pushes main and tags to origin (uses `VERSION_BUMP=0` to satisfy pre-push hook)

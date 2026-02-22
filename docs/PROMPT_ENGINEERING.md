@@ -22,7 +22,7 @@ Modern frontier models (Claude 4.x, GPT-4.1, Gemini 3) follow instructions with 
 
 ### 2. Provide Context and Motivation
 
-Explain *why*, not just *what*. Frontier models generalize from explanations, inferring related constraints from reasoning.
+Explain _why_, not just _what_. Frontier models generalize from explanations, inferring related constraints from reasoning.
 
 ```
 # Less effective (rigid rule)
@@ -39,6 +39,7 @@ pronounce them.
 Specify the shape of the response: JSON schema, markdown structure, prose paragraphs, or XML-tagged sections. Most frontier models are highly steerable on format, though the mechanisms differ by provider (see Model-Specific Guidance).
 
 **Techniques for format control:**
+
 - XML format indicators: `<smoothly_flowing_prose_paragraphs>` tags
 - Style matching: The formatting used in the prompt influences the response
 - Positive framing: "Write in flowing prose paragraphs" instead of "Do not use markdown"
@@ -58,16 +59,19 @@ The formatting style in the prompt influences the response style. If you don't w
 ### Chain-of-Thought (CoT)
 
 **When to use:**
+
 - Complex multi-step reasoning, math, logic, and code generation
 - Tasks requiring explicit reasoning traces for debugging or auditing
 - Structured CoT with XML tags (`<thinking>`, `<answer>`) to separate reasoning from output
 
 **When to skip or be cautious:**
+
 - Straightforward tasks where the model already "thinks" internally
 - Frontier models where explicit CoT provides diminishing lift (Wharton, June 2025)
 - Out-of-distribution tasks where CoT can be counterproductive (arXiv, 2025-2026)
 
 **Model-specific notes:**
+
 - Claude 4.x: Sensitive to the word "think" when extended thinking is disabled — prefer "consider," "evaluate," "reflect"
 - OpenAI o-series (o1, o3): Built-in CoT — explicit step-by-step instructions are redundant and can hurt performance
 - OpenAI GPT-4.1/4o: Still benefits from explicit CoT prompting ("think aloud" boosts reliability)
@@ -79,6 +83,7 @@ The formatting style in the prompt influences the response style. If you don't w
 **The shift:** Modern frontier models understand most tasks from descriptions alone. Few-shot examples can bias the model toward patterns that don't generalize. Reasoning models (OpenAI o-series, DeepSeek R1) actively perform worse with few-shot examples.
 
 **When examples are still valuable:**
+
 - Demonstrating exact output format or schema
 - Establishing tone and style
 - Disambiguating edge cases
@@ -89,6 +94,7 @@ The formatting style in the prompt influences the response style. If you don't w
 ### Task Decomposition / Prompt Chaining
 
 Breaking complex tasks into atomic subtasks remains one of the highest-impact techniques:
+
 - Monolithic prompts that try to do everything lead to hallucination, missed tasks, and quality degradation
 - Modular prompts reduce token usage per call and improve accuracy per subtask
 - Aligns naturally with multi-agent architectures
@@ -96,6 +102,7 @@ Breaking complex tasks into atomic subtasks remains one of the highest-impact te
 ### Meta-Prompting
 
 Using an LLM to generate, refine, or improve prompts:
+
 - Creating reusable prompt templates at scale
 - Systematically improving prompts through iteration
 - Building applications where prompt quality directly impacts results
@@ -103,6 +110,7 @@ Using an LLM to generate, refine, or improve prompts:
 ### ReAct (Reason + Act)
 
 Separates reasoning tokens from tool invocation:
+
 - Uses a "scratchpad" mechanism for robust planning
 - Improves tool-use reliability
 - Foundational pattern for general-purpose agents
@@ -110,6 +118,7 @@ Separates reasoning tokens from tool invocation:
 ### Reflection Pattern
 
 Treats model output as a draft, then has the model critically evaluate its own work:
+
 - Converts the LLM from a generator into a self-correcting system
 - Useful for code review, writing quality, and factual accuracy
 
@@ -122,17 +131,20 @@ Token optimization is a production architecture concern, not premature optimizat
 ### Input Token Optimization
 
 **Concise prompting:**
+
 - More tokens does not mean better results
 - Bloated prompts dilute signal, causing focus on irrelevant details
 - Well-optimized prompts often produce superior output to verbose alternatives
 
 **Prompt compression:**
+
 - Remove redundancy, summarize context, optimize examples
 - Apply word-level substitutions and strip extraneous characters
 - Always test compressed prompts for output quality
 - Lossy compression that removes critical context forces hallucination
 
 **Conditional context inclusion:**
+
 - Include instructions only when relevant to the current task
 - System prompts often contain sections relevant only in specific scenarios
 - No point burning tokens on instructions for tools not in use
@@ -140,6 +152,7 @@ Token optimization is a production architecture concern, not premature optimizat
 ### Output Token Management
 
 Output tokens often dominate costs and latency more than input tokens:
+
 - Explicitly constrain output length and format
 - Specify when summaries vs. detailed responses are needed
 - Use structured output (JSON, XML) to prevent verbose prose when not needed
@@ -153,6 +166,7 @@ Output tokens often dominate costs and latency more than input tokens:
 ### The Compression Tradeoff
 
 There is no single optimizer for all cases. Increased compression comes at the cost of model performance. The key is finding the right balance per task:
+
 - **Clarity-critical tasks**: Prefer verbosity over token savings
 - **High-volume tasks**: Invest in compression and testing
 - **Safety-critical instructions**: Redundancy is acceptable and encouraged
@@ -168,6 +182,7 @@ Each model family has distinct prompting characteristics. Prompts that perform w
 **Key characteristics:** Precise instruction following, XML tag affinity, context awareness, aggressive parallel tool calling.
 
 **Prompting patterns:**
+
 - **XML semantic tags** are the recommended structuring mechanism (`<critical>`, `<instructions>`, `<constraint>`)
 - **Thinking sensitivity**: When extended thinking is disabled, avoid the word "think" — use "consider," "evaluate," "reflect"
 - **Overtriggering**: Opus 4.5 is more responsive to system prompts than prior models. Aggressive language ("CRITICAL: You MUST...") can cause overtriggering — use natural language instead
@@ -178,6 +193,7 @@ Each model family has distinct prompting characteristics. Prompts that perform w
 - **Code grounding**: Prompt with "ALWAYS read files before proposing edits" to prevent hallucination
 
 **Structuring with XML tags:**
+
 ```xml
 <use_parallel_tool_calls>
   Make all independent tool calls in parallel.
@@ -195,6 +211,7 @@ Each model family has distinct prompting characteristics. Prompts that perform w
 ```
 
 **Model tiers:**
+
 - **Opus 4.5**: Strategic analysis, complex trade-offs, deep reasoning
 - **Sonnet 4.5**: Strong balance of capability and cost for most tasks
 - **Haiku 4.5**: Fast, cost-efficient systematic work and procedural execution
@@ -204,6 +221,7 @@ Each model family has distinct prompting characteristics. Prompts that perform w
 **Key characteristics:** Literal instruction following (even more than GPT-4o), 1M token context, strong agentic capabilities, enhanced tool calling.
 
 **Prompting patterns:**
+
 - **Literal compliance**: GPT-4.1 follows instructions more literally than GPT-4o. Prompts must be migrated — what worked on 4o may underperform. A single clear sentence is usually enough to steer behavior
 - **Agentic prompts need three reminders**: (1) Persistence — don't yield until the task is fully done, (2) Tool-calling encouragement — use tools for accuracy, (3) Planning and reflection — articulate intentions and reflect on outcomes. These three instructions alone increased SWE-bench score by ~20%
 - **Use the API `tools` field** for tool descriptions, not manual injection into the system prompt (+2% SWE-bench from this alone)
@@ -219,6 +237,7 @@ Each model family has distinct prompting characteristics. Prompts that perform w
 **Key characteristics:** Built-in chain-of-thought reasoning, self-fact-checking, large context windows (up to 200K).
 
 **Prompting patterns:**
+
 - **Do NOT use explicit CoT prompting** — the model reasons internally. Instructions like "let's think step by step" are redundant and can be counterproductive
 - **Do NOT use few-shot examples** — these are not recommended for reasoning models and can degrade performance
 - **Keep prompts simple and direct** — present the problem clearly; the model analyzes deeply on its own
@@ -232,6 +251,7 @@ Each model family has distinct prompting characteristics. Prompts that perform w
 **Key characteristics:** PTCF framework affinity, multimodal native, very large context windows, simplify-first philosophy (Gemini 3).
 
 **Prompting patterns:**
+
 - **PTCF framework**: Gemini performs best with Persona, Task, Context, Format structure
 - **Gemini 3 — simplify aggressively**: Cut 30-50% of prompt verbosity compared to Gemini 2.x. State the goal and format; skip obvious rules. Elaborate prompts from 2.x produce verbose, over-explained outputs in 3
 - **Temperature**: For Gemini 3, keep temperature at default 1.0. Changing it causes looping or degraded performance, especially on reasoning tasks
@@ -247,6 +267,7 @@ Each model family has distinct prompting characteristics. Prompts that perform w
 **Key characteristics:** Open-weight MoE architecture, massive context (Scout: 10M tokens, Maverick: 1M), special token format, multimodal native.
 
 **Prompting patterns:**
+
 - **Special token format**: Uses `<|begin_of_text|>`, `<|header_start|>system<|header_end|>`, `<|eot|>` tokens. Use framework `apply_chat_template` rather than manual token construction
 - **System prompts work well**: Define role and behavior in the system message
 - **Prompt Ops toolkit**: Meta's `llama-prompt-ops` package automates prompt transformation from other models to Llama format
@@ -259,6 +280,7 @@ Each model family has distinct prompting characteristics. Prompts that perform w
 **Key characteristics:** Two distinct models with opposite prompting requirements. V3 is a traditional chat model; R1 is a reasoning model with native CoT.
 
 **DeepSeek V3 (Chat):**
+
 - Behaves similarly to GPT-4o or Claude Sonnet — standard techniques apply
 - **Leverage system prompts and personas**: Responds exceptionally well to role-playing
 - **Context caching**: Place static data at the beginning of prompts for API-level caching (up to 90% cost discount on repeated prefixes)
@@ -266,6 +288,7 @@ Each model family has distinct prompting characteristics. Prompts that perform w
 - Supports function calling, JSON mode, and structured outputs
 
 **DeepSeek R1 (Reasoning):**
+
 - **Avoid system prompts entirely** — place all instructions in the user role
 - **Use zero-shot prompting** — few-shot examples degrade performance. The model mimics example patterns instead of reasoning
 - **Keep prompts minimal and direct** — simpler prompts produce better results
@@ -279,6 +302,7 @@ Each model family has distinct prompting characteristics. Prompts that perform w
 **Key characteristics:** Strong instruction following, PTCF-like structure, native function calling, structured output support.
 
 **Prompting patterns:**
+
 - **Role definition first**: Start with "You are a <role>, your task is to <task>" — effective for steering toward verticals
 - **Markdown/XML formatting**: Critical for long prompts. Makes structure intuitive for both model and developer
 - **Avoid contradictions in long prompts**: As system prompts grow, slight contradictions appear. Use explicit decision-tree logic to resolve ambiguity
@@ -291,17 +315,17 @@ Each model family has distinct prompting characteristics. Prompts that perform w
 
 ## Cross-Model Comparison Matrix
 
-| Capability | Claude 4.x | GPT-4.1 | o-Series | Gemini 3 | Llama 4 | DeepSeek R1 | DeepSeek V3 | Mistral L2 |
-|---|---|---|---|---|---|---|---|---|
-| **System prompt** | Strong | Strong | Limited | Strong | Strong | Avoid | Strong | Strong |
-| **XML tags** | Recommended | Supported | N/A | Supported | Supported | User-msg only | Supported | Supported |
-| **Few-shot** | Sparingly | Sparingly | Avoid | Sparingly | Works well | Avoid | Works well | Works well |
-| **Explicit CoT** | Careful* | Helpful | Avoid | Avoid over-constraining | Works | Avoid | Helpful | Helpful |
-| **Built-in reasoning** | Extended thinking | No | Yes | Thinking levels | No | Yes (`<think>`) | No | Magistral only |
-| **Max context** | 200K | 1M | 200K | 1M+ | 10M (Scout) | 128K | 128K | 128K |
-| **Parallel tool calls** | Aggressive | Strong | N/A | Supported | Supported | N/A | Supported | Supported |
-| **Structured output** | XML/JSON | JSON | JSON | `responseSchema` | JSON | Markdown/XML | JSON mode | Custom schemas |
-| **Overengineering risk** | High (Opus) | Moderate | Low | Low | Low | Low | Moderate | Low |
+| Capability               | Claude 4.x        | GPT-4.1   | o-Series | Gemini 3                | Llama 4     | DeepSeek R1     | DeepSeek V3 | Mistral L2     |
+| ------------------------ | ----------------- | --------- | -------- | ----------------------- | ----------- | --------------- | ----------- | -------------- |
+| **System prompt**        | Strong            | Strong    | Limited  | Strong                  | Strong      | Avoid           | Strong      | Strong         |
+| **XML tags**             | Recommended       | Supported | N/A      | Supported               | Supported   | User-msg only   | Supported   | Supported      |
+| **Few-shot**             | Sparingly         | Sparingly | Avoid    | Sparingly               | Works well  | Avoid           | Works well  | Works well     |
+| **Explicit CoT**         | Careful\*         | Helpful   | Avoid    | Avoid over-constraining | Works       | Avoid           | Helpful     | Helpful        |
+| **Built-in reasoning**   | Extended thinking | No        | Yes      | Thinking levels         | No          | Yes (`<think>`) | No          | Magistral only |
+| **Max context**          | 200K              | 1M        | 200K     | 1M+                     | 10M (Scout) | 128K            | 128K        | 128K           |
+| **Parallel tool calls**  | Aggressive        | Strong    | N/A      | Supported               | Supported   | N/A             | Supported   | Supported      |
+| **Structured output**    | XML/JSON          | JSON      | JSON     | `responseSchema`        | JSON        | Markdown/XML    | JSON mode   | Custom schemas |
+| **Overengineering risk** | High (Opus)       | Moderate  | Low      | Low                     | Low         | Low             | Moderate    | Low            |
 
 \* Claude: avoid the word "think" when extended thinking is disabled
 
@@ -349,6 +373,7 @@ As instruction complexity increases in a single agent, adherence to specific rul
 ### Hub-and-Spoke Orchestration
 
 A central orchestrator manages all agent interactions:
+
 - Predictable workflows
 - Strong consistency
 - Simplified debugging
@@ -357,6 +382,7 @@ A central orchestrator manages all agent interactions:
 ### Plan-and-Execute
 
 A capable model plans; cheaper models execute:
+
 - Up to 90% cost reduction
 - Separation of strategic thinking from systematic implementation
 - Natural fit for tiered model pairings: Claude Opus/Haiku, OpenAI o3/GPT-4.1-mini, Gemini Pro/Flash
@@ -365,11 +391,11 @@ A capable model plans; cheaper models execute:
 
 Most production AI failures (2024-2026) were architectural, not model quality issues:
 
-| Failure Pattern | Root Cause |
-|---|---|
-| Poor state management between agents | No structured state format |
-| Bad handoff design | Unclear input/output contracts |
-| Over-engineering initial implementations | Premature abstraction |
+| Failure Pattern                             | Root Cause                                        |
+| ------------------------------------------- | ------------------------------------------------- |
+| Poor state management between agents        | No structured state format                        |
+| Bad handoff design                          | Unclear input/output contracts                    |
+| Over-engineering initial implementations    | Premature abstraction                             |
 | Jumping to multi-agent complexity too early | Not understanding simple-case failure modes first |
 
 ---
@@ -378,27 +404,27 @@ Most production AI failures (2024-2026) were architectural, not model quality is
 
 These are the most common prompt engineering mistakes. The `ai-prompt-engineer` agent should detect and warn against all of them.
 
-| Anti-Pattern | Why It Fails | Fix |
-|---|---|---|
-| Vague/underspecified prompts | Model fills gaps with generic output | Be explicit about desired behavior, format, and scope |
-| Packing too many tasks in one prompt | Divided attention leads to hallucination, missed tasks | Decompose into atomic subtasks |
-| Overusing few-shot examples | Biases model, wastes tokens, can reduce performance | Use 1-2 diverse examples for format only |
-| Using absolute/rigid instructions | Forces model to hallucinate to comply | Use conditional language with context |
-| Telling model what NOT to do | Leaves desired behavior undefined | State what the model SHOULD do instead |
-| Ignoring output token costs | Output often dominates total cost | Constrain output format and length |
-| Over-engineering from the start | Simple solutions outperform complex ones initially | Start simple, add complexity only when needed |
-| Repeating same examples | Overfitting to specific patterns | Provide diverse examples |
-| Vague references in long conversations | Model loses track of context | Be specific with names, quotes, or re-state context |
-| Over-indexing on third-party frameworks | Generic tools often underperform custom solutions | Build essential components yourself first |
-| Missing output format | Model produces unpredictable response shapes | Add explicit format specification (JSON schema, XML structure, etc.) |
-| Aggressive trigger language | ALL CAPS, "CRITICAL," "MUST" overuse causes overtriggering (especially Opus 4.5) | Tone down to natural language; reserve emphasis for genuine safety constraints |
-| Style mismatch | Prompt uses one format (markdown) but expects a different output format (prose) | Match prompt formatting style to desired output style |
-| Dead context | Instructions reference tools, features, or scenarios not in scope | Remove irrelevant instructions or make them conditional |
-| No grounding constraint | Model claims facts without verification | Add "read before answering" or "investigate before claiming" instructions |
-| Conflicting instructions | Contradictory rules in long prompts cause unpredictable behavior | Resolve with explicit decision-tree logic or priority ordering |
-| Context window overflow | Prompt too large for target model's max context | Compress, decompose, or switch to a model with larger context |
-| Hallucination-inducing pressure | Demanding specific answers the model cannot know forces fabrication | Add "if uncertain, say so" or remove false-precision requirements |
-| Prompt injection vulnerability | User input can override system-level instructions | Add input sanitization, instruction hierarchy, or delimiter boundaries |
+| Anti-Pattern                            | Why It Fails                                                                     | Fix                                                                            |
+| --------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Vague/underspecified prompts            | Model fills gaps with generic output                                             | Be explicit about desired behavior, format, and scope                          |
+| Packing too many tasks in one prompt    | Divided attention leads to hallucination, missed tasks                           | Decompose into atomic subtasks                                                 |
+| Overusing few-shot examples             | Biases model, wastes tokens, can reduce performance                              | Use 1-2 diverse examples for format only                                       |
+| Using absolute/rigid instructions       | Forces model to hallucinate to comply                                            | Use conditional language with context                                          |
+| Telling model what NOT to do            | Leaves desired behavior undefined                                                | State what the model SHOULD do instead                                         |
+| Ignoring output token costs             | Output often dominates total cost                                                | Constrain output format and length                                             |
+| Over-engineering from the start         | Simple solutions outperform complex ones initially                               | Start simple, add complexity only when needed                                  |
+| Repeating same examples                 | Overfitting to specific patterns                                                 | Provide diverse examples                                                       |
+| Vague references in long conversations  | Model loses track of context                                                     | Be specific with names, quotes, or re-state context                            |
+| Over-indexing on third-party frameworks | Generic tools often underperform custom solutions                                | Build essential components yourself first                                      |
+| Missing output format                   | Model produces unpredictable response shapes                                     | Add explicit format specification (JSON schema, XML structure, etc.)           |
+| Aggressive trigger language             | ALL CAPS, "CRITICAL," "MUST" overuse causes overtriggering (especially Opus 4.5) | Tone down to natural language; reserve emphasis for genuine safety constraints |
+| Style mismatch                          | Prompt uses one format (markdown) but expects a different output format (prose)  | Match prompt formatting style to desired output style                          |
+| Dead context                            | Instructions reference tools, features, or scenarios not in scope                | Remove irrelevant instructions or make them conditional                        |
+| No grounding constraint                 | Model claims facts without verification                                          | Add "read before answering" or "investigate before claiming" instructions      |
+| Conflicting instructions                | Contradictory rules in long prompts cause unpredictable behavior                 | Resolve with explicit decision-tree logic or priority ordering                 |
+| Context window overflow                 | Prompt too large for target model's max context                                  | Compress, decompose, or switch to a model with larger context                  |
+| Hallucination-inducing pressure         | Demanding specific answers the model cannot know forces fabrication              | Add "if uncertain, say so" or remove false-precision requirements              |
+| Prompt injection vulnerability          | User input can override system-level instructions                                | Add input sanitization, instruction hierarchy, or delimiter boundaries         |
 
 ---
 
@@ -416,6 +442,7 @@ These are the most common prompt engineering mistakes. The `ai-prompt-engineer` 
 ## Sources
 
 ### General
+
 - [IBM 2026 Guide to Prompt Engineering](https://www.ibm.com/think/prompt-engineering)
 - [Prompt Engineering Guide (promptingguide.ai)](https://www.promptingguide.ai/)
 - [Lakera Ultimate Guide (2025)](https://www.lakera.ai/blog/prompt-engineering-guide)
@@ -427,32 +454,38 @@ These are the most common prompt engineering mistakes. The `ai-prompt-engineer` 
 - [PromptBuilder Best Practices 2025](https://promptbuilder.cc/blog/prompt-engineering-best-practices-2025)
 
 ### Anthropic Claude
+
 - [Claude 4.x Prompting Best Practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-4-best-practices)
 - [Anthropic Interactive Prompt Engineering Tutorial](https://github.com/anthropics/prompt-eng-interactive-tutorial)
 
 ### OpenAI GPT / o-Series
+
 - [OpenAI Prompt Engineering Guide](https://platform.openai.com/docs/guides/prompt-engineering)
 - [OpenAI Reasoning Best Practices](https://platform.openai.com/docs/guides/reasoning-best-practices)
 - [GPT-4.1 Prompting Guide (Cookbook)](https://cookbook.openai.com/examples/gpt4-1_prompting_guide)
 - [Microsoft: Prompt Engineering for O1/O3-mini](https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/prompt-engineering-for-openai%E2%80%99s-o1-and-o3-mini-reasoning-models/4374010)
 
 ### Google Gemini
+
 - [Gemini API Prompt Design Strategies](https://ai.google.dev/gemini-api/docs/prompting-strategies)
 - [Gemini 3 Prompting Guide (Vertex AI)](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/start/gemini-3-prompting-guide)
 - [Gemini 3 Best Practices (Philipp Schmid)](https://www.philschmid.de/gemini-3-prompt-practices)
 - [Gemini 2.5 Pro Best Practices (Google Cloud Community)](https://medium.com/google-cloud/best-practices-for-prompt-engineering-with-gemini-2-5-pro-755cb473de70)
 
 ### Meta Llama
+
 - [Llama 4 Model Card and Prompt Format](https://www.llama.com/docs/model-cards-and-prompt-formats/llama4/)
 - [Meta Prompt Engineering How-To Guide](https://www.llama.com/docs/how-to-guides/prompting/)
 - [Llama Prompt Ops Toolkit](https://www.marktechpost.com/2025/05/03/meta-ai-releases-llama-prompt-ops-a-python-toolkit-for-prompt-optimization-on-llama-models/)
 
 ### DeepSeek
+
 - [DeepSeek R1 & V3 Prompting Guide](https://passhulk.com/blog/deepseek-prompt-engineering-guide-master-r1-v3-models-2025/)
 - [Prompting DeepSeek R1 (Together.ai)](https://docs.together.ai/docs/prompting-deepseek-r1)
 - [DeepSeek Prompting Techniques (DataStudios)](https://www.datastudios.org/post/deepseek-prompting-techniques-strategies-limits-best-practices-etc)
 
 ### Mistral
+
 - [Mistral Official Prompting Guide](https://docs.mistral.ai/guides/prompting_capabilities)
 - [Mistral System Prompt Best Practices (PromptLayer)](https://blog.promptlayer.com/mistral-system-prompt/)
 - [Mistral Tokenization & Chat Templates](https://docs.mistral.ai/cookbooks/concept-deep-dive-tokenization-chat_templates)

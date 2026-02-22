@@ -58,23 +58,23 @@ reaper/
 
 ### Pre-Work Validation Partials
 
-| Partial | Used By | Description |
-|---------|---------|-------------|
-| `pre-work-validation-coding.ejs` | bug-fixer, feature-developer, refactoring-dev, integration-engineer | Validates TASK, WORKTREE_PATH, DESCRIPTION |
-| `pre-work-validation-review.ejs` | security-auditor, test-runner (and SME reviewers dispatched with code-review skill) | Validates TASK, WORKING_DIR, PLAN_CONTEXT |
+| Partial                          | Used By                                                                             | Description                                |
+| -------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------ |
+| `pre-work-validation-coding.ejs` | bug-fixer, feature-developer, refactoring-dev, integration-engineer                 | Validates TASK, WORKTREE_PATH, DESCRIPTION |
+| `pre-work-validation-review.ejs` | security-auditor, test-runner (and SME reviewers dispatched with code-review skill) | Validates TASK, WORKING_DIR, PLAN_CONTEXT  |
 
 ### Standard Protocol Partials
 
-| Partial | Used By | Description |
-|---------|---------|-------------|
-| `directory-exclusions.ejs` | All coding agents | Standard exclusion patterns for tests/linting |
-| `output-requirements.ejs` | All agents | JSON output requirements, no file writing |
-| `git-prohibitions.ejs` | Coding agents | Never run git add/commit/push/merge |
-| `tdd-testing-protocol.ejs` | bug-fixer, feature-developer, refactoring-dev | TDD Red-Green-Blue cycle |
-| `artifact-cleanup-coding.ejs` | Coding agents | Clean up test/lint artifacts |
-| `artifact-cleanup-review.ejs` | Review agents | Clean up scan/build artifacts |
-| `file-conflict-detection.ejs` | Coding agents | Strategy 2 parallel work safety |
-| `no-commits-policy.ejs` | Coding agents | Coding agents never commit |
+| Partial                       | Used By                                       | Description                                   |
+| ----------------------------- | --------------------------------------------- | --------------------------------------------- |
+| `directory-exclusions.ejs`    | All coding agents                             | Standard exclusion patterns for tests/linting |
+| `output-requirements.ejs`     | All agents                                    | JSON output requirements, no file writing     |
+| `git-prohibitions.ejs`        | Coding agents                                 | Never run git add/commit/push/merge           |
+| `tdd-testing-protocol.ejs`    | bug-fixer, feature-developer, refactoring-dev | TDD Red-Green-Blue cycle                      |
+| `artifact-cleanup-coding.ejs` | Coding agents                                 | Clean up test/lint artifacts                  |
+| `artifact-cleanup-review.ejs` | Review agents                                 | Clean up scan/build artifacts                 |
+| `file-conflict-detection.ejs` | Coding agents                                 | Strategy 2 parallel work safety               |
+| `no-commits-policy.ejs`       | Coding agents                                 | Coding agents never commit                    |
 
 ## Template Variables
 
@@ -82,29 +82,45 @@ Templates use these EJS variables passed during compilation:
 
 ### Agent Variables
 
-| Variable | Type | Description | Example |
-|----------|------|-------------|---------|
-| `AGENT_NAME` | string | Agent identifier | `bug-fixer` |
-| `AGENT_TYPE` | enum | Agent category | `coding`, `review`, `planning` |
-| `AGENT_COLOR` | string | Status line color | `green`, `yellow`, `blue` |
-| `AGENT_MODEL` | string | Optional model override | `opus`, `haiku` |
-| `HAS_TDD` | boolean | Uses TDD protocol | `true`/`false` |
-| `HAS_GIT_PROHIBITIONS` | boolean | Has git restrictions | `true`/`false` |
-| `TASK_NOUN` | string | What agent works on | `bug`, `feature`, `code` |
+| Variable               | Type    | Description             | Example                        |
+| ---------------------- | ------- | ----------------------- | ------------------------------ |
+| `AGENT_NAME`           | string  | Agent identifier        | `bug-fixer`                    |
+| `AGENT_TYPE`           | enum    | Agent category          | `coding`, `review`, `planning` |
+| `AGENT_COLOR`          | string  | Status line color       | `green`, `yellow`, `blue`      |
+| `AGENT_MODEL`          | string  | Optional model override | `opus`, `haiku`                |
+| `HAS_TDD`              | boolean | Uses TDD protocol       | `true`/`false`                 |
+| `HAS_GIT_PROHIBITIONS` | boolean | Has git restrictions    | `true`/`false`                 |
+| `TASK_NOUN`            | string  | What agent works on     | `bug`, `feature`, `code`       |
 
 ### Agent Type Mappings
 
 ```javascript
 const AGENT_TYPES = {
-  coding: ['bug-fixer', 'feature-developer', 'refactoring-dev', 'integration-engineer'],
+  coding: [
+    'bug-fixer',
+    'feature-developer',
+    'refactoring-dev',
+    'integration-engineer',
+  ],
   review: ['security-auditor', 'test-runner'],
   planning: [
-    'workflow-planner', 'api-designer', 'database-architect', 'cloud-architect',
-    'event-architect', 'observability-architect', 'frontend-architect',
-    'data-engineer', 'test-strategist', 'compliance-architect',
+    'workflow-planner',
+    'api-designer',
+    'database-architect',
+    'cloud-architect',
+    'event-architect',
+    'observability-architect',
+    'frontend-architect',
+    'data-engineer',
+    'test-strategist',
+    'compliance-architect',
   ],
   operations: ['branch-manager', 'deployment-engineer', 'incident-responder'],
-  documentation: ['technical-writer', 'claude-agent-architect', 'ai-prompt-engineer'],
+  documentation: [
+    'technical-writer',
+    'claude-agent-architect',
+    'ai-prompt-engineer',
+  ],
   performance: ['performance-engineer'],
 };
 ```
@@ -192,6 +208,7 @@ git add agents/ skills/ commands/ hooks/
 ```
 
 This ensures:
+
 1. Templates compile without errors
 2. Generated files are always committed with source changes
 3. No drift between source and output
@@ -199,6 +216,7 @@ This ensures:
 ### CI/CD
 
 The build should also run in CI to verify:
+
 - Template syntax is valid
 - All partials exist
 - Output matches committed files
@@ -216,11 +234,13 @@ The build should also run in CI to verify:
 ### Adding a New Partial
 
 1. Create partial in `src/partials/`:
+
    ```bash
    touch src/partials/my-new-partial.ejs
    ```
 
 2. Add content (no frontmatter, just the markdown):
+
    ```markdown
    ## My New Section
 
@@ -228,6 +248,7 @@ The build should also run in CI to verify:
    ```
 
 3. Include in agents:
+
    ```ejs
    <%- include('partials/my-new-partial') %>
    ```
@@ -240,11 +261,13 @@ The build should also run in CI to verify:
 ### Adding a New Agent
 
 1. Create template in `src/agents/`:
+
    ```bash
    touch src/agents/my-new-agent.ejs
    ```
 
 2. Add frontmatter and content:
+
    ```ejs
    ---
    name: my-new-agent
@@ -260,6 +283,7 @@ The build should also run in CI to verify:
    ```
 
 3. Register in build config (if using agent type inference):
+
    ```javascript
    // In scripts/build.js or config
    AGENT_TYPES.coding.push('my-new-agent');
@@ -294,6 +318,7 @@ For review agents (security-auditor, test-runner; Gate 2 SME reviewers use the c
 ### directory-exclusions.ejs
 
 Standard exclusion patterns for all languages:
+
 - `**/trees/**` - Worktree directories
 - `**/*backup*/` - Backup directories
 - `**/node_modules/**` - Node.js dependencies
@@ -303,6 +328,7 @@ Standard exclusion patterns for all languages:
 ### git-prohibitions.ejs
 
 Git operations that coding agents must never run:
+
 - `git add`
 - `git commit`
 - `git push`
@@ -314,6 +340,7 @@ Explains why only branch-manager is authorized after quality gates.
 ### tdd-testing-protocol.ejs
 
 TDD testing guidance for coding agents:
+
 - Test YOUR changes only (not full test suite)
 - Red-Green-Blue cycle
 - Language-specific examples
@@ -322,21 +349,24 @@ TDD testing guidance for coding agents:
 ### artifact-cleanup-coding.ejs
 
 Cleanup for coding agent artifacts:
+
 - Coverage directories (coverage/, .nyc_output/, htmlcov/)
-- Test cache (.pytest_cache/, __pycache__)
+- Test cache (.pytest_cache/, **pycache**)
 - Linter cache (.eslintcache, .ruff_cache/)
 - Find-based deletion patterns
 
 ### artifact-cleanup-review.ejs
 
 Cleanup for review agent artifacts:
+
 - Build artifacts (dist/, build/)
-- Security scan results (trivy-*.json, semgrep-*.json)
+- Security scan results (trivy-_.json, semgrep-_.json)
 - Type checking artifacts (.tsbuildinfo)
 
 ### file-conflict-detection.ejs
 
 Strategy 2 parallel work safety:
+
 - Check git status before making changes
 - Detect unexpected modified files
 - EXIT IMMEDIATELY with conflict report
@@ -345,6 +375,7 @@ Strategy 2 parallel work safety:
 ### no-commits-policy.ejs
 
 Commit policy for all strategies:
+
 - Coding agents NEVER commit
 - Workflow explanation per strategy
 - What happens after quality gates
@@ -355,6 +386,7 @@ Commit policy for all strategies:
 ### Updating Partials
 
 When updating a partial:
+
 1. Edit the partial in `src/partials/`
 2. Run `npm run build`
 3. Review all affected agents in `agents/`
@@ -363,6 +395,7 @@ When updating a partial:
 ### Verifying Consistency
 
 After major changes:
+
 ```bash
 # Rebuild all
 npm run build
@@ -377,14 +410,17 @@ git diff agents/
 ### Troubleshooting
 
 **Build fails with "partial not found":**
+
 - Check partial name matches exactly (case-sensitive)
 - Ensure partial exists in `src/partials/`
 
 **Output doesn't match expected:**
+
 - Check variable values in build config
 - Verify conditional logic in template
 - Run build with verbose logging
 
 **Git shows changes after build:**
+
 - Source templates were edited but build wasn't run
 - Run `npm run build` and commit all changes

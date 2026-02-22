@@ -1,6 +1,6 @@
 # Workflow
 
-*The full orchestration lifecycle, step by step.*
+_The full orchestration lifecycle, step by step._
 
 Reaper turns a description of what you want into tested, reviewed, gate-passed code. This document covers the end-to-end pipeline, from planning through quality gates to merge.
 
@@ -72,11 +72,11 @@ If the task has pre-planned child issues with acceptance criteria, those become 
 
 For each work unit, the orchestrator deploys the appropriate coding agent:
 
-| Work Type | Agent | Method |
-|-----------|-------|--------|
-| Bug fixes | reaper:bug-fixer | Minimal fix with TDD Red-Green-Refactor |
-| New features | reaper:feature-developer | TDD + SOLID from inception |
-| Code improvements | reaper:refactoring-dev | Preserve behavior, improve structure |
+| Work Type         | Agent                    | Method                                  |
+| ----------------- | ------------------------ | --------------------------------------- |
+| Bug fixes         | reaper:bug-fixer         | Minimal fix with TDD Red-Green-Refactor |
+| New features      | reaper:feature-developer | TDD + SOLID from inception              |
+| Code improvements | reaper:refactoring-dev   | Preserve behavior, improve structure    |
 
 Every coding agent works test-first. Tests are written before implementation, not after.
 
@@ -100,11 +100,11 @@ Only after all gates pass for every work unit does Reaper present the completed 
 
 You control what happens next:
 
-| Your Response | What Happens |
-|---------------|--------------|
-| Feedback or questions | Reaper addresses concerns, re-runs gates if changes are made |
-| "looks good" | Reaper asks for merge confirmation |
-| "ship it" / "merge" / "approved" | reaper:branch-manager merges to develop |
+| Your Response                    | What Happens                                                 |
+| -------------------------------- | ------------------------------------------------------------ |
+| Feedback or questions            | Reaper addresses concerns, re-runs gates if changes are made |
+| "looks good"                     | Reaper asks for merge confirmation                           |
+| "ship it" / "merge" / "approved" | reaper:branch-manager merges to develop                      |
 
 No code lands on your main branch without your explicit approval.
 
@@ -116,23 +116,24 @@ When `reaper:workflow-planner` is invoked for a new task, it routes to the `reap
 
 ### Scoring Dimensions
 
-| Dimension | What It Measures |
-|-----------|-----------------|
-| File Impact | Number and size of files changing. Single small file scores low; many large files or high-complexity areas (auth, payment, core logic) score high. |
-| Dependencies | Cross-module coupling. External API integrations, database schema changes, and third-party library changes all multiply the score. |
-| Testing Burden | Test infrastructure needed. Unit tests score low; integration scenarios, required mocking, and E2E tests score progressively higher. |
-| Integration Risk | File overlap between work units and shared interface changes. Overlap forces worktree isolation regardless of total score. |
-| Uncertainty | Unfamiliar technology, unclear requirements, missing documentation, or research needed. Each adds to the score. |
+| Dimension        | What It Measures                                                                                                                                   |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| File Impact      | Number and size of files changing. Single small file scores low; many large files or high-complexity areas (auth, payment, core logic) score high. |
+| Dependencies     | Cross-module coupling. External API integrations, database schema changes, and third-party library changes all multiply the score.                 |
+| Testing Burden   | Test infrastructure needed. Unit tests score low; integration scenarios, required mocking, and E2E tests score progressively higher.               |
+| Integration Risk | File overlap between work units and shared interface changes. Overlap forces worktree isolation regardless of total score.                         |
+| Uncertainty      | Unfamiliar technology, unclear requirements, missing documentation, or research needed. Each adds to the score.                                    |
 
 ### Strategy Selection
 
-| Strategy | Score Range | Typical Use Case | Environment |
-|----------|------------|------------------|-------------|
-| **Small Direct** | 0-10 | Config changes, simple fixes, single-file docs | Current branch |
-| **Medium Branch** | 11-35 | Multi-file features, no file overlap between units | Feature branch |
-| **Large Multi-Worktree** | >35 | Complex features, file overlap, high integration risk | Isolated `./trees/` worktrees |
+| Strategy                 | Score Range | Typical Use Case                                      | Environment                   |
+| ------------------------ | ----------- | ----------------------------------------------------- | ----------------------------- |
+| **Small Direct**         | 0-10        | Config changes, simple fixes, single-file docs        | Current branch                |
+| **Medium Branch**        | 11-35       | Multi-file features, no file overlap between units    | Feature branch                |
+| **Large Multi-Worktree** | >35         | Complex features, file overlap, high integration risk | Isolated `./trees/` worktrees |
 
 Two conditions force Large Multi-Worktree regardless of score:
+
 - Any file overlap between work units
 - Any single work unit exceeding 5 files or 500 lines of code
 
@@ -150,11 +151,11 @@ A content override exists for the opposite direction: if a task involves five or
 
 If runtime conditions exceed a strategy's assumptions, the workflow-planner re-scores and upgrades:
 
-| From | To | Trigger |
-|------|----|---------|
-| Small Direct | Medium Branch | Work expands beyond 1-2 files; parallel opportunities discovered |
+| From          | To                   | Trigger                                                                                                       |
+| ------------- | -------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Small Direct  | Medium Branch        | Work expands beyond 1-2 files; parallel opportunities discovered                                              |
 | Medium Branch | Large Multi-Worktree | File overlap discovered; agents report conflicts; work units exceed limits; more than 3 quality gate failures |
-| Any | Re-plan | Context windows routinely exhausted; requirements fundamentally change |
+| Any           | Re-plan              | Context windows routinely exhausted; requirements fundamentally change                                        |
 
 Partial work is committed before escalation so nothing is lost.
 
@@ -211,13 +212,13 @@ After cleanup:
 
 Every work unit, regardless of strategy, must stay within these limits:
 
-| Constraint | Limit |
-|------------|-------|
-| Files per unit | 3-5 maximum |
-| Lines of code per unit | ~500 |
-| Direct dependencies | 2-3 maximum |
-| Scope | Single testable outcome, describable in under 3 lines |
-| TDD methodology | Tests written before implementation |
+| Constraint             | Limit                                                 |
+| ---------------------- | ----------------------------------------------------- |
+| Files per unit         | 3-5 maximum                                           |
+| Lines of code per unit | ~500                                                  |
+| Direct dependencies    | 2-3 maximum                                           |
+| Scope                  | Single testable outcome, describable in under 3 lines |
+| TDD methodology        | Tests written before implementation                   |
 
 If any work unit exceeds these limits during planning, the workflow-planner decomposes it further. If a unit exceeds limits during execution, the orchestrator triggers re-planning with the discovered context.
 
@@ -236,6 +237,7 @@ Research is skipped when the work is a brand-new standalone project, purely docu
 ### Decomposition
 
 Using the research findings, flight-plan breaks the work into sized units with:
+
 - Acceptance criteria for each unit
 - File assignments (verified against the actual project structure)
 - Dependency ordering and parallel opportunities
@@ -259,12 +261,12 @@ These entries are never applied automatically. Run `/reaper:claude-sync` to revi
 
 ## Supporting Commands
 
-| Command | Purpose |
-|---------|---------|
-| `/reaper:ship` | Fast-path from worktree to pull request. Commits, pushes, and opens a PR without running quality gates. Use when you have already validated the work yourself. |
-| `/reaper:status-worktrees` | Lists all active worktrees with branch status, uncommitted changes, and completion progress. |
-| `/reaper:claude-sync` | Analyzes commits since CLAUDE.md was last modified. Surfaces changes that should be documented for LLM context. |
-| `/reaper:squadron` | Assembles domain expert agents for collaborative design discussions. Use before flight-plan when the architecture decision itself is what matters. |
+| Command                    | Purpose                                                                                                                                                        |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/reaper:ship`             | Fast-path from worktree to pull request. Commits, pushes, and opens a PR without running quality gates. Use when you have already validated the work yourself. |
+| `/reaper:status-worktrees` | Lists all active worktrees with branch status, uncommitted changes, and completion progress.                                                                   |
+| `/reaper:claude-sync`      | Analyzes commits since CLAUDE.md was last modified. Surfaces changes that should be documented for LLM context.                                                |
+| `/reaper:squadron`         | Assembles domain expert agents for collaborative design discussions. Use before flight-plan when the architecture decision itself is what matters.             |
 
 ### Squadron and the Explore-First Principle
 

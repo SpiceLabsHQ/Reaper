@@ -304,14 +304,23 @@ describe('formatMismatchReport', () => {
       'README.md': '2.0.0',
     };
     const report = formatMismatchReport(versions);
-    assert.ok(report.includes('package.json'), 'report should name package.json');
+    assert.ok(
+      report.includes('package.json'),
+      'report should name package.json'
+    );
     assert.ok(
       report.includes('.claude-plugin/plugin.json'),
       'report should name plugin.json'
     );
     assert.ok(report.includes('README.md'), 'report should name README.md');
-    assert.ok(report.includes('1.9.9'), 'report should include diverging version');
-    assert.ok(report.includes('2.0.0'), 'report should include majority version');
+    assert.ok(
+      report.includes('1.9.9'),
+      'report should include diverging version'
+    );
+    assert.ok(
+      report.includes('2.0.0'),
+      'report should include majority version'
+    );
   });
 
   it('is non-empty when any version diverges', () => {
@@ -524,7 +533,9 @@ describe('verifyVersionConsistency', () => {
       assert.strictEqual(exitCode, 1);
       const output = capturedOutput.join('\n');
       assert.ok(
-        output.includes('5.0.1') || output.includes('git tag') || output.includes('tag'),
+        output.includes('5.0.1') ||
+          output.includes('git tag') ||
+          output.includes('tag'),
         `Expected git tag version in error output: ${output}`
       );
     } finally {
@@ -545,7 +556,9 @@ describe('verifyVersionConsistency', () => {
       assert.strictEqual(exitCode, 1);
       const output = capturedOutput.join('\n');
       assert.ok(
-        output.includes('5.9.0') || output.includes('git tag') || output.includes('tag'),
+        output.includes('5.9.0') ||
+          output.includes('git tag') ||
+          output.includes('tag'),
         `Expected git tag mismatch info in error output: ${output}`
       );
     } finally {

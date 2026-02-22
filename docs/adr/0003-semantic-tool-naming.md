@@ -25,28 +25,28 @@ This ADR establishes naming as a first-class constraint — not a style guide, b
 
 **1. Role/noun (preferred)**
 
-Name the tool after what it *is*: the role it plays or the resource it manages.
+Name the tool after what it _is_: the role it plays or the resource it manages.
 
-| Tool | Reads as |
-|------|----------|
-| `security-auditor` | An auditor who specializes in security |
-| `database-architect` | An architect for database concerns |
-| `worktree-manager` | A manager for git worktrees |
-| `issue-tracker-beads` | An issue tracker backed by Beads |
-| `branch-manager` | A manager for git branches |
+| Tool                  | Reads as                               |
+| --------------------- | -------------------------------------- |
+| `security-auditor`    | An auditor who specializes in security |
+| `database-architect`  | An architect for database concerns     |
+| `worktree-manager`    | A manager for git worktrees            |
+| `issue-tracker-beads` | An issue tracker backed by Beads       |
+| `branch-manager`      | A manager for git branches             |
 
-The role/noun pattern works because it anchors the name to a stable identity. The tool's *behavior* may evolve; its *role* rarely does.
+The role/noun pattern works because it anchors the name to a stable identity. The tool's _behavior_ may evolve; its _role_ rarely does.
 
 **2. Thematic-semantic (permitted)**
 
 Names that evoke purpose through a consistent metaphor are acceptable when the metaphor maps clearly to the action — and when the metaphor is already established in the system.
 
-| Tool | Reads as |
-|------|----------|
+| Tool          | Reads as                        |
+| ------------- | ------------------------------- |
 | `flight-plan` | Plan your work before executing |
-| `takeoff` | Execute the plan |
-| `ship` | Deliver completed work |
-| `squadron` | Assemble a team of experts |
+| `takeoff`     | Execute the plan                |
+| `ship`        | Deliver completed work          |
+| `squadron`    | Assemble a team of experts      |
 
 Thematic names require the metaphor to earn its meaning. A new reader who encounters `takeoff` and `flight-plan` in the same system can infer the relationship. A tool named `soar` or `altitude` in the same system would break that inference. Thematic names are only semantic within an established theme; isolated thematic names are not.
 
@@ -67,14 +67,14 @@ A reader who knows one member of the family can predict the others. Prefix-based
 
 The following naming patterns violate this rule:
 
-| Anti-pattern | Examples | Why it fails |
-|---|---|---|
-| Ordinal suffixes | `agent-1`, `reviewer-2` | No meaning — just a count |
-| Generic nouns | `helper`, `utils`, `processor`, `handler` | Says nothing about the domain |
-| Abbreviations | `db-arch`, `sec-aud`, `wt-mgr` | Forces the reader to decode |
-| Cute names without mapping | `spark`, `atlas`, `nova` | No inference path to function |
-| Verb-only names | `run`, `check`, `fix` | Too broad; reads as an action, not an identity |
-| Implementation-leaking names | `ejs-compiler`, `md-generator` | Names the mechanism, not the purpose |
+| Anti-pattern                 | Examples                                  | Why it fails                                   |
+| ---------------------------- | ----------------------------------------- | ---------------------------------------------- |
+| Ordinal suffixes             | `agent-1`, `reviewer-2`                   | No meaning — just a count                      |
+| Generic nouns                | `helper`, `utils`, `processor`, `handler` | Says nothing about the domain                  |
+| Abbreviations                | `db-arch`, `sec-aud`, `wt-mgr`            | Forces the reader to decode                    |
+| Cute names without mapping   | `spark`, `atlas`, `nova`                  | No inference path to function                  |
+| Verb-only names              | `run`, `check`, `fix`                     | Too broad; reads as an action, not an identity |
+| Implementation-leaking names | `ejs-compiler`, `md-generator`            | Names the mechanism, not the purpose           |
 
 ---
 
@@ -106,12 +106,14 @@ Known names to evaluate at next review: `refactoring-dev` (`dev` vs `developer` 
 ## Consequences
 
 **Positive:**
+
 - New tools are nameable by a rule, not by intuition — consistent outcomes across sessions and authors
 - Related tools cluster correctly in any listing without manual grouping
 - Names document intent; documentation doesn't have to carry the full burden of discoverability
 - The compliance checklist gives authors a concrete test to apply before committing a name
 
 **Negative / Risks:**
+
 - Thematic names require judgment about whether a metaphor "maps clearly" — the line isn't always bright
 - Enforcing the rule retroactively on existing names requires migration work and coordination with downstream users of the tool
 
@@ -119,7 +121,7 @@ Known names to evaluate at next review: `refactoring-dev` (`dev` vs `developer` 
 
 ## Alternatives Considered
 
-**No convention — rely on author judgment** — Rejected. The gap this ADR addresses *is* unguided author judgment. Without a documented rule, names are only as good as the session that produced them.
+**No convention — rely on author judgment** — Rejected. The gap this ADR addresses _is_ unguided author judgment. Without a documented rule, names are only as good as the session that produced them.
 
 **Strict function-based naming only (no themes)** — Would require renaming `flight-plan`, `takeoff`, `ship`, and `squadron`. These names carry established meaning within Reaper's UX and their metaphors map consistently. Renaming them would destroy a coherent mental model without producing clearer names. Rejected.
 

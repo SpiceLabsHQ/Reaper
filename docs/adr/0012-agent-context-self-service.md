@@ -36,30 +36,34 @@ Test-runner's role is to run the test suite, measure coverage, and report pass/f
 Gate 2 reviewer prompts receive a `<plan_context>` block containing a reference, not content. Two reference formats are accepted:
 
 **Format 1 — Issue ID with optional labels:**
+
 ```
 epic: reaper-wiax, task: reaper-wiax.2
 ```
+
 The reviewer resolves this by running `bd show reaper-wiax.2` (or the equivalent task system command) to retrieve the issue body on demand.
 
 **Format 2 — Planfile path with optional unit range:**
+
 ```
 .claude/plans/reaper-wiax.md Units 2.1-2.3
 ```
+
 The reviewer reads the specified file, optionally restricting to the listed unit range, to retrieve the relevant plan sections on demand.
 
 Either format may appear. Reviewers treat the reference as a pointer: fetch if needed, skip if the review scope does not require plan context.
 
 ### Agents affected
 
-| Agent | Change |
-|-------|--------|
-| `reaper:test-runner` | Receives no `PLAN_CONTEXT`; broken review include removed |
-| `reaper:principal-engineer` | Receives lightweight reference; self-serves content if needed |
-| `reaper:ai-prompt-engineer` | Receives lightweight reference; self-serves content if needed |
-| `reaper:technical-writer` | Receives lightweight reference; self-serves content if needed |
-| `reaper:database-architect` | Receives lightweight reference; self-serves content if needed |
+| Agent                        | Change                                                        |
+| ---------------------------- | ------------------------------------------------------------- |
+| `reaper:test-runner`         | Receives no `PLAN_CONTEXT`; broken review include removed     |
+| `reaper:principal-engineer`  | Receives lightweight reference; self-serves content if needed |
+| `reaper:ai-prompt-engineer`  | Receives lightweight reference; self-serves content if needed |
+| `reaper:technical-writer`    | Receives lightweight reference; self-serves content if needed |
+| `reaper:database-architect`  | Receives lightweight reference; self-serves content if needed |
 | `reaper:deployment-engineer` | Receives lightweight reference; self-serves content if needed |
-| `reaper:security-auditor` | Receives lightweight reference; self-serves content if needed |
+| `reaper:security-auditor`    | Receives lightweight reference; self-serves content if needed |
 
 The `takeoff` command's Step 3.5 is removed. The orchestrator no longer searches for plan files or fetches issue bodies before dispatching gate agents. It passes the reference it already holds (the task ID and, if known, the plan file path) and delegates resolution to each reviewer.
 
@@ -68,6 +72,7 @@ The `takeoff` command's Step 3.5 is removed. The orchestrator no longer searches
 ## Consequences
 
 **Positive:**
+
 - Agents pay only for the context they actually consume. A reviewer that does not consult the plan pays zero tokens for plan content; one that reads two sections pays for two sections.
 - Gate 1 overhead is eliminated entirely. Test-runner no longer receives or is expected to process plan context it has no use for.
 - The broken `pre-work-validation-review.ejs` include in test-runner is corrected. Gate 1 validation now matches the agent's actual role and tool usage.
@@ -75,6 +80,7 @@ The `takeoff` command's Step 3.5 is removed. The orchestrator no longer searches
 - Context fetching is lazy and scoped. Reviewers that need only a subset of plan content (e.g., a specific unit or acceptance criteria) can read that subset rather than receiving the full document.
 
 **Negative / Risks:**
+
 - Each Gate 2 reviewer that consults plan context pays one additional tool call (a `bd show` or file read) to retrieve it. In the prior approach, the orchestrator absorbed this cost once; now each reviewer absorbs it independently if needed. For reviewers that always read the full plan, per-reviewer fetch cost may exceed the prior amortized cost.
 - Reference resolution is delegated to agents. If a reference is malformed (e.g., a task ID that does not exist, a plan file path that has moved), the reviewer must handle the resolution failure gracefully rather than receiving an error at dispatch time.
 - Reviewers that skip plan context because "it seems optional" may miss scope violations that plan review would have caught. The lightweight reference lowers the friction of skipping context; gate quality depends on reviewers exercising judgment about when to fetch.

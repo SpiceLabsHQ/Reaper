@@ -1,6 +1,6 @@
 # Quality Gates
 
-*Claude gets picky so you don't have to be.*
+_Claude gets picky so you don't have to be._
 
 Every task Reaper executes passes through mandatory quality gates before you see it. No half-finished work reaches your review queue. The gate pipeline runs automatically after each coding agent completes its work, and failures loop back to the coding agent with specific issues to fix -- without your involvement.
 
@@ -34,6 +34,7 @@ Rather than a fixed code-reviewer agent, Gate 2 selects a subject matter expert 
 - Domain-specific review criteria from the specialty file
 
 **Security auditor:**
+
 - Vulnerability scanning with Trivy, Semgrep, and TruffleHog
 - Hardcoded secrets detection
 - Dependency CVE analysis
@@ -45,13 +46,13 @@ When a gate fails, the work returns to the coding agent automatically. The agent
 
 After the coding agent applies fixes, only the failed gate re-runs -- not the entire pipeline. Each gate agent has its own retry limit before escalating to you:
 
-| Gate Agent | Max Iterations | Rationale |
-|------------|---------------|-----------|
-| reaper:test-runner | 3 | Most likely to need iteration (test failures, coverage gaps) |
-| SME reviewer (via code-review skill) | 1 | SME reviewers perform one focused pass per iteration |
-| reaper:security-auditor | 1 | Security issues require careful one-pass remediation |
-| reaper:ai-prompt-engineer | 1 | Prompt quality review is typically one-pass |
-| reaper:deployment-engineer | 1 | Pipeline validation is typically one-pass |
+| Gate Agent                           | Max Iterations | Rationale                                                    |
+| ------------------------------------ | -------------- | ------------------------------------------------------------ |
+| reaper:test-runner                   | 3              | Most likely to need iteration (test failures, coverage gaps) |
+| SME reviewer (via code-review skill) | 1              | SME reviewers perform one focused pass per iteration         |
+| reaper:security-auditor              | 1              | Security issues require careful one-pass remediation         |
+| reaper:ai-prompt-engineer            | 1              | Prompt quality review is typically one-pass                  |
+| reaper:deployment-engineer           | 1              | Pipeline validation is typically one-pass                    |
 
 If any gate exceeds its iteration limit, Reaper escalates to you with a summary of what failed and what was attempted. You decide how to proceed.
 
@@ -59,17 +60,17 @@ If any gate exceeds its iteration limit, Reaper escalates to you with a summary 
 
 Not all work needs the same gates. Reaper auto-detects the work type from file paths and extensions in the changeset, then selects the appropriate gate agents.
 
-| Work Type | Gate 1 (blocking) | Gate 2 (parallel) | reviewer_agent |
-|-----------|-------------------|-------------------|----------------|
-| Application code | test-runner | SME reviewer + security-auditor | feature-developer |
-| Infrastructure (Terraform, K8s, Docker) | -- | SME reviewer + security-auditor | cloud-architect |
-| Database migrations | -- | SME reviewer | database-architect |
-| API specifications (OpenAPI, GraphQL) | -- | SME reviewer | api-designer |
-| Agent prompts | -- | ai-prompt-engineer + SME reviewer | ai-prompt-engineer |
-| Documentation | -- | SME reviewer | technical-writer |
-| CI/CD pipelines | -- | SME reviewer + security-auditor | deployment-engineer |
-| Test code | test-runner | SME reviewer | principal-engineer |
-| Configuration files | -- | SME reviewer + security-auditor | principal-engineer |
+| Work Type                               | Gate 1 (blocking) | Gate 2 (parallel)                 | reviewer_agent      |
+| --------------------------------------- | ----------------- | --------------------------------- | ------------------- |
+| Application code                        | test-runner       | SME reviewer + security-auditor   | feature-developer   |
+| Infrastructure (Terraform, K8s, Docker) | --                | SME reviewer + security-auditor   | cloud-architect     |
+| Database migrations                     | --                | SME reviewer                      | database-architect  |
+| API specifications (OpenAPI, GraphQL)   | --                | SME reviewer                      | api-designer        |
+| Agent prompts                           | --                | ai-prompt-engineer + SME reviewer | ai-prompt-engineer  |
+| Documentation                           | --                | SME reviewer                      | technical-writer    |
+| CI/CD pipelines                         | --                | SME reviewer + security-auditor   | deployment-engineer |
+| Test code                               | test-runner       | SME reviewer                      | principal-engineer  |
+| Configuration files                     | --                | SME reviewer + security-auditor   | principal-engineer  |
 
 Work types with no Gate 1 skip directly to Gate 2.
 
@@ -101,11 +102,11 @@ Only after all gates pass does completed work reach your review queue. Reaper pr
 
 You explicitly control what happens next:
 
-| Your Response | What Happens |
-|---------------|--------------|
-| Feedback or questions | Reaper addresses concerns, re-runs gates if changes are made |
-| "looks good" / "nice work" | Reaper asks for merge confirmation |
-| "merge" / "ship it" / "approved" | reaper:branch-manager merges to develop |
+| Your Response                    | What Happens                                                 |
+| -------------------------------- | ------------------------------------------------------------ |
+| Feedback or questions            | Reaper addresses concerns, re-runs gates if changes are made |
+| "looks good" / "nice work"       | Reaper asks for merge confirmation                           |
+| "merge" / "ship it" / "approved" | reaper:branch-manager merges to develop                      |
 
 No code lands on your main branch without your say-so.
 

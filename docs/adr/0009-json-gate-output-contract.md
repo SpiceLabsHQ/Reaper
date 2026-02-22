@@ -25,18 +25,19 @@ The orchestrator needs an unambiguous, machine-readable signal from each gate ag
 
 Every gate agent returns these fields:
 
-| Field | Type | Purpose |
-|-------|------|---------|
-| `all_checks_passed` | `boolean` | Top-level pass/fail verdict |
-| `blocking_issues` | `array` | Issues that must be fixed before proceeding; empty array means pass |
+| Field                                   | Type      | Purpose                                                                                 |
+| --------------------------------------- | --------- | --------------------------------------------------------------------------------------- |
+| `all_checks_passed`                     | `boolean` | Top-level pass/fail verdict                                                             |
+| `blocking_issues`                       | `array`   | Issues that must be fixed before proceeding; empty array means pass                     |
 | `pre_work_validation.validation_passed` | `boolean` | Whether the agent's inputs (worktree path, files, context) were valid before work began |
-| `files_modified` | `array` | Files the agent touched, used for scope verification |
+| `files_modified`                        | `array`   | Files the agent touched, used for scope verification                                    |
 
 ### Gate-specific fields
 
 Each gate agent extends the universal contract with domain-specific evidence:
 
 **`reaper:test-runner`:**
+
 - `tests.passed` — count of passing tests
 - `tests.failed` — count of failing tests
 - `tests.skipped` — count of skipped tests
@@ -47,6 +48,7 @@ Each gate agent extends the universal contract with domain-specific evidence:
 - `lint.warnings` — count of lint warnings
 
 **SME code reviewer (via `code-review` skill):**
+
 - `blocking_issues` — issues that must be fixed; empty array means pass
 - `non_blocking_notes` — optional improvement suggestions that do not block merge
 - `plan_coverage` — whether the implementation covers the plan (`full`, `partial`, or `not_checked`)
@@ -57,6 +59,7 @@ Each gate agent extends the universal contract with domain-specific evidence:
 The reviewer does not emit `gate_status`. The orchestrator computes pass/fail externally: `blocking_issues.length === 0 && scope_violations.length === 0`.
 
 **`reaper:security-auditor`:**
+
 - `gate_status` — top-level pass/fail verdict (PASS or FAIL)
 - `summary` — brief narrative of findings
 - `blocking_issues` — security issues that must be fixed before proceeding; empty array means pass
@@ -82,6 +85,7 @@ The orchestrator treats the following patterns as immediate failures requiring r
 ## Consequences
 
 **Positive:**
+
 - Pass/fail decisions are mechanical — no interpretation, no ambiguity, no judgment calls by the orchestrator
 - Red flag detection is automatic; logical inconsistencies surface without human review
 - Orchestrators can iterate programmatically (retry on failure, proceed on pass) without natural language processing
@@ -89,6 +93,7 @@ The orchestrator treats the following patterns as immediate failures requiring r
 - The contract is portable across gate agents: any agent that returns the universal fields can participate in the pipeline
 
 **Negative / Risks:**
+
 - Gate agents must strictly adhere to the contract — missing fields, wrong types, or structural deviations cause orchestrator failures rather than graceful degradation
 - The structured output requirement adds verbosity to gate agent prompts, consuming tokens on contract specification
 - The contract must be versioned when fields are added or modified; unversioned changes break orchestrators that depend on the prior schema

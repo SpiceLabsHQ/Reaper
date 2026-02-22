@@ -27,8 +27,5 @@
     "worktree",
     "worktrees"
   ],
-  "ignorePaths": [
-    "node_modules/**",
-    ".git/**"
-  ]
+  "ignorePaths": ["node_modules/**", ".git/**"]
 }

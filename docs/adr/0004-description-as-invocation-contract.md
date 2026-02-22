@@ -9,9 +9,9 @@
 
 When Claude selects a tool — an agent, skill, or command — for a given task, the only information available at decision time is the tool's name and its `description` frontmatter field. The tool's body (system prompt, workflow steps, skill content) is not loaded until after the invocation decision is made.
 
-This creates a structural fact: the `description` field *is* the invocation contract. It is the complete signal Claude has when deciding whether to use the tool.
+This creates a structural fact: the `description` field _is_ the invocation contract. It is the complete signal Claude has when deciding whether to use the tool.
 
-The consequence of misunderstanding this: authors write "When to Use" and "When NOT to Use" sections in the tool body, believing they guide Claude's selection behavior. They do not. Those sections are only visible to the agent *after* it has already been invoked — at which point they may influence how the agent behaves, but they cannot influence whether it was the right tool to call.
+The consequence of misunderstanding this: authors write "When to Use" and "When NOT to Use" sections in the tool body, believing they guide Claude's selection behavior. They do not. Those sections are only visible to the agent _after_ it has already been invoked — at which point they may influence how the agent behaves, but they cannot influence whether it was the right tool to call.
 
 `reaper:workflow-planner` has this problem today:
 
@@ -19,17 +19,19 @@ The consequence of misunderstanding this: authors write "When to Use" and "When 
 ## Quick Reference
 
 ### When to Use
+
 - Complex features with multiple components
 - Analyzing parallel development opportunities
 - Integration risk assessment
 - Breaking large tasks into context-safe packages
 
 ### When NOT to Use
+
 - Simple single-component tasks or urgent hotfixes
 - Well-understood work already properly sized (<5 files, <500 LOC)
 ```
 
-This content is invisible during tool selection. The "When NOT to Use" guidance — which would be especially valuable for steering Claude *away* from the planner on small tasks — never reaches the decision that determines whether the planner is invoked at all.
+This content is invisible during tool selection. The "When NOT to Use" guidance — which would be especially valuable for steering Claude _away_ from the planner on small tasks — never reaches the decision that determines whether the planner is invoked at all.
 
 ---
 
@@ -45,7 +47,7 @@ A complete description answers three questions:
 
 1. **What does this tool do?** — The tool's core capability in concrete terms. Not its category, not its methodology — what it actually produces or accomplishes.
 2. **When should it be invoked?** — The trigger conditions: task types, request patterns, signals that indicate this is the right tool.
-3. **When should it *not* be invoked?** — Disambiguation from similar tools, explicit exclusions, and anti-triggers. This is especially important for tools that share overlapping domains.
+3. **When should it _not_ be invoked?** — Disambiguation from similar tools, explicit exclusions, and anti-triggers. This is especially important for tools that share overlapping domains.
 
 **Examples** are the most powerful mechanism for trigger conditioning. A well-formed example provides a realistic user request, the correct invocation decision, and a brief rationale. Claude uses examples as pattern templates — they teach when to invoke far more reliably than prose lists.
 
@@ -66,7 +68,7 @@ Any section whose purpose is to guide the invocation decision — whether framed
 
 These sections are not harmful at runtime (an agent can read them once invoked), but they create a false belief that they guide selection. Authors who write them believe they've documented the invocation contract; they have not. The documentation is a dead letter.
 
-If the intent is to guide the agent's *behavior after invocation* — for example, helping the agent self-verify it received an appropriate task — that content may remain in the body, but it must be framed as a post-invocation check, not as invocation guidance.
+If the intent is to guide the agent's _behavior after invocation_ — for example, helping the agent self-verify it received an appropriate task — that content may remain in the body, but it must be framed as a post-invocation check, not as invocation guidance.
 
 ### Description quality standards
 
@@ -100,12 +102,14 @@ For existing tools, any "When to Use" section in the body should be evaluated: i
 ## Consequences
 
 **Positive:**
+
 - Authors write invocation guidance where it actually works — in the `description` field
 - Tool selection improves because all relevant context is present at decision time
 - Body content stays focused on post-invocation behavior, not pre-invocation guidance
 - The false belief that body sections influence selection is eliminated by explicit rule
 
 **Negative / Risks:**
+
 - Descriptions grow longer to accommodate exclusion criteria and examples; this is intentional and correct
 - Descriptions that were previously thin must be rewritten — migration cost for existing tools
 - The distinction between "post-invocation self-check" and "invocation guidance" requires author judgment; not always clear-cut

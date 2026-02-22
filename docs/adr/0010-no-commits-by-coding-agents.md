@@ -58,6 +58,7 @@ Contract tests verify the partial remains present in all coding agent templates.
 ## Consequences
 
 **Positive:**
+
 - Clean commit history: only gate-validated code is committed to the branch
 - Quality gate sovereignty: gates always precede commits, never the reverse
 - User retains authority over what enters `develop` and `main`
@@ -65,6 +66,7 @@ Contract tests verify the partial remains present in all coding agent templates.
 - Clear separation of concerns: coding agents code, branch-manager handles git operations
 
 **Negative / Risks:**
+
 - Extra round-trips (coding agent completes, gates run, branch-manager commits) add latency to each work unit
 - All coding agent prompts must consistently include the no-commits partial; a missed inclusion creates a gap in enforcement
 - The distinction between TDD tests (development feedback) and test-runner results (authoritative gate signal) requires documentation and understanding from all contributing developers

@@ -38,7 +38,9 @@ function readPackageVersion(rootDir) {
   const filePath = path.join(rootDir, 'package.json');
 
   if (!fs.existsSync(filePath)) {
-    throw new Error(`Missing required file: package.json (looked in ${rootDir})`);
+    throw new Error(
+      `Missing required file: package.json (looked in ${rootDir})`
+    );
   }
 
   const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -261,7 +263,9 @@ function verifyVersionConsistency(rootDir, execFn) {
     return;
   }
 
-  console.log(`release:verify passed — all files agree on version ${packageVersion}`);
+  console.log(
+    `release:verify passed — all files agree on version ${packageVersion}`
+  );
   process.exit(0);
 }
 

@@ -21,7 +21,7 @@ A deeper structural concern: a generic reviewer assessing specialist work (a dat
 
 We retire the dedicated `code-reviewer` agent and replace it with:
 
-1. **A multi-file `code-review` skill** (`src/skills/code-review/`) that defines review *process*, not domain knowledge:
+1. **A multi-file `code-review` skill** (`src/skills/code-review/`) that defines review _process_, not domain knowledge:
    - `SKILL.md` — universal gate protocol: plan completion check, scope creep detection, blocking issue format, and the JSON output contract
    - Work-type specialty files — additional process steps unique to that artifact type (see below)
 
@@ -37,12 +37,12 @@ We retire the dedicated `code-reviewer` agent and replace it with:
 
 The skill's `SKILL.md` covers the universal review process. Specialty files add process steps for work types where the universal flow is insufficient:
 
-| File | Work Type | Additional Process |
-|------|-----------|-------------------|
-| `application-code.md` | `application_code`, `test_code` | Verify test coverage was written (not run), SOLID checklist, obvious runtime correctness |
-| `agent-prompt.md` | `agent_prompt` | Anti-pattern checklist (dead context, persona conflict, vague instructions), output format contract validation, tool list appropriateness |
-| `database-migration.md` | `database_migration` | Verify rollback script exists, check idempotency, assess data impact on existing rows |
-| `documentation.md` | `documentation` | Cross-reference implementation against docs (accuracy), check coverage of what was shipped |
+| File                    | Work Type                       | Additional Process                                                                                                                        |
+| ----------------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `application-code.md`   | `application_code`, `test_code` | Verify test coverage was written (not run), SOLID checklist, obvious runtime correctness                                                  |
+| `agent-prompt.md`       | `agent_prompt`                  | Anti-pattern checklist (dead context, persona conflict, vague instructions), output format contract validation, tool list appropriateness |
+| `database-migration.md` | `database_migration`            | Verify rollback script exists, check idempotency, assess data impact on existing rows                                                     |
+| `documentation.md`      | `documentation`                 | Cross-reference implementation against docs (accuracy), check coverage of what was shipped                                                |
 
 Work types without a specialty file (`infrastructure_config`, `api_specification`, `ci_cd_pipeline`, `configuration`) use `SKILL.md` only. The reviewing SME's domain knowledge covers the gap.
 
@@ -59,6 +59,7 @@ The existing `code-reviewer` agent is retained as a fallback `reviewer_agent` en
 ## Consequences
 
 **Positive:**
+
 - Plan context is reliably delivered; scope hallucination is eliminated
 - Token overhead drops ~60-70% per review invocation (one profile injected, not nine)
 - Domain experts review their own work type — higher signal findings
@@ -67,6 +68,7 @@ The existing `code-reviewer` agent is retained as a fallback `reviewer_agent` en
 - Conditional gate-mode logic can be removed from individual agent prompts
 
 **Negative / Risks:**
+
 - SME agents carry larger base context windows than the dedicated reviewer; retry limit drops to 1 (vs. code-reviewer's 2) to control cost
 - Gate output contract (`{ gate_status, blocking_issues }`) must be enforced by the skill, not each agent — fragmentation risk with third-party agents
 - Coverage gap during migration for unmapped work types
