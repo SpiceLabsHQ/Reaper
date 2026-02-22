@@ -5113,6 +5113,153 @@ describe('Contract: misconfiguration sentinel — all generated agents are senti
 });
 
 // ---------------------------------------------------------------------------
+// Contract: branch-manager merge conflict stop-and-report protocol
+// ---------------------------------------------------------------------------
+//
+// When a git merge exits non-zero (conflicts detected), the branch-manager
+// MUST stop and report — it must NOT attempt to auto-resolve the conflict.
+//
+// The four requirements tested here:
+//   1. JSON response schema documents status: "error" as a valid status value
+//   2. git_state field documents merge_conflicts_detected (the flag the agent
+//      sets to true when conflicts are detected)
+//   3. blocking_issues[] field is present in the JSON response schema so
+//      conflicting file paths can be reported there
+//   4. The agent does NOT contain any auto-resolution strategy commands
+//      (--theirs, --ours, --strategy with these options, checkout --theirs)
+//      that would bypass the stop-and-report requirement
+// ---------------------------------------------------------------------------
+
+describe('Contract: branch-manager merge conflict stop-and-report protocol', () => {
+  const filePath = agentFilePath('branch-manager');
+  const relative = 'agents/branch-manager.md';
+
+  /**
+   * Extracts the first ```json ... ``` code block from markdown content.
+   * Used to inspect the JSON Response Format schema.
+   * @param {string} content - Full markdown content
+   * @returns {string} The text inside the first JSON code block, or empty string
+   */
+  function extractJsonResponseBlock(content) {
+    const match = content.match(/```json\n([\s\S]*?)```/);
+    return match ? match[1] : '';
+  }
+
+  it(`${relative} JSON response schema documents "error" as a valid status value`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const jsonBlock = extractJsonResponseBlock(content);
+    assert.ok(
+      jsonBlock.length > 0,
+      `${relative} must contain a JSON code block with the response schema`
+    );
+    // The status field must document "error" as a possible value, not just "success"
+    assert.ok(
+      jsonBlock.includes('error'),
+      `${relative} JSON response schema must document "error" as a valid status value ` +
+        `so that merge conflict reporting is explicit`
+    );
+  });
+
+  it(`${relative} JSON response schema includes merge_conflicts_detected field in git_state`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('merge_conflicts_detected'),
+      `${relative} JSON response schema must include "merge_conflicts_detected" field in git_state ` +
+        `so the agent can signal conflict detection in a structured way`
+    );
+  });
+
+  it(`${relative} JSON response schema includes blocking_issues field`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const jsonBlock = extractJsonResponseBlock(content);
+    assert.ok(
+      jsonBlock.length > 0,
+      `${relative} must contain a JSON code block with the response schema`
+    );
+    assert.ok(
+      jsonBlock.includes('blocking_issues'),
+      `${relative} JSON response schema must include "blocking_issues" field ` +
+        `so conflicting file paths can be reported to the orchestrator`
+    );
+  });
+
+  it(`${relative} Safety Protocols document that merge failures use stop-and-report (Protocol #11)`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const prose = stripCodeBlocks(content);
+    // Protocol #11 is the explicit stop-and-report rule. It must cover merge failures.
+    assert.ok(
+      /Protocol #11|stop.*report.*fail|fail.*stop.*report|unexpected.*state.*status.*error|operation.*fails.*status.*error/i.test(
+        prose
+      ),
+      `${relative} Safety Protocols must document Protocol #11 (stop-and-report) covering merge failures ` +
+        `so merge conflicts trigger status:error, not auto-resolution`
+    );
+  });
+
+  it(`${relative} large_multi_worktree workflow states merge conflicts surface in integration worktree`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // Conflicts must surface in the integration worktree, not in root
+    assert.ok(
+      /conflict.*integration.*worktree|integration.*worktree.*conflict|conflicts.*surface.*trees|trees.*integration.*not.*root/i.test(
+        content
+      ),
+      `${relative} large_multi_worktree workflow must state that merge conflicts surface ` +
+        `inside the integration worktree (./trees/), not in root`
+    );
+  });
+
+  it(`${relative} does NOT contain --theirs auto-resolution flag outside code examples`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const prose = stripCodeBlocks(content);
+    assert.ok(
+      !prose.includes('--theirs'),
+      `${relative} must NOT contain "--theirs" auto-resolution flag — ` +
+        `merge conflicts must be stop-and-reported, not auto-resolved`
+    );
+  });
+
+  it(`${relative} does NOT contain --ours auto-resolution flag outside code examples`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const prose = stripCodeBlocks(content);
+    assert.ok(
+      !prose.includes('--ours'),
+      `${relative} must NOT contain "--ours" auto-resolution flag — ` +
+        `merge conflicts must be stop-and-reported, not auto-resolved`
+    );
+  });
+
+  it(`${relative} does NOT contain checkout --theirs conflict auto-resolution`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // Full content check (including code blocks) — this command should never appear
+    assert.ok(
+      !content.includes('checkout --theirs'),
+      `${relative} must NOT contain "checkout --theirs" — this is a conflict auto-resolution ` +
+        `command that bypasses the stop-and-report protocol`
+    );
+  });
+
+  it(`${relative} does NOT contain merge --strategy=ours or --strategy=theirs conflict override`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // Neither --strategy=ours nor --strategy=theirs should appear
+    assert.ok(
+      !content.includes('--strategy=ours') &&
+        !content.includes('--strategy=theirs'),
+      `${relative} must NOT contain "--strategy=ours" or "--strategy=theirs" — ` +
+        `these are conflict auto-resolution strategies that bypass stop-and-report`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Contract: package.json engines field
 // ---------------------------------------------------------------------------
 
