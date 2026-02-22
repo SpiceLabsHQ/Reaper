@@ -175,18 +175,25 @@ medium_single_branch uses a single shared worktree for all coding agents. Branch
        echo "ERROR: root has uncommitted changes; aborting merge to prevent index pollution"
        exit 1
      fi
-     # Advisory: root is checked out to the review branch being advanced
-     # The ref will move under root's feet, which is confusing but not destructive.
-     # Surface as a warning in the JSON response; proceed with caution.
+     # Informational: root is checked out to the review branch being advanced.
+     # This case is handled correctly below — git merge --ff-only from root will
+     # atomically advance HEAD, index, and working tree, preventing index staleness.
      if [ "$ROOT_BRANCH" = "feature/[TASK_ID]-review" ]; then
-       echo "WARNING: root is checked out to the review branch — ref will advance after merge; root working tree will appear behind HEAD"
+       echo "INFO: root is checked out to the review branch — will use --ff-only from root to advance HEAD, index, and working tree atomically"
      fi
 
      git branch [TASK_ID]-integration-temp feature/[TASK_ID]-review
      git worktree add ./trees/[TASK_ID]-integration [TASK_ID]-integration-temp
      git -C ./trees/[TASK_ID]-integration merge feature/[TASK_ID]-[COMPONENT] --no-ff
-     # On success: advance the review branch ref without touching root files
-     git branch -f feature/[TASK_ID]-review [TASK_ID]-integration-temp
+     # On success: advance the review branch ref.
+     # If root is on the branch being advanced, use --ff-only from root to update
+     # HEAD, index, and working tree atomically — preventing index staleness.
+     # If root is on a different branch, a pointer-only advance is safe.
+     if [ "$ROOT_BRANCH" = "feature/[TASK_ID]-review" ]; then
+       git -C "$ROOT" merge --ff-only [TASK_ID]-integration-temp
+     else
+       git branch -f feature/[TASK_ID]-review [TASK_ID]-integration-temp
+     fi
      # Cleanup integration worktree and temp branch
      git worktree remove ./trees/[TASK_ID]-integration
      git branch -d [TASK_ID]-integration-temp

@@ -9,7 +9,7 @@
 
 ### The root index pollution problem
 
-ADR-0014 established that all branch-manager merge operations use an isolated integration worktree inside `./trees/`. The merge pattern advances the review branch ref using `git branch -f` from within the integration worktree, then cleans up. This avoids checking out the review branch in root and preserves root working tree stability.
+ADR-0014 established that all branch-manager merge operations use an isolated integration worktree inside `./trees/`. The merge pattern advances the review branch ref using `git branch -f` when root is not on the target branch, or `git merge --ff-only` from root when root is on the target branch. This avoids checking out the review branch in root and preserves root working tree stability, including when root is already on the branch being advanced.
 
 The original implementation included a final step after each merge cycle: `git reset --mixed HEAD` in the root working tree. The reasoning was defensive -- after `git branch -f` advances a ref, the root's index could become stale relative to the new HEAD if root happened to be checked out to the branch whose ref was just advanced. The `reset --mixed HEAD` was intended to re-sync the index with the current HEAD without discarding untracked files.
 
@@ -49,7 +49,7 @@ in the root working tree. Two conditions are checked:
 
 **Uncommitted changes in root (hard fail).** If the output is non-empty, root has uncommitted changes. The merge operation aborts immediately with `status: error`. Proceeding with uncommitted changes in root risks those changes being affected by ref advancement or cleanup operations. The orchestrator must resolve the dirty root before retrying.
 
-**Root checked out to the review branch (advisory warning).** If root's current branch (`git branch --show-current`) matches the review branch being merged into, branch-manager emits a warning but does not abort. This state is confusing but not destructive -- `git branch -f` will advance the ref, and root's working tree will be out of sync with HEAD, but no data is lost. The warning alerts the orchestrator that root may show unexpected `git status` output after the merge completes. The reason this is a warning rather than a hard failure is that the branch checkout is not inherently dangerous: `git branch -f` does not modify root's working tree or index, so the mismatch is cosmetic. Aborting the merge would block legitimate workflows where the developer inspected the review branch and forgot to switch back.
+**Root checked out to the review branch (informational, handled correctly).** If root's current branch (`git branch --show-current`) matches the review branch being merged into, branch-manager emits an informational log message and uses `git merge --ff-only` from root instead of `git branch -f` to advance the ref. Running `git merge --ff-only [INTEGRATION-TEMP]` from root atomically advances HEAD, the index, and the working tree to the merge commit -- the same way a normal fast-forward merge works. This eliminates the index staleness that would result from advancing the ref pointer without updating the index. If root is on a different branch, a pointer-only advance via `git branch -f` remains safe and is used instead.
 
 ### Postcondition assertion (after merge)
 
@@ -90,7 +90,7 @@ This is the critical distinction from the previous approach: detection and repor
 
 **Negative / Risks:**
 
-- The advisory warning for "root on review branch" is not a hard block. A developer who leaves root on the review branch will see `git status` output in root that does not match expectations after the merge. This is confusing but not destructive. Upgrading this to a hard failure was considered but rejected because it blocks legitimate inspection workflows and the mismatch resolves itself when the developer switches branches.
+- The "root on review branch" case is now handled correctly via `git merge --ff-only` from root, so it no longer produces index staleness or phantom staged changes. A developer who leaves root on the review branch will see their working tree cleanly advanced to the merge commit after the operation completes, matching the same postcondition as if they were not on that branch.
 - The postcondition assertion adds one `git status --porcelain` call after every merge cycle. This is negligible overhead but is a new failure point: if the assertion fires due to a transient condition (e.g., a background process writing to the working tree during the merge), it will halt the merge pipeline. This is acceptable because false positives are preferable to silent corruption -- the orchestrator can inspect and retry.
 - Contract tests that previously enforced the presence of `git reset --mixed HEAD` in the branch-manager template must be updated to enforce the postcondition assertion pattern instead. This is a one-time migration cost.
 
