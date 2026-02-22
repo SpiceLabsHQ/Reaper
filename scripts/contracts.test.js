@@ -4839,22 +4839,23 @@ describe('Contract: quality-gate-protocol union semantics — 3-work-type dedupl
 });
 
 // ---------------------------------------------------------------------------
-// Contract: branch-manager syncs root working tree index after advancing develop ref
+// Contract: branch-manager Step 0 (pre-merge root check) and Step 8
+// (post-merge cleanliness assertion) in large_multi_worktree workflow
 // ---------------------------------------------------------------------------
 //
-// When branch-manager advances the develop ref using `git branch -f` (or
-// `git update-ref`) from inside an integration worktree, the root working
-// tree's index still points at the old HEAD. This leaves the root in a state
-// where `git status` shows dozens of phantom staged changes.
+// Step 0: Before touching anything, branch-manager inspects the root working
+// tree with `git -C "$ROOT" status --porcelain`. If the root has uncommitted
+// changes it hard-fails (status:error per Protocol #11) rather than risk
+// index pollution. If root is on the review branch being advanced it emits an
+// advisory warning but proceeds.
 //
-// The fix: after advancing the develop ref, branch-manager must run
-//   git reset --mixed HEAD
-// in the ROOT working tree (not the integration worktree) to bring the index
-// back in sync with the new develop HEAD. Using --mixed preserves untracked
-// files and only resets the index.
+// Step 8: After cleanup of the integration worktree and temp branch,
+// branch-manager re-checks `git -C "$ROOT" status --porcelain`. If the root
+// is dirty at that point it returns status:error per Protocol #11 and does not
+// self-remediate.
 // ---------------------------------------------------------------------------
 
-describe('Contract: branch-manager syncs root working tree index after advancing develop ref', () => {
+describe('Contract: branch-manager Step 0 pre-merge root check and Step 8 post-merge cleanliness assertion', () => {
   const filePath = agentFilePath('branch-manager');
   const relative = 'agents/branch-manager.md';
 
@@ -4869,7 +4870,7 @@ describe('Contract: branch-manager syncs root working tree index after advancing
     return nextSection !== -1 ? afterStart.slice(0, nextSection) : afterStart;
   }
 
-  it(`${relative} large_multi_worktree Workflow includes 'git reset --mixed HEAD' step in root after advancing ref`, () => {
+  it(`${relative} large_multi_worktree Workflow checks root status --porcelain before starting the merge (Step 0)`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const section = getLargeMultiSection(content);
@@ -4878,12 +4879,13 @@ describe('Contract: branch-manager syncs root working tree index after advancing
       `${relative} must contain a large_multi_worktree Workflow section`
     );
     assert.ok(
-      /git reset --mixed HEAD/.test(section),
-      `${relative} large_multi_worktree Workflow must include 'git reset --mixed HEAD' to sync the root index after advancing the develop ref`
+      /git -C.*\$ROOT.*status --porcelain|git -C.*ROOT.*status --porcelain/i.test(section),
+      `${relative} large_multi_worktree Workflow must run 'git -C "$ROOT" status --porcelain' ` +
+        `before the merge to detect uncommitted root changes (Step 0)`
     );
   });
 
-  it(`${relative} large_multi_worktree Workflow runs 'git reset --mixed HEAD' in root (not integration worktree)`, () => {
+  it(`${relative} large_multi_worktree Workflow hard-fails (status:error) when root has uncommitted changes (Step 0)`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const section = getLargeMultiSection(content);
@@ -4891,20 +4893,17 @@ describe('Contract: branch-manager syncs root working tree index after advancing
       section.length > 0,
       `${relative} must contain a large_multi_worktree Workflow section`
     );
-
-    // The reset must reference the root working tree — either via 'git -C' with root path
-    // or with an explicit comment/instruction stating it runs in root (not in trees/)
+    // The workflow must document aborting when ROOT_STATUS is non-empty
     assert.ok(
-      /root.*git reset --mixed|git reset --mixed.*root|git -C.*root.*reset --mixed|reset --mixed HEAD.*root/i.test(
+      /ROOT_STATUS.*uncommitted|uncommitted.*ROOT_STATUS|root has uncommitted|Hard-fail.*uncommitted|uncommitted.*hard.fail/i.test(
         section
       ) ||
-        (/git reset --mixed HEAD/.test(section) &&
-          /root working tree|root.{0,30}index|index.{0,30}root/i.test(section)),
-      `${relative} large_multi_worktree Workflow must clarify that 'git reset --mixed HEAD' runs in the root working tree to sync the index`
+        /if \[ -n "\$ROOT_STATUS" \]/.test(section),
+      `${relative} large_multi_worktree Workflow must hard-fail when root has uncommitted changes (Step 0 — Protocol #11)`
     );
   });
 
-  it(`${relative} large_multi_worktree Workflow states the purpose: sync index after ref advancement`, () => {
+  it(`${relative} large_multi_worktree Workflow emits advisory warning when root is on the review branch (Step 0)`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const section = getLargeMultiSection(content);
@@ -4912,14 +4911,36 @@ describe('Contract: branch-manager syncs root working tree index after advancing
       section.length > 0,
       `${relative} must contain a large_multi_worktree Workflow section`
     );
-
-    // The workflow must explain why the reset is needed: to sync the root index
+    // The workflow must surface a warning (not an error) when root is checked out to the review branch
     assert.ok(
-      /sync.*index|index.*sync|stale.*index|index.*stale|root.*index|index.*root/i.test(
+      /advisory.*warning|WARNING.*root.*review|root.*checked out.*review|review branch.*warning/i.test(
         section
-      ),
-      `${relative} large_multi_worktree Workflow must explain that 'git reset --mixed HEAD' syncs the root index ` +
-        `after the develop ref is advanced`
+      ) ||
+        /ROOT_BRANCH.*review|warning.*ref will advance/i.test(section),
+      `${relative} large_multi_worktree Workflow must emit an advisory warning (not error) when root is on the review branch (Step 0)`
+    );
+  });
+
+  it(`${relative} large_multi_worktree Workflow checks root status --porcelain after cleanup and returns status:error if dirty (Step 8)`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getLargeMultiSection(content);
+    assert.ok(
+      section.length > 0,
+      `${relative} must contain a large_multi_worktree Workflow section`
+    );
+    // Step 8: post-cleanup porcelain check must be present
+    assert.ok(
+      /POST_STATUS|post.merge.*status|step 8|post-merge clean/i.test(section),
+      `${relative} large_multi_worktree Workflow must include a post-merge cleanliness check (Step 8)`
+    );
+    // Must return status:error (Protocol #11) if dirty after cleanup
+    assert.ok(
+      /status:error.*Protocol #11|Protocol #11.*status:error|dirty after.*cleanup|dirty after merge cleanup/i.test(
+        section
+      ) ||
+        /if \[ -n "\$POST_STATUS" \]/.test(section),
+      `${relative} large_multi_worktree Workflow must return status:error per Protocol #11 if root is dirty after cleanup (Step 8)`
     );
   });
 });

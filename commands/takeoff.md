@@ -542,6 +542,11 @@ At every work unit boundary (before starting the next unit or before signaling c
 **Keep** (still needed): dev servers, databases, file watchers, and any long-lived process the next work unit depends on.
 
 7. **Commit to feature branch**: After all gates pass, use reaper:branch-manager to commit the current state to the feature branch in WORKTREE_PATH. This is a commit-only step -- do not merge to develop. Use conventional commit format based on the work completed (e.g., `feat: implement X`, `fix: resolve Y`). If `BRANCH_MANAGER_SESSION_ID` is set, resume that session via `Task --resume BRANCH_MANAGER_SESSION_ID`; otherwise deploy a fresh reaper:branch-manager agent and store the returned `agent_id` as `BRANCH_MANAGER_SESSION_ID`. If resume fails, fall back to a fresh deployment and update `BRANCH_MANAGER_SESSION_ID`.
+
+   **Branch-manager error handling (commit step)**: Inspect the branch-manager JSON response before continuing:
+   - If `status` is `"error"` and `git_state.merge_conflicts_detected` is `true`: render a **Merge Conflict Card** (see below), surface all entries from `blocking_issues[]` to the user, and **pause the workflow**. Do NOT auto-resolve or auto-retry. Await explicit user instruction before proceeding.
+   - If `status` is `"error"` for any other reason (e.g., precondition failure, hook rejection, staged artifacts): surface the `message` field and all `blocking_issues[]` entries, then pause and await user instruction.
+   - Only continue to step 8 when `status` is `"success"` or `"warning"`.
 8. Update TodoWrite to mark the unit as completed
 <!-- user-comms: say "marking the task complete" not "CLOSE_ISSUE" -->
 9. For any tracked issue (pre-planned or not) on non-markdown_only platforms, use CLOSE_ISSUE to close the corresponding child issue after gates pass.
@@ -549,6 +554,45 @@ At every work unit boundary (before starting the next unit or before signaling c
 11. **Announce progress and loop back**: "Completed [X] of [N] work units. Next: [unit name]." -- then return to step 1 for the next unit
 
 This cycle repeats for every work unit. The Completion section is only reachable after the final unit passes its gates.
+
+### Merge Conflict Card
+
+When branch-manager returns `status: error` with `merge_conflicts_detected: true`, render this card and pause:
+
+```
+  MERGE CONFLICT DETECTED
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Step:       [current step X.Y]
+  Branch:     [feature branch name]
+  Conflicts:  [N files]
+
+  Conflicting files:
+  [List each entry from blocking_issues[] on its own line]
+
+  Workflow paused — awaiting your instruction.
+  Options:
+    • Resolve conflicts manually, then say "retry commit"
+    • Abort this unit and say "skip" or "abort"
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+Do NOT auto-resolve conflicts, modify files, or retry without explicit user direction.
+
+For non-conflict `status: error` responses (precondition failures, hook rejections, staged artifacts, or any other error), render a simpler error card:
+
+```
+  BRANCH-MANAGER ERROR
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Step:       [current step X.Y]
+  Operation:  [agent_metadata.operation]
+  Error:      [message field]
+
+  Details:
+  [List each entry from blocking_issues[] on its own line]
+
+  Workflow paused — awaiting your instruction.
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
 
 ### Continuation Rule
 
@@ -929,6 +973,12 @@ you'd prefer to open a PR instead of merging directly, just say so and I'll run
 | "merge" / "ship it" / "approved" | Use reaper:branch-manager to merge the feature branch to develop. Resume `BRANCH_MANAGER_SESSION_ID` via `Task --resume` if available; fall back to a fresh deployment if the session is stale. |
 | "open a PR" / "create PR" | Invoke `/reaper:ship` on the feature worktree to commit, push, and open a PR. |
 | Silence or unclear | Ask: "Any feedback, or ready to merge?" |
+
+**Merge error handling (develop merge)**: After branch-manager completes the merge-to-develop operation, inspect the JSON response before announcing success:
+
+- If `status` is `"error"` and `git_state.merge_conflicts_detected` is `true`: render a Merge Conflict Card (see Per-Unit Cycle section above), surface all `blocking_issues[]` entries, and pause. Do NOT auto-resolve or retry. Await user instruction.
+- If `status` is `"error"` for any other reason: render a Branch-Manager Error Card (see Per-Unit Cycle section above) with the `message` and `blocking_issues[]` contents, then pause and await user instruction.
+- Only proceed to Worktree Cleanup when `status` is `"success"` or `"warning"`.
 
 ## Worktree Cleanup
 

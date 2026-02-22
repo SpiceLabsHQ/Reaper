@@ -165,6 +165,23 @@ medium_single_branch uses a single shared worktree for all coding agents. Branch
    - Commit in worktree: `git -C ./trees/[TASK_ID]-[COMPONENT] add . && git -C ./trees/[TASK_ID]-[COMPONENT] commit -m "..."`
    - Merge to review branch using an isolated integration worktree — never `git checkout` in root:
      ```
+     # Step 0: Pre-merge precondition check — inspect root before touching anything
+     ROOT="$(git rev-parse --show-toplevel)"
+     ROOT_STATUS="$(git -C "$ROOT" status --porcelain)"
+     ROOT_BRANCH="$(git -C "$ROOT" branch --show-current)"
+     # Hard-fail: uncommitted changes in root would be corrupted by the index manipulation below
+     if [ -n "$ROOT_STATUS" ]; then
+       # Return status:error — do not proceed (Protocol #11)
+       echo "ERROR: root has uncommitted changes; aborting merge to prevent index pollution"
+       exit 1
+     fi
+     # Advisory: root is checked out to the review branch being advanced
+     # The ref will move under root's feet, which is confusing but not destructive.
+     # Surface as a warning in the JSON response; proceed with caution.
+     if [ "$ROOT_BRANCH" = "feature/[TASK_ID]-review" ]; then
+       echo "WARNING: root is checked out to the review branch — ref will advance after merge; root working tree will appear behind HEAD"
+     fi
+
      git branch [TASK_ID]-integration-temp feature/[TASK_ID]-review
      git worktree add ./trees/[TASK_ID]-integration [TASK_ID]-integration-temp
      git -C ./trees/[TASK_ID]-integration merge feature/[TASK_ID]-[COMPONENT] --no-ff
@@ -173,10 +190,15 @@ medium_single_branch uses a single shared worktree for all coding agents. Branch
      # Cleanup integration worktree and temp branch
      git worktree remove ./trees/[TASK_ID]-integration
      git branch -d [TASK_ID]-integration-temp
-     # Sync the root working tree index: git branch -f advances the ref but leaves the
-     # root index stale (pointing at the old HEAD). Run git reset --mixed HEAD in the root
-     # to sync the index without discarding untracked files.
-     git -C "$(git rev-parse --show-toplevel)" reset --mixed HEAD
+
+     # Step 8: Post-merge cleanliness assertion — root must be clean after cleanup
+     POST_STATUS="$(git -C "$ROOT" status --porcelain)"
+     if [ -n "$POST_STATUS" ]; then
+       # Return status:error per Protocol #11 — stop and report; do not self-remediate
+       echo "ERROR: root is dirty after merge cleanup (unexpected index pollution); aborting"
+       echo "$POST_STATUS"
+       exit 1
+     fi
      ```
    - If the merge produces conflicts, they surface inside `./trees/[TASK_ID]-integration`, not in root
    - Teardown component worktree (verify from project root — never teardown from inside the worktree)
