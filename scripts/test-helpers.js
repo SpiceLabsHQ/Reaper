@@ -50,6 +50,7 @@ function resetBuildState() {
   stats.errors = 0;
   stats.skipped = 0;
   stats.errorMessages = [];
+  stats.agentTokenCounts = {};
 }
 
 /**
