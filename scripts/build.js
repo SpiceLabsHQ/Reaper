@@ -110,6 +110,12 @@ const stats = {
   skipped: 0,
   /** @type {string[]} Array of error messages */
   errorMessages: [],
+  /**
+   * Estimated token counts per agent, keyed by agent name.
+   * Only populated for successfully compiled agent files.
+   * @type {Object.<string, number>}
+   */
+  agentTokenCounts: {},
 };
 
 /**
@@ -348,6 +354,11 @@ function processFile(sourcePath, outputPath, sourceType, relativePath) {
     // Write the output file
     fs.writeFileSync(outputPath, output, 'utf8');
 
+    // Track estimated token count for agent files only
+    if (sourceType === 'agents') {
+      stats.agentTokenCounts[filename] = estimateTokenCount(output);
+    }
+
     console.log(`  [OK] ${relativePath}`);
     stats.success++;
     return true;
@@ -378,6 +389,64 @@ function formatError(err, _sourcePath) {
   }
 
   return err.message || String(err);
+}
+
+/**
+ * Estimates the token count for a string of text.
+ *
+ * Uses the 4-characters-per-token approximation, which is a well-known
+ * rule of thumb for English prose and code (OpenAI documentation reference).
+ * This is not exact — it is intentionally simple and fast for monitoring
+ * purposes. The goal is to surface relative prompt size trends, not
+ * precise billing counts.
+ *
+ * Formula: ceil(length / 4)
+ *
+ * @param {string} text - The text to estimate tokens for
+ * @returns {number} Estimated token count (ceiling of character count / 4)
+ */
+function estimateTokenCount(text) {
+  if (!text || text.length === 0) {
+    return 0;
+  }
+  return Math.ceil(text.length / 4);
+}
+
+/**
+ * Prints a prompt size summary table sorted by estimated token count descending.
+ * Only emits output if there is at least one agent token count recorded.
+ * Output goes to stdout via console.log.
+ */
+function printTokenSummary() {
+  const entries = Object.entries(stats.agentTokenCounts);
+  if (entries.length === 0) {
+    return;
+  }
+
+  // Sort descending by token count
+  entries.sort((a, b) => b[1] - a[1]);
+
+  const nameWidth = Math.max(
+    'Agent'.length,
+    ...entries.map(([name]) => name.length)
+  );
+  const countWidth = Math.max(
+    'Est. Tokens'.length,
+    ...entries.map(([, count]) => String(count).length)
+  );
+
+  const separator = `${'─'.repeat(nameWidth + 2)}┼${'─'.repeat(countWidth + 2)}`;
+  const header = `${'Agent'.padEnd(nameWidth)} │ ${'Est. Tokens'.padStart(countWidth)}`;
+
+  console.log('\nPrompt Size Summary (4 chars ≈ 1 token):');
+  console.log(header);
+  console.log(separator);
+
+  for (const [name, count] of entries) {
+    console.log(`${name.padEnd(nameWidth)} │ ${String(count).padStart(countWidth)}`);
+  }
+
+  console.log('');
 }
 
 /**
@@ -487,6 +556,7 @@ function build() {
   stats.errors = 0;
   stats.skipped = 0;
   stats.errorMessages = [];
+  stats.agentTokenCounts = {};
 
   // Check if src directory exists
   if (!fs.existsSync(config.srcDir)) {
@@ -517,6 +587,9 @@ function build() {
   }
 
   console.log('--------------------------\n');
+
+  // Print per-agent prompt size summary after all files are processed
+  printTokenSummary();
 }
 
 /**
@@ -620,6 +693,8 @@ module.exports = {
   buildType,
   build,
   main,
+  estimateTokenCount,
+  printTokenSummary,
   AGENT_TYPES,
   TDD_AGENTS,
   DIRECTORY_MAP,

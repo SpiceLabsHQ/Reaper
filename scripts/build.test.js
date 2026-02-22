@@ -16,6 +16,8 @@ const {
   buildType,
   build,
   main,
+  estimateTokenCount,
+  printTokenSummary,
   AGENT_TYPES,
   TDD_AGENTS,
   config,
@@ -27,6 +29,8 @@ const FIXTURES_DIR = path.join(__dirname, 'fixtures');
 
 beforeEach(() => {
   resetBuildState();
+  // Reset agentTokenCounts separately — not yet part of resetBuildState in test-helpers
+  stats.agentTokenCounts = {};
 });
 
 // ===========================================================================
@@ -2631,6 +2635,432 @@ describe('orchestrator-role-boundary.ejs: commit freely example removed', () => 
     assert.ok(
       content.includes('gate') || content.includes('quality'),
       'orchestrator-role-boundary.ejs must still contain gate iteration guidance'
+    );
+  });
+});
+
+// ===========================================================================
+// estimateTokenCount — unit tests for the 4-char-per-token approximation
+// ===========================================================================
+
+describe('estimateTokenCount', () => {
+  it('should return 0 for an empty string', () => {
+    assert.strictEqual(estimateTokenCount(''), 0);
+  });
+
+  it('should estimate 1 token for a 4-character string', () => {
+    assert.strictEqual(estimateTokenCount('abcd'), 1);
+  });
+
+  it('should estimate 1 token for a string shorter than 4 characters (ceiling)', () => {
+    // 3 chars / 4 = 0.75, ceil = 1
+    assert.strictEqual(estimateTokenCount('abc'), 1);
+  });
+
+  it('should estimate 2 tokens for an 8-character string', () => {
+    assert.strictEqual(estimateTokenCount('abcdefgh'), 2);
+  });
+
+  it('should estimate 250 tokens for a 1000-character string', () => {
+    const text = 'a'.repeat(1000);
+    assert.strictEqual(estimateTokenCount(text), 250);
+  });
+
+  it('should estimate 25 tokens for a 100-character string', () => {
+    const text = 'x'.repeat(100);
+    assert.strictEqual(estimateTokenCount(text), 25);
+  });
+
+  it('should use ceiling division — 5 chars yields 2 tokens', () => {
+    // 5 chars / 4 = 1.25, ceil = 2
+    assert.strictEqual(estimateTokenCount('abcde'), 2);
+  });
+
+  it('should handle a realistic markdown string', () => {
+    const text = '# Hello World\n\nThis is a test.';
+    // 31 chars / 4 = 7.75, ceil = 8
+    const expected = Math.ceil(text.length / 4);
+    assert.strictEqual(estimateTokenCount(text), expected);
+  });
+});
+
+// ===========================================================================
+// stats.agentTokenCounts — shape and accumulation
+// ===========================================================================
+
+describe('stats.agentTokenCounts', () => {
+  it('should exist on the stats object', () => {
+    assert.ok(
+      'agentTokenCounts' in stats,
+      'stats.agentTokenCounts should exist'
+    );
+  });
+
+  it('should be an object', () => {
+    assert.strictEqual(typeof stats.agentTokenCounts, 'object');
+    assert.ok(
+      stats.agentTokenCounts !== null,
+      'agentTokenCounts should not be null'
+    );
+  });
+
+  it('should be reset to an empty object by build()', () => {
+    // Pre-populate so we can assert it gets cleared
+    stats.agentTokenCounts = { 'bug-fixer': 999 };
+
+    config.srcDir = '/tmp/reaper-test-nonexistent-src';
+    build();
+
+    assert.deepStrictEqual(
+      stats.agentTokenCounts,
+      {},
+      'agentTokenCounts should be reset to empty object at start of build'
+    );
+  });
+});
+
+// ===========================================================================
+// processFile — agent token count accumulation
+// ===========================================================================
+
+describe('processFile agent token count tracking', () => {
+  const TMP_OUTPUT_DIR = path.join(FIXTURES_DIR, '_test_token_output');
+
+  beforeEach(() => {
+    resetBuildState();
+    stats.agentTokenCounts = {};
+    fs.rmSync(TMP_OUTPUT_DIR, { recursive: true, force: true });
+  });
+
+  afterEach(() => {
+    fs.rmSync(TMP_OUTPUT_DIR, { recursive: true, force: true });
+  });
+
+  it('should record a token count for a successfully compiled agent file', () => {
+    const srcDir = path.join(TMP_OUTPUT_DIR, 'src_agents');
+    fs.mkdirSync(srcDir, { recursive: true });
+    const sourcePath = path.join(srcDir, 'bug-fixer.ejs');
+    fs.writeFileSync(sourcePath, 'Hello <%= FILENAME %>, this is your prompt.');
+    const outputPath = path.join(TMP_OUTPUT_DIR, 'bug-fixer.md');
+
+    processFile(sourcePath, outputPath, 'agents', 'agents/bug-fixer.ejs');
+
+    assert.ok(
+      'bug-fixer' in stats.agentTokenCounts,
+      'stats.agentTokenCounts should have an entry for bug-fixer'
+    );
+    assert.strictEqual(
+      typeof stats.agentTokenCounts['bug-fixer'],
+      'number',
+      'Token count should be a number'
+    );
+    assert.ok(
+      stats.agentTokenCounts['bug-fixer'] > 0,
+      'Token count should be greater than 0'
+    );
+  });
+
+  it('should NOT record a token count for a non-agent file (skills source type)', () => {
+    const sourcePath = path.join(FIXTURES_DIR, 'simple.ejs');
+    const outputPath = path.join(TMP_OUTPUT_DIR, 'simple.md');
+
+    processFile(sourcePath, outputPath, 'skills', 'skills/simple.ejs');
+
+    assert.deepStrictEqual(
+      stats.agentTokenCounts,
+      {},
+      'Token counts should not be tracked for non-agent files'
+    );
+  });
+
+  it('should NOT record a token count when processFile fails', () => {
+    const sourcePath = path.join(FIXTURES_DIR, 'does-not-exist.ejs');
+    const outputPath = path.join(TMP_OUTPUT_DIR, 'out.md');
+
+    processFile(sourcePath, outputPath, 'agents', 'agents/bug-fixer.ejs');
+
+    assert.deepStrictEqual(
+      stats.agentTokenCounts,
+      {},
+      'Failed compilations should not produce token count entries'
+    );
+  });
+
+  it('should record accurate token count matching estimateTokenCount of the output', () => {
+    const srcDir = path.join(TMP_OUTPUT_DIR, 'src_agents');
+    fs.mkdirSync(srcDir, { recursive: true });
+    const agentContent = 'Hello from bug-fixer agent!';
+    const sourcePath = path.join(srcDir, 'bug-fixer.ejs');
+    fs.writeFileSync(sourcePath, agentContent);
+    const outputPath = path.join(TMP_OUTPUT_DIR, 'bug-fixer.md');
+
+    processFile(sourcePath, outputPath, 'agents', 'agents/bug-fixer.ejs');
+
+    const writtenContent = fs.readFileSync(outputPath, 'utf8');
+    const expectedTokens = estimateTokenCount(writtenContent);
+    assert.strictEqual(
+      stats.agentTokenCounts['bug-fixer'],
+      expectedTokens,
+      'Token count should match estimateTokenCount of the written output'
+    );
+  });
+});
+
+// ===========================================================================
+// printTokenSummary — output format and ordering
+// ===========================================================================
+
+describe('printTokenSummary', () => {
+  let logLines;
+  let originalConsoleLog;
+
+  beforeEach(() => {
+    resetBuildState();
+    stats.agentTokenCounts = {};
+    logLines = [];
+    originalConsoleLog = console.log;
+    console.log = (...args) => logLines.push(args.join(' '));
+  });
+
+  afterEach(() => {
+    console.log = originalConsoleLog;
+    resetBuildState();
+    stats.agentTokenCounts = {};
+  });
+
+  it('should print nothing when agentTokenCounts is empty', () => {
+    stats.agentTokenCounts = {};
+    printTokenSummary();
+    assert.strictEqual(
+      logLines.length,
+      0,
+      'No output should be produced when there are no agent token counts'
+    );
+  });
+
+  it('should print a "Prompt Size Summary" heading', () => {
+    stats.agentTokenCounts = { 'bug-fixer': 100 };
+    printTokenSummary();
+    const output = logLines.join('\n');
+    assert.ok(
+      output.includes('Prompt Size Summary'),
+      'Output must contain "Prompt Size Summary" heading'
+    );
+  });
+
+  it('should include each agent name in the output', () => {
+    stats.agentTokenCounts = {
+      'bug-fixer': 200,
+      'feature-developer': 150,
+      'workflow-planner': 300,
+    };
+    printTokenSummary();
+    const output = logLines.join('\n');
+    assert.ok(output.includes('bug-fixer'), 'Output must list bug-fixer');
+    assert.ok(
+      output.includes('feature-developer'),
+      'Output must list feature-developer'
+    );
+    assert.ok(
+      output.includes('workflow-planner'),
+      'Output must list workflow-planner'
+    );
+  });
+
+  it('should include token counts in the output', () => {
+    stats.agentTokenCounts = { 'bug-fixer': 1234 };
+    printTokenSummary();
+    const output = logLines.join('\n');
+    assert.ok(
+      output.includes('1234'),
+      'Output must include the token count value'
+    );
+  });
+
+  it('should list agents sorted descending by token count', () => {
+    stats.agentTokenCounts = {
+      'feature-developer': 100,
+      'workflow-planner': 500,
+      'bug-fixer': 300,
+    };
+    printTokenSummary();
+    const output = logLines.join('\n');
+
+    const wfPos = output.indexOf('workflow-planner');
+    const bfPos = output.indexOf('bug-fixer');
+    const fdPos = output.indexOf('feature-developer');
+
+    assert.ok(wfPos !== -1, 'workflow-planner should appear in output');
+    assert.ok(bfPos !== -1, 'bug-fixer should appear in output');
+    assert.ok(fdPos !== -1, 'feature-developer should appear in output');
+
+    assert.ok(
+      wfPos < bfPos,
+      'workflow-planner (500) should appear before bug-fixer (300)'
+    );
+    assert.ok(
+      bfPos < fdPos,
+      'bug-fixer (300) should appear before feature-developer (100)'
+    );
+  });
+
+  it('should handle a single agent entry', () => {
+    stats.agentTokenCounts = { 'test-runner': 42 };
+    printTokenSummary();
+    const output = logLines.join('\n');
+    assert.ok(output.includes('test-runner'), 'Single agent should be listed');
+    assert.ok(output.includes('42'), 'Single agent token count should appear');
+  });
+});
+
+// ===========================================================================
+// build integration — prompt size summary printed after agents are built
+// ===========================================================================
+
+describe('build prompt size summary integration', () => {
+  const TMP_OUTPUT_DIR = path.join(FIXTURES_DIR, '_test_build_summary_output');
+  let logLines;
+  let originalConsoleLog;
+  let originalSrcDir;
+  let originalRootDir;
+
+  beforeEach(() => {
+    resetBuildState();
+    stats.agentTokenCounts = {};
+    fs.rmSync(TMP_OUTPUT_DIR, { recursive: true, force: true });
+    fs.mkdirSync(TMP_OUTPUT_DIR, { recursive: true });
+
+    originalSrcDir = config.srcDir;
+    originalRootDir = config.rootDir;
+
+    logLines = [];
+    originalConsoleLog = console.log;
+    console.log = (...args) => logLines.push(args.join(' '));
+  });
+
+  afterEach(() => {
+    fs.rmSync(TMP_OUTPUT_DIR, { recursive: true, force: true });
+    config.srcDir = originalSrcDir;
+    config.rootDir = originalRootDir;
+    console.log = originalConsoleLog;
+    stats.agentTokenCounts = {};
+  });
+
+  it('should print a prompt size summary after building agents', () => {
+    const srcAgentsDir = path.join(TMP_OUTPUT_DIR, 'src', 'agents');
+    fs.mkdirSync(srcAgentsDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(srcAgentsDir, 'bug-fixer.ejs'),
+      'You are the bug-fixer agent with a long description here.'
+    );
+
+    config.srcDir = path.join(TMP_OUTPUT_DIR, 'src');
+    config.rootDir = path.join(TMP_OUTPUT_DIR, 'out');
+    config.type = 'agents';
+
+    build();
+
+    const output = logLines.join('\n');
+    assert.ok(
+      output.includes('Prompt Size Summary'),
+      'build() must print "Prompt Size Summary" after processing agents'
+    );
+  });
+
+  it('should include agent name and token count in build summary output', () => {
+    const srcAgentsDir = path.join(TMP_OUTPUT_DIR, 'src', 'agents');
+    fs.mkdirSync(srcAgentsDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(srcAgentsDir, 'bug-fixer.ejs'),
+      'Agent content here for token estimation.'
+    );
+
+    config.srcDir = path.join(TMP_OUTPUT_DIR, 'src');
+    config.rootDir = path.join(TMP_OUTPUT_DIR, 'out');
+    config.type = 'agents';
+
+    build();
+
+    const output = logLines.join('\n');
+    assert.ok(
+      output.includes('bug-fixer'),
+      'Summary must include the agent name'
+    );
+    assert.ok(
+      /\d+/.test(output.split('Prompt Size Summary')[1] || ''),
+      'Summary must include at least one numeric token count after the heading'
+    );
+  });
+
+  it('should NOT print prompt size summary when no agent files were processed', () => {
+    // Build only skills (no agents)
+    const srcSkillsDir = path.join(TMP_OUTPUT_DIR, 'src', 'skills');
+    fs.mkdirSync(srcSkillsDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(srcSkillsDir, 'my-skill.ejs'),
+      'Skill content here.'
+    );
+
+    config.srcDir = path.join(TMP_OUTPUT_DIR, 'src');
+    config.rootDir = path.join(TMP_OUTPUT_DIR, 'out');
+    config.type = 'skills';
+
+    build();
+
+    const output = logLines.join('\n');
+    assert.ok(
+      !output.includes('Prompt Size Summary'),
+      'build() must NOT print token summary when no agents were processed'
+    );
+  });
+
+  it('should print summary after all types are built when config.type is null', () => {
+    const srcAgentsDir = path.join(TMP_OUTPUT_DIR, 'src', 'agents');
+    const srcSkillsDir = path.join(TMP_OUTPUT_DIR, 'src', 'skills');
+    fs.mkdirSync(srcAgentsDir, { recursive: true });
+    fs.mkdirSync(srcSkillsDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(srcAgentsDir, 'bug-fixer.ejs'),
+      'Bug fixer prompt content.'
+    );
+    fs.writeFileSync(path.join(srcSkillsDir, 'my-skill.ejs'), 'Skill content.');
+
+    config.srcDir = path.join(TMP_OUTPUT_DIR, 'src');
+    config.rootDir = path.join(TMP_OUTPUT_DIR, 'out');
+    config.type = null;
+
+    build();
+
+    const output = logLines.join('\n');
+    assert.ok(
+      output.includes('Prompt Size Summary'),
+      'build() must print summary when building all types including agents'
+    );
+  });
+
+  it('should print the summary AFTER the build summary separator', () => {
+    const srcAgentsDir = path.join(TMP_OUTPUT_DIR, 'src', 'agents');
+    fs.mkdirSync(srcAgentsDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(srcAgentsDir, 'bug-fixer.ejs'),
+      'Bug fixer agent prompt.'
+    );
+
+    config.srcDir = path.join(TMP_OUTPUT_DIR, 'src');
+    config.rootDir = path.join(TMP_OUTPUT_DIR, 'out');
+    config.type = 'agents';
+
+    build();
+
+    const output = logLines.join('\n');
+    const summaryPos = output.indexOf('Prompt Size Summary');
+    const buildSummaryPos = output.indexOf('Build Summary:');
+
+    assert.ok(summaryPos !== -1, 'Prompt Size Summary must be present');
+    assert.ok(buildSummaryPos !== -1, 'Build Summary must be present');
+    assert.ok(
+      summaryPos > buildSummaryPos,
+      'Prompt Size Summary must appear AFTER Build Summary'
     );
   });
 });
