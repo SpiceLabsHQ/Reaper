@@ -19,6 +19,7 @@ const {
   readPackageVersion,
   readPluginVersion,
   readReadmeVersion,
+  readGitTag,
   collectVersions,
   formatMismatchReport,
   verifyVersionConsistency,
@@ -325,6 +326,40 @@ describe('formatMismatchReport', () => {
 });
 
 // ---------------------------------------------------------------------------
+// readGitTag
+// ---------------------------------------------------------------------------
+
+describe('readGitTag', () => {
+  it('returns the version string stripped from a semver git tag', () => {
+    const fakeExec = () => 'v1.2.3\n';
+    const result = readGitTag(fakeExec);
+    assert.strictEqual(result, '1.2.3');
+  });
+
+  it('returns the version string from a tag without a v-prefix', () => {
+    const fakeExec = () => '1.2.3\n';
+    const result = readGitTag(fakeExec);
+    assert.strictEqual(result, '1.2.3');
+  });
+
+  it('throws a clear error when git describe returns no tag', () => {
+    const fakeExec = () => {
+      throw new Error('fatal: No names found, cannot describe anything.');
+    };
+    assert.throws(
+      () => readGitTag(fakeExec),
+      (err) => {
+        assert.ok(
+          err.message.includes('git tag') || err.message.includes('No git tag'),
+          `Expected git-tag mention in error: ${err.message}`
+        );
+        return true;
+      }
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
 // verifyVersionConsistency — integration (uses real process.exit stub)
 // ---------------------------------------------------------------------------
 
@@ -362,8 +397,9 @@ describe('verifyVersionConsistency', () => {
       pluginVersion: '1.2.3',
       readmeVersion: '1.2.3',
     });
+    const fakeExec = () => 'v1.2.3\n';
     try {
-      verifyVersionConsistency(dir);
+      verifyVersionConsistency(dir, fakeExec);
       assert.strictEqual(exitCode, 0);
     } finally {
       cleanup();
@@ -455,6 +491,85 @@ describe('verifyVersionConsistency', () => {
       verifyVersionConsistency(dir);
       const output = capturedOutput.join('\n');
       assert.ok(output.length > 0, 'Expected some output on success');
+    } finally {
+      cleanup();
+    }
+  });
+
+  it('exits 0 when all three versions match and git tag agrees', () => {
+    const { dir, cleanup } = makeTmpProject({
+      packageVersion: '5.0.0',
+      pluginVersion: '5.0.0',
+      readmeVersion: '5.0.0',
+    });
+    const fakeExec = () => 'v5.0.0\n';
+    try {
+      verifyVersionConsistency(dir, fakeExec);
+      assert.strictEqual(exitCode, 0);
+    } finally {
+      cleanup();
+    }
+  });
+
+  it('exits 1 with a clear error when git tag does not match package.json version', () => {
+    const { dir, cleanup } = makeTmpProject({
+      packageVersion: '5.0.0',
+      pluginVersion: '5.0.0',
+      readmeVersion: '5.0.0',
+    });
+    // Simulate a stale package.json — tag says 5.0.1 but package.json says 5.0.0
+    const fakeExec = () => 'v5.0.1\n';
+    try {
+      verifyVersionConsistency(dir, fakeExec);
+      assert.strictEqual(exitCode, 1);
+      const output = capturedOutput.join('\n');
+      assert.ok(
+        output.includes('5.0.1') || output.includes('git tag') || output.includes('tag'),
+        `Expected git tag version in error output: ${output}`
+      );
+    } finally {
+      cleanup();
+    }
+  });
+
+  it('exits 1 with a clear error when package.json is ahead of the git tag', () => {
+    const { dir, cleanup } = makeTmpProject({
+      packageVersion: '6.0.0',
+      pluginVersion: '6.0.0',
+      readmeVersion: '6.0.0',
+    });
+    // package.json bumped to 6.0.0 but git tag is still at 5.9.0
+    const fakeExec = () => 'v5.9.0\n';
+    try {
+      verifyVersionConsistency(dir, fakeExec);
+      assert.strictEqual(exitCode, 1);
+      const output = capturedOutput.join('\n');
+      assert.ok(
+        output.includes('5.9.0') || output.includes('git tag') || output.includes('tag'),
+        `Expected git tag mismatch info in error output: ${output}`
+      );
+    } finally {
+      cleanup();
+    }
+  });
+
+  it('skips git tag check and exits 0 when no execFn provided and files agree', () => {
+    // Without an execFn injection the sentinel cannot call real git in a unit test;
+    // the existing file-only verification path must still pass.
+    const { dir, cleanup } = makeTmpProject({
+      packageVersion: '7.0.0',
+      pluginVersion: '7.0.0',
+      readmeVersion: '7.0.0',
+    });
+    // Pass an execFn that throws "not in a git repo" to exercise the graceful fallback
+    const fakeExec = () => {
+      throw new Error('not a git repository');
+    };
+    try {
+      verifyVersionConsistency(dir, fakeExec);
+      // When git is unavailable the sentinel should still exit 0 (files agree)
+      // but emit a warning — the sentinel must NOT hard-fail on missing git.
+      assert.strictEqual(exitCode, 0);
     } finally {
       cleanup();
     }
