@@ -691,10 +691,10 @@ Not all work types need the same quality gates. Use the profile table below to d
 
 | Work Type | Gate 1 (blocking) | Gate 2 (parallel) |
 |-----------|-------------------|-------------------|
-| `application_code` | reaper:test-runner | reaper:principal-engineer, reaper:security-auditor |
-| `infrastructure_config` | -- | reaper:principal-engineer, reaper:security-auditor |
+| `application_code` | reaper:test-runner | reaper:feature-developer, reaper:security-auditor |
+| `infrastructure_config` | -- | reaper:cloud-architect, reaper:security-auditor |
 | `database_migration` | -- | reaper:database-architect |
-| `api_specification` | -- | reaper:principal-engineer |
+| `api_specification` | -- | reaper:api-designer |
 | `agent_prompt` | -- | reaper:ai-prompt-engineer |
 | `documentation` | -- | reaper:technical-writer |
 | `ci_cd_pipeline` | -- | reaper:deployment-engineer, reaper:security-auditor |
@@ -734,7 +734,7 @@ When a changeset spans multiple work types, compute the union of all matching pr
 
 **Example:** A changeset touching `src/auth.ts` (application_code) and `terraform/main.tf` (infrastructure_config) produces:
 - Gate 1: reaper:test-runner (from application_code; infrastructure_config has no Gate 1)
-- Gate 2: reaper:principal-engineer (from application_code; deduplicated since both profiles include it) + reaper:security-auditor (union of both profiles; deduplicated since both include security-auditor)
+- Gate 2: reaper:feature-developer (from application_code) + reaper:cloud-architect (from infrastructure_config) + reaper:security-auditor (union of both profiles; deduplicated since both include security-auditor)
 
 #### Differential Retry Limits
 

@@ -1953,6 +1953,9 @@ const GATE_PROFILE_WORK_TYPES = [
  * The valid Gate 2 reviewer agents that may appear in the Gate 2 column.
  */
 const VALID_GATE2_AGENTS = [
+  'reaper:feature-developer',
+  'reaper:cloud-architect',
+  'reaper:api-designer',
   'reaper:database-architect',
   'reaper:ai-prompt-engineer',
   'reaper:technical-writer',
@@ -2044,6 +2047,126 @@ describe('Contract: gate profile correctness — all 10 work types and valid Gat
       );
     }
   });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: Gate 2 SME routing — work-type-matched agents (B1b)
+//
+// Validates that each work type routes to its correct domain SME rather than
+// falling back to the generic reaper:principal-engineer. These tests encode
+// the routing table from docs/quality-gates.md (reviewer_agent column).
+//
+// Work types without a specialist (architecture_review, test_code,
+// configuration) intentionally retain reaper:principal-engineer — those are
+// NOT asserted here.
+// ---------------------------------------------------------------------------
+
+/**
+ * Parses the first (orchestrator-role) gate profile table from the partial.
+ * Returns a Map of workType → Gate2Cell string.
+ */
+function parseOrchestratorGateTable(content) {
+  const lines = content.split('\n');
+  // Find the orchestrator block (before the else branch)
+  const elseIdx = lines.findIndex((l) => l.includes('<% } else { -%>'));
+  const orchestratorLines = elseIdx >= 0 ? lines.slice(0, elseIdx) : lines;
+
+  const tableRows = orchestratorLines.filter((line) => {
+    if (!line.startsWith('|') || !line.endsWith('|')) return false;
+    const cells = line.split('|').slice(1, -1);
+    if (cells.length < 3) return false;
+    if (/^[\s|-]+$/.test(line)) return false;
+    if (line.includes('Gate 2 (parallel)') || line.includes('Gate 1 (blocking)'))
+      return false;
+    return true;
+  });
+
+  const map = new Map();
+  for (const row of tableRows) {
+    const cells = row.split('|').slice(1, -1).map((c) => c.trim());
+    // Column 0: work type (strip backticks), Column 2: Gate 2 agents
+    const workType = cells[0].replace(/`/g, '');
+    if (workType && cells[2]) {
+      map.set(workType, cells[2]);
+    }
+  }
+  return map;
+}
+
+/**
+ * Work-type → expected Gate 2 SME agent mapping.
+ * Encodes the reviewer_agent column from docs/quality-gates.md.
+ */
+const WORK_TYPE_SME_ROUTING = [
+  {
+    workType: 'application_code',
+    expectedAgent: 'reaper:feature-developer',
+    rationale: 'Application code reviewed by the agent that built it',
+  },
+  {
+    workType: 'infrastructure_config',
+    expectedAgent: 'reaper:cloud-architect',
+    rationale: 'Infrastructure config reviewed by cloud domain expert',
+  },
+  {
+    workType: 'api_specification',
+    expectedAgent: 'reaper:api-designer',
+    rationale: 'API specs reviewed by API domain expert',
+  },
+  {
+    workType: 'database_migration',
+    expectedAgent: 'reaper:database-architect',
+    rationale: 'Database migrations reviewed by database domain expert',
+  },
+  {
+    workType: 'agent_prompt',
+    expectedAgent: 'reaper:ai-prompt-engineer',
+    rationale: 'Agent prompts reviewed by prompt engineering expert',
+  },
+  {
+    workType: 'documentation',
+    expectedAgent: 'reaper:technical-writer',
+    rationale: 'Documentation reviewed by technical writer',
+  },
+  {
+    workType: 'ci_cd_pipeline',
+    expectedAgent: 'reaper:deployment-engineer',
+    rationale: 'CI/CD pipelines reviewed by deployment engineering expert',
+  },
+];
+
+describe('Contract: Gate 2 SME routing — work-type-matched agents', () => {
+  const sourcePath = path.join(
+    ROOT,
+    'src',
+    'partials',
+    'quality-gate-protocol.ejs'
+  );
+  const sourceRelative = 'src/partials/quality-gate-protocol.ejs';
+
+  it(`${sourceRelative} exists`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+  });
+
+  for (const { workType, expectedAgent, rationale } of WORK_TYPE_SME_ROUTING) {
+    it(`"${workType}" Gate 2 must route to ${expectedAgent} (${rationale})`, () => {
+      assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+      const content = fs.readFileSync(sourcePath, 'utf8');
+      const table = parseOrchestratorGateTable(content);
+
+      assert.ok(
+        table.has(workType),
+        `${sourceRelative} gate profile table must contain work type "${workType}"`
+      );
+
+      const gate2Cell = table.get(workType);
+      assert.ok(
+        gate2Cell.includes(expectedAgent),
+        `${sourceRelative} work type "${workType}" Gate 2 must include ${expectedAgent}. ` +
+          `Got: "${gate2Cell}". ${rationale}.`
+      );
+    });
+  }
 });
 
 // ---------------------------------------------------------------------------
@@ -4401,7 +4524,7 @@ describe('Contract: Gate 2 partial failure — combine blocking_issues and re-ru
 //
 // Gate profile lookup (from quality-gate-protocol.ejs):
 //   application_code  → Gate 1: reaper:test-runner
-//                        Gate 2: reaper:principal-engineer, reaper:security-auditor
+//                        Gate 2: reaper:feature-developer, reaper:security-auditor
 //   database_migration → Gate 1: --
 //                        Gate 2: reaper:database-architect
 //   documentation      → Gate 1: --
@@ -4409,7 +4532,7 @@ describe('Contract: Gate 2 partial failure — combine blocking_issues and re-ru
 //
 // Union result:
 //   Gate 1 (deduped): reaper:test-runner (exactly 1; only application_code contributes)
-//   Gate 2 (deduped): reaper:principal-engineer, reaper:security-auditor,
+//   Gate 2 (deduped): reaper:feature-developer, reaper:security-auditor,
 //                     reaper:database-architect, reaper:technical-writer (4 unique agents)
 // ---------------------------------------------------------------------------
 
@@ -4601,11 +4724,11 @@ describe('Contract: quality-gate-protocol union semantics — 3-work-type dedupl
     ];
     const union = computeUnion(profiles, workTypes);
 
-    // application_code contributes: reaper:principal-engineer, reaper:security-auditor
+    // application_code contributes: reaper:feature-developer, reaper:security-auditor
     // database_migration contributes: reaper:database-architect
     // documentation contributes: reaper:technical-writer
     const expectedGate2 = [
-      'reaper:principal-engineer',
+      'reaper:feature-developer',
       'reaper:security-auditor',
       'reaper:database-architect',
       'reaper:technical-writer',
@@ -4656,7 +4779,7 @@ describe('Contract: quality-gate-protocol union semantics — 3-work-type dedupl
       union.gate2.length,
       4,
       `Union Gate 2 must have exactly 4 unique agents ` +
-        `(principal-engineer + security-auditor + database-architect + technical-writer). ` +
+        `(feature-developer + security-auditor + database-architect + technical-writer). ` +
         `Got ${union.gate2.length}: [${union.gate2.join(', ')}]`
     );
   });
