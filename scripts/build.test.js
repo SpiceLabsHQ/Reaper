@@ -29,8 +29,6 @@ const FIXTURES_DIR = path.join(__dirname, 'fixtures');
 
 beforeEach(() => {
   resetBuildState();
-  // Reset agentTokenCounts separately — not yet part of resetBuildState in test-helpers
-  stats.agentTokenCounts = {};
 });
 
 // ===========================================================================

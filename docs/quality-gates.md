@@ -68,8 +68,8 @@ Not all work needs the same gates. Reaper auto-detects the work type from file p
 | Agent prompts | -- | ai-prompt-engineer + SME reviewer | ai-prompt-engineer |
 | Documentation | -- | SME reviewer | technical-writer |
 | CI/CD pipelines | -- | SME reviewer + security-auditor | deployment-engineer |
-| Test code | test-runner | SME reviewer | feature-developer |
-| Configuration files | -- | SME reviewer + security-auditor | feature-developer |
+| Test code | test-runner | SME reviewer | principal-engineer |
+| Configuration files | -- | SME reviewer + security-auditor | principal-engineer |
 
 Work types with no Gate 1 skip directly to Gate 2.
 

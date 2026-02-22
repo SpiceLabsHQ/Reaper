@@ -2170,6 +2170,59 @@ describe('Contract: Gate 2 SME routing — work-type-matched agents', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Contract: Gate 2 principal-engineer routing — test_code and configuration (B1c)
+//
+// test_code and configuration both route to reaper:principal-engineer for
+// Gate 2 review. principal-engineer is the correct SME for cross-cutting
+// quality concerns (test_code) and architectural implications
+// (configuration). These tests pin those specific routing entries so that
+// future edits to the partial cannot silently regress them.
+// ---------------------------------------------------------------------------
+
+describe('Contract: test_code and configuration Gate 2 must route to principal-engineer', () => {
+  const sourcePath = path.join(
+    ROOT,
+    'src',
+    'partials',
+    'quality-gate-protocol.ejs'
+  );
+  const sourceRelative = 'src/partials/quality-gate-protocol.ejs';
+
+  const PRINCIPAL_ENGINEER_ROUTING = [
+    {
+      workType: 'test_code',
+      rationale:
+        'Test code review requires cross-cutting quality expertise (principal-engineer), not the feature agent',
+    },
+    {
+      workType: 'configuration',
+      rationale:
+        'Configuration review has architectural implications best handled by principal-engineer',
+    },
+  ];
+
+  for (const { workType, rationale } of PRINCIPAL_ENGINEER_ROUTING) {
+    it(`"${workType}" Gate 2 must route to reaper:principal-engineer (${rationale})`, () => {
+      assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+      const content = fs.readFileSync(sourcePath, 'utf8');
+      const table = parseOrchestratorGateTable(content);
+
+      assert.ok(
+        table.has(workType),
+        `${sourceRelative} gate profile table must contain work type "${workType}"`
+      );
+
+      const gate2Cell = table.get(workType);
+      assert.ok(
+        gate2Cell.includes('reaper:principal-engineer'),
+        `${sourceRelative} work type "${workType}" Gate 2 must include reaper:principal-engineer. ` +
+          `Got: "${gate2Cell}". ${rationale}.`
+      );
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Contract: work-type detection patterns (B2)
 // ---------------------------------------------------------------------------
 
