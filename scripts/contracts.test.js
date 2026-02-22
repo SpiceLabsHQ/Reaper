@@ -3766,7 +3766,7 @@ describe('Contract: branch-manager large_multi_worktree merge uses isolated inte
     );
   });
 
-  it(`${relative} large_multi_worktree Workflow uses 'git branch -f' to advance review branch ref without checkout`, () => {
+  it(`${relative} large_multi_worktree Workflow uses conditional ff-only merge or branch -f to advance review branch ref`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const section = getLargeMultiSection(content);
@@ -3775,9 +3775,13 @@ describe('Contract: branch-manager large_multi_worktree merge uses isolated inte
       `${relative} must have a large_multi_worktree Workflow section`
     );
     assert.ok(
+      /git merge --ff-only/.test(section),
+      `${relative} large_multi_worktree Workflow must use 'git merge --ff-only' to advance the review branch ref ` +
+        `when root is on the target branch, preventing root index staleness`
+    );
+    assert.ok(
       /git branch -f/.test(section),
-      `${relative} large_multi_worktree Workflow must use 'git branch -f' to advance the review branch ref ` +
-        `without switching root's branch`
+      `${relative} large_multi_worktree Workflow must also include 'git branch -f' for the case when root is NOT on the target branch`
     );
   });
 
