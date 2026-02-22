@@ -1376,6 +1376,69 @@ describe('Contract: status-worktrees TAKING OFF state in shell script', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Contract: status-worktrees shows branch age on fleet dashboard and detail
+// ---------------------------------------------------------------------------
+
+describe('Contract: status-worktrees branch age display', () => {
+  const filePath = path.join(COMMANDS_DIR, 'status-worktrees.md');
+  const relative = 'commands/status-worktrees.md';
+
+  it(`${relative} collects branch age using git %cr relative format`, () => {
+    const content = fs.readFileSync(filePath, 'utf8');
+    // Branch age must use git's native relative time format (%cr)
+    // e.g. git log -1 --pretty=format:"%cr"
+    assert.ok(
+      content.includes('%cr'),
+      `${relative} must use git %%cr format to collect relative branch age`
+    );
+  });
+
+  it(`${relative} fleet dashboard row includes branch age`, () => {
+    const content = fs.readFileSync(filePath, 'utf8');
+    // The fleet dashboard printf line must render an age column
+    // Age variable must be captured per-worktree and included in the entry or printed on the row
+    assert.ok(
+      /age|AGE|branch_age|BRANCH_AGE/i.test(content),
+      `${relative} fleet dashboard must include a branch age variable`
+    );
+  });
+
+  it(`${relative} fleet dashboard printf includes age field`, () => {
+    const content = fs.readFileSync(filePath, 'utf8');
+    // The printf that renders fleet rows must include the age value
+    // Look for a printf that has both the gauge and an age-related variable
+    const printfLine = content.match(/printf.*gauge.*age|printf.*age.*gauge/i);
+    assert.ok(
+      printfLine !== null ||
+        /printf[^"]*"[^"]*%s[^"]*"[^"]*\$[a-zA-Z_]*age/i.test(content) ||
+        /printf[^"]*\$[a-zA-Z_]*age/i.test(content),
+      `${relative} fleet dashboard printf must render the branch age on each row`
+    );
+  });
+
+  it(`${relative} example output shows age on fleet dashboard rows`, () => {
+    const content = fs.readFileSync(filePath, 'utf8');
+    // The Example Output section must show relative time strings
+    // representing branch age (e.g. "3 days ago", "2 hours ago", "1 week ago")
+    const exampleSection = content.slice(content.indexOf('## Example Output'));
+    assert.ok(
+      / ago/.test(exampleSection),
+      `${relative} Example Output section must show relative age strings (e.g. "3 days ago")`
+    );
+  });
+
+  it(`${relative} per-worktree detail block includes branch age`, () => {
+    const content = fs.readFileSync(filePath, 'utf8');
+    // The check_worktree_status function must output a Branch age or Age line
+    // This is distinct from the existing "Last commit" line
+    assert.ok(
+      /[Bb]ranch age|branch_age|BRANCH_AGE/i.test(content),
+      `${relative} per-worktree detail must include a "Branch age" label`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Contract: squadron nameplate uses stance summaries, not generic "Take."
 // ---------------------------------------------------------------------------
 
