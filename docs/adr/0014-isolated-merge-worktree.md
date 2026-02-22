@@ -40,9 +40,15 @@ git worktree add ./trees/[TASK_ID]-integration [TASK_ID]-integration-temp
 # 3. Merge the component branch inside the isolated worktree
 git -C ./trees/[TASK_ID]-integration merge feature/[TASK_ID]-[COMPONENT] --no-ff
 
-# 4. On success: advance the review branch ref to match the temp branch
-#    This updates the ref without checking out the review branch in root
-git branch -f feature/[TASK_ID]-review [TASK_ID]-integration-temp
+# 4. On success: advance the review branch ref to match the temp branch.
+#    If root is checked out to the review branch, use --ff-only from root to
+#    atomically update HEAD, index, and working tree (ADR-0019). Otherwise,
+#    git branch -f updates the ref without checking out the review branch in root.
+if [ "$ROOT_BRANCH" = "feature/[TASK_ID]-review" ]; then
+  git merge --ff-only [TASK_ID]-integration-temp
+else
+  git branch -f feature/[TASK_ID]-review [TASK_ID]-integration-temp
+fi
 
 # 5. Cleanup: remove the integration worktree and delete the temp branch
 git worktree remove ./trees/[TASK_ID]-integration
@@ -73,7 +79,7 @@ All future branch-manager merge steps must follow this pattern. Direct `git chec
 - Conflict isolation: merge conflicts surface in a disposable worktree that can be cleaned up without affecting root
 - No stash/unstash choreography: the agent does not need to remember to stash uncommitted root changes before merging and restore them afterward -- a sequence that is error-prone and has no recovery path if the agent forgets
 - Consistent with Reaper's worktree isolation model: all agent work happens inside `./trees/`, including merge operations
-- Ref advancement without checkout: `git branch -f` updates the review branch pointer without switching any working tree, making the operation atomic from the user's perspective
+- Ref advancement without checkout: when root is not on the review branch, `git branch -f` updates the review branch pointer without switching any working tree. When root is on the review branch, `git merge --ff-only` atomically advances HEAD, index, and working tree, preventing index staleness (see ADR-0019)
 
 **Negative / Risks:**
 
@@ -97,3 +103,4 @@ All future branch-manager merge steps must follow this pattern. Direct `git chec
 
 - **ADR-0010: No Commits by Coding Agents** -- Established that `reaper:branch-manager` is the sole agent authorized to commit and merge. This ADR specifies how branch-manager must perform those merge operations.
 - **ADR-0013: Orchestrator Owns Commit and Merge Authority** -- Established that branch-manager is a pure executor. This ADR defines the execution pattern branch-manager uses for merges directed by the orchestrator.
+- **ADR-0019: Post-Merge Root-Cleanliness Assertion** -- Refines step 4 of this pattern. When root is checked out to the branch being advanced, `git merge --ff-only` replaces `git branch -f` to atomically advance HEAD, index, and working tree and prevent root index staleness. Also establishes pre-merge (Step 0) and post-merge (Step 8) `git status --porcelain` assertions.
