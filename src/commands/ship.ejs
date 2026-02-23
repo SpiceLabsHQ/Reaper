@@ -69,7 +69,15 @@ REMOTE_URL=$(git -C "$WORKTREE_PATH" remote get-url origin 2>/dev/null)
 - Branch is not `main`, `master`, or `develop` (refuse to ship from protected branches)
 - There are either uncommitted changes to commit OR existing unpushed commits to push
 
-If nothing to commit and nothing to push, report "Already shipped" and stop.
+If nothing to commit and nothing to push, report "Already shipped" and stop. Include these actionable next steps:
+
+```
+Already shipped. Nothing to commit or push.
+
+Next steps:
+- Check for a pending PR on your remote (GitHub/GitLab) — it may already be open.
+- Run /reaper:status-worktrees to see the current state of all worktrees.
+```
 
 ### Departure Card
 

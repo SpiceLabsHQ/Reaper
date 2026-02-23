@@ -4127,6 +4127,42 @@ describe('Contract: commands contain mission banner', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Contract: ship already-shipped message includes actionable next steps
+// ---------------------------------------------------------------------------
+
+describe('Contract: ship already-shipped message includes actionable next steps', () => {
+  const filePath = commandFilePath('ship');
+  const relative = 'commands/ship.md';
+
+  // Helper: extract a window of text around the "Already shipped" phrase
+  const getAlreadyShippedContext = () => {
+    const content = fs.readFileSync(filePath, 'utf8');
+    const idx = content.indexOf('Already shipped');
+    assert.ok(idx !== -1, `${relative} must contain "Already shipped" phrase`);
+    // Capture up to 500 chars after the phrase to cover any added guidance
+    return content.slice(idx, idx + 500);
+  };
+
+  it(`${relative} already-shipped message references /reaper:status-worktrees`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const context = getAlreadyShippedContext();
+    assert.ok(
+      context.includes('/reaper:status-worktrees'),
+      `${relative} already-shipped message must reference /reaper:status-worktrees so users know what to do next`
+    );
+  });
+
+  it(`${relative} already-shipped message mentions checking for a pending PR`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const context = getAlreadyShippedContext();
+    assert.ok(
+      context.includes('pending PR') || context.includes('pull request'),
+      `${relative} already-shipped message must mention checking for a pending PR`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Contract: takeoff completion section references /reaper:ship as a PR option
 // ---------------------------------------------------------------------------
 
