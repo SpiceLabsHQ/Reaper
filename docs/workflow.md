@@ -215,11 +215,11 @@ Worktree isolation is not just for Reaper's internal multi-agent strategies -- y
 The practical pattern:
 
 1. **Kick off a task** with `/reaper:takeoff` and note the worktree path Reaper creates (shown in the preflight card).
-2. **Open the worktree** as a separate editor window. In VS Code: `code ./trees/TASK-ID-description`. Cursor and Windsurf work identically.
-3. **Start a second task** from your original window. Reaper creates a second worktree -- the two sessions are completely independent.
+2. **Start a second task** in a second Claude Code session. Reaper creates a second worktree -- the two sessions are completely independent.
+3. **Navigate between worktrees** in VS Code via the Source Control panel: all worktrees appear as separate repository entries, and clicking any worktree's commit box shifts focus and updates the graph to show that worktree's history. Cursor and Windsurf work the same way.
 4. **Monitor progress** across all active sessions with `/reaper:status-worktrees`, which gives you a radar view of branch status, uncommitted changes, and gate results for every active worktree.
 
-Session boundaries are clean: each editor window has its own Claude Code context, its own branch, and its own test results. A flaky test in one worktree does not affect another. A merge conflict in one session does not surface in another.
+Session boundaries are clean: each Claude Code session has its own context, its own branch, and its own test results. A flaky test in one worktree does not affect another. A merge conflict in one session does not surface in another.
 
 When each task finishes its quality gates and you approve the output, Reaper merges each branch to develop independently and removes the worktree. There is nothing to reconcile between sessions -- the worktrees already diverged from a clean baseline.
 
