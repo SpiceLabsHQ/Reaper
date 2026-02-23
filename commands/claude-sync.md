@@ -1,6 +1,7 @@
 ---
 description: Surface changes since CLAUDE.md last touched down.
 ---
+
 ## Mission Header
 
 > **Opt-out**: If the target project's CLAUDE.md contains the line `Reaper: disable ASCII art`, output nothing — skip the header entirely.
@@ -12,7 +13,6 @@ description: Surface changes since CLAUDE.md last touched down.
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   scanning commit history
 ```
-
 
 # Synchronize CLAUDE.md with Recent Code Changes
 
@@ -28,23 +28,23 @@ Do not use any of the following in user-facing messages, status cards, or progre
 
 **Abstract operation names** — replace with plain language:
 
-| Forbidden | Use instead |
-|-----------|-------------|
-| `FETCH_ISSUE` | "retrieving task details" or "looking up the issue" |
-| `CREATE_ISSUE` | "creating a task" or "logging the issue" |
-| `UPDATE_ISSUE` | "updating the task" or "recording progress" |
-| `ADD_DEPENDENCY` | "linking a dependency" |
-| `LIST_CHILDREN` | "listing subtasks" |
-| `QUERY_DEPENDENCY_TREE` | "checking dependencies" |
-| `CLOSE_ISSUE` | "marking the task complete" |
+| Forbidden               | Use instead                                         |
+| ----------------------- | --------------------------------------------------- |
+| `FETCH_ISSUE`           | "retrieving task details" or "looking up the issue" |
+| `CREATE_ISSUE`          | "creating a task" or "logging the issue"            |
+| `UPDATE_ISSUE`          | "updating the task" or "recording progress"         |
+| `ADD_DEPENDENCY`        | "linking a dependency"                              |
+| `LIST_CHILDREN`         | "listing subtasks"                                  |
+| `QUERY_DEPENDENCY_TREE` | "checking dependencies"                             |
+| `CLOSE_ISSUE`           | "marking the task complete"                         |
 
 **Internal state variables** — omit or rephrase:
 
-| Forbidden | Use instead |
-|-----------|-------------|
-| `TASK_SYSTEM` / `markdown_only` | "your project's task tracking setup" |
-| `PLAN_CONTEXT` | "the task requirements" or "the plan" |
-| `CODEBASE CONTEXT` | "the codebase" |
+| Forbidden                       | Use instead                           |
+| ------------------------------- | ------------------------------------- |
+| `TASK_SYSTEM` / `markdown_only` | "your project's task tracking setup"  |
+| `PLAN_CONTEXT`                  | "the task requirements" or "the plan" |
+| `CODEBASE CONTEXT`              | "the codebase"                        |
 
 **Internal file sentinels** — never surface raw filenames:
 
@@ -52,10 +52,10 @@ Do not use any of the following in user-facing messages, status cards, or progre
 
 **Tool names** — never expose tool internals as user language:
 
-| Forbidden | Use instead |
-|-----------|-------------|
+| Forbidden    | Use instead                                     |
+| ------------ | ----------------------------------------------- |
 | `TaskCreate` | "tracking progress" or "updating the work plan" |
-| `TaskUpdate` | "recording progress" |
+| `TaskUpdate` | "recording progress"                            |
 
 **Architecture terms** — omit entirely:
 
@@ -64,7 +64,6 @@ Do not use any of the following in user-facing messages, status cards, or progre
 ### Tone Rule
 
 Describe what is happening for the user ("running tests", "planning the feature", "reviewing security") — not what the system is doing internally ("routing to skill", "resolving TASK_SYSTEM", "invoking TaskCreate").
-
 
 Analyze git commits since CLAUDE.md was last modified and identify **critical, non-obvious changes** that should be documented for LLM context.
 
@@ -344,18 +343,19 @@ After all 4 agents complete their analysis, aggregate their findings and present
 
 ### Report Structure
 
-```markdown
-  SYNC REPORT
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Repository:    [repo name]
-  Analyzed:      [count] commits from [baseline short hash] ([date]) to present
-  CLAUDE.md:     [location or "not found"]
+````markdown
+SYNC REPORT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Repository: [repo name]
+Analyzed: [count] commits from [baseline short hash] ([date]) to present
+CLAUDE.md: [location or "not found"]
 
 ━━━ Architecture Changes ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 [Agent 1 findings - categorized by priority]
 
 **[HIGH] [Finding Title]**
+
 - **Commits:** a3f9d81, b7e2c45
 - **What Changed:** [Technical summary]
 - **Why It Matters:** [Impact on LLM understanding]
@@ -363,6 +363,7 @@ After all 4 agents complete their analysis, aggregate their findings and present
   ```markdown
   [Ready-to-paste content for CLAUDE.md]
   ```
+````
 
 [Repeat for each architecture finding]
 
@@ -389,6 +390,7 @@ After all 4 agents complete their analysis, aggregate their findings and present
 **Total Findings:** [count high], [count medium], [count low] priority
 
 **Priority Breakdown:**
+
 - **[HIGH]** ([count]): Critical for LLM correctness - update CLAUDE.md immediately
 - **[MEDIUM]** ([count]): Important context - should be documented
 - **[LOW]** ([count]): Nice to have - optional documentation
@@ -420,17 +422,20 @@ I can help you with:
 4. **Generate git commit** - Commit CLAUDE.md updates with proper message
 
 What would you like to do next?
+
 ```
 
 After presenting the report, render a completion card:
 
 ```
-  SYNC REPORT FILED
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Commits analyzed:  [count]
-  Findings:          [total finding count]
-  ██████████  LANDED
-```
+
+SYNC REPORT FILED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Commits analyzed: [count]
+Findings: [total finding count]
+██████████ LANDED
+
+````
 
 ## Phase 7: Interactive Next Steps
 
@@ -503,7 +508,7 @@ These are loaded automatically when Claude works in those directories, keeping r
 ```bash
 # Clean up temporary files
 rm -rf "$TEMP_DIR"
-```
+````
 
 ---
 

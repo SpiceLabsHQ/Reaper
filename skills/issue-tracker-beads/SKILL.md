@@ -10,15 +10,15 @@ Platform skill for Reaper's task-system-operations. Maps abstract operations to 
 
 ## Quick Reference
 
-| Operation | Command |
-|-----------|---------|
-| FETCH_ISSUE | `bd show <id>` |
-| LIST_CHILDREN | `bd show <parent-id>` (children listed in output) |
-| CREATE_ISSUE | `bd create --title="..." --type=task [--parent=<id>]` |
-| UPDATE_ISSUE | `bd update <id> --status=in_progress` |
-| ADD_DEPENDENCY | `bd dep add <issue> <depends-on>` |
-| QUERY_DEPENDENCY_TREE | `bd show <id>` recursively (follow children + deps) |
-| CLOSE_ISSUE | `bd close <id>` or `bd close <id1> <id2> ...` |
+| Operation             | Command                                               |
+| --------------------- | ----------------------------------------------------- |
+| FETCH_ISSUE           | `bd show <id>`                                        |
+| LIST_CHILDREN         | `bd show <parent-id>` (children listed in output)     |
+| CREATE_ISSUE          | `bd create --title="..." --type=task [--parent=<id>]` |
+| UPDATE_ISSUE          | `bd update <id> --status=in_progress`                 |
+| ADD_DEPENDENCY        | `bd dep add <issue> <depends-on>`                     |
+| QUERY_DEPENDENCY_TREE | `bd show <id>` recursively (follow children + deps)   |
+| CLOSE_ISSUE           | `bd close <id>` or `bd close <id1> <id2> ...`         |
 
 ## Operations
 
@@ -92,13 +92,13 @@ bd close <issue-id>.1 <issue-id>.2         # Batch
 
 Numeric 0-4 (or P0-P4). Do not use string labels.
 
-| Value | Meaning |
-|-------|---------|
-| 0 | Critical |
-| 1 | High |
-| 2 | Medium (default) |
-| 3 | Low |
-| 4 | Backlog |
+| Value | Meaning          |
+| ----- | ---------------- |
+| 0     | Critical         |
+| 1     | High             |
+| 2     | Medium (default) |
+| 3     | Low              |
+| 4     | Backlog          |
 
 ## Useful Commands
 

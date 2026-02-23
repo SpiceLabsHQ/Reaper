@@ -1,6 +1,9 @@
-# Format all files and re-stage to prevent working tree drift
-npx prettier --write .
-git add -u
+# Format staged files only and re-stage to prevent working tree drift
+STAGED=$(git diff --cached --name-only)
+if [ -n "$STAGED" ]; then
+    echo "$STAGED" | xargs npx prettier --write --ignore-unknown 2>/dev/null || true
+    echo "$STAGED" | xargs git add --
+fi
 
 # Lint check (fail fast before tests)
 npm run lint
@@ -14,6 +17,8 @@ npm run build
 # Run contract tests on generated output
 node --test scripts/contracts.test.js
 
+# Format generated output before staging (scoped to known output dirs only)
+npx prettier --write agents/ skills/ hooks/ commands/ 2>/dev/null || true
 git add agents/ skills/ hooks/ commands/
 
 # Beads pre-commit: flush pending changes to JSONL

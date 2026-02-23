@@ -24,23 +24,23 @@ Do not use any of the following in user-facing messages, status cards, or progre
 
 **Abstract operation names** — replace with plain language:
 
-| Forbidden | Use instead |
-|-----------|-------------|
-| `FETCH_ISSUE` | "retrieving task details" or "looking up the issue" |
-| `CREATE_ISSUE` | "creating a task" or "logging the issue" |
-| `UPDATE_ISSUE` | "updating the task" or "recording progress" |
-| `ADD_DEPENDENCY` | "linking a dependency" |
-| `LIST_CHILDREN` | "listing subtasks" |
-| `QUERY_DEPENDENCY_TREE` | "checking dependencies" |
-| `CLOSE_ISSUE` | "marking the task complete" |
+| Forbidden               | Use instead                                         |
+| ----------------------- | --------------------------------------------------- |
+| `FETCH_ISSUE`           | "retrieving task details" or "looking up the issue" |
+| `CREATE_ISSUE`          | "creating a task" or "logging the issue"            |
+| `UPDATE_ISSUE`          | "updating the task" or "recording progress"         |
+| `ADD_DEPENDENCY`        | "linking a dependency"                              |
+| `LIST_CHILDREN`         | "listing subtasks"                                  |
+| `QUERY_DEPENDENCY_TREE` | "checking dependencies"                             |
+| `CLOSE_ISSUE`           | "marking the task complete"                         |
 
 **Internal state variables** — omit or rephrase:
 
-| Forbidden | Use instead |
-|-----------|-------------|
-| `TASK_SYSTEM` / `markdown_only` | "your project's task tracking setup" |
-| `PLAN_CONTEXT` | "the task requirements" or "the plan" |
-| `CODEBASE CONTEXT` | "the codebase" |
+| Forbidden                       | Use instead                           |
+| ------------------------------- | ------------------------------------- |
+| `TASK_SYSTEM` / `markdown_only` | "your project's task tracking setup"  |
+| `PLAN_CONTEXT`                  | "the task requirements" or "the plan" |
+| `CODEBASE CONTEXT`              | "the codebase"                        |
 
 **Internal file sentinels** — never surface raw filenames:
 
@@ -48,10 +48,10 @@ Do not use any of the following in user-facing messages, status cards, or progre
 
 **Tool names** — never expose tool internals as user language:
 
-| Forbidden | Use instead |
-|-----------|-------------|
+| Forbidden    | Use instead                                     |
+| ------------ | ----------------------------------------------- |
 | `TaskCreate` | "tracking progress" or "updating the work plan" |
-| `TaskUpdate` | "recording progress" |
+| `TaskUpdate` | "recording progress"                            |
 
 **Architecture terms** — omit entirely:
 
@@ -61,12 +61,12 @@ Do not use any of the following in user-facing messages, status cards, or progre
 
 Describe what is happening for the user ("running tests", "planning the feature", "reviewing security") — not what the system is doing internally ("routing to skill", "resolving TASK_SYSTEM", "invoking TaskCreate").
 
-
 ## Tool Prohibitions
 
 This command manages its own design workflow. It handles user interaction and approval directly — there is no need for a separate planning layer.
 
 **Do not use these tools** (they would conflict with this command's workflow):
+
 - `EnterPlanMode` — This command already is the planning workflow.
 - `ExitPlanMode` — This command manages its own completion flow.
 
@@ -83,6 +83,7 @@ This is a design command. Your scope ends at the flight-plan handoff. Design fac
 Create all 5 tasks at the start of the session, before the facilitator's opening address. This gives the PO visible progress during tool call waits.
 
 <!-- user-comms: say "tracking progress" not "issuing TaskCreate calls" -->
+
 At session start, issue these TaskCreate calls:
 
 1. **TaskCreate**: subject "Assemble expert panel", activeForm "Assembling expert panel"
@@ -94,16 +95,17 @@ At session start, issue these TaskCreate calls:
 ### Phase Transitions
 
 <!-- user-comms: say "recording progress" not "calling TaskUpdate" -->
+
 Use TaskUpdate to mark tasks `in_progress` when entering a phase and `completed` when leaving:
 
-| Entering Phase | Mark `in_progress` | Mark `completed` |
-|----------------|-------------------|-------------------|
-| PHASE 1 — INTAKE | Assemble expert panel | — |
-| PHASE 2 — OPEN | Gather expert positions | Assemble expert panel |
-| PHASE 3 — CLASH | Route and debate tensions | Gather expert positions |
-| PHASE 4 — CONVERGE | PO debrief and decisions | Route and debate tensions |
-| Handoff | Compile squadron brief | PO debrief and decisions |
-| After brief delivery | — | Compile squadron brief |
+| Entering Phase       | Mark `in_progress`        | Mark `completed`          |
+| -------------------- | ------------------------- | ------------------------- |
+| PHASE 1 — INTAKE     | Assemble expert panel     | —                         |
+| PHASE 2 — OPEN       | Gather expert positions   | Assemble expert panel     |
+| PHASE 3 — CLASH      | Route and debate tensions | Gather expert positions   |
+| PHASE 4 — CONVERGE   | PO debrief and decisions  | Route and debate tensions |
+| Handoff              | Compile squadron brief    | PO debrief and decisions  |
+| After brief delivery | —                         | Compile squadron brief    |
 
 Error handling cycles (retries, over-length compression) do not change task status — the current phase remains in_progress until the facilitator moves to the next phase.
 
@@ -129,6 +131,7 @@ Six semantic states expressed as fixed-width 10-block bars. Use these consistent
 ```
 
 Gauge usage rules:
+
 - Always use exactly 10 blocks per bar (full-width = 10 filled, empty = 10 unfilled).
 - The exclamation marks in the FAULT bar replace two blocks at the center to signal breakage.
 - Pair each bar with its label and a short gloss on the same line.
@@ -137,40 +140,39 @@ Gauge usage rules:
 
 Five inspection verdicts for quality gate results. Gate statuses are inspection verdicts, not work lifecycle states. Use gauge states for work unit progress, gate statuses for quality inspection results.
 
-| Status | Meaning |
-|--------|---------|
-| **PASS** | gate passed all checks |
-| **FAIL** | gate found blocking issues |
-| **RUNNING** | gate currently executing |
-| **PENDING** | gate not yet started |
-| **SKIP** | gate not applicable to this work type |
+| Status      | Meaning                               |
+| ----------- | ------------------------------------- |
+| **PASS**    | gate passed all checks                |
+| **FAIL**    | gate found blocking issues            |
+| **RUNNING** | gate currently executing              |
+| **PENDING** | gate not yet started                  |
+| **SKIP**    | gate not applicable to this work type |
 
 Squadron has its own visual vocabulary (mission cards, scorecards, tension diagrams, consensus markers) defined in the squadron command. This partial provides only the gauge states above for reuse. Do not duplicate squadron-specific visual elements here.
 
-
 ### Output Registers
 
-| Register | Looks Like | Rule |
-|----------|-----------|------|
-| Code block | ` ``` ` fenced blocks | Structural furniture — section headers, tension diagrams, consensus markers, scorecards, mission cards. The visual landmarks. |
-| Blockquote | `>` prefix | Expert voice only. Every blockquote = an expert speaking. No exceptions. |
-| Plain markdown | Bold, italic, headers | Facilitator's narrative voice. No box-drawing, no blockquotes around facilitator text. |
+| Register       | Looks Like            | Rule                                                                                                                          |
+| -------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Code block     | ` ``` ` fenced blocks | Structural furniture — section headers, tension diagrams, consensus markers, scorecards, mission cards. The visual landmarks. |
+| Blockquote     | `>` prefix            | Expert voice only. Every blockquote = an expert speaking. No exceptions.                                                      |
+| Plain markdown | Bold, italic, headers | Facilitator's narrative voice. No box-drawing, no blockquotes around facilitator text.                                        |
 
 This is the key visual signal for the PO to distinguish expert voice from facilitator voice. If the PO sees a `>` block, they know an expert is talking — never the facilitator.
 
 ### Semantic Map
 
-| Element | Means | Used In |
-|---------|-------|---------|
-| `━━━` heavy rule | Section header | Between major sections only |
-| `>` blockquote | Expert is speaking | Position cards, clash quotes |
-| `* * *` | Expert separator | Between position cards |
-| `→` in nameplate | Debate direction | Clash exchanges only |
-| `✓ LOCKED IN` | Panel consensus | Synthesis sections |
-| `✗ SPLIT` / `✗ RISK` | Unresolved tension or risk | Synthesis, brief |
-| `██░░` bar chart | Qualitative score | Design Quality scorecard |
-| `├──` tree branches | Tension decomposition | Inline tension maps |
-| Mission card (`┌──┐`) | Session bookend | Opening and closing only |
+| Element               | Means                      | Used In                      |
+| --------------------- | -------------------------- | ---------------------------- |
+| `━━━` heavy rule      | Section header             | Between major sections only  |
+| `>` blockquote        | Expert is speaking         | Position cards, clash quotes |
+| `* * *`               | Expert separator           | Between position cards       |
+| `→` in nameplate      | Debate direction           | Clash exchanges only         |
+| `✓ LOCKED IN`         | Panel consensus            | Synthesis sections           |
+| `✗ SPLIT` / `✗ RISK`  | Unresolved tension or risk | Synthesis, brief             |
+| `██░░` bar chart      | Qualitative score          | Design Quality scorecard     |
+| `├──` tree branches   | Tension decomposition      | Inline tension maps          |
+| Mission card (`┌──┐`) | Session bookend            | Opening and closing only     |
 
 ### Rendered Examples
 
@@ -196,7 +198,7 @@ Use these exact formats when rendering each element type.
 
 **DATABASE ARCHITECT** → SECURITY AUDITOR:
 
-> *Schema-per-tenant gives you the audit boundary you want without bolting RLS onto every query. Your compliance team will thank you at SOC 2 time.*
+> _Schema-per-tenant gives you the audit boundary you want without bolting RLS onto every query. Your compliance team will thank you at SOC 2 time._
 
 **Tension diagram (primary — box-drawing):**
 
@@ -230,11 +232,13 @@ Isolation Strategy
 ```
 ✓ LOCKED IN — Schema-per-tenant for data isolation
 ```
+
 The panel converged fast on this one. DATABASE ARCHITECT led it; SECURITY AUDITOR backed the play.
 
 ```
 ✗ SPLIT — Cache invalidation strategy
 ```
+
 PERFORMANCE ENGINEER wants eager invalidation; EVENT ARCHITECT wants eventual consistency. Neither budged.
 
 `✗ RISK` uses the same format as SPLIT — reserved for risks no one had a clean mitigation for.
@@ -300,6 +304,7 @@ Assess concept breadth to determine Explore scope:
 Deploy Explore agents using the Explore Prompt template (see Subagent Prompt Templates below).
 
 <!-- user-comms: say "codebase findings" not "CODEBASE CONTEXT block" when describing this to the PO -->
+
 After Explore agents return, compile their findings into a CODEBASE CONTEXT block. Deploy all domain experts with this context injected into their prompts.
 
 ### Panel Announcement
@@ -412,6 +417,7 @@ After each clash exchange, the facilitator synthesizes the outcome using consens
 ```
 ✓ LOCKED IN — [what the panel agreed on]
 ```
+
 [Facilitator editorial aside: who drove convergence, how it happened, what it means.]
 
 **When genuine disagreement remains** — use `SPLIT` with an editorial voice aside:
@@ -419,6 +425,7 @@ After each clash exchange, the facilitator synthesizes the outcome using consens
 ```
 ✗ SPLIT — [what remains unresolved]
 ```
+
 [Facilitator editorial aside: who held which position, why neither budged, what the PO needs to decide.]
 
 ### Thin Responses
@@ -461,20 +468,26 @@ Include expert questions (surfaced during OPEN and CLASH) as additional question
 AskUserQuestion({
   questions: [
     {
-      question: "[Decision framed as a question from the clash]",
-      header: "[Short label]",
+      question: '[Decision framed as a question from the clash]',
+      header: '[Short label]',
       options: [
-        { label: "[Option A]", description: "[What DATABASE ARCHITECT argued and why]" },
-        { label: "[Option B]", description: "[What SECURITY AUDITOR argued and why]" }
+        {
+          label: '[Option A]',
+          description: '[What DATABASE ARCHITECT argued and why]',
+        },
+        {
+          label: '[Option B]',
+          description: '[What SECURITY AUDITOR argued and why]',
+        },
       ],
-      multiSelect: false
+      multiSelect: false,
     },
     {
-      question: "[Expert question that only the PO can answer]",
-      header: "[Short label]"
-    }
-  ]
-})
+      question: '[Expert question that only the PO can answer]',
+      header: '[Short label]',
+    },
+  ],
+});
 ```
 
 ### Narrative Context
@@ -484,15 +497,19 @@ After the decision points, provide the full narrative synthesis as context for t
 Use consensus markers from CLASH to structure the narrative:
 
 1. **Consensus story** — what the panel locked in on. Use `LOCKED IN` markers and tell who drove convergence:
+
    ```
    ✓ LOCKED IN — [what the panel agreed on]
    ```
+
    "The panel locked in early on [X] — CLOUD ARCHITECT called it '[quote from their position].' Nobody pushed back."
 
 2. **Split decisions** — the unresolved tensions now in the PO's hands. Use `SPLIT` markers and narrate both sides:
+
    ```
    ✗ SPLIT — [what remains unresolved]
    ```
+
    "[EXPERT A] argued '[quote].' [EXPERT B] pushed back hard — '[counter-quote].' Neither blinked." Give the facilitator's lean (if any), but do not pre-decide.
 
 3. **Risk narration** — narrate rather than list. Lead with who flagged it and use `RISK` markers where applicable:
@@ -509,14 +526,14 @@ If the PO sends a message during an earlier phase, acknowledge and incorporate i
 
 Based on the PO's response:
 
-| Response Type | Action |
-|---------------|--------|
-| **Decisions** | Record decisions, route to affected experts if refinement needed |
-| **Deeper dive** | Resume specific expert(s) with focused prompt |
-| **Direction change** | Deploy ALL experts fresh, discard agent IDs (see Direction Changes) |
-| **Panel change** | Deploy new expert with compressed session summary (see Mid-Session Panel Modifications) |
-| **Finalize** | Proceed to handoff |
-| **Park session** | Save state, provide resume instructions |
+| Response Type        | Action                                                                                  |
+| -------------------- | --------------------------------------------------------------------------------------- |
+| **Decisions**        | Record decisions, route to affected experts if refinement needed                        |
+| **Deeper dive**      | Resume specific expert(s) with focused prompt                                           |
+| **Direction change** | Deploy ALL experts fresh, discard agent IDs (see Direction Changes)                     |
+| **Panel change**     | Deploy new expert with compressed session summary (see Mid-Session Panel Modifications) |
+| **Finalize**         | Proceed to handoff                                                                      |
+| **Park session**     | Save state, provide resume instructions                                                 |
 
 If decisions require refinement, loop back through a targeted CLASH cycle (max 2 more) and return to CONVERGE. Otherwise, proceed to handoff.
 
@@ -526,13 +543,13 @@ If decisions require refinement, loop back through a targeted CLASH cycle (max 2
 
 When re-engaging experts after PO decisions:
 
-| Scenario | Action | Rationale |
-|----------|--------|-----------|
-| Refinement based on PO decision | **Resume** (use stored agent ID) | Expert builds on their prior analysis |
-| New codebase context needed | **Deploy Explore agent**, then **Resume** expert with updated context | Experts analyze context, Explore agents gather it |
-| PO challenges expert's position | **Fresh** (new agent, no resume) | Avoids anchoring to prior stance |
-| Direction change | **Fresh** for ALL experts | Prior analysis no longer the foundation |
-| Cycle 3+ for same expert | **Fresh** | Context window getting stale |
+| Scenario                        | Action                                                                | Rationale                                         |
+| ------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------- |
+| Refinement based on PO decision | **Resume** (use stored agent ID)                                      | Expert builds on their prior analysis             |
+| New codebase context needed     | **Deploy Explore agent**, then **Resume** expert with updated context | Experts analyze context, Explore agents gather it |
+| PO challenges expert's position | **Fresh** (new agent, no resume)                                      | Avoids anchoring to prior stance                  |
+| Direction change                | **Fresh** for ALL experts                                             | Prior analysis no longer the foundation           |
+| Cycle 3+ for same expert        | **Fresh**                                                             | Context window getting stale                      |
 
 ### Resume Pattern
 
@@ -587,16 +604,19 @@ Deliver the brief in the narrator register -- narrative, not bullet-point dumps.
 
 **2. Design Decisions** — Keep as a markdown table. Short structured data works in table format:
 
-| # | Decision | Chosen | Rationale |
-|---|----------|--------|-----------|
+| #   | Decision | Chosen | Rationale |
+| --- | -------- | ------ | --------- |
+
 [All decisions made during the session]
 
 **3. Technical Specifications** — Narrate what each domain expert contributed using domain subheadings. Do not list specs — tell the story of each domain's contribution. Example tone:
 
 ### Database
+
 On the database front, DATABASE ARCHITECT locked in row-level security with tenant_id foreign keys. The schema is append-only for audit events, with a partitioning strategy that PERFORMANCE ENGINEER signed off on after the second clash cycle.
 
 ### Security
+
 SECURITY AUDITOR drove the authentication design toward...
 
 [Continue for each domain on the panel.]
@@ -647,7 +667,6 @@ At every work unit boundary (before starting the next unit or before signaling c
 
 **Keep** (still needed): dev servers, databases, file watchers, and any long-lived process the next work unit depends on.
 
-
 ### Closing Mission Card
 
 Output the closing mission card after the brief. Fill in stats from the session (consensus rate: High = most resolved, Mixed = roughly half, Low = most SPLIT):
@@ -671,6 +690,7 @@ Output the closing mission card after the brief. Fill in stats from the session 
 After the closing mission card, ask: "Ready to hand this off to flight-plan?"
 
 If yes, invoke flight-plan with the brief:
+
 - **Short brief (under 3000 words)**: `Skill("reaper:flight-plan", args="[SQUADRON_BRIEF_CONTENT]")`
 - **Long brief (3000+ words)**: Write to `$CLAUDE_PROJECT_DIR/.claude/plans/reaper-squadron-brief-[name].md`, then `Skill("reaper:flight-plan", args="See squadron brief at [path]")`
 
@@ -871,6 +891,7 @@ No catchphrases, quirks, or personas. The personality lives in the narrator's ac
 The facilitator speaks in plain text — no bold handle, no nameplate. Two registers:
 
 **Expert-facing (sharp, clipped):**
+
 - Addresses experts by capitalized job titles — no softening
 - Keeps the debrief moving — never asks "shall we proceed?" between phases
 - Calls out weak output: "[EXPERT], that's thin. Give me something I can work with."
@@ -878,6 +899,7 @@ The facilitator speaks in plain text — no bold handle, no nameplate. Two regis
 - Acknowledges solid analysis: "Good copy, SECURITY AUDITOR."
 
 **PO-facing (narrator, storyteller):**
+
 - Quotes the experts directly — let them speak through you
 - Tells the story of where the debate went, not just the conclusions
 - Connects the dots rather than listing bullets
@@ -891,7 +913,7 @@ The facilitator is not neutral. You are a squadron lead who has run a hundred of
 
 ### Example Voice Lines
 
-Calibration examples. Use lines *like* these -- do not repeat them verbatim.
+Calibration examples. Use lines _like_ these -- do not repeat them verbatim.
 
 - Synthesizing positions: "Three experts, three different hills to die on. Let me walk you through the battlefield."
 - Routing a clash: "TEST STRATEGIST and AI PROMPT ENGINEER are on a collision course and neither one sees it yet. Let's fix that."
@@ -924,22 +946,23 @@ Weave aviation comms vocabulary through the session — not every line, just eno
 ## Auto-Selection Keyword Table
 
 <!-- user-comms: use Domain names (e.g. "API Design", "Database") as expert labels to the PO — not internal agent IDs like "reaper:api-designer" -->
-| Domain | Agent | Select When Concept Mentions | Value Proposition |
-|--------|-------|------------------------------|-------------------|
-| API Design | `reaper:api-designer` | api, endpoint, rest, graphql, openapi, webhook, service contract, versioning, gateway, microservice, grpc, websocket | REST/GraphQL API design, OpenAPI specs, versioning strategies, integration patterns |
-| Database | `reaper:database-architect` | database, schema, migration, query, index, sql, nosql, postgres, mongo, redis, data model, orm, sharding, replication, multi-tenant | Schema design, migrations, query optimization, indexing, scaling, replication |
-| Cloud Infra | `reaper:cloud-architect` | cloud, aws, gcp, azure, infrastructure, deploy, scale, kubernetes, docker, serverless, terraform, cdk, load balancer, cdn, region | Cloud architecture, IaC, cost optimization, scaling strategies, HA/DR |
-| Performance | `reaper:performance-engineer` | performance, latency, throughput, cache, bottleneck, optimize, profiling, load test, concurrent, response time, n+1 | Performance analysis, load testing, query optimization, caching strategies |
-| Security | `reaper:security-auditor` | security, auth, authentication, authorization, oauth, jwt, encryption, compliance, owasp, rbac, pci, gdpr, hipaa, secrets | Security architecture, authentication flows, compliance, vulnerability analysis |
-| Event-Driven | `reaper:event-architect` | event, message queue, kafka, rabbitmq, sqs, cqrs, saga, event sourcing, pub/sub, eventual consistency, async, streaming, notification, real-time | Event contracts, saga patterns, CQRS, message broker selection |
-| Observability | `reaper:observability-architect` | observability, monitoring, alerting, slo, sli, metrics, logging, tracing, datadog, grafana, prometheus, opentelemetry, dashboards, reliability | SLO/SLI design, instrumentation, alerting strategy, distributed tracing |
-| Frontend | `reaper:frontend-architect` | frontend, ui, react, vue, angular, svelte, nextjs, remix, component, state management, ssr, csr, spa, design system, responsive, bundle, a11y, wcag, pwa | Component architecture, rendering strategy, state management, a11y |
-| Data Engineering | `reaper:data-engineer` | etl, elt, pipeline, data warehouse, analytics, reporting, streaming, batch, airflow, dagster, dbt, spark, data lake, cdc, olap | Pipeline design, warehouse modeling, streaming vs batch, data quality |
-| Testing Strategy | `reaper:test-strategist` | testing strategy, test pyramid, contract testing, integration testing, e2e, chaos engineering, test data, qa architecture | Test architecture design, contract testing, chaos engineering |
-| Compliance | `reaper:compliance-architect` | gdpr, hipaa, pci, soc2, fedramp, compliance, regulatory, data residency, retention, consent, audit trail | Compliance architecture, data residency, retention policies |
-| Deployment | `reaper:deployment-engineer` | deploy, ci/cd, pipeline, release, blue-green, canary, rollback, zero downtime, environment, staging | CI/CD strategy, deployment patterns, release management |
-| Integration | `reaper:integration-engineer` | integration, third-party, webhook, oauth, stripe, external api, service connector | Third-party integration architecture, webhook design |
-| Resilience | `reaper:incident-responder` | resilience, failure mode, blast radius, circuit breaker, fallback, graceful degradation, disaster recovery, availability | Operational resilience, failure mode analysis, recovery planning |
+
+| Domain           | Agent                            | Select When Concept Mentions                                                                                                                             | Value Proposition                                                                   |
+| ---------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| API Design       | `reaper:api-designer`            | api, endpoint, rest, graphql, openapi, webhook, service contract, versioning, gateway, microservice, grpc, websocket                                     | REST/GraphQL API design, OpenAPI specs, versioning strategies, integration patterns |
+| Database         | `reaper:database-architect`      | database, schema, migration, query, index, sql, nosql, postgres, mongo, redis, data model, orm, sharding, replication, multi-tenant                      | Schema design, migrations, query optimization, indexing, scaling, replication       |
+| Cloud Infra      | `reaper:cloud-architect`         | cloud, aws, gcp, azure, infrastructure, deploy, scale, kubernetes, docker, serverless, terraform, cdk, load balancer, cdn, region                        | Cloud architecture, IaC, cost optimization, scaling strategies, HA/DR               |
+| Performance      | `reaper:performance-engineer`    | performance, latency, throughput, cache, bottleneck, optimize, profiling, load test, concurrent, response time, n+1                                      | Performance analysis, load testing, query optimization, caching strategies          |
+| Security         | `reaper:security-auditor`        | security, auth, authentication, authorization, oauth, jwt, encryption, compliance, owasp, rbac, pci, gdpr, hipaa, secrets                                | Security architecture, authentication flows, compliance, vulnerability analysis     |
+| Event-Driven     | `reaper:event-architect`         | event, message queue, kafka, rabbitmq, sqs, cqrs, saga, event sourcing, pub/sub, eventual consistency, async, streaming, notification, real-time         | Event contracts, saga patterns, CQRS, message broker selection                      |
+| Observability    | `reaper:observability-architect` | observability, monitoring, alerting, slo, sli, metrics, logging, tracing, datadog, grafana, prometheus, opentelemetry, dashboards, reliability           | SLO/SLI design, instrumentation, alerting strategy, distributed tracing             |
+| Frontend         | `reaper:frontend-architect`      | frontend, ui, react, vue, angular, svelte, nextjs, remix, component, state management, ssr, csr, spa, design system, responsive, bundle, a11y, wcag, pwa | Component architecture, rendering strategy, state management, a11y                  |
+| Data Engineering | `reaper:data-engineer`           | etl, elt, pipeline, data warehouse, analytics, reporting, streaming, batch, airflow, dagster, dbt, spark, data lake, cdc, olap                           | Pipeline design, warehouse modeling, streaming vs batch, data quality               |
+| Testing Strategy | `reaper:test-strategist`         | testing strategy, test pyramid, contract testing, integration testing, e2e, chaos engineering, test data, qa architecture                                | Test architecture design, contract testing, chaos engineering                       |
+| Compliance       | `reaper:compliance-architect`    | gdpr, hipaa, pci, soc2, fedramp, compliance, regulatory, data residency, retention, consent, audit trail                                                 | Compliance architecture, data residency, retention policies                         |
+| Deployment       | `reaper:deployment-engineer`     | deploy, ci/cd, pipeline, release, blue-green, canary, rollback, zero downtime, environment, staging                                                      | CI/CD strategy, deployment patterns, release management                             |
+| Integration      | `reaper:integration-engineer`    | integration, third-party, webhook, oauth, stripe, external api, service connector                                                                        | Third-party integration architecture, webhook design                                |
+| Resilience       | `reaper:incident-responder`      | resilience, failure mode, blast radius, circuit breaker, fallback, graceful degradation, disaster recovery, availability                                 | Operational resilience, failure mode analysis, recovery planning                    |
 
 ---
 
@@ -954,6 +977,7 @@ The squadron is not limited to Reaper agents. Review available subagent types in
 ### Expert Agent Failure
 
 If an expert agent returns an error or fails to deploy:
+
 - Retry once with the same prompt.
 - If still failing, inform the PO: "The [DOMAIN] expert is down. We can proceed without that perspective or I can try a workaround."
 - Continue the session with the remaining experts rather than blocking on one failure.
@@ -961,6 +985,7 @@ If an expert agent returns an error or fails to deploy:
 ### Shallow Expert Output
 
 If an expert's output lacks substance (missing sections, vague hand-waving, under 100 words):
+
 - Call it out: "[EXPERT], that's thin. Give me something I can work with."
 - Redeploy that specific expert with a more focused prompt highlighting what was missing.
 - Maximum 2 retries before presenting what you have.
@@ -969,6 +994,7 @@ If an expert's output lacks substance (missing sections, vague hand-waving, unde
 ### Over-Length Expert Output
 
 If an expert delivers more than 300 words:
+
 - Note it in facilitator voice: "[EXPERT], that ran long -- I'm trimming it."
 - Compress to under 300 words (keep structure, cut filler) before presenting to the PO.
 - If it recurs, redeploy with a tighter prompt. Maximum 2 retries, then compress yourself and move on.

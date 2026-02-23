@@ -16,12 +16,12 @@ Use QUERY_DEPENDENCY_TREE on the epic ID to retrieve the full hierarchy. Use FET
 
 **Step 2: Evaluate Each Issue Against 4 Criteria**
 
-| Criterion | Pass | Fail | Auto-Fix |
-|-----------|------|------|----------|
-| **Detail Sufficiency**: Can agent work autonomously? | Clear objective, identifiable files, acceptance criteria, bounded size, `work_type` set | Vague objective, no file hints, no AC, unbounded, missing `work_type` | Add missing details (including `work_type` classified from assigned files) |
-| **Cross-Issue Awareness**: Do related issues reference each other? | Same-module issues linked, file overlap documented, scope boundaries clear | No cross-references, overlap not mentioned | Add cross-references |
-| **Relationship Appropriateness**: Are deps structured for parallel execution? | parent-child for hierarchy, blocks only for execution order, no unnecessary blockers or cycles | Flat with blockers, "blocks because related", circular deps | Remove inappropriate blockers, convert to cross-references |
-| **Orchestratability**: Can takeoff execute without human guidance? | Determinable execution order, visible parallel groups, identifiable critical path, clear scope boundaries | Ambiguous deps, everything serial, open-ended scope | Add execution hints |
+| Criterion                                                                     | Pass                                                                                                      | Fail                                                                  | Auto-Fix                                                                   |
+| ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| **Detail Sufficiency**: Can agent work autonomously?                          | Clear objective, identifiable files, acceptance criteria, bounded size, `work_type` set                   | Vague objective, no file hints, no AC, unbounded, missing `work_type` | Add missing details (including `work_type` classified from assigned files) |
+| **Cross-Issue Awareness**: Do related issues reference each other?            | Same-module issues linked, file overlap documented, scope boundaries clear                                | No cross-references, overlap not mentioned                            | Add cross-references                                                       |
+| **Relationship Appropriateness**: Are deps structured for parallel execution? | parent-child for hierarchy, blocks only for execution order, no unnecessary blockers or cycles            | Flat with blockers, "blocks because related", circular deps           | Remove inappropriate blockers, convert to cross-references                 |
+| **Orchestratability**: Can takeoff execute without human guidance?            | Determinable execution order, visible parallel groups, identifiable critical path, clear scope boundaries | Ambiguous deps, everything serial, open-ended scope                   | Add execution hints                                                        |
 
 **Red flags for inappropriate blockers**: "blocks because related" (should be cross-reference), "blocks because same module" (should be parallel with cross-reference), "blocks for coordination" (should be parent-child).
 
@@ -40,7 +40,17 @@ Use UPDATE_ISSUE to append missing details to the issue description. Prefix addi
   "issues_verified": ["repo-b2e", "repo-c3f"],
   "verification_results": {
     "detail_sufficiency": { "passed": true, "issues": [] },
-    "cross_issue_awareness": { "passed": false, "issues": [{ "issue_ids": ["..."], "problem": "...", "auto_fixed": true, "fix_applied": "..." }] },
+    "cross_issue_awareness": {
+      "passed": false,
+      "issues": [
+        {
+          "issue_ids": ["..."],
+          "problem": "...",
+          "auto_fixed": true,
+          "fix_applied": "..."
+        }
+      ]
+    },
     "relationship_appropriateness": { "passed": true, "issues": [] },
     "orchestratability": { "passed": true, "notes": "..." }
   },
@@ -56,10 +66,10 @@ Use UPDATE_ISSUE to append missing details to the issue description. Prefix addi
 
 ## Verification vs Planning
 
-| Aspect | Planning | Verification |
-|--------|----------|--------------|
-| Input | Task description | Epic ID with existing children |
-| Output | Work breakdown + strategy | Verification report + fixes |
-| Creates issues | Yes | No |
-| Modifies issues | No | Yes (auto-fix) |
-| Strategy selection | Yes | No (already decided) |
+| Aspect             | Planning                  | Verification                   |
+| ------------------ | ------------------------- | ------------------------------ |
+| Input              | Task description          | Epic ID with existing children |
+| Output             | Work breakdown + strategy | Verification report + fixes    |
+| Creates issues     | Yes                       | No                             |
+| Modifies issues    | No                        | Yes (auto-fix)                 |
+| Strategy selection | Yes                       | No (already decided)           |

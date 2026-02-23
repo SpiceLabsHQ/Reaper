@@ -16,23 +16,23 @@ Do not use any of the following in user-facing messages, status cards, or progre
 
 **Abstract operation names** — replace with plain language:
 
-| Forbidden | Use instead |
-|-----------|-------------|
-| `FETCH_ISSUE` | "retrieving task details" or "looking up the issue" |
-| `CREATE_ISSUE` | "creating a task" or "logging the issue" |
-| `UPDATE_ISSUE` | "updating the task" or "recording progress" |
-| `ADD_DEPENDENCY` | "linking a dependency" |
-| `LIST_CHILDREN` | "listing subtasks" |
-| `QUERY_DEPENDENCY_TREE` | "checking dependencies" |
-| `CLOSE_ISSUE` | "marking the task complete" |
+| Forbidden               | Use instead                                         |
+| ----------------------- | --------------------------------------------------- |
+| `FETCH_ISSUE`           | "retrieving task details" or "looking up the issue" |
+| `CREATE_ISSUE`          | "creating a task" or "logging the issue"            |
+| `UPDATE_ISSUE`          | "updating the task" or "recording progress"         |
+| `ADD_DEPENDENCY`        | "linking a dependency"                              |
+| `LIST_CHILDREN`         | "listing subtasks"                                  |
+| `QUERY_DEPENDENCY_TREE` | "checking dependencies"                             |
+| `CLOSE_ISSUE`           | "marking the task complete"                         |
 
 **Internal state variables** — omit or rephrase:
 
-| Forbidden | Use instead |
-|-----------|-------------|
-| `TASK_SYSTEM` / `markdown_only` | "your project's task tracking setup" |
-| `PLAN_CONTEXT` | "the task requirements" or "the plan" |
-| `CODEBASE CONTEXT` | "the codebase" |
+| Forbidden                       | Use instead                           |
+| ------------------------------- | ------------------------------------- |
+| `TASK_SYSTEM` / `markdown_only` | "your project's task tracking setup"  |
+| `PLAN_CONTEXT`                  | "the task requirements" or "the plan" |
+| `CODEBASE CONTEXT`              | "the codebase"                        |
 
 **Internal file sentinels** — never surface raw filenames:
 
@@ -40,10 +40,10 @@ Do not use any of the following in user-facing messages, status cards, or progre
 
 **Tool names** — never expose tool internals as user language:
 
-| Forbidden | Use instead |
-|-----------|-------------|
+| Forbidden    | Use instead                                     |
+| ------------ | ----------------------------------------------- |
 | `TaskCreate` | "tracking progress" or "updating the work plan" |
-| `TaskUpdate` | "recording progress" |
+| `TaskUpdate` | "recording progress"                            |
 
 **Architecture terms** — omit entirely:
 
@@ -52,7 +52,6 @@ Do not use any of the following in user-facing messages, status cards, or progre
 ### Tone Rule
 
 Describe what is happening for the user ("running tests", "planning the feature", "reviewing security") — not what the system is doing internally ("routing to skill", "resolving TASK_SYSTEM", "invoking TaskCreate").
-
 
 ## Visual Vocabulary
 
@@ -74,6 +73,7 @@ Six semantic states expressed as fixed-width 10-block bars. Use these consistent
 ```
 
 Gauge usage rules:
+
 - Always use exactly 10 blocks per bar (full-width = 10 filled, empty = 10 unfilled).
 - The exclamation marks in the FAULT bar replace two blocks at the center to signal breakage.
 - Pair each bar with its label and a short gloss on the same line.
@@ -82,13 +82,13 @@ Gauge usage rules:
 
 Five inspection verdicts for quality gate results. Gate statuses are inspection verdicts, not work lifecycle states. Use gauge states for work unit progress, gate statuses for quality inspection results.
 
-| Status | Meaning |
-|--------|---------|
-| **PASS** | gate passed all checks |
-| **FAIL** | gate found blocking issues |
-| **RUNNING** | gate currently executing |
-| **PENDING** | gate not yet started |
-| **SKIP** | gate not applicable to this work type |
+| Status      | Meaning                               |
+| ----------- | ------------------------------------- |
+| **PASS**    | gate passed all checks                |
+| **FAIL**    | gate found blocking issues            |
+| **RUNNING** | gate currently executing              |
+| **PENDING** | gate not yet started                  |
+| **SKIP**    | gate not applicable to this work type |
 
 ### Runway Card
 
@@ -132,6 +132,7 @@ Render when the start command is invoked with no input (bare invocation). Shows 
 ```
 
 Runway card rules:
+
 - Show exactly three entrypoint boxes in the order: SQUADRON, FLIGHT-PLAN, TAKEOFF.
 - Connect each pair with `↓ feeds into` between closing and opening boxes.
 - Each box contains: tagline (bold first line), description (2-3 lines), and command syntax.
@@ -170,12 +171,12 @@ Render when the start command is invoked with user input. Shows the parsed input
 ```
 
 Input analysis card rules:
+
 - Quote the user's input verbatim inside the box, wrapped in double quotes.
 - KEY ELEMENTS section: Extract 2-4 key concerns from the input, each with a ★ bullet and a sub-detail line.
 - ROUTING FACTORS section: List factors as key-value pairs that explain why a specific workflow is recommended (e.g., Complexity, Scope, Dependencies, Design risk).
 - Separate sections with `* * *` centered dividers.
 - Use the REAPER branded header with heavy rule (━━━) at the top.
-
 
 Parse `[ARGUMENTS]` to determine which mode to enter.
 
@@ -198,25 +199,27 @@ After the Runway Card, present three options using AskUserQuestion. Each option 
 
 ```json
 {
-  "questions": [{
-    "question": "What are you working on?",
-    "header": "Pick a Workflow",
-    "options": [
-      {
-        "label": "I have a design question",
-        "description": "Assembles domain experts to explore architecture, trade-offs, and competing approaches before you commit to a direction."
-      },
-      {
-        "label": "I have a feature to plan",
-        "description": "Breaks your feature into parallel work units with dependencies mapped. Creates issues ready for autonomous execution."
-      },
-      {
-        "label": "I have a task to build",
-        "description": "Give it a task ID or description and walk away. Writes code test-first through mandatory quality gates."
-      }
-    ],
-    "multiSelect": false
-  }]
+  "questions": [
+    {
+      "question": "What are you working on?",
+      "header": "Pick a Workflow",
+      "options": [
+        {
+          "label": "I have a design question",
+          "description": "Assembles domain experts to explore architecture, trade-offs, and competing approaches before you commit to a direction."
+        },
+        {
+          "label": "I have a feature to plan",
+          "description": "Breaks your feature into parallel work units with dependencies mapped. Creates issues ready for autonomous execution."
+        },
+        {
+          "label": "I have a task to build",
+          "description": "Give it a task ID or description and walk away. Writes code test-first through mandatory quality gates."
+        }
+      ],
+      "multiSelect": false
+    }
+  ]
 }
 ```
 
@@ -224,12 +227,12 @@ After the Runway Card, present three options using AskUserQuestion. Each option 
 
 Map the user's choice to a downstream command and invoke it. The downstream command will prompt the user for details.
 
-| Selection | Action |
-|-----------|--------|
-| "I have a design question" | `Skill("reaper:squadron")` |
-| "I have a feature to plan" | `Skill("reaper:flight-plan")` |
-| "I have a task to build" | `Skill("reaper:takeoff")` |
-| Other (freeform text) | Treat as input -- fall through to Mode 2 using the freeform text as `[ARGUMENTS]` |
+| Selection                  | Action                                                                            |
+| -------------------------- | --------------------------------------------------------------------------------- |
+| "I have a design question" | `Skill("reaper:squadron")`                                                        |
+| "I have a feature to plan" | `Skill("reaper:flight-plan")`                                                     |
+| "I have a task to build"   | `Skill("reaper:takeoff")`                                                         |
+| Other (freeform text)      | Treat as input -- fall through to Mode 2 using the freeform text as `[ARGUMENTS]` |
 
 Invoke the Skill with no arguments. The downstream command will ask the user for its own input.
 
@@ -246,7 +249,9 @@ Apply these heuristic rules in order. Stop at the first match.
 **Rule 1 -- Task ID pattern detected: recommend takeoff**
 
 <!-- user-comms: describe detection as "looks like a task ID" — do not expose regex patterns or rule numbers in user output -->
+
 Match any of these patterns in the input:
+
 - `PROJ-123` (uppercase letters, dash, digits)
 - `repo-a3f` (lowercase letters, dash, alphanumeric short hash)
 - `#456` (hash followed by digits)
@@ -258,6 +263,7 @@ If a task ID pattern is found anywhere in the input, classify as **takeoff**.
 **Rule 2 -- Design keywords detected (and no task ID): recommend squadron**
 
 Check whether the input contains any of these keywords or phrases (case-insensitive):
+
 - architecture
 - design
 - decision
@@ -276,6 +282,7 @@ If neither Rule 1 nor Rule 2 matched, classify as **flight-plan**.
 ### Step 2: Render the Input Analysis Card
 
 Use the Input Analysis Card from the Visual Vocabulary above. Populate it with:
+
 - The user's input
 - The detected classification
 - The recommended workflow
@@ -288,25 +295,27 @@ Present all three workflows using AskUserQuestion. The recommended option appear
 
 ```json
 {
-  "questions": [{
-    "question": "How would you like to proceed?",
-    "header": "Input Analysis",
-    "options": [
-      {
-        "label": "takeoff (Recommended)",
-        "description": "This looks like a task ID or a specific piece of work. Takeoff will fetch the task details, set up a worktree, and execute it autonomously with quality gates."
-      },
-      {
-        "label": "flight-plan",
-        "description": "Choose this if the input describes a larger feature that should be decomposed into multiple tasks before execution."
-      },
-      {
-        "label": "squadron",
-        "description": "Choose this if you need to explore design trade-offs and get expert opinions before committing to a direction."
-      }
-    ],
-    "multiSelect": false
-  }]
+  "questions": [
+    {
+      "question": "How would you like to proceed?",
+      "header": "Input Analysis",
+      "options": [
+        {
+          "label": "takeoff (Recommended)",
+          "description": "This looks like a task ID or a specific piece of work. Takeoff will fetch the task details, set up a worktree, and execute it autonomously with quality gates."
+        },
+        {
+          "label": "flight-plan",
+          "description": "Choose this if the input describes a larger feature that should be decomposed into multiple tasks before execution."
+        },
+        {
+          "label": "squadron",
+          "description": "Choose this if you need to explore design trade-offs and get expert opinions before committing to a direction."
+        }
+      ],
+      "multiSelect": false
+    }
+  ]
 }
 ```
 
@@ -314,25 +323,27 @@ Present all three workflows using AskUserQuestion. The recommended option appear
 
 ```json
 {
-  "questions": [{
-    "question": "How would you like to proceed?",
-    "header": "Input Analysis",
-    "options": [
-      {
-        "label": "squadron (Recommended)",
-        "description": "This sounds like a design question. Squadron assembles domain experts to debate trade-offs and produce a technical brief before you commit to a direction."
-      },
-      {
-        "label": "flight-plan",
-        "description": "Choose this if you already know the direction and want to decompose it into executable work units."
-      },
-      {
-        "label": "takeoff",
-        "description": "Choose this if the work is already scoped and ready to build -- no planning or design exploration needed."
-      }
-    ],
-    "multiSelect": false
-  }]
+  "questions": [
+    {
+      "question": "How would you like to proceed?",
+      "header": "Input Analysis",
+      "options": [
+        {
+          "label": "squadron (Recommended)",
+          "description": "This sounds like a design question. Squadron assembles domain experts to debate trade-offs and produce a technical brief before you commit to a direction."
+        },
+        {
+          "label": "flight-plan",
+          "description": "Choose this if you already know the direction and want to decompose it into executable work units."
+        },
+        {
+          "label": "takeoff",
+          "description": "Choose this if the work is already scoped and ready to build -- no planning or design exploration needed."
+        }
+      ],
+      "multiSelect": false
+    }
+  ]
 }
 ```
 
@@ -340,25 +351,27 @@ Present all three workflows using AskUserQuestion. The recommended option appear
 
 ```json
 {
-  "questions": [{
-    "question": "How would you like to proceed?",
-    "header": "Input Analysis",
-    "options": [
-      {
-        "label": "flight-plan (Recommended)",
-        "description": "This looks like a feature that needs decomposition. Flight-plan will break it into parallel work units, map dependencies, and create issues for autonomous execution."
-      },
-      {
-        "label": "takeoff",
-        "description": "Choose this if the work is small enough to execute directly without planning -- a single task, not a multi-step feature."
-      },
-      {
-        "label": "squadron",
-        "description": "Choose this if you are unsure about the technical approach and want expert debate before committing to a plan."
-      }
-    ],
-    "multiSelect": false
-  }]
+  "questions": [
+    {
+      "question": "How would you like to proceed?",
+      "header": "Input Analysis",
+      "options": [
+        {
+          "label": "flight-plan (Recommended)",
+          "description": "This looks like a feature that needs decomposition. Flight-plan will break it into parallel work units, map dependencies, and create issues for autonomous execution."
+        },
+        {
+          "label": "takeoff",
+          "description": "Choose this if the work is small enough to execute directly without planning -- a single task, not a multi-step feature."
+        },
+        {
+          "label": "squadron",
+          "description": "Choose this if you are unsure about the technical approach and want expert debate before committing to a plan."
+        }
+      ],
+      "multiSelect": false
+    }
+  ]
 }
 ```
 
@@ -367,12 +380,13 @@ Present all three workflows using AskUserQuestion. The recommended option appear
 Map the user's choice to a downstream command. Pass the original user input as arguments so the downstream command has context.
 
 <!-- user-comms: do not surface skill routing or platform detection details to the user — just invoke the selected workflow -->
-| Selection | Action |
-|-----------|--------|
-| "takeoff (Recommended)" or "takeoff" | `Skill("reaper:takeoff", args="[original-user-input]")` |
-| "flight-plan (Recommended)" or "flight-plan" | `Skill("reaper:flight-plan", args="[original-user-input]")` |
-| "squadron (Recommended)" or "squadron" | `Skill("reaper:squadron", args="[original-user-input]")` |
-| Other (freeform text) | Combine freeform text with original input, re-classify, and present options again |
+
+| Selection                                    | Action                                                                            |
+| -------------------------------------------- | --------------------------------------------------------------------------------- |
+| "takeoff (Recommended)" or "takeoff"         | `Skill("reaper:takeoff", args="[original-user-input]")`                           |
+| "flight-plan (Recommended)" or "flight-plan" | `Skill("reaper:flight-plan", args="[original-user-input]")`                       |
+| "squadron (Recommended)" or "squadron"       | `Skill("reaper:squadron", args="[original-user-input]")`                          |
+| Other (freeform text)                        | Combine freeform text with original input, re-classify, and present options again |
 
 Replace `[original-user-input]` with the exact text from `[ARGUMENTS]`.
 

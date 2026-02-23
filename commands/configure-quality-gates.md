@@ -1,6 +1,7 @@
 ---
 description: Detect and configure quality gate test and lint commands for this project.
 ---
+
 ## Mission Header
 
 > **Opt-out**: If the target project's CLAUDE.md contains the line `Reaper: disable ASCII art`, output nothing — skip the header entirely.
@@ -12,7 +13,6 @@ description: Detect and configure quality gate test and lint commands for this p
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   detecting test and lint commands
 ```
-
 
 # Configure Quality Gates
 
@@ -28,23 +28,23 @@ Do not use any of the following in user-facing messages, status cards, or progre
 
 **Abstract operation names** — replace with plain language:
 
-| Forbidden | Use instead |
-|-----------|-------------|
-| `FETCH_ISSUE` | "retrieving task details" or "looking up the issue" |
-| `CREATE_ISSUE` | "creating a task" or "logging the issue" |
-| `UPDATE_ISSUE` | "updating the task" or "recording progress" |
-| `ADD_DEPENDENCY` | "linking a dependency" |
-| `LIST_CHILDREN` | "listing subtasks" |
-| `QUERY_DEPENDENCY_TREE` | "checking dependencies" |
-| `CLOSE_ISSUE` | "marking the task complete" |
+| Forbidden               | Use instead                                         |
+| ----------------------- | --------------------------------------------------- |
+| `FETCH_ISSUE`           | "retrieving task details" or "looking up the issue" |
+| `CREATE_ISSUE`          | "creating a task" or "logging the issue"            |
+| `UPDATE_ISSUE`          | "updating the task" or "recording progress"         |
+| `ADD_DEPENDENCY`        | "linking a dependency"                              |
+| `LIST_CHILDREN`         | "listing subtasks"                                  |
+| `QUERY_DEPENDENCY_TREE` | "checking dependencies"                             |
+| `CLOSE_ISSUE`           | "marking the task complete"                         |
 
 **Internal state variables** — omit or rephrase:
 
-| Forbidden | Use instead |
-|-----------|-------------|
-| `TASK_SYSTEM` / `markdown_only` | "your project's task tracking setup" |
-| `PLAN_CONTEXT` | "the task requirements" or "the plan" |
-| `CODEBASE CONTEXT` | "the codebase" |
+| Forbidden                       | Use instead                           |
+| ------------------------------- | ------------------------------------- |
+| `TASK_SYSTEM` / `markdown_only` | "your project's task tracking setup"  |
+| `PLAN_CONTEXT`                  | "the task requirements" or "the plan" |
+| `CODEBASE CONTEXT`              | "the codebase"                        |
 
 **Internal file sentinels** — never surface raw filenames:
 
@@ -52,10 +52,10 @@ Do not use any of the following in user-facing messages, status cards, or progre
 
 **Tool names** — never expose tool internals as user language:
 
-| Forbidden | Use instead |
-|-----------|-------------|
+| Forbidden    | Use instead                                     |
+| ------------ | ----------------------------------------------- |
 | `TaskCreate` | "tracking progress" or "updating the work plan" |
-| `TaskUpdate` | "recording progress" |
+| `TaskUpdate` | "recording progress"                            |
 
 **Architecture terms** — omit entirely:
 
@@ -64,7 +64,6 @@ Do not use any of the following in user-facing messages, status cards, or progre
 ### Tone Rule
 
 Describe what is happening for the user ("running tests", "planning the feature", "reviewing security") — not what the system is doing internally ("routing to skill", "resolving TASK_SYSTEM", "invoking TaskCreate").
-
 
 Detect the test runner and linter for this project, confirm the commands with the user, and write a `## Quality Gates` section to `CLAUDE.md`.
 
@@ -151,21 +150,23 @@ If a `## Quality Gates` section exists:
 
 ```json
 {
-  "questions": [{
-    "question": "A Quality Gates section already exists in CLAUDE.md. What would you like to do?",
-    "header": "Existing Configuration Found",
-    "options": [
-      {
-        "label": "Keep current configuration",
-        "description": "Leave the existing test and lint commands unchanged."
-      },
-      {
-        "label": "Update configuration",
-        "description": "Replace the existing values with newly detected or manually entered commands."
-      }
-    ],
-    "multiSelect": false
-  }]
+  "questions": [
+    {
+      "question": "A Quality Gates section already exists in CLAUDE.md. What would you like to do?",
+      "header": "Existing Configuration Found",
+      "options": [
+        {
+          "label": "Keep current configuration",
+          "description": "Leave the existing test and lint commands unchanged."
+        },
+        {
+          "label": "Update configuration",
+          "description": "Replace the existing values with newly detected or manually entered commands."
+        }
+      ],
+      "multiSelect": false
+    }
+  ]
 }
 ```
 
@@ -183,25 +184,27 @@ Present the detected commands to the user for confirmation:
 
 ```json
 {
-  "questions": [{
-    "question": "The following commands were detected. Would you like to use them, or enter custom commands instead?",
-    "header": "Detected Quality Gate Commands",
-    "options": [
-      {
-        "label": "Use detected commands",
-        "description": "Test: <detected-test-command>\nLint: <detected-lint-command>"
-      },
-      {
-        "label": "Enter commands manually",
-        "description": "Type in test and lint commands yourself."
-      },
-      {
-        "label": "Skip lint (lint: skip)",
-        "description": "No lint command for this project. Suppresses the missing-lint warning during automated runs."
-      }
-    ],
-    "multiSelect": false
-  }]
+  "questions": [
+    {
+      "question": "The following commands were detected. Would you like to use them, or enter custom commands instead?",
+      "header": "Detected Quality Gate Commands",
+      "options": [
+        {
+          "label": "Use detected commands",
+          "description": "Test: <detected-test-command>\nLint: <detected-lint-command>"
+        },
+        {
+          "label": "Enter commands manually",
+          "description": "Type in test and lint commands yourself."
+        },
+        {
+          "label": "Skip lint (lint: skip)",
+          "description": "No lint command for this project. Suppresses the missing-lint warning during automated runs."
+        }
+      ],
+      "multiSelect": false
+    }
+  ]
 }
 ```
 
@@ -234,21 +237,23 @@ Display the resolved commands and ask for final approval before writing anything
 
 ```json
 {
-  "questions": [{
-    "question": "Write these commands to CLAUDE.md?",
-    "header": "Confirm Quality Gate Commands",
-    "options": [
-      {
-        "label": "Yes, write to CLAUDE.md",
-        "description": "Test: <final-test-command>\nLint: <final-lint-command>"
-      },
-      {
-        "label": "No, cancel",
-        "description": "Exit without making any changes."
-      }
-    ],
-    "multiSelect": false
-  }]
+  "questions": [
+    {
+      "question": "Write these commands to CLAUDE.md?",
+      "header": "Confirm Quality Gate Commands",
+      "options": [
+        {
+          "label": "Yes, write to CLAUDE.md",
+          "description": "Test: <final-test-command>\nLint: <final-lint-command>"
+        },
+        {
+          "label": "No, cancel",
+          "description": "Exit without making any changes."
+        }
+      ],
+      "multiSelect": false
+    }
+  ]
 }
 ```
 
@@ -265,7 +270,6 @@ If the user selects **No, cancel**, stop here and confirm that no changes were m
 Append the following block to the end of `CLAUDE.md`:
 
 ```markdown
-
 ## Quality Gates
 
 The following commands are used during automated quality gates:
@@ -305,6 +309,7 @@ git commit -m "chore(config): add quality gate commands to CLAUDE.md"
 No `Ref:` footer. This is a configuration commit, not tied to a feature task.
 
 Confirm success by reporting:
+
 - Which commands were written
 - Whether the section was appended or updated in-place
 - The commit hash
@@ -327,6 +332,7 @@ After confirming success, render a completion card:
 ## Scope Boundary
 
 This command:
+
 - Detects and configures quality gate commands only
 - Writes only to `CLAUDE.md` — no other files are modified
 - Does not run the detected commands
@@ -338,6 +344,7 @@ This command:
 ## Error Handling
 
 <!-- user-comms: say "couldn't find a test runner" not "no test runner detected" when speaking to the user -->
+
 - **No test runner detected**: Inform the user that no known test configuration was found, then offer manual entry as the only option.
 - **No lint tool detected**: Offer the `skip` option as the default recommendation.
 - **CLAUDE.md not found**: Create `CLAUDE.md` with only the `## Quality Gates` section. Inform the user that the file was created.

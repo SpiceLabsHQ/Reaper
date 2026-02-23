@@ -1,6 +1,7 @@
 ---
 description: Chart work into flight-ready issues with dependencies mapped.
 ---
+
 ## Mission Header
 
 > **Opt-out**: If the target project's CLAUDE.md contains the line `Reaper: disable ASCII art`, output nothing — skip the header entirely.
@@ -12,7 +13,6 @@ description: Chart work into flight-ready issues with dependencies mapped.
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   analyzing mission scope
 ```
-
 
 <!-- user-comms-contract -->
 
@@ -26,23 +26,23 @@ Do not use any of the following in user-facing messages, status cards, or progre
 
 **Abstract operation names** — replace with plain language:
 
-| Forbidden | Use instead |
-|-----------|-------------|
-| `FETCH_ISSUE` | "retrieving task details" or "looking up the issue" |
-| `CREATE_ISSUE` | "creating a task" or "logging the issue" |
-| `UPDATE_ISSUE` | "updating the task" or "recording progress" |
-| `ADD_DEPENDENCY` | "linking a dependency" |
-| `LIST_CHILDREN` | "listing subtasks" |
-| `QUERY_DEPENDENCY_TREE` | "checking dependencies" |
-| `CLOSE_ISSUE` | "marking the task complete" |
+| Forbidden               | Use instead                                         |
+| ----------------------- | --------------------------------------------------- |
+| `FETCH_ISSUE`           | "retrieving task details" or "looking up the issue" |
+| `CREATE_ISSUE`          | "creating a task" or "logging the issue"            |
+| `UPDATE_ISSUE`          | "updating the task" or "recording progress"         |
+| `ADD_DEPENDENCY`        | "linking a dependency"                              |
+| `LIST_CHILDREN`         | "listing subtasks"                                  |
+| `QUERY_DEPENDENCY_TREE` | "checking dependencies"                             |
+| `CLOSE_ISSUE`           | "marking the task complete"                         |
 
 **Internal state variables** — omit or rephrase:
 
-| Forbidden | Use instead |
-|-----------|-------------|
-| `TASK_SYSTEM` / `markdown_only` | "your project's task tracking setup" |
-| `PLAN_CONTEXT` | "the task requirements" or "the plan" |
-| `CODEBASE CONTEXT` | "the codebase" |
+| Forbidden                       | Use instead                           |
+| ------------------------------- | ------------------------------------- |
+| `TASK_SYSTEM` / `markdown_only` | "your project's task tracking setup"  |
+| `PLAN_CONTEXT`                  | "the task requirements" or "the plan" |
+| `CODEBASE CONTEXT`              | "the codebase"                        |
 
 **Internal file sentinels** — never surface raw filenames:
 
@@ -50,10 +50,10 @@ Do not use any of the following in user-facing messages, status cards, or progre
 
 **Tool names** — never expose tool internals as user language:
 
-| Forbidden | Use instead |
-|-----------|-------------|
+| Forbidden    | Use instead                                     |
+| ------------ | ----------------------------------------------- |
 | `TaskCreate` | "tracking progress" or "updating the work plan" |
-| `TaskUpdate` | "recording progress" |
+| `TaskUpdate` | "recording progress"                            |
 
 **Architecture terms** — omit entirely:
 
@@ -62,7 +62,6 @@ Do not use any of the following in user-facing messages, status cards, or progre
 ### Tone Rule
 
 Describe what is happening for the user ("running tests", "planning the feature", "reviewing security") — not what the system is doing internally ("routing to skill", "resolving TASK_SYSTEM", "invoking TaskCreate").
-
 
 ## Visual Vocabulary
 
@@ -84,6 +83,7 @@ Six semantic states expressed as fixed-width 10-block bars. Use these consistent
 ```
 
 Gauge usage rules:
+
 - Always use exactly 10 blocks per bar (full-width = 10 filled, empty = 10 unfilled).
 - The exclamation marks in the FAULT bar replace two blocks at the center to signal breakage.
 - Pair each bar with its label and a short gloss on the same line.
@@ -92,13 +92,13 @@ Gauge usage rules:
 
 Five inspection verdicts for quality gate results. Gate statuses are inspection verdicts, not work lifecycle states. Use gauge states for work unit progress, gate statuses for quality inspection results.
 
-| Status | Meaning |
-|--------|---------|
-| **PASS** | gate passed all checks |
-| **FAIL** | gate found blocking issues |
-| **RUNNING** | gate currently executing |
-| **PENDING** | gate not yet started |
-| **SKIP** | gate not applicable to this work type |
+| Status      | Meaning                               |
+| ----------- | ------------------------------------- |
+| **PASS**    | gate passed all checks                |
+| **FAIL**    | gate found blocking issues            |
+| **RUNNING** | gate currently executing              |
+| **PENDING** | gate not yet started                  |
+| **SKIP**    | gate not applicable to this work type |
 
 ### Briefing Card
 
@@ -126,11 +126,11 @@ Render after issue creation completes in Phase 7. Shows the result summary only 
 ```
 
 Filed card rules:
+
 - Show the plan title on the Plan row.
 - Show the total count of issues created on the Issues row.
 - Use the FILED gauge — the plan has been filed, ready for takeoff.
 - Do not include a Next row in the card — the takeoff instructions appear below it.
-
 
 Do not use EnterPlanMode or ExitPlanMode tools. This command manages its own planning workflow and presents the plan in-conversation.
 
@@ -160,11 +160,11 @@ Detect the active task system from recent commit history.
 
 Run `git log --format="%B" -10` and scan commit bodies for issue reference patterns:
 
-| System | Pattern | Examples |
-|--------|---------|----------|
-| Beads | `(Ref|Closes|Resolves):?\s+[a-z][a-z0-9]*-[a-f0-9]{2,}` | `Ref: reaper-a3f`, `Closes myapp-bc12` |
-| Jira | `(Ref|Fixes|Closes|Resolves):?\s+[A-Z]{2,}-\d+` | `Ref: PROJ-123`, `Fixes ENG-456` |
-| GitHub Issues | `(Fixes|Closes|Resolves):?\s+#\d+` | `Fixes #456`, `Closes #42` |
+| System        | Pattern | Examples |
+| ------------- | ------- | -------- | ------------------------------------------- | -------------------------------------- | -------------------------------- |
+| Beads         | `(Ref   | Closes   | Resolves):?\s+[a-z][a-z0-9]\*-[a-f0-9]{2,}` | `Ref: reaper-a3f`, `Closes myapp-bc12` |
+| Jira          | `(Ref   | Fixes    | Closes                                      | Resolves):?\s+[A-Z]{2,}-\d+`           | `Ref: PROJ-123`, `Fixes ENG-456` |
+| GitHub Issues | `(Fixes | Closes   | Resolves):?\s+#\d+`                         | `Fixes #456`, `Closes #42`             |
 
 **Mixed/ambiguous rule:** If multiple systems match, the system with the highest count wins. Equal counts = `markdown_only`.
 
@@ -181,11 +181,11 @@ Commit patterns found (1+ match in last 10 commits)?
 
 After detection, load the corresponding skill for platform-specific operations:
 
-| TASK_SYSTEM | Skill |
-|-------------|-------|
-| GitHub | `reaper:issue-tracker-github` |
-| Beads | `reaper:issue-tracker-beads` |
-| Jira | `reaper:issue-tracker-jira` |
+| TASK_SYSTEM   | Skill                           |
+| ------------- | ------------------------------- |
+| GitHub        | `reaper:issue-tracker-github`   |
+| Beads         | `reaper:issue-tracker-beads`    |
+| Jira          | `reaper:issue-tracker-jira`     |
 | markdown_only | `reaper:issue-tracker-planfile` |
 
 The loaded skill provides platform-specific command mappings for all abstract operations below.
@@ -194,15 +194,15 @@ The loaded skill provides platform-specific command mappings for all abstract op
 
 Use these operations to interact with whatever task system is detected. The LLM maps each operation to the appropriate system commands or markdown equivalents.
 
-| Operation | Purpose |
-|-----------|---------|
-| FETCH_ISSUE | Retrieve a single issue by ID (title, description, status, acceptance criteria) |
-| LIST_CHILDREN | List direct child issues of a parent (one level deep) |
-| CREATE_ISSUE | Create a new issue with title, description, and optional `parent` (the `parent` parameter is the sole mechanism for establishing parent-child hierarchy) |
-| UPDATE_ISSUE | Modify an existing issue (status, description, assignee) |
-| ADD_DEPENDENCY | Create a `blocks` or `related` dependency between two sibling issues (never for hierarchy) |
-| QUERY_DEPENDENCY_TREE | Recursively retrieve the full dependency graph from a root issue |
-| CLOSE_ISSUE | Mark an issue as completed/closed |
+| Operation             | Purpose                                                                                                                                                  |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| FETCH_ISSUE           | Retrieve a single issue by ID (title, description, status, acceptance criteria)                                                                          |
+| LIST_CHILDREN         | List direct child issues of a parent (one level deep)                                                                                                    |
+| CREATE_ISSUE          | Create a new issue with title, description, and optional `parent` (the `parent` parameter is the sole mechanism for establishing parent-child hierarchy) |
+| UPDATE_ISSUE          | Modify an existing issue (status, description, assignee)                                                                                                 |
+| ADD_DEPENDENCY        | Create a `blocks` or `related` dependency between two sibling issues (never for hierarchy)                                                               |
+| QUERY_DEPENDENCY_TREE | Recursively retrieve the full dependency graph from a root issue                                                                                         |
+| CLOSE_ISSUE           | Mark an issue as completed/closed                                                                                                                        |
 
 ### Dependency Type Semantics
 
@@ -213,24 +213,28 @@ ADD_DEPENDENCY supports two recommended dependency types for execution planning:
 
 **Hierarchy preference:** Use the `parent` parameter on CREATE_ISSUE for parent-child relationships. While some task systems support a `parent-child` dependency type via ADD_DEPENDENCY, the `parent` parameter on CREATE_ISSUE produces cleaner tracking and consistent child ID patterns. Prefer `parent` on create; reserve ADD_DEPENDENCY for sibling-to-sibling execution constraints and informational links.
 
-
 ### Platform Skill Loading
 
 <!-- user-comms: say "checking the task system" not "detecting TASK_SYSTEM" -->
 <!-- user-comms: say "loading the right tools for your task tracker" not "Platform Skill Routing table" -->
+
 After detecting TASK_SYSTEM, load the corresponding skill from the Platform Skill Routing table above. The loaded skill provides platform-specific command mappings for all abstract operations used in this command (FETCH_ISSUE, CREATE_ISSUE, UPDATE_ISSUE, ADD_DEPENDENCY, LIST_CHILDREN, QUERY_DEPENDENCY_TREE).
 
 Classify the input (ARGUMENTS) as one of:
+
 <!-- user-comms: say "retrieving task details" not "FETCH_ISSUE" -->
+
 - **Existing parent issue ID** (e.g., `PROJ-123` or `repo-a3f`): Use FETCH_ISSUE to retrieve issue details. Validate the issue has no existing children via LIST_CHILDREN -- if children exist, stop and report the conflict.
 - **New description**: Detect the available task system using the detection heuristics above. Store the description as the planning request.
 
 ### Markdown-Only Mode Detection
 
 <!-- user-comms: say "no task tracker detected, plan file will be the deliverable" not "TASK_SYSTEM is markdown_only" -->
+
 When no task system is detected, inform the user the plan file will be the primary deliverable. Update behavioral contract todo #2 to: "Finalize plan file as deliverable (no task system)".
 
 ### Validation
+
 - **Existing parent issue:** Must have no children (empty)
 - **New description:** Minimum 20 characters
 - **Ambiguous system:** Ask user preference if both available
@@ -240,6 +244,7 @@ When no task system is detected, inform the user the plan file will be the prima
 <!-- user-comms: say "tracking progress" not "TaskCreate" -->
 <!-- user-comms: say "recording progress" not "TaskUpdate" -->
 <!-- user-comms: say "your project's task tracking setup" not "behavioral contract" -->
+
 After detecting task system, create three core tasks via TaskCreate with blocking dependencies:
 
 1. **TaskCreate**: "Show plan for user approval" → set `in_progress`
@@ -247,6 +252,7 @@ After detecting task system, create three core tasks via TaskCreate with blockin
 3. **TaskCreate**: "Run workflow-planner-verification skill to verify issues"
 
 Then establish blockers via TaskUpdate:
+
 - Task #2 `addBlockedBy: [#1]` — cannot create issues until plan is approved
 - Task #3 `addBlockedBy: [#2]` — cannot verify issues until they exist
 
@@ -261,6 +267,7 @@ Explore agents are a fallback for when context is genuinely missing — not a ro
 ### When to Skip (Default)
 
 Skip research entirely when:
+
 - The current session already contains relevant file paths, architecture context, or a detailed task description
 - The user provided a spec, plan file, or task file with sufficient detail
 - The request is a new standalone project, pure documentation, or configuration change
@@ -271,6 +278,7 @@ Skip research entirely when:
 ### When to Research (Exception)
 
 Spawn an Explore agent only when all of the following are true:
+
 - The change touches existing code (not a greenfield project)
 - The affected files or integration points are genuinely unclear
 - No sufficient context exists in the current session
@@ -311,11 +319,13 @@ If research was run, use the findings to inform work unit scope, affected files,
 ### When Questions Are Appropriate
 
 Ask upfront ONLY if:
+
 - The request could mean two fundamentally different things (scope ambiguity)
 - A critical constraint is completely unknown and uninferable
 - The wrong assumption would waste significant effort
 
 **Do NOT ask about:**
+
 - Implementation details (resolve during planning)
 - Nice-to-have clarifications (make assumptions, note them)
 - Things discoverable from codebase exploration
@@ -328,6 +338,7 @@ If you must ask (rare): briefly restate the plan, ask the question, and offer a 
 ### Work Analysis
 
 Using research from Phase 1.5, identify:
+
 1. **Parent Issue Definition:** Title, goal, scope boundaries, success criteria (only needed when the plan contains multiple child work items)
 2. **Work Units:** Discrete issues following constraints below
 3. **Parallel Opportunities:** Units with no file overlap or dependencies
@@ -336,15 +347,16 @@ Using research from Phase 1.5, identify:
 
 ### Work Unit Constraints
 
-| Constraint | Limit |
-|------------|-------|
-| Files per unit | ≤5 |
-| LOC per unit | ~500 |
-| Estimated time | 1-2 hours |
-| Responsibility | Single testable outcome |
+| Constraint      | Limit                       |
+| --------------- | --------------------------- |
+| Files per unit  | ≤5                          |
+| LOC per unit    | ~500                        |
+| Estimated time  | 1-2 hours                   |
+| Responsibility  | Single testable outcome     |
 | TDD methodology | Tests BEFORE implementation |
 
 **TDD Requirement:** Each work unit MUST follow Red-Green-Blue cycle internally:
+
 1. **RED**: Write failing tests that define expected behavior
 2. **GREEN**: Implement minimal code to pass tests
 3. **BLUE**: Refactor while keeping tests green
@@ -356,6 +368,7 @@ All three phases complete within the same work unit. Every work unit must leave 
 ### User Intervention Markers
 
 Mark units as `Assignee: user` when they require:
+
 - Physical device testing
 - Vendor/third-party coordination
 - Approval workflows
@@ -380,6 +393,7 @@ After completing work analysis, evaluate whether any decisions made during resea
 1. Check `docs/adr/` to determine the next sequential number (e.g., if the last is `0012-*.md`, the next is `0013`). If the directory does not exist or contains no ADRs, start at `0001`.
 
 2. Draft a proposed ADR entry in the plan file under `## Proposed ADRs`:
+
    ```
    ### ADR-NNNN: [Short decision title]
    **Why this warrants an ADR**: [Name the specific characteristic — non-obvious / consequential /
@@ -409,39 +423,58 @@ Present a **flight briefing** to the user that summarizes the plan in-conversati
 5. **Key assumptions** — list assumptions the user might want to correct
 
 <!-- user-comms: say "checking the task system" not "TASK_SYSTEM detected in Phase 1" -->
+
 Then prompt for approval using AskUserQuestion. Select the variant based on `TASK_SYSTEM` detected in Phase 1:
 
 <!-- user-comms: say "using [Beads|Jira|GitHub] for task tracking" not "TASK_SYSTEM is Beads, Jira, or GitHub" -->
+
 **If TASK_SYSTEM is Beads, Jira, or GitHub:**
 
 ```json
 {
-  "questions": [{
-    "question": "Flight plan filed: N work units, M% parallelizable. Ready for issue creation in [Beads|Jira|GitHub]?",
-    "header": "Flight Plan",
-    "options": [
-      {"label": "Cleared for takeoff", "description": "Create all issues and dependencies in [Beads|Jira|GitHub] as shown in the plan above"},
-      {"label": "Revise flight plan", "description": "Circle back to the hangar — request changes to work units, scope, or dependencies before creating issues"}
-    ],
-    "multiSelect": false
-  }]
+  "questions": [
+    {
+      "question": "Flight plan filed: N work units, M% parallelizable. Ready for issue creation in [Beads|Jira|GitHub]?",
+      "header": "Flight Plan",
+      "options": [
+        {
+          "label": "Cleared for takeoff",
+          "description": "Create all issues and dependencies in [Beads|Jira|GitHub] as shown in the plan above"
+        },
+        {
+          "label": "Revise flight plan",
+          "description": "Circle back to the hangar — request changes to work units, scope, or dependencies before creating issues"
+        }
+      ],
+      "multiSelect": false
+    }
+  ]
 }
 ```
 
 <!-- user-comms: say "no task tracker detected" not "TASK_SYSTEM is markdown_only" -->
+
 **If TASK_SYSTEM is markdown_only:**
 
 ```json
 {
-  "questions": [{
-    "question": "Flight plan filed: N work units, M% parallelizable. Finalize the plan file as your deliverable?",
-    "header": "Flight Plan",
-    "options": [
-      {"label": "Cleared for takeoff", "description": "Lock in the plan file as the final deliverable — ready for manual task creation or direct /reaper:takeoff execution"},
-      {"label": "Revise flight plan", "description": "Circle back to the hangar — request changes to work units, scope, or dependencies before finalizing"}
-    ],
-    "multiSelect": false
-  }]
+  "questions": [
+    {
+      "question": "Flight plan filed: N work units, M% parallelizable. Finalize the plan file as your deliverable?",
+      "header": "Flight Plan",
+      "options": [
+        {
+          "label": "Cleared for takeoff",
+          "description": "Lock in the plan file as the final deliverable — ready for manual task creation or direct /reaper:takeoff execution"
+        },
+        {
+          "label": "Revise flight plan",
+          "description": "Circle back to the hangar — request changes to work units, scope, or dependencies before finalizing"
+        }
+      ],
+      "multiSelect": false
+    }
+  ]
 }
 ```
 
@@ -455,11 +488,11 @@ Replace `N` with the work unit count and `M` with the parallelization percentage
 
 Map the user's AskUserQuestion selection:
 
-| Selection | Action |
-|-----------|--------|
-| **Cleared for takeoff** | Proceed to Phase 5 |
-| **Revise flight plan** | Ask the user what they want to change, then apply feedback and re-prompt (same as "Other" path) |
-| **Other** (freeform text) | Treat as feedback — revise the plan in-conversation and re-prompt |
+| Selection                 | Action                                                                                          |
+| ------------------------- | ----------------------------------------------------------------------------------------------- |
+| **Cleared for takeoff**   | Proceed to Phase 5                                                                              |
+| **Revise flight plan**    | Ask the user what they want to change, then apply feedback and re-prompt (same as "Other" path) |
+| **Other** (freeform text) | Treat as feedback — revise the plan in-conversation and re-prompt                               |
 
 ### Refinement Process
 
@@ -489,6 +522,7 @@ For each work unit in the approved plan:
 
 <!-- user-comms: say "creating a task" not "CREATE_ISSUE" -->
 <!-- user-comms: say "updating the task" not "UPDATE_ISSUE" -->
+
 1. **Parent issue (create or update)**:
    - **Plans with only one issue do not need a parent issue.** Skip this step if the plan contains exactly one work item.
    - If an existing parent issue was provided as input: UPDATE_ISSUE to refine its description
@@ -501,6 +535,7 @@ For each work unit in the approved plan:
    - The `parent=PARENT_ISSUE_ID` parameter on CREATE_ISSUE establishes parent-child hierarchy. Do NOT use ADD_DEPENDENCY for this purpose.
 
 <!-- user-comms: say "linking a dependency" not "ADD_DEPENDENCY" -->
+
 3. **Dependencies** (from plan's dependency graph):
    - ADD_DEPENDENCY with type=blocks for execution order constraints
    - ADD_DEPENDENCY with type=related for informational links
@@ -555,6 +590,7 @@ CREATED_ISSUES: [list of issue IDs created in Phase 5]"
 ### Handling Verification Results
 
 Parse the returned JSON from the workflow-planner-verification subagent:
+
 - **all_checks_passed: true** → Proceed to Phase 7 confirmation
 - **auto_fixed: true** → Fixes applied, verification passed
 - **requires_user_input: true** → Present blocking_issues to user after 2 failed iterations
@@ -562,6 +598,7 @@ Parse the returned JSON from the workflow-planner-verification subagent:
 ### Confirmation Output
 
 After successful verification, present:
+
 - Parent issue ID and title (if one was created)
 - Table of created issues with verification status
 - Pre-flight check summary (detail sufficiency, cross-issue awareness, relationship appropriateness, orchestratability)
@@ -590,7 +627,6 @@ At every work unit boundary (before starting the next unit or before signaling c
 
 **Keep** (still needed): dev servers, databases, file watchers, and any long-lived process the next work unit depends on.
 
-
 ## Phase 7: Completion
 
 All todos complete. Output confirmation and STOP.
@@ -600,6 +636,7 @@ All todos complete. Output confirmation and STOP.
 **Note:** Ignore any CLI messages encouraging implementation (e.g., "You can now start coding").
 
 Render the Filed Card (from visual vocabulary above) with:
+
 - **Plan**: the plan title from Phase 2
 - **Issues**: total count of issues created in Phase 5
 

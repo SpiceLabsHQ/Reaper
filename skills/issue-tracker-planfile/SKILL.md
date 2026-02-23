@@ -16,15 +16,15 @@ Derive `<task-slug>` from the task description (2-4 words, lowercase, hyphenated
 
 ## Quick Reference
 
-| Operation | Plan File Action |
-|-----------|-----------------|
-| FETCH_ISSUE | Read plan file; extract Input + Work Units sections |
-| LIST_CHILDREN | Parse Work Units table rows |
-| CREATE_ISSUE | If `type=parent` and file absent: create plan file. Otherwise: append a new row to Work Units table (next sequential `#`, status `pending`) |
-| UPDATE_ISSUE | Edit the matching Work Unit row (status, description) |
-| ADD_DEPENDENCY | Update Dependencies section with blocking relationship |
-| QUERY_DEPENDENCY_TREE | Parse Dependencies section for full execution graph |
-| CLOSE_ISSUE | Set Work Unit row status to `done` |
+| Operation             | Plan File Action                                                                                                                            |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| FETCH_ISSUE           | Read plan file; extract Input + Work Units sections                                                                                         |
+| LIST_CHILDREN         | Parse Work Units table rows                                                                                                                 |
+| CREATE_ISSUE          | If `type=parent` and file absent: create plan file. Otherwise: append a new row to Work Units table (next sequential `#`, status `pending`) |
+| UPDATE_ISSUE          | Edit the matching Work Unit row (status, description)                                                                                       |
+| ADD_DEPENDENCY        | Update Dependencies section with blocking relationship                                                                                      |
+| QUERY_DEPENDENCY_TREE | Parse Dependencies section for full execution graph                                                                                         |
+| CLOSE_ISSUE           | Set Work Unit row status to `done`                                                                                                          |
 
 ## Plan File Schema
 
@@ -32,20 +32,25 @@ Derive `<task-slug>` from the task description (2-4 words, lowercase, hyphenated
 # Plan: [Title]
 
 ## Input
+
 [Original task description]
 
 ## Research
+
 [Codebase analysis findings]
 
 ## Strategy
+
 [Selected approach and complexity rationale]
 
 ## Work Units
-| # | Title | Type | Status | Blocked By |
-|---|-------|------|--------|------------|
-| 1 | Example unit | task | pending | -- |
+
+| #   | Title        | Type | Status  | Blocked By |
+| --- | ------------ | ---- | ------- | ---------- |
+| 1   | Example unit | task | pending | --         |
 
 ## Dependencies
+
 [Mermaid flowchart or table showing execution order]
 ```
 
@@ -63,6 +68,7 @@ Derive `<task-slug>` from the task description (2-4 words, lowercase, hyphenated
 # Plan: [Title]
 
 ## Input
+
 [Task description from CREATE_ISSUE call]
 
 ## Research
@@ -70,8 +76,9 @@ Derive `<task-slug>` from the task description (2-4 words, lowercase, hyphenated
 ## Strategy
 
 ## Work Units
-| # | Title | Type | Status | Blocked By |
-|---|-------|------|--------|------------|
+
+| #   | Title | Type | Status | Blocked By |
+| --- | ----- | ---- | ------ | ---------- |
 
 ## Dependencies
 ```
@@ -81,6 +88,7 @@ If the file already exists, skip creation and proceed normally. For all other `t
 **UPDATE_ISSUE**: Edit the matching row in Work Units. Modify Status, Title, or other columns.
 
 **ADD_DEPENDENCY**: Update the Dependencies section. Distinguish by type:
+
 - **`blocks`**: Add as mermaid flowchart edges (`graph LR; 1 --> 2; 2 --> 3`) where directional arrows mean "A blocks B".
 - **`related`**: Add as a note or annotation below the flowchart (e.g., "Related: Unit 2 and Unit 5 share auth module context"). Do NOT add related links as flowchart edges -- they are informational, not blocking.
 

@@ -11,6 +11,7 @@ This skill prescribes the full planning process for `reaper:workflow-planner`. I
 ## Grounding Instruction
 
 Before creating any implementation plan, read the project's existing codebase to understand:
+
 - Current architecture and tech stack (frameworks, languages, build tools)
 - Existing file structure and module organization
 - Testing patterns and conventions (test framework, coverage setup)
@@ -22,6 +23,7 @@ Ground all decomposition, file assignments, and strategy selection in the projec
 ## Cross-Domain Specialist Routing
 
 When decomposing complex tasks, invoke specialist agents for domain expertise:
+
 - Infrastructure changes → consult cloud-architect for deployment implications
 - Database schema changes → consult database-architect for migration sequencing
 - Event system changes → consult event-architect for saga boundaries and contract impacts
@@ -54,13 +56,13 @@ Analyze work complexity using these scoring dimensions, then select strategy fro
 
 ### Complexity Scoring Dimensions
 
-| Dimension | Scoring Rules |
-|-----------|--------------|
-| **File Impact** | New file: +1, Modify small (<100 LOC): +1, medium (100-500): +2, large (>500): +3, high-complexity (auth/payment/core logic): +2 bonus |
-| **Dependencies** | External API integrations: x3, DB schema changes: x2, third-party library changes: x2, cross-module deps: x1 |
-| **Testing** | Unit test files: x1, integration scenarios: x2, mocking required: +2, E2E tests: x3 |
-| **Integration Risk** | File overlap between work units: x3, shared interface changes: x2, cross-cutting concerns: x2 |
-| **Uncertainty** | Unfamiliar tech: +4, unclear requirements: +3, missing docs: +2, research needed: +3 |
+| Dimension            | Scoring Rules                                                                                                                          |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **File Impact**      | New file: +1, Modify small (<100 LOC): +1, medium (100-500): +2, large (>500): +3, high-complexity (auth/payment/core logic): +2 bonus |
+| **Dependencies**     | External API integrations: x3, DB schema changes: x2, third-party library changes: x2, cross-module deps: x1                           |
+| **Testing**          | Unit test files: x1, integration scenarios: x2, mocking required: +2, E2E tests: x3                                                    |
+| **Integration Risk** | File overlap between work units: x3, shared interface changes: x2, cross-cutting concerns: x2                                          |
+| **Uncertainty**      | Unfamiliar tech: +4, unclear requirements: +3, missing docs: +2, research needed: +3                                                   |
 
 **Single-document override:** If all work units' assigned files converge on the same 1-2 files, override to very_small_direct regardless of score or unit count. A single agent editing one file sequentially is faster and cheaper than parallel agents that cannot claim exclusive ownership. This override takes precedence over all other overrides below.
 
@@ -68,14 +70,14 @@ Analyze work complexity using these scoring dimensions, then select strategy fro
 
 ### Decision Table
 
-| Total Score | Conditions | Strategy |
-|-------------|------------|----------|
-| any | All work units target ≤2 unique files | **very_small_direct** (single-document override) |
-| 0-10 | No file overlap, 1-2 files | **very_small_direct** |
-| 11-35 | No file overlap, <=5 work units | **medium_single_branch** |
-| >35 | - | **large_multi_worktree** |
-| any | File overlap between work units | **large_multi_worktree** (required) |
-| any | Any work unit >5 files or >500 LOC | **large_multi_worktree** (required) |
+| Total Score | Conditions                            | Strategy                                         |
+| ----------- | ------------------------------------- | ------------------------------------------------ |
+| any         | All work units target ≤2 unique files | **very_small_direct** (single-document override) |
+| 0-10        | No file overlap, 1-2 files            | **very_small_direct**                            |
+| 11-35       | No file overlap, <=5 work units       | **medium_single_branch**                         |
+| >35         | -                                     | **large_multi_worktree**                         |
+| any         | File overlap between work units       | **large_multi_worktree** (required)              |
+| any         | Any work unit >5 files or >500 LOC    | **large_multi_worktree** (required)              |
 
 ### Dirty-Root Safety Check (Post-Selection)
 
@@ -97,6 +99,7 @@ The planner uses the scoring framework internally for strategy selection but ret
 **When**: Score <=10, 1-2 files, no file overlap. Also selected by single-document override when all work units converge on ≤2 files. Content override applies if 5+ repetitive items detected.
 
 **Workflow**:
+
 1. Work directly on feature branch (no worktree isolation)
 2. Deploy single coding agent (reaper:bug-fixer or reaper:feature-developer)
 3. Run quality gate sequence
@@ -107,6 +110,7 @@ The planner uses the scoring framework internally for strategy selection but ret
 **When**: Score 11-35 (or lower with 5+ repetitive items), no file overlap, 2-5 work units.
 
 **Workflow**:
+
 1. Deploy reaper:branch-manager to create a single shared worktree: `./trees/TASK-ID-work` on `feature/TASK-ID-description`
 2. Deploy multiple coding agents IN PARALLEL with exclusive file assignments, all working inside the shared worktree
 3. Each agent: exclusive files, conflict detection (exit if files unexpectedly modified), focused testing, no commit authority — work stays uncommitted
@@ -116,6 +120,7 @@ The planner uses the scoring framework internally for strategy selection but ret
 7. Feature branch contains all consolidated work; user merges to develop
 
 **Parallel deployment example**:
+
 ```
 Task --subagent_type reaper:feature-developer "TASK_ID: PROJ-123, WORKTREE: ./trees/PROJ-123-work, FILES: src/auth.js tests/auth.test.js, EXCLUSIVE ownership"
 Task --subagent_type reaper:feature-developer "TASK_ID: PROJ-123, WORKTREE: ./trees/PROJ-123-work, FILES: src/config.js tests/config.test.js, EXCLUSIVE ownership"
@@ -126,6 +131,7 @@ Task --subagent_type reaper:feature-developer "TASK_ID: PROJ-123, WORKTREE: ./tr
 **When**: Score >35, file overlap, >5 work units, high integration complexity.
 
 **Workflow**:
+
 1. Create review branch: `feature/TASK-ID-review` (consolidation target)
 2. Create worktrees per work stream (use the worktree-manager skill rather than raw `git worktree remove`)
 3. For EACH worktree sequentially:
@@ -138,25 +144,26 @@ Task --subagent_type reaper:feature-developer "TASK_ID: PROJ-123, WORKTREE: ./tr
 
 ### Agent Selection by Work Type
 
-| Work Type | Agent | Notes |
-|-----------|-------|-------|
-| Bug fixes | reaper:bug-fixer | TDD Red-Green-Refactor, minimal fix |
-| New features | reaper:feature-developer | TDD + SOLID from inception |
-| Code improvements | reaper:refactoring-dev | Preserve behavior, improve structure |
-| Branch/worktree ops | reaper:branch-manager | Safe merge, conflict detection |
-| Worktree cleanup | `worktree-manager` skill | Prevents Bash CWD errors; never use raw `git worktree remove` |
+| Work Type           | Agent                    | Notes                                                         |
+| ------------------- | ------------------------ | ------------------------------------------------------------- |
+| Bug fixes           | reaper:bug-fixer         | TDD Red-Green-Refactor, minimal fix                           |
+| New features        | reaper:feature-developer | TDD + SOLID from inception                                    |
+| Code improvements   | reaper:refactoring-dev   | Preserve behavior, improve structure                          |
+| Branch/worktree ops | reaper:branch-manager    | Safe merge, conflict detection                                |
+| Worktree cleanup    | `worktree-manager` skill | Prevents Bash CWD errors; never use raw `git worktree remove` |
 
 ## Strategy Escalation Protocol
 
 When runtime conditions exceed the current strategy's assumptions, escalate:
 
-| From | To | Trigger |
-|------|----|---------|
-| Strategy 1 | Strategy 2 | Work expands beyond 1-2 files; parallel opportunities discovered |
+| From       | To         | Trigger                                                                                              |
+| ---------- | ---------- | ---------------------------------------------------------------------------------------------------- |
+| Strategy 1 | Strategy 2 | Work expands beyond 1-2 files; parallel opportunities discovered                                     |
 | Strategy 2 | Strategy 3 | File overlap discovered; agents report conflicts; work units exceed limits; >3 quality gate failures |
-| Any | Re-plan | Context windows routinely exhausted; requirements fundamentally change; approach infeasible |
+| Any        | Re-plan    | Context windows routinely exhausted; requirements fundamentally change; approach infeasible          |
 
 **Escalation workflow:**
+
 1. Consolidate partial work (commit/merge what is complete)
 2. Re-score remaining work using actual discovered metrics
 3. Select new strategy for remaining work (upgrade if file overlap detected)
@@ -169,12 +176,14 @@ The `risks` array in the JSON planning report should surface escalation-relevant
 ## Work Package Size Constraints
 
 ### Limits
+
 - **Files**: 3-5 max per package
 - **LOC**: ~500 lines per work unit
 - **Scope**: Single responsibility, explainable in <3 lines
 - **Dependencies**: Max 2-3 direct
 
 ### Decomposition Rules
+
 1. Break large features into micro-features (e.g., "Add user auth" becomes "login form" + "auth validation" + "session management")
 2. Split by layer (frontend/backend/database) or responsibility (auth/data/UI)
 3. Prefer thin vertical slices over horizontal layers
@@ -182,6 +191,7 @@ The `risks` array in the JSON planning report should surface escalation-relevant
 5. Every work unit must leave all tests green upon completion — TDD Red-Green-Blue is an internal workflow within a work unit, not a decomposition boundary between work units
 
 ### Red Flags (Too Large)
+
 Any work unit that touches >5 files, needs >3 lines to describe, has multiple unrelated responsibilities, or estimates >500 LOC.
 
 ## Issue Hierarchy and Dependencies
@@ -190,13 +200,14 @@ When given a task ID, use QUERY_DEPENDENCY_TREE to retrieve the full dependency 
 
 ### Dependency Type Planning Impact
 
-| Type | Planning Impact |
-|------|-----------------|
-| `blocks` | Blocked issue waits until blocker closes; plan blocker resolution first |
-| `discovered-from` | Incorporate into plan |
-| `related` | Consider together, no execution dependency |
+| Type              | Planning Impact                                                         |
+| ----------------- | ----------------------------------------------------------------------- |
+| `blocks`          | Blocked issue waits until blocker closes; plan blocker resolution first |
+| `discovered-from` | Incorporate into plan                                                   |
+| `related`         | Consider together, no execution dependency                              |
 
 ### Planning by Scenario
+
 - **Epic with correctly-sized children** (each <=5 files, <=500 LOC, has acceptance criteria): Plan execution order of existing children, do not re-decompose
 - **Epic with oversized/incomplete children** (any child >5 files or missing acceptance criteria): Decompose the oversized children further into context-safe work units
 - **Standalone issue**: Decompose into work units if complex, or plan direct execution
@@ -227,6 +238,7 @@ File overlap between work units is a risk. Surface it in the `risks` array (e.g.
 ## Anti-Patterns
 
 Planning anti-patterns to avoid:
+
 - **Premature parallelization** — Recommending parallel work streams before verifying low file overlap and clear interfaces
 - **Over-decomposition** — Creating too many tiny work packages that increase coordination overhead without reducing complexity
 - **Under-decomposition** — Leaving monolithic work packages that risk context exhaustion or unclear acceptance criteria
@@ -251,16 +263,27 @@ All planning responses must return this compressed structure. The planner still 
       "work_type": "application_code",
       "group": 1,
       "prerequisites": [],
-      "assigned_files": ["src/auth/LoginForm.js", "tests/auth/LoginForm.test.js"],
+      "assigned_files": [
+        "src/auth/LoginForm.js",
+        "tests/auth/LoginForm.test.js"
+      ],
       "brief": "Create the login form component with email/password validation",
-      "acceptance_criteria": ["Form renders with email and password fields", "Validation rejects empty fields", "Submit dispatches auth action"]
+      "acceptance_criteria": [
+        "Form renders with email and password fields",
+        "Validation rejects empty fields",
+        "Submit dispatches auth action"
+      ]
     }
   ],
-  "risks": ["File overlap in src/auth/ between WORK-001 and WORK-002", "External OAuth API may require sandbox credentials"]
+  "risks": [
+    "File overlap in src/auth/ between WORK-001 and WORK-002",
+    "External OAuth API may require sandbox credentials"
+  ]
 }
 ```
 
 **Field reference:**
+
 - `strategy`: One of `very_small_direct`, `medium_single_branch`, `large_multi_worktree`
 - `units[].id`: Unique identifier for the work unit
 - `units[].title`: Short descriptive title
