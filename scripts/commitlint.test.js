@@ -171,6 +171,72 @@ describe('commitlint beads-ref rule', () => {
     });
   });
 
+  describe('comma-separated refs on a single Ref: line', () => {
+    it('should return [true, ...] for two refs (Ref: reaper-a, reaper-b)', () => {
+      const result = beadsRefRule({
+        type: 'feat',
+        raw: 'feat: squash two units\n\nRef: reaper-a, reaper-b',
+      });
+      assert.strictEqual(result[0], true);
+    });
+
+    it('should return [true, ...] for three refs (Ref: reaper-a, reaper-b, reaper-c)', () => {
+      const result = beadsRefRule({
+        type: 'fix',
+        raw: 'fix: consolidate fixes\n\nRef: reaper-a, reaper-b, reaper-c',
+      });
+      assert.strictEqual(result[0], true);
+    });
+
+    it('should return [true, ...] for four refs (Ref: reaper-a, reaper-b, reaper-c, reaper-d)', () => {
+      const result = beadsRefRule({
+        type: 'feat',
+        raw: 'feat: merge four work units\n\nRef: reaper-a, reaper-b, reaper-c, reaper-d',
+      });
+      assert.strictEqual(result[0], true);
+    });
+
+    it('should return [true, ...] for mixed alphanumeric refs in a comma list', () => {
+      const result = beadsRefRule({
+        type: 'feat',
+        raw: 'feat: squash work\n\nRef: reaper-abc, reaper-123, reaper-a1b2',
+      });
+      assert.strictEqual(result[0], true);
+    });
+
+    it('should return [false, ...] when any ref in the list has wrong prefix', () => {
+      const result = beadsRefRule({
+        type: 'feat',
+        raw: 'feat: squash work\n\nRef: reaper-abc, other-xyz',
+      });
+      assert.strictEqual(result[0], false);
+    });
+
+    it('should return [false, ...] when any ref in the list has uppercase ID', () => {
+      const result = beadsRefRule({
+        type: 'feat',
+        raw: 'feat: squash work\n\nRef: reaper-abc, reaper-XYZ',
+      });
+      assert.strictEqual(result[0], false);
+    });
+
+    it('should return [false, ...] when a ref in the list is missing ID after hyphen', () => {
+      const result = beadsRefRule({
+        type: 'feat',
+        raw: 'feat: squash work\n\nRef: reaper-abc, reaper-',
+      });
+      assert.strictEqual(result[0], false);
+    });
+
+    it('should return [true, ...] for comma list in multiline message', () => {
+      const result = beadsRefRule({
+        type: 'feat',
+        raw: 'feat: squash multiple units\n\nBody text here.\n\nRef: reaper-e3q, reaper-x9z',
+      });
+      assert.strictEqual(result[0], true);
+    });
+  });
+
   describe('various valid reaper ID formats', () => {
     it('should accept short alphabetic IDs (reaper-abc)', () => {
       const result = beadsRefRule({

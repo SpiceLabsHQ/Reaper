@@ -5363,3 +5363,313 @@ describe('Contract: package.json engines field', () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Contract: branch-manager rebase-first commit strategy (ADR-0020)
+// ---------------------------------------------------------------------------
+//
+// ADR-0020 replaces the --no-ff-everywhere default with a three-path strategy:
+//
+//   Path 1 (commit-count=1): rebase + --ff-only
+//   Path 2 (commit-count>1 + FLAT_TREE): rebase + squash + --ff-only
+//   Path 3 (COMPLEX_TREE): existing --no-ff per sub-parent (unchanged)
+//
+// The FLAT_TREE/COMPLEX_TREE flag is passed by takeoff at launch time.
+// commit-count is determined via `git rev-list --count <review>..<feature>`.
+// All rebase and merge operations execute inside the ADR-0014 integration
+// worktree — never in root.
+// ---------------------------------------------------------------------------
+
+describe('Contract: branch-manager rebase-first commit strategy (ADR-0020)', () => {
+  const filePath = agentFilePath('branch-manager');
+  const relative = 'agents/branch-manager.md';
+
+  // Helper: extract the large_multi_worktree Workflow section text
+  function getLargeMultiSection(content) {
+    const start = content.indexOf('large_multi_worktree Workflow');
+    if (start === -1) {
+      return '';
+    }
+    const afterStart = content.slice(start);
+    const nextSection = afterStart.search(/\n## /);
+    return nextSection !== -1 ? afterStart.slice(0, nextSection) : afterStart;
+  }
+
+  it(`${relative} large_multi_worktree Workflow references "rebase" for Path 1 or Path 2`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getLargeMultiSection(content);
+    assert.ok(
+      section.length > 0,
+      `${relative} must have a large_multi_worktree Workflow section`
+    );
+    assert.ok(
+      /\brebase\b/i.test(section),
+      `${relative} large_multi_worktree Workflow must reference "rebase" — ADR-0020 requires rebase-first for Path 1 and Path 2`
+    );
+  });
+
+  it(`${relative} large_multi_worktree Workflow uses --ff-only for Path 1 and Path 2 integration`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getLargeMultiSection(content);
+    assert.ok(
+      section.length > 0,
+      `${relative} must have a large_multi_worktree Workflow section`
+    );
+    assert.ok(
+      /--ff-only/.test(section),
+      `${relative} large_multi_worktree Workflow must use "--ff-only" for Path 1/2 integration merges (ADR-0020)`
+    );
+  });
+
+  it(`${relative} large_multi_worktree Workflow references "squash" for Path 2 (multi-commit flat-tree)`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getLargeMultiSection(content);
+    assert.ok(
+      section.length > 0,
+      `${relative} must have a large_multi_worktree Workflow section`
+    );
+    assert.ok(
+      /\bsquash\b/i.test(section),
+      `${relative} large_multi_worktree Workflow must reference "squash" for Path 2 (commit-count > 1 + FLAT_TREE)`
+    );
+  });
+
+  it(`${relative} large_multi_worktree Workflow references FLAT_TREE flag`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getLargeMultiSection(content);
+    assert.ok(
+      section.length > 0,
+      `${relative} must have a large_multi_worktree Workflow section`
+    );
+    assert.ok(
+      /FLAT_TREE/.test(section),
+      `${relative} large_multi_worktree Workflow must reference "FLAT_TREE" flag passed by takeoff (ADR-0020)`
+    );
+  });
+
+  it(`${relative} large_multi_worktree Workflow references COMPLEX_TREE flag`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getLargeMultiSection(content);
+    assert.ok(
+      section.length > 0,
+      `${relative} must have a large_multi_worktree Workflow section`
+    );
+    assert.ok(
+      /COMPLEX_TREE/.test(section),
+      `${relative} large_multi_worktree Workflow must reference "COMPLEX_TREE" flag for Path 3 fallback (ADR-0020)`
+    );
+  });
+
+  it(`${relative} large_multi_worktree Workflow uses git rev-list or commit-count heuristic`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getLargeMultiSection(content);
+    assert.ok(
+      section.length > 0,
+      `${relative} must have a large_multi_worktree Workflow section`
+    );
+    assert.ok(
+      /rev-list.*--count|--count.*rev-list|commit.?count|commit_count/i.test(
+        section
+      ),
+      `${relative} large_multi_worktree Workflow must use "git rev-list --count" to determine commit count (ADR-0020 heuristic)`
+    );
+  });
+
+  it(`${relative} large_multi_worktree Workflow Path 3 COMPLEX_TREE retains --no-ff`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getLargeMultiSection(content);
+    assert.ok(
+      section.length > 0,
+      `${relative} must have a large_multi_worktree Workflow section`
+    );
+    assert.ok(
+      /--no-ff/.test(section),
+      `${relative} large_multi_worktree Workflow must retain "--no-ff" for Path 3 COMPLEX_TREE (ADR-0020 backward-compatible fallback)`
+    );
+  });
+
+  it(`${relative} large_multi_worktree Workflow Path 1 and Path 2 rebase runs inside integration worktree`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getLargeMultiSection(content);
+    assert.ok(
+      section.length > 0,
+      `${relative} must have a large_multi_worktree Workflow section`
+    );
+    // Rebase must be performed via git -C ./trees/ (not in root)
+    assert.ok(
+      /git -C \.\/trees\/.*rebase|git -C.*integration.*rebase/i.test(section),
+      `${relative} large_multi_worktree Workflow rebase must run inside the integration worktree via "git -C ./trees/..." (ADR-0020 + ADR-0014)`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: takeoff tree-depth inspection and TREE_FLAG determination (ADR-0020)
+// ---------------------------------------------------------------------------
+//
+// Takeoff must inspect the issue tree depth at launch (before dispatching any
+// work units) and pass the resulting TREE_FLAG (FLAT_TREE or COMPLEX_TREE) to
+// every branch-manager deployment throughout the session.
+// ---------------------------------------------------------------------------
+
+describe('Contract: takeoff tree-depth inspection and TREE_FLAG (ADR-0020)', () => {
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
+
+  /**
+   * Extracts the Tree Depth Inspection section from takeoff.md.
+   * The section starts at "## Tree Depth Inspection" and ends at the
+   * next top-level heading ("## ").
+   * @param {string} content - Full markdown content
+   * @returns {string} The Tree Depth Inspection section text, or '' if absent
+   */
+  function extractTreeInspectionSection(content) {
+    const start = content.search(/## Tree Depth Inspection/i);
+    if (start === -1) {
+      return '';
+    }
+    const afterStart = content.slice(start);
+    const nextSection = afterStart.search(/\n## /);
+    return nextSection !== -1 ? afterStart.slice(0, nextSection) : afterStart;
+  }
+
+  it(`${relative} has a Tree Depth Inspection section`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /## Tree Depth Inspection/i.test(content),
+      `${relative} must contain a "## Tree Depth Inspection" section — takeoff must inspect tree depth at launch before dispatching work units (ADR-0020)`
+    );
+  });
+
+  it(`${relative} Tree Depth Inspection references LIST_CHILDREN to get direct children`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = extractTreeInspectionSection(content);
+    assert.ok(
+      section.length > 0,
+      `${relative} must contain a Tree Depth Inspection section`
+    );
+    assert.ok(
+      /LIST_CHILDREN/i.test(section),
+      `${relative} Tree Depth Inspection must use LIST_CHILDREN to inspect direct children of the root task (ADR-0020)`
+    );
+  });
+
+  it(`${relative} Tree Depth Inspection sets TREE_FLAG to FLAT_TREE when all children are leaf nodes`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = extractTreeInspectionSection(content);
+    assert.ok(
+      section.length > 0,
+      `${relative} must contain a Tree Depth Inspection section`
+    );
+    assert.ok(
+      /FLAT_TREE/.test(section),
+      `${relative} Tree Depth Inspection must set TREE_FLAG = "FLAT_TREE" when all direct children are leaf nodes (ADR-0020)`
+    );
+  });
+
+  it(`${relative} Tree Depth Inspection sets TREE_FLAG to COMPLEX_TREE when any child has children`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = extractTreeInspectionSection(content);
+    assert.ok(
+      section.length > 0,
+      `${relative} must contain a Tree Depth Inspection section`
+    );
+    assert.ok(
+      /COMPLEX_TREE/.test(section),
+      `${relative} Tree Depth Inspection must set TREE_FLAG = "COMPLEX_TREE" when any direct child has children of its own (ADR-0020)`
+    );
+  });
+
+  it(`${relative} Tree Depth Inspection sets COMPLEX_TREE for description-only or multi-root launch`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = extractTreeInspectionSection(content);
+    assert.ok(
+      section.length > 0,
+      `${relative} must contain a Tree Depth Inspection section`
+    );
+    assert.ok(
+      /description.only|multiple top.level|no parent|multi.root/i.test(section),
+      `${relative} Tree Depth Inspection must set COMPLEX_TREE for description-only or multiple top-level ID launches (ADR-0020)`
+    );
+  });
+
+  it(`${relative} Tree Depth Inspection logs the determination result`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = extractTreeInspectionSection(content);
+    assert.ok(
+      section.length > 0,
+      `${relative} must contain a Tree Depth Inspection section`
+    );
+    assert.ok(
+      /log|Tree shape|TREE_FLAG/i.test(section),
+      `${relative} Tree Depth Inspection must log the determination result (transparency requirement — ADR-0020)`
+    );
+  });
+
+  it(`${relative} Tree Depth Inspection runs before first work unit is dispatched`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // The Tree Depth Inspection section must appear before the Strategy Execution section
+    const inspectionIdx = content.search(/## Tree Depth Inspection/i);
+    const strategyIdx = content.search(/## Strategy Execution/i);
+    assert.ok(
+      inspectionIdx !== -1,
+      `${relative} must contain a "## Tree Depth Inspection" section`
+    );
+    assert.ok(
+      strategyIdx !== -1,
+      `${relative} must contain a "## Strategy Execution" section`
+    );
+    assert.ok(
+      inspectionIdx < strategyIdx,
+      `${relative} Tree Depth Inspection section must appear before Strategy Execution ` +
+        `(inspection at index ${inspectionIdx}, strategy at index ${strategyIdx})`
+    );
+  });
+
+  it(`${relative} branch-manager commit step passes TREE_FLAG in its prompt context`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const perUnitSection = extractFullPerUnitCycle(content);
+    assert.ok(
+      perUnitSection.length > 0,
+      `${relative} must contain a Per-Unit Cycle section`
+    );
+    // The branch-manager commit step within the per-unit cycle must reference TREE_FLAG
+    assert.ok(
+      /TREE_FLAG/i.test(perUnitSection),
+      `${relative} Per-Unit Cycle branch-manager commit step must pass TREE_FLAG in its prompt context (ADR-0020)`
+    );
+  });
+
+  it(`${relative} branch-manager merge step (Response Handling) passes TREE_FLAG`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // The Response Handling table / merge section must reference TREE_FLAG
+    // so the final merge-to-develop also receives the flag
+    const responseIdx = content.search(/### Response Handling/i);
+    assert.ok(
+      responseIdx !== -1,
+      `${relative} must contain a Response Handling section`
+    );
+    const responseSection = content.slice(responseIdx);
+    assert.ok(
+      /TREE_FLAG/i.test(responseSection),
+      `${relative} Response Handling merge step must pass TREE_FLAG to branch-manager (ADR-0020 — flag required for all branch-manager deployments)`
+    );
+  });
+});

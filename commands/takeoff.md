@@ -501,6 +501,20 @@ Use the Preflight Card template from the Visual Vocabulary above. Populate it wi
 
 The card ends with the `TAXIING` gauge, indicating work has not yet started.
 
+## Tree Depth Inspection
+
+After resolving the task ID and before dispatching the first work unit, determine the tree shape by inspecting issue depth:
+
+1. Use LIST_CHILDREN to get direct children of the root task
+2. For each direct child, check whether it has children of its own (one level deep via LIST_CHILDREN)
+3. Set TREE_FLAG:
+   - If all direct children are leaf nodes (no children of their own): TREE_FLAG = "FLAT_TREE"
+   - If any direct child has children: TREE_FLAG = "COMPLEX_TREE"
+   - If launched with multiple top-level IDs or description-only (no parent task): TREE_FLAG = "COMPLEX_TREE"
+4. Log the determination: "Tree shape: FLAT_TREE — all N children are leaf nodes" or "Tree shape: COMPLEX_TREE — child [ID] has [M] children of its own"
+
+This inspection runs once at launch. The TREE_FLAG value is fixed for the session and must be passed to every branch-manager deployment.
+
 ## Strategy Execution
 
 Execute ALL work units from the plan. Do not present work to the user or proceed to the Completion section until every work unit in the TodoWrite plan is marked completed.
@@ -541,7 +555,7 @@ At every work unit boundary (before starting the next unit or before signaling c
 
 **Keep** (still needed): dev servers, databases, file watchers, and any long-lived process the next work unit depends on.
 
-7. **Commit to feature branch**: After all gates pass, use reaper:branch-manager to commit the current state to the feature branch in WORKTREE_PATH. This is a commit-only step -- do not merge to develop. Use conventional commit format based on the work completed (e.g., `feat: implement X`, `fix: resolve Y`). If `BRANCH_MANAGER_SESSION_ID` is set, resume that session via `Task --resume BRANCH_MANAGER_SESSION_ID`; otherwise deploy a fresh reaper:branch-manager agent and store the returned `agent_id` as `BRANCH_MANAGER_SESSION_ID`. If resume fails, fall back to a fresh deployment and update `BRANCH_MANAGER_SESSION_ID`.
+7. **Commit to feature branch**: After all gates pass, use reaper:branch-manager to commit the current state to the feature branch in WORKTREE_PATH. This is a commit-only step -- do not merge to develop. Use conventional commit format based on the work completed (e.g., `feat: implement X`, `fix: resolve Y`). If `BRANCH_MANAGER_SESSION_ID` is set, resume that session via `Task --resume BRANCH_MANAGER_SESSION_ID`; otherwise deploy a fresh reaper:branch-manager agent and store the returned `agent_id` as `BRANCH_MANAGER_SESSION_ID`. If resume fails, fall back to a fresh deployment and update `BRANCH_MANAGER_SESSION_ID`. Always pass `TREE_FLAG: [FLAT_TREE or COMPLEX_TREE — determined at launch]` in the branch-manager prompt context.
 
    **Branch-manager error handling (commit step)**: Inspect the branch-manager JSON response before continuing:
    - If `status` is `"error"` and `git_state.merge_conflicts_detected` is `true`: render a **Merge Conflict Card** (see below), surface all entries from `blocking_issues[]` to the user, and **pause the workflow**. Do NOT auto-resolve or auto-retry. Await explicit user instruction before proceeding.
@@ -970,7 +984,7 @@ you'd prefer to open a PR instead of merging directly, just say so and I'll run
 |---------------|--------|
 | Feedback or questions | Address concerns, re-run quality gates if changes were made |
 | "looks good" / "nice work" | Ask: "Shall I merge to develop?" |
-| "merge" / "ship it" / "approved" | Use reaper:branch-manager to merge the feature branch to develop. Resume `BRANCH_MANAGER_SESSION_ID` via `Task --resume` if available; fall back to a fresh deployment if the session is stale. |
+| "merge" / "ship it" / "approved" | Use reaper:branch-manager to merge the feature branch to develop. Resume `BRANCH_MANAGER_SESSION_ID` via `Task --resume` if available; fall back to a fresh deployment if the session is stale. Always pass `TREE_FLAG` in the prompt context. |
 | "open a PR" / "create PR" | Invoke `/reaper:ship` on the feature worktree to commit, push, and open a PR. |
 | Silence or unclear | Ask: "Any feedback, or ready to merge?" |
 

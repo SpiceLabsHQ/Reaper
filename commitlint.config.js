@@ -27,8 +27,10 @@ const beadsRefPlugin = {
         ];
       }
 
-      // Check for Ref: footer with Beads issue ID pattern (reaper-xxx)
-      const refPattern = /^Ref:\s+reaper-[a-z0-9]+/m;
+      // Check for Ref: footer with one or more Beads issue IDs (comma-separated).
+      // Each ID must match reaper-[a-z0-9.]+ and the entire value must consist only
+      // of such IDs separated by ", " — no extra tokens or wrong-prefix IDs allowed.
+      const refPattern = /^Ref:\s+reaper-[a-z0-9.]+(,\s+reaper-[a-z0-9.]+)*$/m;
       const hasRef = refPattern.test(raw);
 
       if (!hasRef) {
@@ -36,6 +38,7 @@ const beadsRefPlugin = {
           false,
           `Commit must include a Beads issue reference in footer.\n` +
             `Expected format: Ref: reaper-xxx\n` +
+            `For squash commits: Ref: reaper-xxx, reaper-yyy\n` +
             `Tip: Use 'bd list' to see available issues, or 'bd create' to make one.\n` +
             `Note: chore commits are exempt from this requirement.`,
         ];

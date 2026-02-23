@@ -132,7 +132,9 @@ medium_single_branch uses a single shared worktree for all coding agents. Branch
    - Quality gates validate
    - Orchestrator deploys branch-manager with confirmation of gates passed and user authorization
    - Commit in worktree: `git -C ./trees/[TASK_ID]-[COMPONENT] add . && git -C ./trees/[TASK_ID]-[COMPONENT] commit -m "..."`
-   - Merge to review branch using an isolated integration worktree — never `git checkout` in root:
+   - Merge to review branch using an isolated integration worktree — never `git checkout` in root.
+     The merge path is determined by two inputs from the orchestrator deployment prompt:
+     the FLAT_TREE/COMPLEX_TREE flag (set by takeoff at launch) and the commit count for this work unit.
      ```
      # Step 0: Pre-merge precondition check — inspect root before touching anything
      ROOT="$(git rev-parse --show-toplevel)"
@@ -151,9 +153,44 @@ medium_single_branch uses a single shared worktree for all coding agents. Branch
        echo "INFO: root is checked out to the review branch — will use --ff-only from root to advance HEAD, index, and working tree atomically"
      fi
 
+     # Determine commit-count for this work unit (used by Path 1 and Path 2 heuristic)
+     COMMIT_COUNT="$(git rev-list --count feature/[TASK_ID]-review..feature/[TASK_ID]-[COMPONENT])"
+
      git branch [TASK_ID]-integration-temp feature/[TASK_ID]-review
      git worktree add ./trees/[TASK_ID]-integration [TASK_ID]-integration-temp
-     git -C ./trees/[TASK_ID]-integration merge feature/[TASK_ID]-[COMPONENT] --no-ff
+
+     # ADR-0020 three-path merge strategy:
+     #   Path 1 (commit-count=1, FLAT_TREE or any): rebase + --ff-only — linear single commit
+     #   Path 2 (commit-count>1, FLAT_TREE): rebase + squash to one conventional commit + --ff-only
+     #   Path 3 (COMPLEX_TREE): existing --no-ff per sub-parent — preserves sub-parent grouping
+
+     if [ "$TREE_FLAG" = "COMPLEX_TREE" ]; then
+       # Path 3: COMPLEX_TREE — retain --no-ff to preserve sub-parent grouping in history
+       git -C ./trees/[TASK_ID]-integration merge --no-ff feature/[TASK_ID]-[COMPONENT]
+
+     elif [ "$COMMIT_COUNT" -eq 1 ]; then
+       # Path 1: Single-commit unit + FLAT_TREE (or any flag) — rebase + fast-forward
+       # Rebase replays the single commit onto the current review branch tip, then
+       # --ff-only advances the integration branch pointer without a merge commit.
+       git -C ./trees/[TASK_ID]-integration rebase feature/[TASK_ID]-review feature/[TASK_ID]-[COMPONENT]
+       git -C ./trees/[TASK_ID]-integration merge --ff-only feature/[TASK_ID]-[COMPONENT]
+
+     else
+       # Path 2: Multi-commit unit + FLAT_TREE — rebase + squash to one conventional commit
+       # Rebase onto the review branch tip first, then collapse all N commits into one
+       # using reset --soft so the working tree is preserved and we can make a single commit.
+       git -C ./trees/[TASK_ID]-integration rebase feature/[TASK_ID]-review feature/[TASK_ID]-[COMPONENT]
+       git -C ./trees/[TASK_ID]-integration reset --soft "HEAD~${COMMIT_COUNT}"
+       # Squash commit message (conventional format, commitlint-compliant):
+       # <type>(<scope>): <subject derived from parent issue title>
+       #
+       # Squashes work across N components: component-a, component-b.
+       #
+       # Ref: reaper-parent, reaper-child-1, reaper-child-2
+       git -C ./trees/[TASK_ID]-integration commit -m "${SQUASH_COMMIT_MESSAGE}"
+       git -C ./trees/[TASK_ID]-integration merge --ff-only feature/[TASK_ID]-[COMPONENT]
+     fi
+
      # On success: advance the review branch ref.
      # If root is on the branch being advanced, use --ff-only from root to update
      # HEAD, index, and working tree atomically — preventing index staleness.
