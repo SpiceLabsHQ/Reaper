@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.12.1](https://github.com/SpiceLabsHQ/Reaper/compare/v1.12.0...v1.12.1) (2026-02-23)
+
+
+### Bug Fixes
+
+* **config:** exempt CHANGELOG.md from Prettier formatting ([a26eb3d](https://github.com/SpiceLabsHQ/Reaper/commit/a26eb3d14cb37c63e7825b02d4be324453ba7008))
+* **skill:** require --description on all bd create calls in issue-tracker-beads ([2a74c5f](https://github.com/SpiceLabsHQ/Reaper/commit/2a74c5f160215b5a19eeedc75b854c28eea7a2a0))
+
 ## [1.12.0](https://github.com/SpiceLabsHQ/Reaper/compare/v1.11.0...v1.12.0) (2026-02-23)
 
 ### Features
