@@ -16,22 +16,22 @@ Maps abstract task operations to `gh` CLI commands. See `gh issue --help` and `g
 
 Scripts are in `${CLAUDE_PLUGIN_ROOT}/skills/issue-tracker-github/scripts/`:
 
-| Script                  | Purpose                                                 |
-| ----------------------- | ------------------------------------------------------- |
+| Script | Purpose |
+|--------|---------|
 | `gh-link-sub-issues.sh` | Link 1+ issues as sub-issues of a parent (bulk-capable) |
-| `gh-list-sub-issues.sh` | List sub-issues of a parent via GraphQL                 |
+| `gh-list-sub-issues.sh` | List sub-issues of a parent via GraphQL |
 
 ## Quick Reference
 
-| Operation             | Command Pattern                                                   |
-| --------------------- | ----------------------------------------------------------------- |
-| FETCH_ISSUE           | `gh issue view <number> --json title,body,state,labels,assignees` |
-| LIST_CHILDREN         | `gh-list-sub-issues.sh <parent>` or parse tracking issue body     |
-| CREATE_ISSUE          | `gh issue create --title "..." --body "..." --label "..."`        |
-| UPDATE_ISSUE          | `gh issue edit <number> --add-label/--title/--body/--assignee`    |
-| ADD_DEPENDENCY        | Add cross-references to issue bodies (see Dependency Pattern)     |
-| QUERY_DEPENDENCY_TREE | Recursively parse cross-references from issue bodies              |
-| CLOSE_ISSUE           | `gh issue close <number>`                                         |
+| Operation | Command Pattern |
+|-----------|----------------|
+| FETCH_ISSUE | `gh issue view <number> --json title,body,state,labels,assignees` |
+| LIST_CHILDREN | `gh-list-sub-issues.sh <parent>` or parse tracking issue body |
+| CREATE_ISSUE | `gh issue create --title "..." --body "..." --label "..."` |
+| UPDATE_ISSUE | `gh issue edit <number> --add-label/--title/--body/--assignee` |
+| ADD_DEPENDENCY | Add cross-references to issue bodies (see Dependency Pattern) |
+| QUERY_DEPENDENCY_TREE | Recursively parse cross-references from issue bodies |
+| CLOSE_ISSUE | `gh issue close <number>` |
 
 ## Two Modes
 
@@ -90,7 +90,6 @@ gh issue create --title "Authentication overhaul" --body "Parent issue tracking 
 **CREATE_ISSUE with `parent`:**
 
 1. Create child issues first (batch all creates before linking):
-
    ```bash
    gh issue create --title "Set up database schema" --body "..." --label "feature:auth"
    gh issue create --title "Implement API endpoints" --body "..." --label "feature:auth"
@@ -98,7 +97,6 @@ gh issue create --title "Authentication overhaul" --body "Parent issue tracking 
    ```
 
 2. Bulk-link all children to the parent in one call:
-
    ```bash
    ${CLAUDE_PLUGIN_ROOT}/skills/issue-tracker-github/scripts/gh-link-sub-issues.sh <parent-number> <child-1> <child-2> <child-3>
    ```
@@ -169,7 +167,6 @@ Then fetch each child: `gh issue view <number> --json number,title,state`.
 GitHub has no native dependency links. Use structured cross-references in issue bodies.
 
 **Format:**
-
 - `blocks` type: Add `**Blocked by:** #X, #Y` to the dependent issue's body
 - `related` type: Add `**Related to:** #Z` to both issues' bodies
 

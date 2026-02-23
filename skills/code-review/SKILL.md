@@ -16,15 +16,15 @@ This skill defines the **review process**, not domain knowledge. Follow the univ
 
 The orchestrator passes the following fields when invoking this skill:
 
-| Field                 | Description                                                               |
-| --------------------- | ------------------------------------------------------------------------- |
-| `TASK`                | Task ID being reviewed                                                    |
-| `WORKTREE`            | Path to the worktree under review                                         |
-| `SCOPE`               | Glob patterns for the files in scope                                      |
-| `PLAN_CONTEXT`        | Materialized plan content (may be absent)                                 |
-| `SKILL_CONTENT`       | The contents of this file (already loaded by caller)                      |
-| `WORK_TYPE`           | Work type identifier used to self-load the specialty file (may be absent) |
-| `TEST_RUNNER_RESULTS` | Gate 1 test-runner JSON output (may be absent)                            |
+| Field | Description |
+|-------|-------------|
+| `TASK` | Task ID being reviewed |
+| `WORKTREE` | Path to the worktree under review |
+| `SCOPE` | Glob patterns for the files in scope |
+| `PLAN_CONTEXT` | Materialized plan content (may be absent) |
+| `SKILL_CONTENT` | The contents of this file (already loaded by caller) |
+| `WORK_TYPE` | Work type identifier used to self-load the specialty file (may be absent) |
+| `TEST_RUNNER_RESULTS` | Gate 1 test-runner JSON output (may be absent) |
 
 ## Universal Review Process
 
@@ -35,7 +35,6 @@ Work through these steps in order for every review.
 **Trust Gate 1 results. Do not re-run the full test suite.** If `TEST_RUNNER_RESULTS` was provided, use it to confirm test coverage requirements were met. Selective test execution during inspection is permitted (e.g., running a single test to reproduce a defect you spotted), but never run the full suite.
 
 If `PLAN_CONTEXT` was provided:
-
 - Read the acceptance criteria and work unit description from the plan.
 - Verify that the implementation addresses every acceptance criterion.
 - Flag any criterion that is missing, incomplete, or incorrectly implemented as a blocking issue.
@@ -61,19 +60,19 @@ Use the `WORK_TYPE` value to look up the specialty file in the map below, then s
 
 **Specialty File Map**
 
-| Work Type               | Specialty File                              |
-| ----------------------- | ------------------------------------------- |
-| `application_code`      | `skills/code-review/application-code.md`    |
-| `infrastructure_config` | (none)                                      |
-| `database_migration`    | `skills/code-review/database-migration.md`  |
-| `api_specification`     | (none)                                      |
-| `agent_prompt`          | `skills/code-review/agent-prompt.md`        |
-| `documentation`         | `skills/code-review/documentation.md`       |
-| `ci_cd_pipeline`        | (none)                                      |
-| `test_code`             | `skills/code-review/application-code.md`    |
-| `configuration`         | (none)                                      |
-| `architecture_review`   | `skills/code-review/architecture-review.md` |
-| (anything else)         | (none)                                      |
+| Work Type | Specialty File |
+|-----------|---------------|
+| `application_code` | `skills/code-review/application-code.md` |
+| `infrastructure_config` | (none) |
+| `database_migration` | `skills/code-review/database-migration.md` |
+| `api_specification` | (none) |
+| `agent_prompt` | `skills/code-review/agent-prompt.md` |
+| `documentation` | `skills/code-review/documentation.md` |
+| `ci_cd_pipeline` | (none) |
+| `test_code` | `skills/code-review/application-code.md` |
+| `configuration` | (none) |
+| `architecture_review` | `skills/code-review/architecture-review.md` |
+| (anything else) | (none) |
 
 **Self-loading procedure:**
 
@@ -84,7 +83,6 @@ Use the `WORK_TYPE` value to look up the specialty file in the map below, then s
 ## Blocking vs. Non-Blocking Issues
 
 **Blocking issues** (`blocking_issues`) prevent approval. Include only:
-
 - Bugs or logic errors in the implementation
 - Missing required functionality from the acceptance criteria
 - Broken contracts (API shape, JSON schema, function signatures)
@@ -92,7 +90,6 @@ Use the `WORK_TYPE` value to look up the specialty file in the map below, then s
 - Files modified outside declared scope (unless pre-authorized)
 
 **Non-blocking notes** (`non_blocking_notes`) are observations that do not prevent approval:
-
 - Style suggestions or readability improvements
 - Optional refactors
 - Minor nitpicks that do not affect correctness or contract
@@ -117,11 +114,11 @@ Emit exactly this structure as your final output. No prose after the JSON block.
 
 Field definitions:
 
-| Field                | Type     | Values                                                                                                                                                                                              |
-| -------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `blocking_issues`    | string[] | One entry per blocking issue found; empty array if none                                                                                                                                             |
-| `non_blocking_notes` | string[] | Observations that do not block approval; empty array if none                                                                                                                                        |
-| `plan_coverage`      | string   | `"full"` all criteria met, `"partial"` some missing, `"not_checked"` no plan provided                                                                                                               |
-| `scope_violations`   | string[] | File paths modified outside declared scope; empty array if none                                                                                                                                     |
-| `files_reviewed`     | string[] | Required, non-empty. The paths of files you actually read or inspected during review. Used by the orchestrator to detect empty/crashed reviews. A review with an empty `files_reviewed` is invalid. |
-| `summary`            | string   | One or two sentences: what was reviewed and whether it passed                                                                                                                                       |
+| Field | Type | Values |
+|-------|------|--------|
+| `blocking_issues` | string[] | One entry per blocking issue found; empty array if none |
+| `non_blocking_notes` | string[] | Observations that do not block approval; empty array if none |
+| `plan_coverage` | string | `"full"` all criteria met, `"partial"` some missing, `"not_checked"` no plan provided |
+| `scope_violations` | string[] | File paths modified outside declared scope; empty array if none |
+| `files_reviewed` | string[] | Required, non-empty. The paths of files you actually read or inspected during review. Used by the orchestrator to detect empty/crashed reviews. A review with an empty `files_reviewed` is invalid. |
+| `summary` | string | One or two sentences: what was reviewed and whether it passed |

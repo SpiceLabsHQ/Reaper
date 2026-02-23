@@ -1,7 +1,6 @@
 ---
 description: Fast-path from worktree to PR — commit, push, open.
 ---
-
 ## Mission Header
 
 > **Opt-out**: If the target project's CLAUDE.md contains the line `Reaper: disable ASCII art`, output nothing — skip the header entirely.
@@ -13,6 +12,7 @@ description: Fast-path from worktree to PR — commit, push, open.
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   commit, push, open
 ```
+
 
 # Ship: Worktree to Pull Request
 
@@ -30,23 +30,23 @@ Do not use any of the following in user-facing messages, status cards, or progre
 
 **Abstract operation names** — replace with plain language:
 
-| Forbidden               | Use instead                                         |
-| ----------------------- | --------------------------------------------------- |
-| `FETCH_ISSUE`           | "retrieving task details" or "looking up the issue" |
-| `CREATE_ISSUE`          | "creating a task" or "logging the issue"            |
-| `UPDATE_ISSUE`          | "updating the task" or "recording progress"         |
-| `ADD_DEPENDENCY`        | "linking a dependency"                              |
-| `LIST_CHILDREN`         | "listing subtasks"                                  |
-| `QUERY_DEPENDENCY_TREE` | "checking dependencies"                             |
-| `CLOSE_ISSUE`           | "marking the task complete"                         |
+| Forbidden | Use instead |
+|-----------|-------------|
+| `FETCH_ISSUE` | "retrieving task details" or "looking up the issue" |
+| `CREATE_ISSUE` | "creating a task" or "logging the issue" |
+| `UPDATE_ISSUE` | "updating the task" or "recording progress" |
+| `ADD_DEPENDENCY` | "linking a dependency" |
+| `LIST_CHILDREN` | "listing subtasks" |
+| `QUERY_DEPENDENCY_TREE` | "checking dependencies" |
+| `CLOSE_ISSUE` | "marking the task complete" |
 
 **Internal state variables** — omit or rephrase:
 
-| Forbidden                       | Use instead                           |
-| ------------------------------- | ------------------------------------- |
-| `TASK_SYSTEM` / `markdown_only` | "your project's task tracking setup"  |
-| `PLAN_CONTEXT`                  | "the task requirements" or "the plan" |
-| `CODEBASE CONTEXT`              | "the codebase"                        |
+| Forbidden | Use instead |
+|-----------|-------------|
+| `TASK_SYSTEM` / `markdown_only` | "your project's task tracking setup" |
+| `PLAN_CONTEXT` | "the task requirements" or "the plan" |
+| `CODEBASE CONTEXT` | "the codebase" |
 
 **Internal file sentinels** — never surface raw filenames:
 
@@ -54,10 +54,10 @@ Do not use any of the following in user-facing messages, status cards, or progre
 
 **Tool names** — never expose tool internals as user language:
 
-| Forbidden    | Use instead                                     |
-| ------------ | ----------------------------------------------- |
+| Forbidden | Use instead |
+|-----------|-------------|
 | `TaskCreate` | "tracking progress" or "updating the work plan" |
-| `TaskUpdate` | "recording progress"                            |
+| `TaskUpdate` | "recording progress" |
 
 **Architecture terms** — omit entirely:
 
@@ -66,6 +66,7 @@ Do not use any of the following in user-facing messages, status cards, or progre
 ### Tone Rule
 
 Describe what is happening for the user ("running tests", "planning the feature", "reviewing security") — not what the system is doing internally ("routing to skill", "resolving TASK_SYSTEM", "invoking TaskCreate").
+
 
 ## Visual Vocabulary
 
@@ -87,7 +88,6 @@ Six semantic states expressed as fixed-width 10-block bars. Use these consistent
 ```
 
 Gauge usage rules:
-
 - Always use exactly 10 blocks per bar (full-width = 10 filled, empty = 10 unfilled).
 - The exclamation marks in the FAULT bar replace two blocks at the center to signal breakage.
 - Pair each bar with its label and a short gloss on the same line.
@@ -96,13 +96,13 @@ Gauge usage rules:
 
 Five inspection verdicts for quality gate results. Gate statuses are inspection verdicts, not work lifecycle states. Use gauge states for work unit progress, gate statuses for quality inspection results.
 
-| Status      | Meaning                               |
-| ----------- | ------------------------------------- |
-| **PASS**    | gate passed all checks                |
-| **FAIL**    | gate found blocking issues            |
-| **RUNNING** | gate currently executing              |
-| **PENDING** | gate not yet started                  |
-| **SKIP**    | gate not applicable to this work type |
+| Status | Meaning |
+|--------|---------|
+| **PASS** | gate passed all checks |
+| **FAIL** | gate found blocking issues |
+| **RUNNING** | gate currently executing |
+| **PENDING** | gate not yet started |
+| **SKIP** | gate not applicable to this work type |
 
 ### Departure Card
 
@@ -129,6 +129,7 @@ Render when the ship command completes. Shows the result of the PR or merge.
   Status:     [merged / opened / failed]
   ██████████  LANDED
 ```
+
 
 ## 1. Determine Worktree Context
 
@@ -184,7 +185,6 @@ REMOTE_URL=$(git -C "$WORKTREE_PATH" remote get-url origin 2>/dev/null)
 ```
 
 **Validation checks:**
-
 - Worktree is a valid git directory
 - Branch is not `main`, `master`, or `develop` (refuse to ship from protected branches)
 - There are either uncommitted changes to commit OR existing unpushed commits to push
@@ -196,7 +196,6 @@ If nothing to commit and nothing to push, report "Already shipped" and stop.
 After validation passes, render a **Departure Card** using the template from the Visual Vocabulary. Populate it with values gathered so far:
 
 <!-- user-comms: show the resolved worktree path, not the variable name "$WORKTREE_PATH" -->
-
 ```
   DEPARTURE
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -265,7 +264,6 @@ If uncommitted changes exist:
 
 1. **Analyze the diff** to understand what changed
 2. **Pre-stage safety scan**: Before staging, check for sensitive files in the working tree:
-
    ```bash
    # Scan for sensitive file patterns
    SENSITIVE_PATTERNS='.env* *.pem *.key *.p12 *.pfx *.jks id_rsa* *.credentials *.secret *.token node_modules/ *.sqlite *.db'
@@ -277,9 +275,7 @@ If uncommitted changes exist:
        echo "This is a common-pattern check, not a comprehensive security scan — review staged files manually."
    fi
    ```
-
    If sensitive files are found, warn the user and exclude them from staging:
-
    ```bash
    # Stage everything, then unstage sensitive matches
    git -C "$WORKTREE_PATH" add -A
@@ -287,15 +283,12 @@ If uncommitted changes exist:
        git -C "$WORKTREE_PATH" reset HEAD -- "$FILE" 2>/dev/null || true
    done
    ```
-
    If no sensitive files are found, stage normally: `git -C "$WORKTREE_PATH" add -A`
-
 3. **Generate conventional commit message** from the diff:
    - Determine type: `feat`, `fix`, `refactor`, `test`, `docs`, `style`, `chore`
    - Extract scope from affected files
    - Write concise subject (max 72 chars)
 4. **Commit** with task reference if task ID was found:
-
    ```bash
    git -C "$WORKTREE_PATH" commit -m "<type>(<scope>): <subject>
 
@@ -330,15 +323,12 @@ FILES_CHANGED=$(git -C "$WORKTREE_PATH" diff --stat "$TARGET_BRANCH".."$BRANCH")
 
 ```markdown
 ## Summary
-
 <bullet points summarizing the changes>
 
 ## Changes
-
 $FILES_CHANGED
 
 ## Test Plan
-
 - [ ] Tests passing (verify in CI)
 - [ ] Code reviewed
 
@@ -348,7 +338,6 @@ Ref: <TASK_ID>
 ### Create PR by Host
 
 **GitHub** (via `gh` CLI):
-
 ```bash
 gh pr create \
   --base "$TARGET_BRANCH" \
@@ -358,7 +347,6 @@ gh pr create \
 ```
 
 **Bitbucket** (via `acli` — preferred, consistent with Jira workflow):
-
 ```bash
 # acli handles auth, repo detection, and API calls
 acli bitbucket pullrequest create \
@@ -369,7 +357,6 @@ acli bitbucket pullrequest create \
 ```
 
 If `acli` is not available, fall back to the Bitbucket REST API:
-
 ```bash
 REPO_SLUG=$(echo "$REMOTE_URL" | sed -E 's#.*bitbucket\.org[:/]([^/]+/[^/]+?)(\.git)?$#\1#')
 
@@ -387,14 +374,12 @@ curl -s -X POST \
 ```
 
 **Bitbucket auth fallback order** (when acli unavailable):
-
 1. `BITBUCKET_TOKEN` environment variable
 2. `BITBUCKET_APP_PASSWORD` environment variable
 3. Git credential helper (`git credential fill`)
 4. Fall back to push-only with manual PR URL
 
 **GitLab** (via `glab` CLI or API):
-
 ```bash
 # If glab is available
 glab mr create \
@@ -421,6 +406,7 @@ At every work unit boundary (before starting the next unit or before signaling c
 
 **Keep** (still needed): dev servers, databases, file watchers, and any long-lived process the next work unit depends on.
 
+
 ## 7. Output — Landing Card
 
 When all steps complete, render a **Landing Card** using the template from the Visual Vocabulary. Populate it with the actual PR URL and outcome status:
@@ -434,7 +420,6 @@ When all steps complete, render a **Landing Card** using the template from the V
 ```
 
 Landing card rules:
-
 - **PR** shows the PR URL returned by the host CLI, or the push URL if PR creation was skipped.
 - **Status** shows `opened` when a PR was created, `merged` if auto-merged, or `failed` if PR creation failed.
 - Use the FAULT gauge state (`░░░░!!░░░░  FAULT`) instead of LANDED if any step failed.
@@ -452,7 +437,6 @@ This output is compact and transactional. No narration, no headings, no filler t
 ## Scope Boundary
 
 This command does NOT:
-
 - Run quality gates (use `/reaper:takeoff` for that)
 - Merge to target branch (PR review required)
 - Clean up the worktree (cleanup happens post-merge)
@@ -463,7 +447,6 @@ This is a fast-path shipping command. For full orchestration with quality gates,
 ## Error Handling
 
 <!-- user-comms: say "couldn't create a PR automatically" not "no CLI tool for host" or "acli/gh/glab unavailable" -->
-
 - **No CLI tool for host**: Try `acli` (Bitbucket), `gh` (GitHub), `glab` (GitLab), then REST API, then push-only with manual PR URL
 <!-- user-comms: say "authentication failed — check your credentials" not "BITBUCKET_TOKEN not set" -->
 - **Auth failure**: Report which auth methods were tried, suggest setting the appropriate token env var

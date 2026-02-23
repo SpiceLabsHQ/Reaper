@@ -49,12 +49,10 @@ Creates a new worktree with validation and dependency installation.
 | `--no-install` | Skip dependency installation |
 
 **Output:**
-
 - Worktree at: `./trees/<task-id>-<description>`
 - Branch: `feature/<task-id>-<description>`
 
 **Validation performed:**
-
 - Not already in a worktree
 - Worktree path doesn't exist
 - Branch doesn't already exist
@@ -85,7 +83,6 @@ Lists all worktrees with status information.
 | UNMERGED | Count of unmerged commits |
 
 **JSON output fields:**
-
 ```json
 {
   "path": "/path/to/worktree",
@@ -114,7 +111,6 @@ Checks detailed health of a specific worktree.
 | `--json` | Output in JSON format |
 
 **Checks performed:**
-
 - Directory exists
 - Valid git worktree
 - Uncommitted changes
@@ -123,7 +119,6 @@ Checks detailed health of a specific worktree.
 - Dependency installation status
 
 **JSON output:**
-
 ```json
 {
   "path": "/path/to/worktree",
@@ -161,9 +156,9 @@ Safely removes a worktree, handling the CWD issue. **Requires explicit branch di
 
 When removing a worktree with an associated feature branch, you MUST specify one of:
 
-| Option            | Description                                          |
-| ----------------- | ---------------------------------------------------- |
-| `--keep-branch`   | Remove worktree but keep branch for future work      |
+| Option | Description |
+|--------|-------------|
+| `--keep-branch` | Remove worktree but keep branch for future work |
 | `--delete-branch` | Remove worktree AND delete branch (local and remote) |
 
 **Note:** Protected branches (`develop`, `main`, `master`) are never deleted and don't require disposition flags.
@@ -193,14 +188,12 @@ When removing a worktree with an associated feature branch, you MUST specify one
 | 4 | Timeout (operation exceeded time limit) |
 
 **Safety checks (unless --force):**
-
 1. No uncommitted changes
 2. No unmerged commits (warns only, non-blocking)
 3. Worktree lock detection (unless `--skip-lock-check` or `--force`)
 4. Open file handle detection via `lsof` (warns only, non-blocking; unless `--skip-lock-check`)
 
 **Cleanup actions:**
-
 1. Change to project root (CWD fix)
 2. Pre-removal checks: lock detection and open file handle scan (unless `--skip-lock-check`)
 3. Remove worktree directory (with timeout protection, default 120s)
@@ -211,7 +204,6 @@ When removing a worktree with an associated feature branch, you MUST specify one
 5. Prune stale worktree entries
 
 **Examples:**
-
 ```bash
 # IMPORTANT: Always cd to project root first to avoid breaking the shell!
 # Use git rev-parse --show-toplevel to reliably get the repo root
@@ -250,7 +242,6 @@ When errors occur, `worktree-cleanup.sh` outputs structured `=== AI REMEDIATION 
 Triggered when worktree removal or network operations exceed their time limit.
 
 **Output format:**
-
 ```
 === AI REMEDIATION GUIDE ===
 ERROR_CODE: 4
@@ -288,7 +279,6 @@ REMEDIATION_STEPS:
 Triggered when a worktree has a git lock file preventing removal.
 
 **Output format:**
-
 ```
 === AI REMEDIATION GUIDE ===
 ERROR_CODE: WORKTREE_LOCKED
@@ -321,7 +311,6 @@ REMEDIATION:
 Emitted as a non-blocking warning when processes have open file handles in the worktree directory. Does not prevent removal, but may cause it to hang or fail.
 
 **Output format:**
-
 ```
 WARNING_CODE: OPEN_FILE_HANDLES
 WORKTREE_PATH: ./trees/PROJ-123-auth
@@ -417,11 +406,11 @@ cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./trees/PROJ-123 --
 
 Dependency installation is auto-detected for:
 
-| Type    | Detection                        | Install Command           |
-| ------- | -------------------------------- | ------------------------- |
-| Node.js | package.json                     | npm install / yarn / pnpm |
-| Python  | pyproject.toml, requirements.txt | poetry / uv / pip         |
-| Ruby    | Gemfile                          | bundle install            |
-| PHP     | composer.json                    | composer install          |
-| Go      | go.mod                           | go mod download           |
-| Rust    | Cargo.toml                       | cargo fetch               |
+| Type | Detection | Install Command |
+|------|-----------|-----------------|
+| Node.js | package.json | npm install / yarn / pnpm |
+| Python | pyproject.toml, requirements.txt | poetry / uv / pip |
+| Ruby | Gemfile | bundle install |
+| PHP | composer.json | composer install |
+| Go | go.mod | go mod download |
+| Rust | Cargo.toml | cargo fetch |

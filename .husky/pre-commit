@@ -17,8 +17,6 @@ npm run build
 # Run contract tests on generated output
 node --test scripts/contracts.test.js
 
-# Format generated output before staging (scoped to known output dirs only)
-npx prettier --write agents/ skills/ hooks/ commands/ 2>/dev/null || true
 git add agents/ skills/ hooks/ commands/
 
 # Beads pre-commit: flush pending changes to JSONL

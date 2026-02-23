@@ -1,7 +1,6 @@
 ---
 description: Radar sweep your parallel worktrees for progress and drift.
 ---
-
 ## Mission Header
 
 > **Opt-out**: If the target project's CLAUDE.md contains the line `Reaper: disable ASCII art`, output nothing — skip the header entirely.
@@ -13,6 +12,7 @@ description: Radar sweep your parallel worktrees for progress and drift.
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   radar sweep of active worktrees
 ```
+
 
 # Status of Worktrees for Tasks
 
@@ -28,23 +28,23 @@ Do not use any of the following in user-facing messages, status cards, or progre
 
 **Abstract operation names** — replace with plain language:
 
-| Forbidden               | Use instead                                         |
-| ----------------------- | --------------------------------------------------- |
-| `FETCH_ISSUE`           | "retrieving task details" or "looking up the issue" |
-| `CREATE_ISSUE`          | "creating a task" or "logging the issue"            |
-| `UPDATE_ISSUE`          | "updating the task" or "recording progress"         |
-| `ADD_DEPENDENCY`        | "linking a dependency"                              |
-| `LIST_CHILDREN`         | "listing subtasks"                                  |
-| `QUERY_DEPENDENCY_TREE` | "checking dependencies"                             |
-| `CLOSE_ISSUE`           | "marking the task complete"                         |
+| Forbidden | Use instead |
+|-----------|-------------|
+| `FETCH_ISSUE` | "retrieving task details" or "looking up the issue" |
+| `CREATE_ISSUE` | "creating a task" or "logging the issue" |
+| `UPDATE_ISSUE` | "updating the task" or "recording progress" |
+| `ADD_DEPENDENCY` | "linking a dependency" |
+| `LIST_CHILDREN` | "listing subtasks" |
+| `QUERY_DEPENDENCY_TREE` | "checking dependencies" |
+| `CLOSE_ISSUE` | "marking the task complete" |
 
 **Internal state variables** — omit or rephrase:
 
-| Forbidden                       | Use instead                           |
-| ------------------------------- | ------------------------------------- |
-| `TASK_SYSTEM` / `markdown_only` | "your project's task tracking setup"  |
-| `PLAN_CONTEXT`                  | "the task requirements" or "the plan" |
-| `CODEBASE CONTEXT`              | "the codebase"                        |
+| Forbidden | Use instead |
+|-----------|-------------|
+| `TASK_SYSTEM` / `markdown_only` | "your project's task tracking setup" |
+| `PLAN_CONTEXT` | "the task requirements" or "the plan" |
+| `CODEBASE CONTEXT` | "the codebase" |
 
 **Internal file sentinels** — never surface raw filenames:
 
@@ -52,10 +52,10 @@ Do not use any of the following in user-facing messages, status cards, or progre
 
 **Tool names** — never expose tool internals as user language:
 
-| Forbidden    | Use instead                                     |
-| ------------ | ----------------------------------------------- |
+| Forbidden | Use instead |
+|-----------|-------------|
 | `TaskCreate` | "tracking progress" or "updating the work plan" |
-| `TaskUpdate` | "recording progress"                            |
+| `TaskUpdate` | "recording progress" |
 
 **Architecture terms** — omit entirely:
 
@@ -64,6 +64,7 @@ Do not use any of the following in user-facing messages, status cards, or progre
 ### Tone Rule
 
 Describe what is happening for the user ("running tests", "planning the feature", "reviewing security") — not what the system is doing internally ("routing to skill", "resolving TASK_SYSTEM", "invoking TaskCreate").
+
 
 Check the status of git worktrees and parallel development progress
 
@@ -92,7 +93,6 @@ Six semantic states expressed as fixed-width 10-block bars. Use these consistent
 ```
 
 Gauge usage rules:
-
 - Always use exactly 10 blocks per bar (full-width = 10 filled, empty = 10 unfilled).
 - The exclamation marks in the FAULT bar replace two blocks at the center to signal breakage.
 - Pair each bar with its label and a short gloss on the same line.
@@ -101,13 +101,13 @@ Gauge usage rules:
 
 Five inspection verdicts for quality gate results. Gate statuses are inspection verdicts, not work lifecycle states. Use gauge states for work unit progress, gate statuses for quality inspection results.
 
-| Status      | Meaning                               |
-| ----------- | ------------------------------------- |
-| **PASS**    | gate passed all checks                |
-| **FAIL**    | gate found blocking issues            |
-| **RUNNING** | gate currently executing              |
-| **PENDING** | gate not yet started                  |
-| **SKIP**    | gate not applicable to this work type |
+| Status | Meaning |
+|--------|---------|
+| **PASS** | gate passed all checks |
+| **FAIL** | gate found blocking issues |
+| **RUNNING** | gate currently executing |
+| **PENDING** | gate not yet started |
+| **SKIP** | gate not applicable to this work type |
 
 ### Fleet Dashboard
 
@@ -125,17 +125,16 @@ Render as a multi-row status overview. One row per worktree.
 ```
 
 Fleet dashboard rules:
-
 - One row per worktree. Path left-aligned, gauge bar and state right.
 - Sort: FAULT first, then IN FLIGHT, then TAKING OFF, then ON APPROACH, then TAXIING, then LANDED.
 - If no worktrees exist, show a single line: `No active worktrees.`
+
 
 ## Instructions
 
 Display comprehensive status information about worktrees using the fleet dashboard format defined in the Visual Vocabulary above. Output a scannable instrument panel first, then per-worktree detail underneath.
 
 ### Pre-status Validation:
-
 ```bash
 # If TASK_ID provided, validate format (JIRA: PROJ-123, Beads: reaper-a3f)
 if [ -n "${TASK_ID}" ]; then

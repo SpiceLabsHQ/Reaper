@@ -10,15 +10,15 @@ Maps abstract task operations to `acli jira` CLI commands. See `acli jira --help
 
 ## Quick Reference
 
-| Operation             | Command Pattern                                                                           |
-| --------------------- | ----------------------------------------------------------------------------------------- |
-| FETCH_ISSUE           | `acli jira workitem view <key>`                                                           |
-| LIST_CHILDREN         | `acli jira workitem search --jql "parent=<key>"`                                          |
-| CREATE_ISSUE          | `acli jira workitem create --project=<key> --type=Task --title="..." --description="..."` |
-| UPDATE_ISSUE          | `acli jira workitem update <key> --status="..." --assignee="..."`                         |
-| ADD_DEPENDENCY        | `acli jira workitem link <source> <target> --type=Blocks`                                 |
-| QUERY_DEPENDENCY_TREE | `acli jira workitem search --jql "issuekey in linkedIssuesOf(<key>)"` recursively         |
-| CLOSE_ISSUE           | `acli jira workitem update <key> --status="Done"`                                         |
+| Operation | Command Pattern |
+|-----------|----------------|
+| FETCH_ISSUE | `acli jira workitem view <key>` |
+| LIST_CHILDREN | `acli jira workitem search --jql "parent=<key>"` |
+| CREATE_ISSUE | `acli jira workitem create --project=<key> --type=Task --title="..." --description="..."` |
+| UPDATE_ISSUE | `acli jira workitem update <key> --status="..." --assignee="..."` |
+| ADD_DEPENDENCY | `acli jira workitem link <source> <target> --type=Blocks` |
+| QUERY_DEPENDENCY_TREE | `acli jira workitem search --jql "issuekey in linkedIssuesOf(<key>)"` recursively |
+| CLOSE_ISSUE | `acli jira workitem update <key> --status="Done"` |
 
 ## Hierarchy -- Parent/Child Pattern
 
