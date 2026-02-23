@@ -189,6 +189,28 @@ Command reference: [docs/commands.md](docs/commands.md)
 
 ---
 
+## Parallel Development
+
+Every task Reaper runs gets its own isolated worktree under `./trees/`. That is not just a safety mechanism -- it is a workflow primitive.
+
+Each worktree is a complete, independent copy of the repository on its own branch. Which means each one can host its own Claude Code session, running simultaneously, without interference.
+
+Start a task in one Claude Code session. Start a second task in another. They do not know about each other, and that is the point.
+
+```bash
+# Start a task -- Reaper creates the worktree automatically
+/reaper:takeoff PROJ-42
+
+# Check what all your active sessions are doing
+/reaper:status-worktrees
+```
+
+VS Code displays all worktrees natively in the Source Control panel -- click any worktree's commit box to shift focus and update the graph. Cursor and Windsurf work the same way.
+
+Full parallel mechanics: [docs/workflow.md](docs/workflow.md)
+
+---
+
 ## Is This For You?
 
 Reaper is for developers who ship features, not snippets. If you are building production systems, solving architectural problems, or running a team that needs consistent quality -- this is your tool.
