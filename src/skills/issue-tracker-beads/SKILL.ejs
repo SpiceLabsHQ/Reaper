@@ -14,7 +14,7 @@ Platform skill for Reaper's task-system-operations. Maps abstract operations to 
 |-----------|---------|
 | FETCH_ISSUE | `bd show <id>` |
 | LIST_CHILDREN | `bd show <parent-id>` (children listed in output) |
-| CREATE_ISSUE | `bd create --title="..." --type=task [--parent=<id>]` |
+| CREATE_ISSUE | `bd create --title="..." --description="..." --type=task [--parent=<id>]` |
 | UPDATE_ISSUE | `bd update <id> --status=in_progress` |
 | ADD_DEPENDENCY | `bd dep add <issue> <depends-on>` |
 | QUERY_DEPENDENCY_TREE | `bd show <id>` recursively (follow children + deps) |
@@ -33,8 +33,8 @@ Returns title, description, status, priority, children, and dependencies. Childr
 ### CREATE_ISSUE
 
 ```bash
-bd create --title="Add OAuth support" --type=task --priority=2
-bd create --title="Implement Google provider" --type=task --parent=<parent-id>
+bd create --title="Add OAuth support" --description="Implement OAuth2 authentication flow" --type=task --priority=2
+bd create --title="Implement Google provider" --description="Add Google OAuth provider integration" --type=task --parent=<parent-id>
 # Types: task, bug, feature
 ```
 
@@ -46,14 +46,14 @@ A parent issue organizes multiple related child issues under a single grouping. 
 
 ```bash
 # 1. Create the parent issue (no --parent flag)
-bd create --title="Authentication overhaul" --type=task --priority=2
+bd create --title="Authentication overhaul" --description="Comprehensive auth system redesign" --type=task --priority=2
 # Returns: reaper-a3f
 
 # 2. Create child issues using --parent
-bd create --title="Add OAuth support" --type=task --parent=reaper-a3f
+bd create --title="Add OAuth support" --description="Implement OAuth2 authentication flow" --type=task --parent=reaper-a3f
 # Returns: reaper-a3f.1
 
-bd create --title="Implement Google provider" --type=task --parent=reaper-a3f
+bd create --title="Implement Google provider" --description="Add Google OAuth provider to auth module" --type=task --parent=reaper-a3f
 # Returns: reaper-a3f.2
 ```
 
