@@ -35,7 +35,7 @@ setup() {
 
     # Create a fake git repo structure for testing
     mkdir -p "$TEST_TMP/project/.git/worktrees/test-worktree"
-    mkdir -p "$TEST_TMP/project/trees/test-worktree/.git"
+    mkdir -p "$TEST_TMP/project/.claude/worktrees/test-worktree/.git"
 
     # Initialize a real git repo for commands that need it
     git -C "$TEST_TMP/project" init --quiet 2>/dev/null || true
@@ -133,7 +133,7 @@ run_test() {
 create_real_worktree() {
     local project_dir="$1"
     local worktree_name="$2"
-    local worktree_path="$project_dir/trees/$worktree_name"
+    local worktree_path="$project_dir/.claude/worktrees/$worktree_name"
 
     git -C "$project_dir" worktree add "$worktree_path" -b "feature/$worktree_name" >/dev/null 2>&1
     echo "$worktree_path"

@@ -34,9 +34,9 @@ Before starting work, validate these three requirements:
 - ❌ "DESCRIPTION: fix production issue" (too vague)
 
 ### 2. WORKTREE_PATH
-- **Required Format**: ./trees/[task-id]-description
-- **If Missing**: EXIT with "ERROR: Worktree path required (e.g., ./trees/PROJ-123-incident)"
-- **Validation**: Path must exist and be under ./trees/ directory
+- **Required Format**: .claude/worktrees/[task-id]-description
+- **If Missing**: EXIT with "ERROR: Worktree path required (e.g., .claude/worktrees/PROJ-123-incident)"
+- **Validation**: Path must exist and be under .claude/worktrees/ directory
 - **Check**: Path must be accessible and properly isolated
 
 ### 3. DESCRIPTION (Detailed Incident Information)
@@ -362,7 +362,7 @@ Return a minimal JSON object. The orchestrator verifies all claims via quality g
 ```json
 {
   "task_id": "INC-501",
-  "worktree_path": "./trees/INC-501-incident",
+  "worktree_path": ".claude/worktrees/INC-501-incident",
   "severity": "CRITICAL",
   "summary": "Database connection pool exhausted due to leaked connections in order service; restarted pool and deployed connection-leak fix",
   "root_cause": "OrderService.processPayment() opened connections without closing in the error path, exhausting the pool after sustained error rate",

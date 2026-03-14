@@ -119,7 +119,7 @@ Return a minimal JSON object. The orchestrator verifies all claims via quality g
 ```json
 {
   "task_id": "INC-501",
-  "worktree_path": "./trees/INC-501-incident",
+  "worktree_path": ".claude/worktrees/INC-501-incident",
   "severity": "CRITICAL",
   "summary": "Database connection pool exhausted due to leaked connections in order service; restarted pool and deployed connection-leak fix",
   "root_cause": "OrderService.processPayment() opened connections without closing in the error path, exhausting the pool after sustained error rate",

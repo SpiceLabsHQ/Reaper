@@ -34,9 +34,9 @@ Before starting work, validate these three requirements:
 - ❌ "DESCRIPTION: fix bug" (too vague)
 
 ### 2. WORKTREE_PATH
-- **Required Format**: ./trees/[task-id]-description
-- **If Missing**: EXIT with "ERROR: Worktree path required (e.g., ./trees/PROJ-123-fix)"
-- **Validation**: Path must exist and be under ./trees/ directory
+- **Required Format**: .claude/worktrees/[task-id]-description
+- **If Missing**: EXIT with "ERROR: Worktree path required (e.g., .claude/worktrees/PROJ-123-fix)"
+- **Validation**: Path must exist and be under .claude/worktrees/ directory
 - **Check**: Path must be accessible and properly isolated
 
 ### 3. DESCRIPTION (Detailed Bug Information)
@@ -109,19 +109,19 @@ When test-first is not practical (exploratory work, UI prototyping, spike invest
 **Test YOUR bug fix only—not the full suite:**
 ```bash
 # ✅ CORRECT: Test only the files you created/modified
-(cd &#34;./trees/[TASK_ID]-fix&#34; &amp;&amp; npm test -- path/to/your/bug-fix.test.js)
-(cd &#34;./trees/[TASK_ID]-fix&#34; &amp;&amp; npm test -- --testNamePattern=&#34;your fix&#34;)
+(cd &#34;.claude/worktrees/[TASK_ID]-fix&#34; &amp;&amp; npm test -- path/to/your/bug-fix.test.js)
+(cd &#34;.claude/worktrees/[TASK_ID]-fix&#34; &amp;&amp; npm test -- --testNamePattern=&#34;your fix&#34;)
 
 # ✅ CORRECT: Python - test only your module
-(cd &#34;./trees/[TASK_ID]-fix&#34; &amp;&amp; pytest tests/test_your_module.py -v)
+(cd &#34;.claude/worktrees/[TASK_ID]-fix&#34; &amp;&amp; pytest tests/test_your_module.py -v)
 
 # ✅ CORRECT: PHP - test only your class
-(cd &#34;./trees/[TASK_ID]-fix&#34; &amp;&amp; ./vendor/bin/phpunit tests/YourModuleTest.php)
+(cd &#34;.claude/worktrees/[TASK_ID]-fix&#34; &amp;&amp; ./vendor/bin/phpunit tests/YourModuleTest.php)
 ```
 **Avoid full suite runs:**
 ```bash
-(cd &#34;./trees/[TASK_ID]-fix&#34; &amp;&amp; npm test)  # DON&#39;T DO THIS
-(cd &#34;./trees/[TASK_ID]-fix&#34; &amp;&amp; pytest)     # DON&#39;T DO THIS
+(cd &#34;.claude/worktrees/[TASK_ID]-fix&#34; &amp;&amp; npm test)  # DON&#39;T DO THIS
+(cd &#34;.claude/worktrees/[TASK_ID]-fix&#34; &amp;&amp; pytest)     # DON&#39;T DO THIS
 ```
 **The test-runner agent handles full suite validation**—focus on your changes only.
 
@@ -138,7 +138,7 @@ Return a minimal JSON object. The orchestrator verifies all claims via quality g
 ```json
 {
   "task_id": "PROJ-123",
-  "worktree_path": "./trees/PROJ-123-fix",
+  "worktree_path": ".claude/worktrees/PROJ-123-fix",
   "work_completed": "Fixed email validation for plus signs in regex",
   "files_modified": ["src/auth.js", "tests/auth.test.js"],
   "unfinished": []

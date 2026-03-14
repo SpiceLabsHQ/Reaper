@@ -84,7 +84,7 @@ After all overrides above have determined the final strategy, apply this univers
 1. Run `git status --porcelain` on the repo root
 2. If the output is non-empty (uncommitted changes exist in the root) AND the final strategy is `very_small_direct`, escalate to `medium_single_branch`
 
-Uncommitted changes in the root risk contaminating the shared environment when Strategy 1 works directly on the feature branch without worktree isolation. `medium_single_branch` creates an isolated `./trees/` worktree that prevents root state from leaking into the agent's working environment. This check applies to the result of all strategy selection — including the single-document override — with no exemptions. If the final strategy is already `medium_single_branch` or `large_multi_worktree`, no escalation is needed.
+Uncommitted changes in the root risk contaminating the shared environment when Strategy 1 works directly on the feature branch without worktree isolation. `medium_single_branch` creates an isolated `.claude/worktrees/` worktree that prevents root state from leaking into the agent's working environment. This check applies to the result of all strategy selection — including the single-document override — with no exemptions. If the final strategy is already `medium_single_branch` or `large_multi_worktree`, no escalation is needed.
 
 ### Strategy Selection Output
 
@@ -107,7 +107,7 @@ The planner uses the scoring framework internally for strategy selection but ret
 **When**: Score 11-35 (or lower with 5+ repetitive items), no file overlap, 2-5 work units.
 
 **Workflow**:
-1. Deploy reaper:branch-manager to create a single shared worktree: `./trees/TASK-ID-work` on `feature/TASK-ID-description`
+1. Deploy reaper:branch-manager to create a single shared worktree: `.claude/worktrees/TASK-ID-work` on `feature/TASK-ID-description`
 2. Deploy multiple coding agents IN PARALLEL with exclusive file assignments, all working inside the shared worktree
 3. Each agent: exclusive files, conflict detection (exit if files unexpectedly modified), focused testing, no commit authority — work stays uncommitted
 4. After ALL agents complete: run quality gate sequence on full suite in the shared worktree
@@ -117,8 +117,8 @@ The planner uses the scoring framework internally for strategy selection but ret
 
 **Parallel deployment example**:
 ```
-Task --subagent_type reaper:feature-developer "TASK_ID: PROJ-123, WORKTREE: ./trees/PROJ-123-work, FILES: src/auth.js tests/auth.test.js, EXCLUSIVE ownership"
-Task --subagent_type reaper:feature-developer "TASK_ID: PROJ-123, WORKTREE: ./trees/PROJ-123-work, FILES: src/config.js tests/config.test.js, EXCLUSIVE ownership"
+Task --subagent_type reaper:feature-developer "TASK_ID: PROJ-123, WORKTREE: .claude/worktrees/PROJ-123-work, FILES: src/auth.js tests/auth.test.js, EXCLUSIVE ownership"
+Task --subagent_type reaper:feature-developer "TASK_ID: PROJ-123, WORKTREE: .claude/worktrees/PROJ-123-work, FILES: src/config.js tests/config.test.js, EXCLUSIVE ownership"
 ```
 
 ### Strategy 3: Large Multi-Worktree

@@ -28,7 +28,7 @@ You are a Test Runner Agent focused on executing tests and providing structured 
 
 ### 2. WORKING_DIR (Execution Directory)
 - **Required**: Directory where tests will be executed
-- **Format**: ./trees/[task-id]-description (or project root)
+- **Format**: .claude/worktrees/[task-id]-description (or project root)
 - **Validation**: Path must exist and be accessible
 - **If Missing**: Return `{"gate_status":"FAIL","blocking_issues":["ERROR: WORKING_DIR required"]}`
 
@@ -102,7 +102,7 @@ This agent does not: write or modify code, fix failing tests, update issue track
 
 ## Standard Exclusion Patterns
 
-Always exclude these patterns when running tests: `**/trees/**`, `**/*backup*/**`, `**/node_modules/**`, `**/vendor/**`, `**/.git/**`, `**/venv/**`, `**/target/**`.
+Always exclude these patterns when running tests: `**/.claude/worktrees/**`, `**/*backup*/**`, `**/node_modules/**`, `**/vendor/**`, `**/.git/**`, `**/venv/**`, `**/target/**`.
 
 Apply exclusions using the framework's ignore mechanism:
 ```bash
@@ -229,7 +229,7 @@ Return a focused JSON object with authoritative test metrics for quality gate de
 {
   "gate_status": "PASS",
   "task_id": "PROJ-123",
-  "working_dir": "./trees/PROJ-123-test",
+  "working_dir": ".claude/worktrees/PROJ-123-test",
   "summary": "147 passed, 0 failed, 2 skipped, 82.5% coverage, lint clean",
   "tests": {
     "passed": 147,

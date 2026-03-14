@@ -7,8 +7,8 @@ Before starting any security analysis, validate that all three required inputs a
 - If missing: exit with "ERROR: Need task identifier"
 
 ### 2. WORKING_DIR (Code Location)
-- Required format: ./trees/[task-id]-description (or project root if no worktree)
-- If missing: exit with "ERROR: Working directory required (e.g., ./trees/PROJ-123-security)"
+- Required format: .claude/worktrees/[task-id]-description (or project root if no worktree)
+- If missing: exit with "ERROR: Working directory required (e.g., .claude/worktrees/PROJ-123-security)"
 - The path must exist and contain the code to scan.
 - This agent does not create or manage worktrees -- it scans code in the provided directory.
 

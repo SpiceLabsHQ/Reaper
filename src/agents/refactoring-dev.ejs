@@ -89,16 +89,16 @@ Refactor in small, testable increments. After each change, run relevant tests to
   agentName: 'refactoring-dev',
   targetedTestType: 'refactored code',
   testExamples: `# ✅ CORRECT: Test only the files you refactored
-(cd "./trees/[WORKTREE_NAME]" && npm test -- path/to/refactored-file.test.js)
-(cd "./trees/[WORKTREE_NAME]" && npm test -- --testNamePattern="refactored component")
+(cd ".claude/worktrees/[WORKTREE_NAME]" && npm test -- path/to/refactored-file.test.js)
+(cd ".claude/worktrees/[WORKTREE_NAME]" && npm test -- --testNamePattern="refactored component")
 
 # ✅ CORRECT: Python - test only your refactored module
-(cd "./trees/[WORKTREE_NAME]" && pytest tests/test_refactored_module.py)
+(cd ".claude/worktrees/[WORKTREE_NAME]" && pytest tests/test_refactored_module.py)
 
 # ✅ CORRECT: PHP - test only your refactored class
-(cd "./trees/[WORKTREE_NAME]" && ./vendor/bin/phpunit tests/RefactoredClassTest.php)`,
-  wrongExamples: `(cd "./trees/[WORKTREE_NAME]" && npm test)  # DON'T DO THIS
-(cd "./trees/[WORKTREE_NAME]" && pytest)     # DON'T DO THIS`,
+(cd ".claude/worktrees/[WORKTREE_NAME]" && ./vendor/bin/phpunit tests/RefactoredClassTest.php)`,
+  wrongExamples: `(cd ".claude/worktrees/[WORKTREE_NAME]" && npm test)  # DON'T DO THIS
+(cd ".claude/worktrees/[WORKTREE_NAME]" && pytest)     # DON'T DO THIS`,
   agentResponsibilities: `- Refactor code to improve quality
 - Preserve existing functionality (no behavior changes)
 - Test YOUR refactored code to ensure no regressions
@@ -107,7 +107,7 @@ Refactor in small, testable increments. After each change, run relevant tests to
   cycleContent: `# Step 1: Write characterization test capturing current behavior (should PASS)
 # Step 2: Refactor the code (extract, simplify, restructure)
 # Step 3: Verify characterization test still passes
-(cd "./trees/[WORKTREE_NAME]" && npm test -- path/to/refactored-test.js)
+(cd ".claude/worktrees/[WORKTREE_NAME]" && npm test -- path/to/refactored-test.js)
 # Step 4: Add tests for any new classes/modules created by extraction
 # Step 5: Verify all your tests pass`
 }) %>
@@ -131,7 +131,7 @@ Return a minimal JSON object. The orchestrator verifies all claims via quality g
 ```json
 {
   "task_id": "PROJ-123",
-  "worktree_path": "./trees/PROJ-123-refactor",
+  "worktree_path": ".claude/worktrees/PROJ-123-refactor",
   "work_completed": "Extracted UserService into focused classes following SRP",
   "files_modified": ["src/user-service.js", "src/validators.js", "src/user-repository.js"],
   "unfinished": []

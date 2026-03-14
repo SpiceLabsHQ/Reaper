@@ -17,15 +17,15 @@ Usage: $(basename "$0") <worktree-path> [--json]
 Check detailed status of a specific worktree.
 
 Arguments:
-    worktree-path   Path to the worktree (e.g., ./trees/PROJ-123-auth)
+    worktree-path   Path to the worktree (e.g., ./.claude/worktrees/PROJ-123-auth)
 
 Options:
     --json          Output in JSON format
     --help          Show this help message
 
 Examples:
-    $(basename "$0") ./trees/PROJ-123-auth
-    $(basename "$0") ./trees/PROJ-123-auth --json
+    $(basename "$0") ./.claude/worktrees/PROJ-123-auth
+    $(basename "$0") ./.claude/worktrees/PROJ-123-auth --json
 
 Checks performed:
     • Worktree existence and validity

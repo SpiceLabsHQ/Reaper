@@ -174,7 +174,7 @@ When the orchestrator mentions these topics, this agent should be included in co
 {
   "gate_status": "PASS",
   "task_id": "PROJ-123",
-  "working_dir": "./trees/PROJ-123-docs",
+  "working_dir": ".claude/worktrees/PROJ-123-docs",
   "summary": "Generated API reference and architecture docs from verified code analysis",
   "blocking_issues": [],
   "generated_documentation": [
@@ -201,7 +201,7 @@ When the orchestrator mentions these topics, this agent should be included in co
 {
   "gate_status": "FAIL",
   "task_id": "PROJ-123",
-  "working_dir": "./trees/PROJ-123-docs",
+  "working_dir": ".claude/worktrees/PROJ-123-docs",
   "summary": "Could not generate API docs -- source code has no route definitions",
   "blocking_issues": [
     "No API route definitions found in src/ -- cannot generate endpoint documentation",

@@ -149,16 +149,16 @@ Apply these performance-specific testing patterns in addition to standard TDD:
   agentName: 'performance-engineer',
   targetedTestType: 'performance optimization',
   testExamples: `# ✅ CORRECT: Test only your optimization code
-(cd "./trees/[TASK_ID]-perf" && npm test -- path/to/optimized-query.test.js)
-(cd "./trees/[TASK_ID]-perf" && npm test -- --testNamePattern="user query optimization")
+(cd ".claude/worktrees/[TASK_ID]-perf" && npm test -- path/to/optimized-query.test.js)
+(cd ".claude/worktrees/[TASK_ID]-perf" && npm test -- --testNamePattern="user query optimization")
 
 # ✅ CORRECT: Python - test only your optimized module
-(cd "./trees/[TASK_ID]-perf" && pytest tests/test_optimized_query.py -v)
+(cd ".claude/worktrees/[TASK_ID]-perf" && pytest tests/test_optimized_query.py -v)
 
 # ✅ CORRECT: PHP - test only your optimized class
-(cd "./trees/[TASK_ID]-perf" && ./vendor/bin/phpunit tests/Performance/OptimizedQueryTest.php)`,
-  wrongExamples: `(cd "./trees/[TASK_ID]-perf" && npm test)  # DON'T DO THIS
-(cd "./trees/[TASK_ID]-perf" && pytest)     # DON'T DO THIS`,
+(cd ".claude/worktrees/[TASK_ID]-perf" && ./vendor/bin/phpunit tests/Performance/OptimizedQueryTest.php)`,
+  wrongExamples: `(cd ".claude/worktrees/[TASK_ID]-perf" && npm test)  # DON'T DO THIS
+(cd ".claude/worktrees/[TASK_ID]-perf" && pytest)     # DON'T DO THIS`,
   agentResponsibilities: `- Write baseline tests capturing current slow behavior (RED)
 - Implement targeted optimization for profiled bottleneck (GREEN)
 - Refactor for clarity without changing performance characteristics (BLUE)
@@ -167,15 +167,15 @@ Apply these performance-specific testing patterns in addition to standard TDD:
 - Add regression guards (query count assertions, complexity bounds)`,
   cycleTitle: 'Performance Optimization TDD Cycle',
   cycleContent: `# Phase 1: RED - Write tests capturing expected optimized behavior
-(cd "./trees/[TASK_ID]-perf" && npm test -- path/to/optimization.test.js)
+(cd ".claude/worktrees/[TASK_ID]-perf" && npm test -- path/to/optimization.test.js)
 # Tests should FAIL, proving optimization doesn't exist yet
 
 # Phase 2: GREEN - Implement the targeted optimization
-(cd "./trees/[TASK_ID]-perf" && npm test -- path/to/optimization.test.js)
+(cd ".claude/worktrees/[TASK_ID]-perf" && npm test -- path/to/optimization.test.js)
 # Tests should PASS, proving optimization works correctly
 
 # Phase 3: BLUE - Refactor for clarity, verify no regression
-(cd "./trees/[TASK_ID]-perf" && npm test -- path/to/optimization.test.js)
+(cd ".claude/worktrees/[TASK_ID]-perf" && npm test -- path/to/optimization.test.js)
 # Tests still PASS after cleanup`
 }) %>
 <%- include('partials/artifact-cleanup-coding') %>
@@ -189,7 +189,7 @@ Return a minimal JSON object. The orchestrator verifies all claims via quality g
 ```json
 {
   "task_id": "PROJ-123",
-  "worktree_path": "./trees/PROJ-123-perf",
+  "worktree_path": ".claude/worktrees/PROJ-123-perf",
   "work_completed": "Eliminated N+1 query in dashboard endpoint, reducing p95 from 3.2s to 180ms",
   "files_modified": ["src/services/user-query.js", "tests/performance/user-query.test.js"],
   "unfinished": []

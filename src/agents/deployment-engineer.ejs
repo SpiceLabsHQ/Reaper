@@ -111,31 +111,31 @@ Apply these deployment-specific testing patterns in addition to standard TDD:
   agentName: 'deployment-engineer',
   targetedTestType: 'deployment changes',
   testExamples: `# ✅ CORRECT: Test only your deployment code
-(cd "./trees/[TASK_ID]-deployment" && npm test -- path/to/deploy-pipeline.test.js)
-(cd "./trees/[TASK_ID]-deployment" && npm test -- --testNamePattern="deployment")
+(cd ".claude/worktrees/[TASK_ID]-deployment" && npm test -- path/to/deploy-pipeline.test.js)
+(cd ".claude/worktrees/[TASK_ID]-deployment" && npm test -- --testNamePattern="deployment")
 
 # ✅ CORRECT: Python - test only your deployment module
-(cd "./trees/[TASK_ID]-deployment" && pytest tests/deploy/test_pipeline.py)
+(cd ".claude/worktrees/[TASK_ID]-deployment" && pytest tests/deploy/test_pipeline.py)
 
 # ✅ CORRECT: Validate CI/CD workflow syntax
-(cd "./trees/[TASK_ID]-deployment" && npx action-validator .github/workflows/deploy.yml)`,
-  wrongExamples: `(cd "./trees/[TASK_ID]-deployment" && npm test)  # DON'T DO THIS
-(cd "./trees/[TASK_ID]-deployment" && pytest)     # DON'T DO THIS`,
+(cd ".claude/worktrees/[TASK_ID]-deployment" && npx action-validator .github/workflows/deploy.yml)`,
+  wrongExamples: `(cd ".claude/worktrees/[TASK_ID]-deployment" && npm test)  # DON'T DO THIS
+(cd ".claude/worktrees/[TASK_ID]-deployment" && pytest)     # DON'T DO THIS`,
   agentResponsibilities: `- Write tests for pipeline logic and deployment scripts (RED)
 - Implement CI/CD pipelines and deployment automation (GREEN)
 - Refactor for reliability, security, and maintainability (BLUE)
 - Test YOUR deployment code in isolation`,
   cycleTitle: 'Deployment TDD Cycle',
   cycleContent: `# Phase 1: RED - Write tests for deployment behavior
-(cd "./trees/[TASK_ID]-deployment" && npm test -- path/to/deploy.test.js)
+(cd ".claude/worktrees/[TASK_ID]-deployment" && npm test -- path/to/deploy.test.js)
 # Tests should FAIL, proving deployment logic doesn't exist yet
 
 # Phase 2: GREEN - Implement deployment pipeline and scripts
-(cd "./trees/[TASK_ID]-deployment" && npm test -- path/to/deploy.test.js)
+(cd ".claude/worktrees/[TASK_ID]-deployment" && npm test -- path/to/deploy.test.js)
 # Tests should PASS, proving deployment works correctly
 
 # Phase 3: BLUE - Refactor for resilience and security
-(cd "./trees/[TASK_ID]-deployment" && npm test -- path/to/deploy.test.js)
+(cd ".claude/worktrees/[TASK_ID]-deployment" && npm test -- path/to/deploy.test.js)
 # Tests still PASS after adding rollback logic, secrets handling, etc.`
 }) %>
 <%- include('partials/artifact-cleanup-coding') %>
@@ -149,7 +149,7 @@ Return a minimal JSON object. The orchestrator verifies all claims via quality g
 ```json
 {
   "task_id": "PROJ-123",
-  "worktree_path": "./trees/PROJ-123-deployment",
+  "worktree_path": ".claude/worktrees/PROJ-123-deployment",
   "work_completed": "Implemented GitHub Actions CI/CD with blue-green deployment to production",
   "files_modified": [".github/workflows/deploy.yml", "scripts/rollback.sh", "tests/deploy/pipeline.test.js"],
   "unfinished": []

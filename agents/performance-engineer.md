@@ -34,9 +34,9 @@ Before starting work, validate these three requirements:
 - ❌ "DESCRIPTION: improve performance" (too vague)
 
 ### 2. WORKTREE_PATH
-- **Required Format**: ./trees/[task-id]-description
-- **If Missing**: EXIT with "ERROR: Worktree path required (e.g., ./trees/PROJ-123-perf)"
-- **Validation**: Path must exist and be under ./trees/ directory
+- **Required Format**: .claude/worktrees/[task-id]-description
+- **If Missing**: EXIT with "ERROR: Worktree path required (e.g., .claude/worktrees/PROJ-123-perf)"
+- **Validation**: Path must exist and be under .claude/worktrees/ directory
 - **Check**: Path must be accessible and properly isolated
 
 ### 3. DESCRIPTION (Detailed Performance Requirements)
@@ -261,32 +261,32 @@ performance-engineer responsibilities:
 **Test YOUR performance optimization only—not the full suite:**
 ```bash
 # ✅ CORRECT: Test only your optimization code
-(cd &#34;./trees/[TASK_ID]-perf&#34; &amp;&amp; npm test -- path/to/optimized-query.test.js)
-(cd &#34;./trees/[TASK_ID]-perf&#34; &amp;&amp; npm test -- --testNamePattern=&#34;user query optimization&#34;)
+(cd &#34;.claude/worktrees/[TASK_ID]-perf&#34; &amp;&amp; npm test -- path/to/optimized-query.test.js)
+(cd &#34;.claude/worktrees/[TASK_ID]-perf&#34; &amp;&amp; npm test -- --testNamePattern=&#34;user query optimization&#34;)
 
 # ✅ CORRECT: Python - test only your optimized module
-(cd &#34;./trees/[TASK_ID]-perf&#34; &amp;&amp; pytest tests/test_optimized_query.py -v)
+(cd &#34;.claude/worktrees/[TASK_ID]-perf&#34; &amp;&amp; pytest tests/test_optimized_query.py -v)
 
 # ✅ CORRECT: PHP - test only your optimized class
-(cd &#34;./trees/[TASK_ID]-perf&#34; &amp;&amp; ./vendor/bin/phpunit tests/Performance/OptimizedQueryTest.php)
+(cd &#34;.claude/worktrees/[TASK_ID]-perf&#34; &amp;&amp; ./vendor/bin/phpunit tests/Performance/OptimizedQueryTest.php)
 ```
 **Avoid full suite runs:**
 ```bash
-(cd &#34;./trees/[TASK_ID]-perf&#34; &amp;&amp; npm test)  # DON&#39;T DO THIS
-(cd &#34;./trees/[TASK_ID]-perf&#34; &amp;&amp; pytest)     # DON&#39;T DO THIS
+(cd &#34;.claude/worktrees/[TASK_ID]-perf&#34; &amp;&amp; npm test)  # DON&#39;T DO THIS
+(cd &#34;.claude/worktrees/[TASK_ID]-perf&#34; &amp;&amp; pytest)     # DON&#39;T DO THIS
 ```
 ### Performance Optimization TDD Cycle
 ```bash
 # Phase 1: RED - Write tests capturing expected optimized behavior
-(cd &#34;./trees/[TASK_ID]-perf&#34; &amp;&amp; npm test -- path/to/optimization.test.js)
+(cd &#34;.claude/worktrees/[TASK_ID]-perf&#34; &amp;&amp; npm test -- path/to/optimization.test.js)
 # Tests should FAIL, proving optimization doesn&#39;t exist yet
 
 # Phase 2: GREEN - Implement the targeted optimization
-(cd &#34;./trees/[TASK_ID]-perf&#34; &amp;&amp; npm test -- path/to/optimization.test.js)
+(cd &#34;.claude/worktrees/[TASK_ID]-perf&#34; &amp;&amp; npm test -- path/to/optimization.test.js)
 # Tests should PASS, proving optimization works correctly
 
 # Phase 3: BLUE - Refactor for clarity, verify no regression
-(cd &#34;./trees/[TASK_ID]-perf&#34; &amp;&amp; npm test -- path/to/optimization.test.js)
+(cd &#34;.claude/worktrees/[TASK_ID]-perf&#34; &amp;&amp; npm test -- path/to/optimization.test.js)
 # Tests still PASS after cleanup
 ```
 **The test-runner agent handles full suite validation**—focus on your changes only.
@@ -456,7 +456,7 @@ Return a minimal JSON object. The orchestrator verifies all claims via quality g
 ```json
 {
   "task_id": "PROJ-123",
-  "worktree_path": "./trees/PROJ-123-perf",
+  "worktree_path": ".claude/worktrees/PROJ-123-perf",
   "work_completed": "Eliminated N+1 query in dashboard endpoint, reducing p95 from 3.2s to 180ms",
   "files_modified": ["src/services/user-query.js", "tests/performance/user-query.test.js"],
   "unfinished": []

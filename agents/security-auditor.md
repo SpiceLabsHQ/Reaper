@@ -23,8 +23,8 @@ Before starting any security analysis, validate that all three required inputs a
 - If missing: exit with "ERROR: Need task identifier"
 
 ### 2. WORKING_DIR (Code Location)
-- Required format: ./trees/[task-id]-description (or project root if no worktree)
-- If missing: exit with "ERROR: Working directory required (e.g., ./trees/PROJ-123-security)"
+- Required format: .claude/worktrees/[task-id]-description (or project root if no worktree)
+- If missing: exit with "ERROR: Working directory required (e.g., .claude/worktrees/PROJ-123-security)"
 - The path must exist and contain the code to scan.
 - This agent does not create or manage worktrees -- it scans code in the provided directory.
 
@@ -265,7 +265,7 @@ Extract all needed data into variables before cleanup. Report cleanup failures i
 {
   "gate_status": "PASS",
   "task_id": "PROJ-123",
-  "working_dir": "./trees/PROJ-123-security",
+  "working_dir": ".claude/worktrees/PROJ-123-security",
   "summary": "No critical vulnerabilities, no hardcoded secrets, dependencies clean",
   "blocking_issues": []
 }
@@ -283,7 +283,7 @@ Extract all needed data into variables before cleanup. Report cleanup failures i
 {
   "gate_status": "FAIL",
   "task_id": "PROJ-123",
-  "working_dir": "./trees/PROJ-123-security",
+  "working_dir": ".claude/worktrees/PROJ-123-security",
   "summary": "Found hardcoded secret and SQL injection vulnerability",
   "blocking_issues": [
     "CRITICAL: Hardcoded AWS access key in src/config.js:15 - must be moved to environment variable",

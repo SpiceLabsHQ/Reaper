@@ -36,9 +36,9 @@ Before starting work, validate these three requirements:
 - ❌ "DESCRIPTION: refactor code" (too vague)
 
 ### 2. WORKTREE_PATH
-- **Required Format**: ./trees/[task-id]-description
-- **If Missing**: EXIT with "ERROR: Worktree path required (e.g., ./trees/PROJ-123-refactor)"
-- **Validation**: Path must exist and be under ./trees/ directory
+- **Required Format**: .claude/worktrees/[task-id]-description
+- **If Missing**: EXIT with "ERROR: Worktree path required (e.g., .claude/worktrees/PROJ-123-refactor)"
+- **Validation**: Path must exist and be under .claude/worktrees/ directory
 - **Check**: Path must be accessible and properly isolated
 
 ### 3. DESCRIPTION (Detailed Refactoring Requirements)
@@ -199,26 +199,26 @@ refactoring-dev responsibilities:
 **Test YOUR refactored code only—not the full suite:**
 ```bash
 # ✅ CORRECT: Test only the files you refactored
-(cd &#34;./trees/[WORKTREE_NAME]&#34; &amp;&amp; npm test -- path/to/refactored-file.test.js)
-(cd &#34;./trees/[WORKTREE_NAME]&#34; &amp;&amp; npm test -- --testNamePattern=&#34;refactored component&#34;)
+(cd &#34;.claude/worktrees/[WORKTREE_NAME]&#34; &amp;&amp; npm test -- path/to/refactored-file.test.js)
+(cd &#34;.claude/worktrees/[WORKTREE_NAME]&#34; &amp;&amp; npm test -- --testNamePattern=&#34;refactored component&#34;)
 
 # ✅ CORRECT: Python - test only your refactored module
-(cd &#34;./trees/[WORKTREE_NAME]&#34; &amp;&amp; pytest tests/test_refactored_module.py)
+(cd &#34;.claude/worktrees/[WORKTREE_NAME]&#34; &amp;&amp; pytest tests/test_refactored_module.py)
 
 # ✅ CORRECT: PHP - test only your refactored class
-(cd &#34;./trees/[WORKTREE_NAME]&#34; &amp;&amp; ./vendor/bin/phpunit tests/RefactoredClassTest.php)
+(cd &#34;.claude/worktrees/[WORKTREE_NAME]&#34; &amp;&amp; ./vendor/bin/phpunit tests/RefactoredClassTest.php)
 ```
 **Avoid full suite runs:**
 ```bash
-(cd &#34;./trees/[WORKTREE_NAME]&#34; &amp;&amp; npm test)  # DON&#39;T DO THIS
-(cd &#34;./trees/[WORKTREE_NAME]&#34; &amp;&amp; pytest)     # DON&#39;T DO THIS
+(cd &#34;.claude/worktrees/[WORKTREE_NAME]&#34; &amp;&amp; npm test)  # DON&#39;T DO THIS
+(cd &#34;.claude/worktrees/[WORKTREE_NAME]&#34; &amp;&amp; pytest)     # DON&#39;T DO THIS
 ```
 ### Incremental Refactoring Workflow
 ```bash
 # Step 1: Write characterization test capturing current behavior (should PASS)
 # Step 2: Refactor the code (extract, simplify, restructure)
 # Step 3: Verify characterization test still passes
-(cd &#34;./trees/[WORKTREE_NAME]&#34; &amp;&amp; npm test -- path/to/refactored-test.js)
+(cd &#34;.claude/worktrees/[WORKTREE_NAME]&#34; &amp;&amp; npm test -- path/to/refactored-test.js)
 # Step 4: Add tests for any new classes/modules created by extraction
 # Step 5: Verify all your tests pass
 ```
@@ -401,7 +401,7 @@ Return a minimal JSON object. The orchestrator verifies all claims via quality g
 ```json
 {
   "task_id": "PROJ-123",
-  "worktree_path": "./trees/PROJ-123-refactor",
+  "worktree_path": ".claude/worktrees/PROJ-123-refactor",
   "work_completed": "Extracted UserService into focused classes following SRP",
   "files_modified": ["src/user-service.js", "src/validators.js", "src/user-repository.js"],
   "unfinished": []

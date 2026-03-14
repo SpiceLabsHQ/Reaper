@@ -25,9 +25,9 @@ Before starting work, validate these three requirements:
 - ❌ "<%= typeof invalidExample !== 'undefined' ? invalidExample : 'DESCRIPTION: fix bug' %>" (too vague)
 
 ### 2. WORKTREE_PATH
-- **Required Format**: ./trees/[task-id]-description
-- **If Missing**: EXIT with "ERROR: Worktree path required (e.g., ./trees/PROJ-123-<%= typeof worktreeSuffix !== 'undefined' ? worktreeSuffix : 'fix' %>)"
-- **Validation**: Path must exist and be under ./trees/ directory
+- **Required Format**: .claude/worktrees/[task-id]-description
+- **If Missing**: EXIT with "ERROR: Worktree path required (e.g., .claude/worktrees/PROJ-123-<%= typeof worktreeSuffix !== 'undefined' ? worktreeSuffix : 'fix' %>)"
+- **Validation**: Path must exist and be under .claude/worktrees/ directory
 - **Check**: Path must be accessible and properly isolated
 
 ### 3. DESCRIPTION (Detailed <%= typeof sectionTitle !== 'undefined' ? sectionTitle : 'Bug Information' %>)

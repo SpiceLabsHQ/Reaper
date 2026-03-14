@@ -57,7 +57,7 @@ Use specialized agents for all development work. Subagents: skip this section.
 
 ## Safety Rules
 
-- Always work in `./trees/` worktrees — never work directly in the root directory
+- Always work in `.claude/worktrees/` worktrees — never work directly in the root directory
 - Always request explicit user approval before merging to `main`
 - Always let hooks run to completion — never skip them (`--no-verify`, `HUSKY=0`)
 - Always use real task IDs from `bd list` and report actual test results — never fabricate either
@@ -103,7 +103,7 @@ Use `bd list` to find issue IDs, or `bd create` to create one.
 ### Testing & Quality
 
 - 70%+ coverage required (untestable plumbing excluded via `node:coverage disable`)
-- All tests run in worktrees (`./trees/`), never in root
+- All tests run in worktrees (`.claude/worktrees/`), never in root
 - Run linting before every commit (enforced by husky)
 - Quality gates: reaper:test-runner → SME reviewer (via code-review skill) + reaper:security-auditor
 - Prompt quality gate: always run `reaper:ai-prompt-engineer` after modifying agents, skills, commands, hooks, or partials (see Workflow for Editing Agents/Skills step 4)
@@ -121,21 +121,21 @@ Use `bd list` to find issue IDs, or `bd create` to create one.
 
 ### Branch-Manager Constraints (enforced by contract tests)
 
-- Merges use temp worktree (`./trees/[TASK_ID]-integration`), never `git checkout` in root (ADR-0014)
+- Merges use temp worktree (`.claude/worktrees/[TASK_ID]-integration`), never `git checkout` in root (ADR-0014)
 - Stop-and-report on unexpected state; never self-remediate or bypass hooks (Protocols #7-#11)
 - Takeoff reuses branch-manager sessions via `Task --resume`; do not redeploy fresh per commit
 
 ### Worktree Isolation
 
-All work in `./trees/` worktrees, never root. Prefer `reaper:branch-manager` for setup/teardown.
+All work in `.claude/worktrees/` worktrees, never root. Prefer `reaper:branch-manager` for setup/teardown.
 
 Manual fallback:
 
 ```bash
-git worktree add ./trees/TASK-ID-desc -b feature/TASK-ID-desc develop
-git -C ./trees/TASK-ID-desc status
-(cd ./trees/TASK-ID-desc && npm test)
-git worktree remove ./trees/TASK-ID-desc
+git worktree add .claude/worktrees/TASK-ID-desc -b feature/TASK-ID-desc develop
+git -C .claude/worktrees/TASK-ID-desc status
+(cd .claude/worktrees/TASK-ID-desc && npm test)
+git worktree remove .claude/worktrees/TASK-ID-desc
 ```
 
 ## Project Structure
@@ -278,10 +278,10 @@ Task --subagent_type reaper:feature-developer \
 
 # Worktree setup
 Task --subagent_type reaper:branch-manager \
-  --prompt "TASK: reaper-a3f, WORKTREE: ./trees/reaper-a3f-oauth, DESCRIPTION: Create worktree"
+  --prompt "TASK: reaper-a3f, WORKTREE: .claude/worktrees/reaper-a3f-oauth, DESCRIPTION: Create worktree"
 
 # Quality (mandatory before merge)
 Task --subagent_type reaper:test-runner \
-  --prompt "TASK: reaper-a3f, WORKTREE: ./trees/reaper-a3f-oauth, DESCRIPTION: Run full suite"
+  --prompt "TASK: reaper-a3f, WORKTREE: .claude/worktrees/reaper-a3f-oauth, DESCRIPTION: Run full suite"
 # Gate 2 SME dispatch (with skill injection) is automated by takeoff — do not construct manually.
 ```

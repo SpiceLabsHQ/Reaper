@@ -3790,14 +3790,14 @@ describe('Contract: branch-manager does not contain stale Dual Authorization con
 //
 // The large_multi_worktree merge step must NEVER use `git checkout` in the root
 // context. All merges must happen inside a temporary integration worktree so
-// that conflicts surface in ./trees/, not in the root workspace.
+// that conflicts surface in .claude/worktrees/, not in the root workspace.
 //
 // Pattern enforced:
 //   git branch integration-temp feature/[TASK_ID]-review
-//   git worktree add ./trees/[TASK_ID]-integration integration-temp
-//   git -C ./trees/[TASK_ID]-integration merge feature/[TASK_ID]-[COMPONENT] --no-ff
+//   git worktree add .claude/worktrees/[TASK_ID]-integration integration-temp
+//   git -C .claude/worktrees/[TASK_ID]-integration merge feature/[TASK_ID]-[COMPONENT] --no-ff
 //   git branch -f feature/[TASK_ID]-review integration-temp
-//   git worktree remove ./trees/[TASK_ID]-integration && git branch -d integration-temp
+//   git worktree remove .claude/worktrees/[TASK_ID]-integration && git branch -d integration-temp
 // ---------------------------------------------------------------------------
 
 describe('Contract: branch-manager large_multi_worktree merge uses isolated integration worktree', () => {
@@ -3825,7 +3825,7 @@ describe('Contract: branch-manager large_multi_worktree merge uses isolated inte
     );
   });
 
-  it(`${relative} large_multi_worktree Workflow does not use bare 'git checkout' outside ./trees/ context`, () => {
+  it(`${relative} large_multi_worktree Workflow does not use bare 'git checkout' outside .claude/worktrees/ context`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const section = getLargeMultiSection(content);
@@ -3874,7 +3874,7 @@ describe('Contract: branch-manager large_multi_worktree merge uses isolated inte
     );
   });
 
-  it(`${relative} large_multi_worktree Workflow runs merge via 'git -C ./trees/' (not in root)`, () => {
+  it(`${relative} large_multi_worktree Workflow runs merge via 'git -C .claude/worktrees/' (not in root)`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const section = getLargeMultiSection(content);
@@ -3883,8 +3883,8 @@ describe('Contract: branch-manager large_multi_worktree merge uses isolated inte
       `${relative} must have a large_multi_worktree Workflow section`
     );
     assert.ok(
-      /git -C \.\/trees\/.*merge/i.test(section),
-      `${relative} large_multi_worktree Workflow must run merge inside a worktree via 'git -C ./trees/...'`
+      /git -C \.claude\/worktrees\/.*merge/i.test(section),
+      `${relative} large_multi_worktree Workflow must run merge inside a worktree via 'git -C .claude/worktrees/...'`
     );
   });
 
@@ -5439,7 +5439,7 @@ describe('Contract: branch-manager merge conflict stop-and-report protocol', () 
         content
       ),
       `${relative} large_multi_worktree workflow must state that merge conflicts surface ` +
-        `inside the integration worktree (./trees/), not in root`
+        `inside the integration worktree (.claude/worktrees/), not in root`
     );
   });
 
@@ -5661,10 +5661,12 @@ describe('Contract: branch-manager rebase-first commit strategy (ADR-0020)', () 
       section.length > 0,
       `${relative} must have a large_multi_worktree Workflow section`
     );
-    // Rebase must be performed via git -C ./trees/ (not in root)
+    // Rebase must be performed via git -C .claude/worktrees/ (not in root)
     assert.ok(
-      /git -C \.\/trees\/.*rebase|git -C.*integration.*rebase/i.test(section),
-      `${relative} large_multi_worktree Workflow rebase must run inside the integration worktree via "git -C ./trees/..." (ADR-0020 + ADR-0014)`
+      /git -C \.claude\/worktrees\/.*rebase|git -C.*integration.*rebase/i.test(
+        section
+      ),
+      `${relative} large_multi_worktree Workflow rebase must run inside the integration worktree via "git -C .claude/worktrees/..." (ADR-0020 + ADR-0014)`
     );
   });
 });
@@ -5828,6 +5830,575 @@ describe('Contract: takeoff tree-depth inspection and TREE_FLAG (ADR-0020)', () 
     assert.ok(
       /TREE_FLAG/i.test(responseSection),
       `${relative} Response Handling merge step must pass TREE_FLAG to branch-manager (ADR-0020 — flag required for all branch-manager deployments)`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: two-layer worktree architecture — takeoff uses isolation: worktree
+// for coding agents (ADR-0022)
+// ---------------------------------------------------------------------------
+
+describe('Contract: takeoff deploys coding agents with isolation: worktree', () => {
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
+
+  it(`${relative} Per-Unit Cycle deploys coding agents with isolation: "worktree"`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const perUnitSection = extractFullPerUnitCycle(content);
+    assert.ok(
+      perUnitSection.length > 0,
+      `${relative} must contain a Per-Unit Cycle section`
+    );
+    assert.ok(
+      /isolation.*worktree/i.test(perUnitSection),
+      `Per-Unit Cycle must deploy coding agents with isolation: "worktree" for ephemeral agent worktrees (ADR-0022)`
+    );
+  });
+
+  it(`${relative} describes the two-layer worktree model (session + agent layers)`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /session worktree/i.test(content) && /agent worktree/i.test(content),
+      `${relative} must describe both session worktrees and agent worktrees (ADR-0022 two-layer model)`
+    );
+  });
+
+  it(`${relative} describes session worktree creation before work units`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // Session worktree creation must appear before the Per-Unit Cycle
+    const sessionIdx = content.search(/session worktree/i);
+    const perUnitIdx = content.indexOf('### Per-Unit Cycle');
+    assert.ok(
+      sessionIdx !== -1,
+      `${relative} must reference session worktree creation`
+    );
+    assert.ok(
+      perUnitIdx !== -1,
+      `${relative} must contain a Per-Unit Cycle section`
+    );
+    assert.ok(
+      sessionIdx < perUnitIdx,
+      `${relative} session worktree creation must appear before Per-Unit Cycle`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: takeoff coding agent prompts include "do not commit" instruction
+// ---------------------------------------------------------------------------
+
+describe('Contract: takeoff coding agent prompts include do-not-commit instruction', () => {
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
+
+  it(`${relative} instructs coding agents not to commit`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const perUnitSection = extractFullPerUnitCycle(content);
+    assert.ok(
+      perUnitSection.length > 0,
+      `${relative} must contain a Per-Unit Cycle section`
+    );
+    // The Per-Unit Cycle must instruct agents that they must not commit
+    assert.ok(
+      /orchestrator owns all commits|do not commit|never commit/i.test(
+        perUnitSection
+      ),
+      `Per-Unit Cycle must instruct coding agents not to commit — orchestrator owns all commits (ADR-0022)`
+    );
+  });
+
+  it(`${relative} instructs coding agents to return worktreePath`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const perUnitSection = extractFullPerUnitCycle(content);
+    assert.ok(
+      perUnitSection.length > 0,
+      `${relative} must contain a Per-Unit Cycle section`
+    );
+    assert.ok(
+      /worktreePath/i.test(perUnitSection),
+      `Per-Unit Cycle must instruct coding agents to return their worktreePath for gate and commit operations (ADR-0022)`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: takeoff coding agent prompts include vendor symlink instruction
+// ---------------------------------------------------------------------------
+
+describe('Contract: takeoff coding agent prompts include vendor symlink instruction', () => {
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
+
+  it(`${relative} Per-Unit Cycle includes vendor symlink instruction`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const perUnitSection = extractFullPerUnitCycle(content);
+    assert.ok(
+      perUnitSection.length > 0,
+      `${relative} must contain a Per-Unit Cycle section`
+    );
+    assert.ok(
+      /symlink/i.test(perUnitSection) &&
+        /vendor|node_modules|dependencies/i.test(perUnitSection),
+      `Per-Unit Cycle must include vendor symlink instruction for agent worktrees (ADR-0022)`
+    );
+  });
+
+  it(`${relative} vendor symlink instruction references the session worktree path`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const perUnitSection = extractFullPerUnitCycle(content);
+    assert.ok(
+      perUnitSection.length > 0,
+      `${relative} must contain a Per-Unit Cycle section`
+    );
+    // The symlink instruction must reference WORKTREE_PATH as the source
+    assert.ok(
+      /WORKTREE_PATH/i.test(perUnitSection) && /symlink/i.test(perUnitSection),
+      `Per-Unit Cycle vendor symlink instruction must reference WORKTREE_PATH (session worktree) as the symlink source`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: takeoff test-runner deploys directly in agent worktree (no isolation)
+// ---------------------------------------------------------------------------
+
+describe('Contract: takeoff test-runner deploys in agent worktree without isolation', () => {
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
+
+  it(`${relative} test-runner Gate 1 deploys in agent worktree (worktreePath)`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const perUnitSection = extractFullPerUnitCycle(content);
+    assert.ok(
+      perUnitSection.length > 0,
+      `${relative} must contain a Per-Unit Cycle section`
+    );
+    assert.ok(
+      /test-runner.*worktreePath|worktreePath.*test-runner/i.test(
+        perUnitSection
+      ) ||
+        (/test-runner/i.test(perUnitSection) &&
+          /agent worktree/i.test(perUnitSection)),
+      `Per-Unit Cycle test-runner must deploy in the agent worktree (worktreePath) directly (ADR-0022)`
+    );
+  });
+
+  it(`${relative} code reviewers deploy with isolation: worktree`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const perUnitSection = extractFullPerUnitCycle(content);
+    assert.ok(
+      perUnitSection.length > 0,
+      `${relative} must contain a Per-Unit Cycle section`
+    );
+    // Code reviewers and security-auditor should deploy with isolation: worktree
+    assert.ok(
+      /review.*isolation.*worktree|isolation.*worktree.*review|security.*isolation.*worktree/i.test(
+        perUnitSection
+      ) || /Gate 2.*isolation.*worktree/i.test(perUnitSection),
+      `Per-Unit Cycle code reviewers must deploy with isolation: "worktree" for ephemeral read-only review (ADR-0022)`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: branch-manager two-layer worktree model and agent worktree operations
+// ---------------------------------------------------------------------------
+
+describe('Contract: branch-manager two-layer worktree model (ADR-0022)', () => {
+  const filePath = agentFilePath('branch-manager');
+  const relative = 'agents/branch-manager.md';
+
+  it(`${relative} contains a Two-Layer Worktree Model section`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /Two-Layer Worktree Model/i.test(content),
+      `${relative} must contain a "Two-Layer Worktree Model" section describing session and agent worktree layers (ADR-0022)`
+    );
+  });
+
+  it(`${relative} describes session worktrees at .claude/worktrees/ path`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('.claude/worktrees/') &&
+        /session worktree/i.test(content),
+      `${relative} must describe session worktrees at .claude/worktrees/ path (ADR-0022)`
+    );
+  });
+
+  it(`${relative} states coding agents never commit (orchestrator-owned commits)`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /coding agents never commit|agents never commit|orchestrator-owned commits/i.test(
+        content
+      ),
+      `${relative} must state that coding agents never commit — orchestrator owns all commits (ADR-0022)`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: branch-manager agent worktree operations (commit-in-agent, ff-only merge, cleanup)
+// ---------------------------------------------------------------------------
+
+describe('Contract: branch-manager agent worktree operations (ADR-0022)', () => {
+  const filePath = agentFilePath('branch-manager');
+  const relative = 'agents/branch-manager.md';
+
+  it(`${relative} describes commit-in-agent-worktree operation`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /commit.*agent.*worktree|agent worktree.*commit|commit_agent_worktree/i.test(
+        content
+      ),
+      `${relative} must describe committing in an agent worktree (ADR-0022 commit-in-agent operation)`
+    );
+  });
+
+  it(`${relative} describes ff-only merge from agent branch to session branch`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /ff-only.*agent|ff-only.*session|merge --ff-only.*agent/i.test(content) ||
+        /ff_merge_agent_to_session/i.test(content),
+      `${relative} must describe fast-forward (--ff-only) merge from agent branch to session branch (ADR-0022)`
+    );
+  });
+
+  it(`${relative} describes cleanup of agent worktree after merge`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /clean.*up.*agent.*worktree|agent.*worktree.*cleanup|cleanup_agent_worktree|remove.*agent.*worktree/i.test(
+        content
+      ),
+      `${relative} must describe cleaning up the agent worktree after successful merge (ADR-0022)`
+    );
+  });
+
+  it(`${relative} JSON response schema includes agent worktree operations`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // The operations enum must include agent worktree operations
+    assert.ok(
+      content.includes('commit_agent_worktree') &&
+        content.includes('ff_merge_agent_to_session') &&
+        content.includes('cleanup_agent_worktree'),
+      `${relative} JSON response schema must include commit_agent_worktree, ff_merge_agent_to_session, and cleanup_agent_worktree operations (ADR-0022)`
+    );
+  });
+
+  it(`${relative} medium_single_branch Workflow describes agent worktree commit-merge-cleanup cycle`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const s2Start = content.indexOf('medium_single_branch Workflow');
+    assert.ok(
+      s2Start !== -1,
+      `${relative} must contain medium_single_branch Workflow`
+    );
+    const s3Start = content.indexOf('large_multi_worktree Workflow');
+    const section =
+      s3Start !== -1
+        ? content.slice(s2Start, s3Start)
+        : content.slice(s2Start, s2Start + 3000);
+    assert.ok(
+      /ff-only|--ff-only/i.test(section) && /agent/i.test(section),
+      `${relative} medium_single_branch Workflow must describe the agent worktree commit-merge-cleanup cycle with ff-only merge (ADR-0022)`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: takeoff Per-Unit Cycle branch-manager step includes ff-only merge
+// and agent worktree cleanup (ADR-0022)
+// ---------------------------------------------------------------------------
+
+describe('Contract: takeoff Per-Unit Cycle branch-manager handles commit-merge-cleanup (ADR-0022)', () => {
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
+
+  it(`${relative} Per-Unit Cycle branch-manager step includes ff-only merge to session branch`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const perUnitSection = extractFullPerUnitCycle(content);
+    assert.ok(
+      perUnitSection.length > 0,
+      `${relative} must contain a Per-Unit Cycle section`
+    );
+    assert.ok(
+      /ff-only|--ff-only/i.test(perUnitSection),
+      `Per-Unit Cycle branch-manager step must include fast-forward merge (--ff-only) to session branch (ADR-0022)`
+    );
+  });
+
+  it(`${relative} Per-Unit Cycle branch-manager step includes agent worktree cleanup`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const perUnitSection = extractFullPerUnitCycle(content);
+    assert.ok(
+      perUnitSection.length > 0,
+      `${relative} must contain a Per-Unit Cycle section`
+    );
+    assert.ok(
+      /clean.*up.*agent|agent.*worktree.*clean|cleanup/i.test(perUnitSection),
+      `Per-Unit Cycle branch-manager step must include agent worktree cleanup after merge (ADR-0022)`
+    );
+  });
+
+  it(`${relative} strategy notes describe session worktree with dependency installation`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      /session worktree.*depend|depend.*install/i.test(content),
+      `${relative} must describe session worktree with dependency installation (ADR-0022 — install once, symlink in agents)`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: coding agents prohibit positive git commit/add/push instructions
+//
+// The architecture's core safety property: coding agents never commit. Each
+// agent that includes the git-prohibitions partial must mention git commit,
+// git add, and git push ONLY in prohibition context (e.g., "NEVER run",
+// "do NOT", "must not"). No positive/instructional usage is allowed.
+// ---------------------------------------------------------------------------
+
+describe('Contract: coding agents prohibit positive git commit/add/push instructions', () => {
+  // All agents that include the git-prohibitions partial
+  const agentsWithGitProhibitions = [
+    'bug-fixer',
+    'feature-developer',
+    'refactoring-dev',
+    'integration-engineer',
+    'deployment-engineer',
+    'performance-engineer',
+    'incident-responder',
+  ];
+
+  const prohibitionContext =
+    /do not|don't|never|prohibit|must not|should not|forbidden|not authorized|not allowed|❌/i;
+
+  const gitCommands = [
+    { pattern: /git commit/gi, label: 'git commit' },
+    { pattern: /git add/gi, label: 'git add' },
+    { pattern: /git push/gi, label: 'git push' },
+  ];
+
+  for (const agentName of agentsWithGitProhibitions) {
+    const filePath = agentFilePath(agentName);
+    const relative = `agents/${agentName}.md`;
+
+    for (const { pattern, label } of gitCommands) {
+      it(`${relative} uses "${label}" only in prohibition context`, () => {
+        assert.ok(fs.existsSync(filePath), `${relative} not found`);
+        const content = fs.readFileSync(filePath, 'utf8');
+        const prose = stripCodeBlocks(content);
+        const lines = prose.split('\n').filter((line) => pattern.test(line));
+
+        // Filter out lines that are in a prohibition context
+        const positiveUsages = lines.filter(
+          (line) => !prohibitionContext.test(line)
+        );
+
+        assert.strictEqual(
+          positiveUsages.length,
+          0,
+          `${relative} has positive (non-prohibited) "${label}" instructions — ` +
+            `found: ${positiveUsages.map((l) => l.trim()).join('; ')}`
+        );
+      });
+    }
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Contract: branch-manager JSON response schema operation names are scoped
+// to the JSON Response Format section (not loose full-file includes)
+// ---------------------------------------------------------------------------
+
+describe('Contract: branch-manager operation names appear in JSON Response Format section', () => {
+  const filePath = agentFilePath('branch-manager');
+  const relative = 'agents/branch-manager.md';
+
+  /**
+   * Extracts the JSON Response Format section from branch-manager content.
+   * Starts at "## JSON Response Format" and ends at the next ## heading.
+   * @param {string} content - Full markdown content
+   * @returns {string} The JSON Response Format section text
+   */
+  function getJsonResponseSection(content) {
+    const startMarker = '## JSON Response Format';
+    const startIndex = content.indexOf(startMarker);
+    if (startIndex === -1) {
+      return '';
+    }
+    const rest = content.slice(startIndex + startMarker.length);
+    const nextSectionMatch = rest.match(/\n## [^#]/);
+    if (nextSectionMatch) {
+      return content.slice(
+        startIndex,
+        startIndex + startMarker.length + nextSectionMatch.index
+      );
+    }
+    return content.slice(startIndex);
+  }
+
+  it(`${relative} has a JSON Response Format section`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getJsonResponseSection(content);
+    assert.ok(
+      section.length > 0,
+      `${relative} must contain a "## JSON Response Format" section`
+    );
+  });
+
+  it(`${relative} JSON Response Format section contains commit_agent_worktree operation`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getJsonResponseSection(content);
+    assert.ok(
+      section.includes('commit_agent_worktree'),
+      `${relative} JSON Response Format section must include commit_agent_worktree operation (ADR-0022)`
+    );
+  });
+
+  it(`${relative} JSON Response Format section contains ff_merge_agent_to_session operation`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getJsonResponseSection(content);
+    assert.ok(
+      section.includes('ff_merge_agent_to_session'),
+      `${relative} JSON Response Format section must include ff_merge_agent_to_session operation (ADR-0022)`
+    );
+  });
+
+  it(`${relative} JSON Response Format section contains cleanup_agent_worktree operation`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getJsonResponseSection(content);
+    assert.ok(
+      section.includes('cleanup_agent_worktree'),
+      `${relative} JSON Response Format section must include cleanup_agent_worktree operation (ADR-0022)`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: no ./trees/ path references in templates or generated files
+//
+// After the migration to .claude/worktrees/, the old ./trees/ path must not
+// appear in any template source or generated output. ADR docs and this test
+// file are excluded (they reference the old path historically).
+// ---------------------------------------------------------------------------
+
+describe('Contract: no ./trees/ path references in templates or generated files', () => {
+  /**
+   * Collects all template source files (src/**\/*.ejs) and generated output
+   * files (agents/*.md, commands/*.md, skills/**\/*.md, skills/**\/*.sh).
+   * @returns {{ file: string, relative: string }[]}
+   */
+  function collectFilesToCheck() {
+    const srcDir = path.join(ROOT, 'src');
+    const results = [];
+
+    // Template source files
+    const ejsFiles = collectFiles(srcDir, (name) => name.endsWith('.ejs'));
+    for (const file of ejsFiles) {
+      results.push({ file, relative: path.relative(ROOT, file) });
+    }
+
+    // Generated agent files
+    const agentFiles = collectFiles(AGENTS_DIR, (name) => name.endsWith('.md'));
+    for (const file of agentFiles) {
+      results.push({ file, relative: path.relative(ROOT, file) });
+    }
+
+    // Generated command files
+    const commandFiles = collectFiles(COMMANDS_DIR, (name) =>
+      name.endsWith('.md')
+    );
+    for (const file of commandFiles) {
+      results.push({ file, relative: path.relative(ROOT, file) });
+    }
+
+    // Generated skill files (.md and .sh)
+    const skillFiles = collectFiles(
+      SKILLS_DIR,
+      (name) => name.endsWith('.md') || name.endsWith('.sh')
+    );
+    for (const file of skillFiles) {
+      results.push({ file, relative: path.relative(ROOT, file) });
+    }
+
+    return results;
+  }
+
+  const filesToCheck = collectFilesToCheck();
+
+  for (const { file, relative } of filesToCheck) {
+    it(`${relative} does not contain ./trees/ path references`, () => {
+      const content = fs.readFileSync(file, 'utf8');
+      const lines = content.split('\n');
+      const violations = [];
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (/\.\/trees\//.test(line)) {
+          // Skip lines that are in a migration/prohibition context comment
+          if (
+            /migrat|old path|deprecated|previously|no longer|replaced by/i.test(
+              line
+            )
+          ) {
+            continue;
+          }
+          violations.push(`  line ${i + 1}: ${line.trim()}`);
+        }
+      }
+
+      assert.strictEqual(
+        violations.length,
+        0,
+        `${relative} contains ./trees/ path references (should use .claude/worktrees/):\n${violations.join('\n')}`
+      );
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Contract: guard extractFullPerUnitCycle end boundary
+//
+// The extractFullPerUnitCycle helper depends on "### Continuation Rule" as
+// its end boundary. If that heading is removed or renamed, the extractor
+// silently falls back to a weaker ## boundary. This guard ensures the
+// heading exists in takeoff.md so dependent tests remain reliable.
+// ---------------------------------------------------------------------------
+
+describe('Contract: takeoff.md contains Continuation Rule heading (extractFullPerUnitCycle boundary guard)', () => {
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
+
+  it(`${relative} must contain '### Continuation Rule' heading (extractFullPerUnitCycle depends on it)`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('### Continuation Rule'),
+      `${relative} must contain '### Continuation Rule' heading (extractFullPerUnitCycle depends on it)`
     );
   });
 });

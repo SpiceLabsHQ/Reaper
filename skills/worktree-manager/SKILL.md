@@ -21,10 +21,10 @@ If you're inside the worktree when it's deleted, your shell breaks permanently f
 
 ```bash
 # ✅ CORRECT: Use git rev-parse to reliably get project root, then chain with cleanup
-cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123 --delete-branch
+cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./.claude/worktrees/PROJ-123 --delete-branch
 
 # ❌ WRONG: Running directly while inside the worktree breaks the shell
-${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123 --delete-branch
+${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./.claude/worktrees/PROJ-123 --delete-branch
 ```
 
 ### Available Scripts
@@ -50,10 +50,10 @@ Protected branches (`develop`, `main`, `master`) are never deleted.
 
 ```bash
 # After merge: delete the branch (always cd to project root first!)
-cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-description --delete-branch
+cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./.claude/worktrees/PROJ-123-description --delete-branch
 
 # Keep branch for later
-cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-description --keep-branch
+cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./.claude/worktrees/PROJ-123-description --keep-branch
 ```
 
 ### Why This Matters
@@ -70,7 +70,7 @@ When Claude removes a worktree while the shell's CWD is inside that worktree:
 ### Create a new worktree
 ```bash
 ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-create.sh PROJ-123 auth-feature
-# Creates: ./trees/PROJ-123-auth-feature with branch feature/PROJ-123-auth-feature
+# Creates: ./.claude/worktrees/PROJ-123-auth-feature with branch feature/PROJ-123-auth-feature
 ```
 
 ### List all worktrees with status
@@ -80,41 +80,41 @@ ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-list.sh --verbose
 
 ### Check worktree health
 ```bash
-${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-status.sh ./trees/PROJ-123-auth-feature
+${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-status.sh ./.claude/worktrees/PROJ-123-auth-feature
 ```
 
 ### Safely remove a worktree (delete branch after merge)
 ```bash
 # ALWAYS cd to project root first!
-cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-auth-feature --delete-branch
+cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./.claude/worktrees/PROJ-123-auth-feature --delete-branch
 ```
 
 ### Safely remove a worktree (keep branch for later)
 ```bash
-cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-auth-feature --keep-branch
+cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./.claude/worktrees/PROJ-123-auth-feature --keep-branch
 ```
 
 ### Preview what would happen
 ```bash
-cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-auth-feature --delete-branch --dry-run
+cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./.claude/worktrees/PROJ-123-auth-feature --delete-branch --dry-run
 ```
 
 ### Force remove (emergency, with uncommitted changes)
 ```bash
-cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-auth-feature --delete-branch --force
+cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./.claude/worktrees/PROJ-123-auth-feature --delete-branch --force
 ```
 
 ### Custom timeout for large worktrees (monorepos, heavy node_modules)
 ```bash
-cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-auth-feature --delete-branch --timeout 300
+cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./.claude/worktrees/PROJ-123-auth-feature --delete-branch --timeout 300
 ```
 
 ### Skip lock detection for CI/headless environments
 ```bash
-cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-auth-feature --delete-branch --skip-lock-check
+cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./.claude/worktrees/PROJ-123-auth-feature --delete-branch --skip-lock-check
 ```
 
 ### Custom network timeout for slow remotes
 ```bash
-cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123-auth-feature --delete-branch --network-timeout 60
+cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./.claude/worktrees/PROJ-123-auth-feature --delete-branch --network-timeout 60
 ```

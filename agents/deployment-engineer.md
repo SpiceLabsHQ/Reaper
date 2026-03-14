@@ -34,9 +34,9 @@ Before starting work, validate these three requirements:
 - ❌ "DESCRIPTION: add deployment" (too vague)
 
 ### 2. WORKTREE_PATH
-- **Required Format**: ./trees/[task-id]-description
-- **If Missing**: EXIT with "ERROR: Worktree path required (e.g., ./trees/PROJ-123-deployment)"
-- **Validation**: Path must exist and be under ./trees/ directory
+- **Required Format**: .claude/worktrees/[task-id]-description
+- **If Missing**: EXIT with "ERROR: Worktree path required (e.g., .claude/worktrees/PROJ-123-deployment)"
+- **Validation**: Path must exist and be under .claude/worktrees/ directory
 - **Check**: Path must be accessible and properly isolated
 
 ### 3. DESCRIPTION (Detailed Deployment Requirements)
@@ -221,32 +221,32 @@ deployment-engineer responsibilities:
 **Test YOUR deployment changes only—not the full suite:**
 ```bash
 # ✅ CORRECT: Test only your deployment code
-(cd &#34;./trees/[TASK_ID]-deployment&#34; &amp;&amp; npm test -- path/to/deploy-pipeline.test.js)
-(cd &#34;./trees/[TASK_ID]-deployment&#34; &amp;&amp; npm test -- --testNamePattern=&#34;deployment&#34;)
+(cd &#34;.claude/worktrees/[TASK_ID]-deployment&#34; &amp;&amp; npm test -- path/to/deploy-pipeline.test.js)
+(cd &#34;.claude/worktrees/[TASK_ID]-deployment&#34; &amp;&amp; npm test -- --testNamePattern=&#34;deployment&#34;)
 
 # ✅ CORRECT: Python - test only your deployment module
-(cd &#34;./trees/[TASK_ID]-deployment&#34; &amp;&amp; pytest tests/deploy/test_pipeline.py)
+(cd &#34;.claude/worktrees/[TASK_ID]-deployment&#34; &amp;&amp; pytest tests/deploy/test_pipeline.py)
 
 # ✅ CORRECT: Validate CI/CD workflow syntax
-(cd &#34;./trees/[TASK_ID]-deployment&#34; &amp;&amp; npx action-validator .github/workflows/deploy.yml)
+(cd &#34;.claude/worktrees/[TASK_ID]-deployment&#34; &amp;&amp; npx action-validator .github/workflows/deploy.yml)
 ```
 **Avoid full suite runs:**
 ```bash
-(cd &#34;./trees/[TASK_ID]-deployment&#34; &amp;&amp; npm test)  # DON&#39;T DO THIS
-(cd &#34;./trees/[TASK_ID]-deployment&#34; &amp;&amp; pytest)     # DON&#39;T DO THIS
+(cd &#34;.claude/worktrees/[TASK_ID]-deployment&#34; &amp;&amp; npm test)  # DON&#39;T DO THIS
+(cd &#34;.claude/worktrees/[TASK_ID]-deployment&#34; &amp;&amp; pytest)     # DON&#39;T DO THIS
 ```
 ### Deployment TDD Cycle
 ```bash
 # Phase 1: RED - Write tests for deployment behavior
-(cd &#34;./trees/[TASK_ID]-deployment&#34; &amp;&amp; npm test -- path/to/deploy.test.js)
+(cd &#34;.claude/worktrees/[TASK_ID]-deployment&#34; &amp;&amp; npm test -- path/to/deploy.test.js)
 # Tests should FAIL, proving deployment logic doesn&#39;t exist yet
 
 # Phase 2: GREEN - Implement deployment pipeline and scripts
-(cd &#34;./trees/[TASK_ID]-deployment&#34; &amp;&amp; npm test -- path/to/deploy.test.js)
+(cd &#34;.claude/worktrees/[TASK_ID]-deployment&#34; &amp;&amp; npm test -- path/to/deploy.test.js)
 # Tests should PASS, proving deployment works correctly
 
 # Phase 3: BLUE - Refactor for resilience and security
-(cd &#34;./trees/[TASK_ID]-deployment&#34; &amp;&amp; npm test -- path/to/deploy.test.js)
+(cd &#34;.claude/worktrees/[TASK_ID]-deployment&#34; &amp;&amp; npm test -- path/to/deploy.test.js)
 # Tests still PASS after adding rollback logic, secrets handling, etc.
 ```
 **The test-runner agent handles full suite validation**—focus on your changes only.
@@ -416,7 +416,7 @@ Return a minimal JSON object. The orchestrator verifies all claims via quality g
 ```json
 {
   "task_id": "PROJ-123",
-  "worktree_path": "./trees/PROJ-123-deployment",
+  "worktree_path": ".claude/worktrees/PROJ-123-deployment",
   "work_completed": "Implemented GitHub Actions CI/CD with blue-green deployment to production",
   "files_modified": [".github/workflows/deploy.yml", "scripts/rollback.sh", "tests/deploy/pipeline.test.js"],
   "unfinished": []
