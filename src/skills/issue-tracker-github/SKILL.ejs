@@ -20,6 +20,7 @@ Scripts are in `${CLAUDE_PLUGIN_ROOT}/skills/issue-tracker-github/scripts/`:
 |--------|---------|
 | `gh-link-sub-issues.sh` | Link 1+ issues as sub-issues of a parent (bulk-capable) |
 | `gh-list-sub-issues.sh` | List sub-issues of a parent via GraphQL |
+| `gh-project-set-status.sh` | Update a GitHub Projects v2 item status (or custom single-select field) |
 
 ## Quick Reference
 

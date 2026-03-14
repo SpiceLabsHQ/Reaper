@@ -120,7 +120,11 @@ medium_single_branch uses a single shared worktree for all coding agents. Branch
 5. Quality gates validate the shared worktree
 6. On all gates passing: orchestrator deploys branch-manager with confirmation of gates passed and user authorization
 7. Commit all changes in the shared worktree: `git -C ./trees/[TASK_ID]-work add . && git -C ./trees/[TASK_ID]-work commit -m "..."`
-8. Teardown the shared worktree (cd to root first — never teardown from inside the worktree)
+8. Immediately after a successful commit, clean up the worktree and its branch using the worktree-manager skill. Navigate to the project root first (never remove from inside the worktree), then invoke the cleanup script with `--delete-branch` to remove the worktree, delete the local branch, and delete the remote branch:
+   ```
+   cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/[TASK_ID]-work --delete-branch
+   ```
+   Do not defer cleanup to session teardown — it must happen as part of this step. If cleanup fails, return `status: error` with the failure details (Protocol #11).
 9. Feature branch now contains all work. User merges to develop.
 
 ### large_multi_worktree Workflow
@@ -214,7 +218,11 @@ medium_single_branch uses a single shared worktree for all coding agents. Branch
      fi
      ```
    - If the merge produces conflicts, they surface inside `./trees/[TASK_ID]-integration`, not in root
-   - Teardown component worktree (verify from project root — never teardown from inside the worktree)
+   - Immediately after a successful merge verification, clean up the component worktree and its branch using the worktree-manager skill. Navigate to the project root first (never remove from inside the worktree), then invoke the cleanup script with `--delete-branch`:
+     ```
+     cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/[TASK_ID]-[COMPONENT] --delete-branch
+     ```
+     Do not defer cleanup to session teardown — it must happen as part of the merge step. If cleanup fails, return `status: error` with the failure details (Protocol #11).
 4. Review branch contains all consolidated work. User merges to develop.
 
 ## Safety Protocols
