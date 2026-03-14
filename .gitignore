@@ -40,4 +40,4 @@ claude-dev
 *.key
 
 # Worktrees directory (ephemeral development branches)
-trees/
+.claude/worktrees/

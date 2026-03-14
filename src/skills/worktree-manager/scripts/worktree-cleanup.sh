@@ -42,7 +42,7 @@ Usage: $(basename "$0") <worktree-path> [options]
 Safely remove a git worktree with explicit branch disposition.
 
 Arguments:
-  worktree-path    Path to the worktree to remove (e.g., ./trees/PROJ-123-auth)
+  worktree-path    Path to the worktree to remove (e.g., ./.claude/worktrees/PROJ-123-auth)
 
 Options:
   --keep-branch      Remove worktree but keep the associated branch
@@ -81,25 +81,25 @@ Environment variables:
 
 Examples:
   # Keep the branch for later work
-  $(basename "$0") ./trees/PROJ-123-auth --keep-branch
+  $(basename "$0") ./.claude/worktrees/PROJ-123-auth --keep-branch
 
   # Delete the branch after merge
-  $(basename "$0") ./trees/PROJ-123-auth --delete-branch
+  $(basename "$0") ./.claude/worktrees/PROJ-123-auth --delete-branch
 
   # Preview what would happen
-  $(basename "$0") ./trees/PROJ-123-auth --delete-branch --dry-run
+  $(basename "$0") ./.claude/worktrees/PROJ-123-auth --delete-branch --dry-run
 
   # Force removal even with uncommitted changes
-  $(basename "$0") ./trees/PROJ-123-auth --delete-branch --force
+  $(basename "$0") ./.claude/worktrees/PROJ-123-auth --delete-branch --force
 
   # Skip lock detection (CI/headless environments)
-  $(basename "$0") ./trees/PROJ-123-auth --delete-branch --skip-lock-check
+  $(basename "$0") ./.claude/worktrees/PROJ-123-auth --delete-branch --skip-lock-check
 
   # Custom timeout for large worktrees (e.g., monorepos with heavy node_modules)
-  $(basename "$0") ./trees/PROJ-123-auth --delete-branch --timeout 300
+  $(basename "$0") ./.claude/worktrees/PROJ-123-auth --delete-branch --timeout 300
 
   # Custom network timeout for slow remotes
-  $(basename "$0") ./trees/PROJ-123-auth --delete-branch --network-timeout 60
+  $(basename "$0") ./.claude/worktrees/PROJ-123-auth --delete-branch --network-timeout 60
 EOF
 }
 
@@ -323,7 +323,7 @@ is_protected_branch() {
     return 1
 }
 
-# Find the project root (parent of ./trees/)
+# Find the project root (parent of ./.claude/worktrees/)
 find_project_root() {
     local worktree_path="$1"
     local abs_path
@@ -334,9 +334,9 @@ find_project_root() {
         exit 1
     }
 
-    # Look for ./trees/ in the path and get parent
-    if [[ "$abs_path" == *"/trees/"* ]]; then
-        echo "${abs_path%%/trees/*}"
+    # Look for ./.claude/worktrees/ in the path and get parent
+    if [[ "$abs_path" == *"/.claude/worktrees/"* ]]; then
+        echo "${abs_path%%/.claude/worktrees/*}"
     else
         # Fallback: use git worktree list to find main worktree
         local main_worktree

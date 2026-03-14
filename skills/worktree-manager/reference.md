@@ -18,10 +18,10 @@ When Claude removes a worktree while the shell's current working directory (CWD)
 
 ```bash
 # ✅ CORRECT: Use git rev-parse to reliably get project root, then chain with cleanup
-cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123 --delete-branch
+cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./.claude/worktrees/PROJ-123 --delete-branch
 
 # ❌ WRONG: Script's internal cd only affects the subshell, not your session
-${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123 --delete-branch
+${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./.claude/worktrees/PROJ-123 --delete-branch
 ```
 
 **Why this matters**: When you run a bash script, it executes in its own process. Any `cd` commands inside the script only affect that process. When the script exits, your shell session is still in the original (now deleted) directory.
@@ -49,7 +49,7 @@ Creates a new worktree with validation and dependency installation.
 | `--no-install` | Skip dependency installation |
 
 **Output:**
-- Worktree at: `./trees/<task-id>-<description>`
+- Worktree at: `./.claude/worktrees/<task-id>-<description>`
 - Branch: `feature/<task-id>-<description>`
 
 **Validation performed:**
@@ -209,28 +209,28 @@ When removing a worktree with an associated feature branch, you MUST specify one
 # Use git rev-parse --show-toplevel to reliably get the repo root
 
 # After merging: delete the branch
-cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./trees/PROJ-123-auth --delete-branch
+cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./.claude/worktrees/PROJ-123-auth --delete-branch
 
 # Keep branch for later work
-cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./trees/PROJ-123-auth --keep-branch
+cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./.claude/worktrees/PROJ-123-auth --keep-branch
 
 # Preview what would happen
-cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./trees/PROJ-123-auth --delete-branch --dry-run
+cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./.claude/worktrees/PROJ-123-auth --delete-branch --dry-run
 
 # Force removal with uncommitted changes
-cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./trees/PROJ-123-auth --delete-branch --force
+cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./.claude/worktrees/PROJ-123-auth --delete-branch --force
 
 # Custom timeout for large worktrees (monorepos, heavy node_modules)
-cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./trees/PROJ-123-auth --delete-branch --timeout 300
+cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./.claude/worktrees/PROJ-123-auth --delete-branch --timeout 300
 
 # Skip lock detection in CI/headless environments
-cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./trees/PROJ-123-auth --delete-branch --skip-lock-check
+cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./.claude/worktrees/PROJ-123-auth --delete-branch --skip-lock-check
 
 # Custom network timeout for slow remotes
-cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./trees/PROJ-123-auth --delete-branch --network-timeout 60
+cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./.claude/worktrees/PROJ-123-auth --delete-branch --network-timeout 60
 
 # Use environment variables instead of flags
-WORKTREE_REMOVE_TIMEOUT=300 NETWORK_TIMEOUT=60 worktree-cleanup.sh ./trees/PROJ-123-auth --delete-branch
+WORKTREE_REMOVE_TIMEOUT=300 NETWORK_TIMEOUT=60 worktree-cleanup.sh ./.claude/worktrees/PROJ-123-auth --delete-branch
 ```
 
 ## AI Remediation Guides
@@ -246,21 +246,21 @@ Triggered when worktree removal or network operations exceed their time limit.
 === AI REMEDIATION GUIDE ===
 ERROR_CODE: 4
 ERROR_TYPE: TIMEOUT
-WORKTREE_PATH: ./trees/PROJ-123-auth
+WORKTREE_PATH: ./.claude/worktrees/PROJ-123-auth
 TIMEOUT_SECONDS: 120
 OPERATION: git worktree remove
 
 REMEDIATION_STEPS:
 1. RETRY_WITH_LONGER_TIMEOUT:
-   worktree-cleanup.sh ./trees/PROJ-123-auth --delete-branch --timeout 300
+   worktree-cleanup.sh ./.claude/worktrees/PROJ-123-auth --delete-branch --timeout 300
 
 2. PRE_DELETE_LARGE_DIRECTORIES:
-   rm -rf ./trees/PROJ-123-auth/node_modules
-   rm -rf ./trees/PROJ-123-auth/.venv
-   worktree-cleanup.sh ./trees/PROJ-123-auth --delete-branch
+   rm -rf ./.claude/worktrees/PROJ-123-auth/node_modules
+   rm -rf ./.claude/worktrees/PROJ-123-auth/.venv
+   worktree-cleanup.sh ./.claude/worktrees/PROJ-123-auth --delete-branch
 
 3. FORCE_PRUNE_WORKTREE:
-   rm -rf ./trees/PROJ-123-auth
+   rm -rf ./.claude/worktrees/PROJ-123-auth
    git worktree prune
 === END AI REMEDIATION GUIDE ===
 ```
@@ -282,7 +282,7 @@ Triggered when a worktree has a git lock file preventing removal.
 ```
 === AI REMEDIATION GUIDE ===
 ERROR_CODE: WORKTREE_LOCKED
-WORKTREE_PATH: ./trees/PROJ-123-auth
+WORKTREE_PATH: ./.claude/worktrees/PROJ-123-auth
 LOCK_FILE: .git/worktrees/PROJ-123-auth/locked
 LOCK_REASON: (reason from lock file, or "(no reason provided)")
 
@@ -291,10 +291,10 @@ REMEDIATION:
    git worktree unlock PROJ-123-auth
 
 2. FORCE_REMOVAL:
-   worktree-cleanup.sh ./trees/PROJ-123-auth --delete-branch --force
+   worktree-cleanup.sh ./.claude/worktrees/PROJ-123-auth --delete-branch --force
 
 3. SKIP_LOCK_CHECK:
-   worktree-cleanup.sh ./trees/PROJ-123-auth --delete-branch --skip-lock-check
+   worktree-cleanup.sh ./.claude/worktrees/PROJ-123-auth --delete-branch --skip-lock-check
 === END AI REMEDIATION GUIDE ===
 ```
 
@@ -313,7 +313,7 @@ Emitted as a non-blocking warning when processes have open file handles in the w
 **Output format:**
 ```
 WARNING_CODE: OPEN_FILE_HANDLES
-WORKTREE_PATH: ./trees/PROJ-123-auth
+WORKTREE_PATH: ./.claude/worktrees/PROJ-123-auth
 PROCESSES:
 node (PID: 12345)
 code (PID: 67890)
@@ -338,11 +338,11 @@ Large worktrees (monorepos with `node_modules`, `.venv`, or build artifacts) can
 
 ```bash
 # Option 1: Increase the timeout
-cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./trees/PROJ-123 --delete-branch --timeout 300
+cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./.claude/worktrees/PROJ-123 --delete-branch --timeout 300
 
 # Option 2: Pre-delete large directories, then remove
-rm -rf ./trees/PROJ-123/node_modules ./trees/PROJ-123/.venv ./trees/PROJ-123/dist
-cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./trees/PROJ-123 --delete-branch
+rm -rf ./.claude/worktrees/PROJ-123/node_modules ./.claude/worktrees/PROJ-123/.venv ./.claude/worktrees/PROJ-123/dist
+cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./.claude/worktrees/PROJ-123 --delete-branch
 ```
 
 ### Worktree is locked
@@ -354,10 +354,10 @@ Git worktrees can be locked to prevent accidental removal. The script detects th
 git worktree unlock PROJ-123-auth
 
 # Option 2: Force removal (bypasses lock check)
-cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./trees/PROJ-123-auth --delete-branch --force
+cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./.claude/worktrees/PROJ-123-auth --delete-branch --force
 
 # Option 3: Skip lock detection entirely
-cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./trees/PROJ-123-auth --delete-branch --skip-lock-check
+cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./.claude/worktrees/PROJ-123-auth --delete-branch --skip-lock-check
 ```
 
 ### Network timeout on remote branch deletion
@@ -366,10 +366,10 @@ Remote branch deletion requires a network round-trip to the git host. Slow conne
 
 ```bash
 # Increase network timeout
-cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./trees/PROJ-123 --delete-branch --network-timeout 60
+cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./.claude/worktrees/PROJ-123 --delete-branch --network-timeout 60
 
 # Or use environment variable
-NETWORK_TIMEOUT=60 worktree-cleanup.sh ./trees/PROJ-123 --delete-branch
+NETWORK_TIMEOUT=60 worktree-cleanup.sh ./.claude/worktrees/PROJ-123 --delete-branch
 ```
 
 ### Open file handles warning
@@ -381,7 +381,7 @@ Editors, language servers, or other processes may have open file handles in the 
 # The warning lists process names and PIDs for identification
 
 # If you cannot close the processes, use a longer timeout
-cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./trees/PROJ-123 --delete-branch --timeout 300
+cd "$(git rev-parse --show-toplevel)" && worktree-cleanup.sh ./.claude/worktrees/PROJ-123 --delete-branch --timeout 300
 ```
 
 ---

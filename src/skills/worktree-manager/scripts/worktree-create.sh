@@ -32,7 +32,7 @@ Examples:
     $(basename "$0") FEAT-789 api-refactor --no-install
 
 Creates:
-    - Worktree at: ./trees/<task-id>-<description>
+    - Worktree at: ./.claude/worktrees/<task-id>-<description>
     - Branch: feature/<task-id>-<description>
 EOF
     exit 0
@@ -230,8 +230,8 @@ main() {
         exit 1
     fi
 
-    # Check if we're already in a worktree (under ./trees/)
-    if [[ "$(pwd)" == *"/trees/"* ]]; then
+    # Check if we're already in a worktree (under ./.claude/worktrees/)
+    if [[ "$(pwd)" == *"/.claude/worktrees/"* ]]; then
         log_fail "Already inside a worktree directory"
         echo "Navigate to project root first"
         exit 1
@@ -255,7 +255,7 @@ main() {
 
     # Define paths
     local worktree_name="${task_id}-${description}"
-    local worktree_path="./trees/${worktree_name}"
+    local worktree_path="./.claude/worktrees/${worktree_name}"
     local branch_name="feature/${worktree_name}"
 
     log_step "Worktree path: $worktree_path"
@@ -293,8 +293,8 @@ main() {
 
     # --- Create Worktree ---
 
-    # Ensure trees directory exists
-    mkdir -p trees
+    # Ensure worktrees directory exists
+    mkdir -p .claude/worktrees
 
     log_step "Creating worktree..."
     if ! git worktree add "$worktree_path" -b "$branch_name" "$base_branch"; then
