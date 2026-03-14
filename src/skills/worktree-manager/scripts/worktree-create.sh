@@ -49,7 +49,7 @@ install_dependencies() {
         log_step "Node.js project detected"
         if [[ -f "$worktree_path/package-lock.json" ]]; then
             log_step "Installing npm dependencies..."
-            (cd "$worktree_path" && npm install) || {
+            (cd "$worktree_path" && npm install --prefer-offline) || {
                 log_warn "npm install failed"
                 return 1
             }
@@ -67,7 +67,7 @@ install_dependencies() {
             }
         else
             log_step "Installing npm dependencies (no lockfile)..."
-            (cd "$worktree_path" && npm install) || {
+            (cd "$worktree_path" && npm install --prefer-offline) || {
                 log_warn "npm install failed"
                 return 1
             }
