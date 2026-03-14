@@ -113,39 +113,70 @@ Apply exclusions using the framework's ignore mechanism:
 --testPathIgnorePatterns="trees|backup|node_modules"
 ```
 
-## Single-execution test protocol
+## Single-execution concurrent protocol
 
-**CRITICAL: Execute the TEST_COMMAND exactly ONCE. Never run a second command for coverage, structured output, or any other reason.** If the caller wants coverage, they include coverage flags in TEST_COMMAND. If they don't, report coverage as unavailable. Do NOT discover or run alternative scripts (e.g., `test:coverage`) from package.json.
+**CRITICAL: Execute the TEST_COMMAND exactly ONCE and the LINT_COMMAND exactly ONCE. Never run a second command for coverage, structured output, or any other reason.** If the caller wants coverage, they include coverage flags in TEST_COMMAND. If they don't, report coverage as unavailable. Do NOT discover or run alternative scripts (e.g., `test:coverage`) from package.json.
 
-Full test suites produce large output that exceeds the Bash tool's display limit. Run once in the background and read the output file:
+Both commands run concurrently in a single synchronous Bash call using & subprocesses and `wait`. Output is captured to task-scoped log files for reliable reading.
 
-**Step 1 — Run TEST_COMMAND in background:**
+**Step 1 — Launch test and lint concurrently (single Bash call):**
+```bash
+Bash(timeout=600000):
+# Task-scoped output file paths — print before execution for orchestrator observability
+TEST_STDOUT="/tmp/${TASK}-test-stdout.log"
+LINT_STDOUT="/tmp/${TASK}-lint-stdout.log"
+echo "Output file paths:"
+echo "  test: $TEST_STDOUT"
+echo "  lint: $LINT_STDOUT"
+
+# Launch test command as background subprocess
+(cd "$WORKING_DIR" && <TEST_COMMAND> > "$TEST_STDOUT" 2>&1) &
+TEST_PID=$!
+
+# Launch lint conditionally — skip if LINT_COMMAND is "skip"
+if [ "$LINT_COMMAND" != "skip" ]; then
+  (cd "$WORKING_DIR" && <LINT_COMMAND> > "$LINT_STDOUT" 2>&1) &
+  LINT_PID=$!
+fi
+
+# Wait for test to complete and capture its exit code
+wait $TEST_PID
+TEST_EXIT_CODE=$?
+
+# Wait for lint and capture its exit code (0 if skipped)
+if [ -n "$LINT_PID" ]; then
+  wait $LINT_PID
+  LINT_EXIT_CODE=$?
+else
+  LINT_EXIT_CODE=0
+fi
+
+echo "Exit codes:"
+echo "  test: $TEST_EXIT_CODE"
+echo "  lint: $LINT_EXIT_CODE"
 ```
-Bash(run_in_background=true, timeout=600000): (cd "$WORKING_DIR" && <TEST_COMMAND> 2>&1)
-```
-This returns a `task_id` and an `output_file` path. Set `timeout=600000` (10 min) as the hard backstop.
 
-**Step 2 — Poll for completion:**
-```
-TaskOutput(task_id=<id>, block=true, timeout=30000)
-```
-Poll with 30s timeout. If still running, poll again. The Bash timeout from step 1 kills stuck processes.
+Set `timeout=600000` (10 min) as the hard backstop for the entire Bash call.
 
-**Step 3 — Read head and tail of output file:**
+**Step 2 — Read head and tail of each output file:**
 Use the Read tool with `offset`/`limit` to see both ends without re-running:
 ```
-Read(output_file, limit=80)                              # first 80 lines
-Read(output_file, offset=<total_lines - 80>, limit=80)   # last 80 lines
+Read("/tmp/${TASK}-test-stdout.log", limit=80)                              # first 80 lines
+Read("/tmp/${TASK}-test-stdout.log", offset=<total_lines - 80>, limit=80)   # last 80 lines
+Read("/tmp/${TASK}-lint-stdout.log", limit=80)                              # lint output
 ```
-Run `wc -l < <output_file>` after step 2 to compute the tail offset.
+Run `wc -l` on each file to compute the tail offset.
 
-**Step 4 — Parse everything from that single output.** Extract test counts, pass/fail, AND coverage from the output file and any structured data files the framework wrote during execution. If coverage data is not present in the output (because the caller's TEST_COMMAND didn't include coverage flags), set `coverage.percentage` to `null` and `coverage.threshold_met` to `false`.
+**Step 3 — Parse everything from that single execution.** Extract test counts, pass/fail, AND coverage from the output files and any structured data files the framework wrote during execution. If coverage data is not present in the output (because the caller's TEST_COMMAND didn't include coverage flags), set `coverage.percentage` to `null` and `coverage.threshold_met` to `false`.
+
+**Tool call budget:** 1 Bash call (launch) + 2-4 Read calls (output files and structured data) + 1 optional Bash call (wc -l for tail offsets). Aim for 4-6 tool calls total.
 
 **Remember:**
 - Test frameworks may write temporary files (coverage/test-results.json) — that's OK, those are tool outputs
 - You must READ those tool output files and include data in your JSON response
 - NEVER write your own analysis files like "test-summary.json" or "validation-report.json"
 - Your JSON response IS the report
+- Clean up `/tmp/${TASK}-*.log` files during artifact cleanup
 
 ## Artifact Cleanup Protocol
 
@@ -174,13 +205,15 @@ Extract all needed data before cleanup. Report cleanup failures in the JSON resp
 Commands are provided explicitly by the caller. The agent enhances them with standard exclusions.
 
 **Execution flow:**
-1. Execute LINT_COMMAND (unless set to "skip")
-2. Execute TEST_COMMAND once — enhance with exclusion flags if needed, then parse all results from its output
+1. Launch TEST_COMMAND and LINT_COMMAND concurrently using the single-execution concurrent protocol above
+2. Both commands run as & subprocesses in a single Bash call — each executes exactly once
+3. Parse all results from the output files after both complete
 
 **Key principles:**
 - The provided TEST_COMMAND is the ONLY test execution — never run additional test scripts
 - If coverage data appears in the output, parse it; if not, report coverage as unavailable
 - Prefer structured output files (coverage JSON, JUnit XML) written by the framework during that single run
+- Each command's exit code is captured independently after `wait`
 
 **Enhancement example (Jest):**
 ```bash
