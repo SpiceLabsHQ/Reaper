@@ -3874,7 +3874,7 @@ describe('Contract: branch-manager large_multi_worktree merge uses isolated inte
     );
   });
 
-  it(`${relative} large_multi_worktree Workflow runs merge via 'git -C ./trees/' (not in root)`, () => {
+  it(`${relative} large_multi_worktree Workflow runs merge via 'git -C .claude/worktrees/' (not in root)`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const section = getLargeMultiSection(content);
@@ -3883,8 +3883,8 @@ describe('Contract: branch-manager large_multi_worktree merge uses isolated inte
       `${relative} must have a large_multi_worktree Workflow section`
     );
     assert.ok(
-      /git -C \.\/trees\/.*merge/i.test(section),
-      `${relative} large_multi_worktree Workflow must run merge inside a worktree via 'git -C ./trees/...'`
+      /git -C \.claude\/worktrees\/.*merge/i.test(section),
+      `${relative} large_multi_worktree Workflow must run merge inside a worktree via 'git -C .claude/worktrees/...'`
     );
   });
 
