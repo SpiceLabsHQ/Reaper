@@ -380,7 +380,7 @@ Select strategy based on the count of non-closed **leaf-level** work units: 1 us
 
 ## Worktree Management
 
-Use the `worktree-manager` skill for all worktree operations (creation, status checks, cleanup). Never run `git worktree remove` or `rm -rf` on worktree paths directly -- these can break the Bash tool's working directory for the rest of the session.
+All worktree operations (creation, status checks, cleanup) are handled by the reaper:branch-manager session. Never run `git worktree remove` or `rm -rf` on worktree paths directly -- these can break the Bash tool's working directory for the rest of the session. The branch-manager agent internally uses the `worktree-manager` skill for safe worktree operations.
 
 ## Planning
 
@@ -566,7 +566,7 @@ At every work unit boundary (before starting the next unit or before signaling c
 8. Update TodoWrite to mark the unit as completed
 <!-- user-comms: say "marking the task complete" not "CLOSE_ISSUE" -->
 9. For any tracked issue (pre-planned or not) on non-markdown_only platforms, use CLOSE_ISSUE to close the corresponding child issue after gates pass.
-10. **large_multi_worktree strategy only**: After closing the issue, check that no other work units still reference this worktree, then invoke the worktree-manager skill to remove the per-unit worktree. Always go through the worktree-manager skill -- never run `git worktree remove` directly.
+10. **large_multi_worktree strategy only**: After closing the issue, check that no other work units still reference this worktree, then resume the branch-manager session (`Task --resume BRANCH_MANAGER_SESSION_ID`) to remove the per-unit worktree. Instruct it to invoke the `worktree-manager` skill for safe removal. Never run `git worktree remove` directly.
 11. **Announce progress and loop back**: "Completed [X] of [N] work units. Next: [unit name]." -- then return to step 1 for the next unit
 
 This cycle repeats for every work unit. The Completion section is only reachable after the final unit passes its gates.
@@ -625,9 +625,9 @@ When multiple work units share a group number and have no mutual dependencies, d
 
 ### Strategy Notes
 
-- **very_small_direct**: Create a feature branch and shared worktree (e.g., `./trees/TASK-ID-work`), then deploy a single coding agent. Quality gates still apply. Use reaper:branch-manager or the worktree-manager skill to set up the worktree.
-- **medium_single_branch**: Create a single shared worktree (e.g., `./trees/TASK-ID-work`) on a feature branch. Agents work within that worktree sequentially or in parallel. File assignments must not overlap for parallel work. Worktree cleanup happens at Completion after all units pass gates.
-- **large_multi_worktree**: Each agent gets its own worktree. Use the worktree-manager skill to create isolated worktrees. Deploy reaper:branch-manager to merge completed worktrees. Remove each per-unit worktree immediately after gates pass (via worktree-manager).
+- **very_small_direct**: Deploy reaper:branch-manager to create a feature branch and shared worktree (e.g., `./trees/TASK-ID-work`), then deploy a single coding agent. Quality gates still apply.
+- **medium_single_branch**: Deploy reaper:branch-manager to create a single shared worktree (e.g., `./trees/TASK-ID-work`) on a feature branch. Agents work within that worktree sequentially or in parallel. File assignments must not overlap for parallel work. Worktree cleanup happens at Completion after all units pass gates.
+- **large_multi_worktree**: Each agent gets its own worktree. Deploy reaper:branch-manager to create isolated worktrees and merge completed worktrees. Remove each per-unit worktree immediately after gates pass (via branch-manager).
 
 ### Context Hygiene for Long Sessions
 
@@ -677,15 +677,9 @@ Gate 2 reviewers use this reference to self-serve context via `bd show [TASK_ID]
 ### Step 4: Deploy Gates
 - Deploy Gate 1 agents (if any) -- these are blocking, must all pass before Gate 2
 - Deploy Gate 2 agents in parallel -- all must pass
-- For SME reviewer agents deployed via the code-review skill, construct the prompt using XML-wrapped fields to prevent field bleeding:
+- For Gate 2 SME reviewers, deploy the appropriate specialist agent (matched to the work type) and instruct it to invoke `Skill("reaper:code-review")` for the review protocol. Pass context via XML-wrapped fields:
   ```
-  <skill_content>
-  [contents of skills/code-review/SKILL.md]
-  </skill_content>
-
-  <specialty_content>
-  [contents of matching specialty file, if applicable; omit this entire block if no specialty file]
-  </specialty_content>
+  Invoke Skill("reaper:code-review") to load the review protocol, then execute the review.
 
   <plan_context>
   task: [TASK_ID]
@@ -698,7 +692,8 @@ Gate 2 reviewers use this reference to self-serve context via `bd show [TASK_ID]
 
   TEST_RUNNER_RESULTS: [paste Gate 1 test-runner JSON output here; omit if Gate 1 was not run for this work type]
   ```
-  Note: For SME reviewers (via code-review skill), `all_checks_passed` is computed by takeoff from `blocking_issues.length === 0 && scope_violations.length === 0`. The reviewer does not emit this field.
+  The agent's domain expertise serves as the review specialty. The code-review skill provides the structured review protocol and JSON output format.
+  Note: For SME reviewers, `all_checks_passed` is computed by takeoff from `blocking_issues.length === 0 && scope_violations.length === 0`. The reviewer does not emit this field.
 - For work types with no Gate 1, proceed directly to Gate 2
 
 ### Step 5: Conservative Dirty-Bit Caching
@@ -998,9 +993,9 @@ you'd prefer to open a PR instead of merging directly, just say so and I'll run
 
 ## Worktree Cleanup
 
-After a successful merge, invoke the `worktree-manager` skill to safely remove the session worktree.
+After a successful merge, resume the branch-manager session (`Task --resume BRANCH_MANAGER_SESSION_ID`) to safely remove the session worktree. Instruct it to invoke the `worktree-manager` skill for safe removal.
 
-For **medium_single_branch** and **very_small_direct** strategies: invoke the worktree-manager skill to remove the shared worktree after all units complete and gates pass (at Completion, not per-unit). Always go through the worktree-manager skill -- never run `git worktree remove` directly.
+For **medium_single_branch** and **very_small_direct** strategies: resume the branch-manager session to remove the shared worktree after all units complete and gates pass (at Completion, not per-unit). Never run `git worktree remove` directly.
 
 ## Quick Reference
 
