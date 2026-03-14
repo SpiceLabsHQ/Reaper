@@ -36,9 +36,9 @@ Before starting work, validate these three requirements:
 - ❌ "DESCRIPTION: add integration" (too vague)
 
 ### 2. WORKTREE_PATH
-- **Required Format**: ./trees/[task-id]-description
-- **If Missing**: EXIT with "ERROR: Worktree path required (e.g., ./trees/PROJ-123-integration)"
-- **Validation**: Path must exist and be under ./trees/ directory
+- **Required Format**: .claude/worktrees/[task-id]-description
+- **If Missing**: EXIT with "ERROR: Worktree path required (e.g., .claude/worktrees/PROJ-123-integration)"
+- **Validation**: Path must exist and be under .claude/worktrees/ directory
 - **Check**: Path must be accessible and properly isolated
 
 ### 3. DESCRIPTION (Detailed Integration Requirements)
@@ -230,32 +230,32 @@ integration-engineer responsibilities:
 **Test YOUR integration changes only—not the full suite:**
 ```bash
 # ✅ CORRECT: Test only your integration code
-(cd &#34;./trees/[TASK_ID]-integration&#34; &amp;&amp; npm test -- path/to/stripe-client.test.js)
-(cd &#34;./trees/[TASK_ID]-integration&#34; &amp;&amp; npm test -- --testNamePattern=&#34;Stripe integration&#34;)
+(cd &#34;.claude/worktrees/[TASK_ID]-integration&#34; &amp;&amp; npm test -- path/to/stripe-client.test.js)
+(cd &#34;.claude/worktrees/[TASK_ID]-integration&#34; &amp;&amp; npm test -- --testNamePattern=&#34;Stripe integration&#34;)
 
 # ✅ CORRECT: Python - test only your integration module
-(cd &#34;./trees/[TASK_ID]-integration&#34; &amp;&amp; pytest tests/integrations/test_stripe.py)
+(cd &#34;.claude/worktrees/[TASK_ID]-integration&#34; &amp;&amp; pytest tests/integrations/test_stripe.py)
 
 # ✅ CORRECT: PHP - test only your integration class
-(cd &#34;./trees/[TASK_ID]-integration&#34; &amp;&amp; ./vendor/bin/phpunit tests/Integrations/StripeTest.php)
+(cd &#34;.claude/worktrees/[TASK_ID]-integration&#34; &amp;&amp; ./vendor/bin/phpunit tests/Integrations/StripeTest.php)
 ```
 **Avoid full suite runs:**
 ```bash
-(cd &#34;./trees/[TASK_ID]-integration&#34; &amp;&amp; npm test)  # DON&#39;T DO THIS
-(cd &#34;./trees/[TASK_ID]-integration&#34; &amp;&amp; pytest)     # DON&#39;T DO THIS
+(cd &#34;.claude/worktrees/[TASK_ID]-integration&#34; &amp;&amp; npm test)  # DON&#39;T DO THIS
+(cd &#34;.claude/worktrees/[TASK_ID]-integration&#34; &amp;&amp; pytest)     # DON&#39;T DO THIS
 ```
 ### Integration TDD Cycle
 ```bash
 # Phase 1: RED - Create mocks and write failing tests
-(cd &#34;./trees/[TASK_ID]-integration&#34; &amp;&amp; npm test -- path/to/integration.test.js)
+(cd &#34;.claude/worktrees/[TASK_ID]-integration&#34; &amp;&amp; npm test -- path/to/integration.test.js)
 # Tests should FAIL, proving integration doesn&#39;t exist yet
 
 # Phase 2: GREEN - Implement integration to pass tests
-(cd &#34;./trees/[TASK_ID]-integration&#34; &amp;&amp; npm test -- path/to/integration.test.js)
+(cd &#34;.claude/worktrees/[TASK_ID]-integration&#34; &amp;&amp; npm test -- path/to/integration.test.js)
 # Tests should PASS with mocked external services
 
 # Phase 3: BLUE - Refactor for resilience
-(cd &#34;./trees/[TASK_ID]-integration&#34; &amp;&amp; npm test -- path/to/integration.test.js)
+(cd &#34;.claude/worktrees/[TASK_ID]-integration&#34; &amp;&amp; npm test -- path/to/integration.test.js)
 # Tests still PASS after adding retries, circuit breakers, etc.
 ```
 **The test-runner agent handles full suite validation**—focus on your changes only.
@@ -428,7 +428,7 @@ Return a minimal JSON object. The orchestrator verifies all claims via quality g
 ```json
 {
   "task_id": "PROJ-123",
-  "worktree_path": "./trees/PROJ-123-integration",
+  "worktree_path": ".claude/worktrees/PROJ-123-integration",
   "work_completed": "Integrated Stripe payment processing with webhook handlers",
   "files_modified": ["src/payments/stripe-client.js", "src/webhooks/stripe-handler.js", "tests/payments/stripe.test.js"],
   "unfinished": []

@@ -70,24 +70,24 @@ Run only your tests (not the full suite). Verify 80%+ coverage on the applicatio
   agentName: 'feature-developer',
   targetedTestType: 'changes',
   testExamples: `# Test only the files you created/modified
-(cd "./trees/[TASK_ID]-implementation" && npm test -- path/to/your/feature.test.js)
-(cd "./trees/[TASK_ID]-implementation" && pytest tests/test_your_feature.py)
-(cd "./trees/[TASK_ID]-implementation" && ./vendor/bin/phpunit tests/YourFeatureTest.php)`,
-  wrongExamples: `(cd "./trees/[TASK_ID]-implementation" && npm test)  # Runs full suite -- don't
-(cd "./trees/[TASK_ID]-implementation" && pytest)     # Runs full suite -- don't`,
+(cd ".claude/worktrees/[TASK_ID]-implementation" && npm test -- path/to/your/feature.test.js)
+(cd ".claude/worktrees/[TASK_ID]-implementation" && pytest tests/test_your_feature.py)
+(cd ".claude/worktrees/[TASK_ID]-implementation" && ./vendor/bin/phpunit tests/YourFeatureTest.php)`,
+  wrongExamples: `(cd ".claude/worktrees/[TASK_ID]-implementation" && npm test)  # Runs full suite -- don't
+(cd ".claude/worktrees/[TASK_ID]-implementation" && pytest)     # Runs full suite -- don't`,
   agentResponsibilities: `- Write failing tests for the feature (RED)
 - Implement feature to pass tests (GREEN)
 - Refactor for SOLID compliance (BLUE)
 - Test YOUR feature in isolation only`,
   cycleTitle: 'TDD Red-Green-Refactor Cycle',
   cycleContent: `# RED - Tests FAIL (feature doesn't exist yet)
-(cd "./trees/[TASK_ID]-implementation" && npm test -- path/to/feature-test.js)
+(cd ".claude/worktrees/[TASK_ID]-implementation" && npm test -- path/to/feature-test.js)
 
 # GREEN - Tests PASS (feature works)
-(cd "./trees/[TASK_ID]-implementation" && npm test -- path/to/feature-test.js)
+(cd ".claude/worktrees/[TASK_ID]-implementation" && npm test -- path/to/feature-test.js)
 
 # BLUE - Tests still PASS (refactored cleanly)
-(cd "./trees/[TASK_ID]-implementation" && npm test -- path/to/feature-test.js)`
+(cd ".claude/worktrees/[TASK_ID]-implementation" && npm test -- path/to/feature-test.js)`
 }) %>
 <%- include('partials/artifact-cleanup-coding') %>
 <%- include('partials/file-conflict-detection') %>
@@ -102,7 +102,7 @@ Return this structure. The orchestrator verifies all claims via quality gates.
 ```json
 {
   "task_id": "PROJ-123",
-  "worktree_path": "./trees/PROJ-123-implementation",
+  "worktree_path": ".claude/worktrees/PROJ-123-implementation",
   "work_completed": "Implemented OAuth2 authentication with Google and GitHub providers",
   "files_modified": ["src/auth/oauth.js", "src/auth/providers.js", "tests/auth/oauth.test.js"],
   "unfinished": []

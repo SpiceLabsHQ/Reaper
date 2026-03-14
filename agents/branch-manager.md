@@ -66,9 +66,9 @@ Before starting work, validate these three requirements:
 - ❌ "DESCRIPTION: do git stuff" (too vague)
 
 ### 2. WORKTREE_PATH
-- **Required Format**: ./trees/[task-id]-description
-- **If Missing**: EXIT with "ERROR: Worktree path required (e.g., ./trees/PROJ-123-branch-mgmt)"
-- **Validation**: Path must exist and be under ./trees/ directory
+- **Required Format**: .claude/worktrees/[task-id]-description
+- **If Missing**: EXIT with "ERROR: Worktree path required (e.g., .claude/worktrees/PROJ-123-branch-mgmt)"
+- **Validation**: Path must exist and be under .claude/worktrees/ directory
 - **Check**: Path must be accessible and properly isolated
 
 ### 3. DESCRIPTION (Detailed Git Operation Details)

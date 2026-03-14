@@ -31,8 +31,8 @@ When test-first is not practical (exploratory work, UI prototyping, spike invest
 <% if (typeof testExamples !== 'undefined') { -%>
 <%= testExamples %>
 <% } else { -%>
-(cd "./trees/[TASK_ID]" && npm test -- path/to/your.test.js)
-(cd "./trees/[TASK_ID]" && pytest tests/test_your_module.py -v)
+(cd ".claude/worktrees/[TASK_ID]" && npm test -- path/to/your.test.js)
+(cd ".claude/worktrees/[TASK_ID]" && pytest tests/test_your_module.py -v)
 <% } -%>
 ```
 <% if (typeof wrongExamples !== 'undefined') { -%>

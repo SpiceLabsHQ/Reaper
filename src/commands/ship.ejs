@@ -15,15 +15,15 @@ description: Fast-path from worktree to PR — commit, push, open.
 
 Resolve the worktree using this priority order:
 
-1. **Session context**: If you are already operating inside a worktree (e.g., dispatched by `takeoff`, or the user has been working in a `./trees/` directory this session), use that worktree. Check your current working context and recent file operations.
-2. **CWD**: Run `pwd` — if the current directory is inside a `./trees/` path, use it.
-3. **Explicit path from arguments**: If [ARGUMENTS] contains a path (e.g., `./trees/PROJ-123-work`), use it.
-4. **Auto-detect**: List worktrees under `./trees/`. If exactly one exists, use it. If multiple exist, list them and ask which one to ship.
+1. **Session context**: If you are already operating inside a worktree (e.g., dispatched by `takeoff`, or the user has been working in a `.claude/worktrees/` directory this session), use that worktree. Check your current working context and recent file operations.
+2. **CWD**: Run `pwd` — if the current directory is inside a `.claude/worktrees/` path, use it.
+3. **Explicit path from arguments**: If [ARGUMENTS] contains a path (e.g., `.claude/worktrees/PROJ-123-work`), use it.
+4. **Auto-detect**: List worktrees under `.claude/worktrees/`. If exactly one exists, use it. If multiple exist, list them and ask which one to ship.
 
 ```bash
 # Check CWD first
 CURRENT_DIR=$(pwd)
-if echo "$CURRENT_DIR" | grep -q "/trees/"; then
+if echo "$CURRENT_DIR" | grep -q "/.claude/worktrees/"; then
     WORKTREE_PATH="$CURRENT_DIR"
 fi
 
@@ -32,7 +32,7 @@ fi
 
 # Or auto-detect
 if [ -z "$WORKTREE_PATH" ]; then
-    WORKTREES=$(git worktree list --porcelain | grep "^worktree.*trees/" | sed 's/^worktree //')
+    WORKTREES=$(git worktree list --porcelain | grep "^worktree.*.claude/worktrees/" | sed 's/^worktree //')
     WORKTREE_COUNT=$(echo "$WORKTREES" | grep -c .)
     if [ "$WORKTREE_COUNT" -eq 1 ]; then
         WORKTREE_PATH="$WORKTREES"
@@ -41,7 +41,7 @@ if [ -z "$WORKTREE_PATH" ]; then
         echo "$WORKTREES"
         # Stop and ask user
     else
-        echo "SHIP ABORTED: No worktrees found under ./trees/"
+        echo "SHIP ABORTED: No worktrees found under .claude/worktrees/"
     fi
 fi
 ```
@@ -105,9 +105,9 @@ This card is compact and factual. No narration, no flair -- just flight data.
 Extract task ID from the worktree directory name or branch name:
 
 ```bash
-# Extract from worktree path: ./trees/PROJ-123-work → PROJ-123
-# Or: ./trees/reaper-a3f-oauth → reaper-a3f
-# Or: ./trees/issue-456-ratelimit → #456
+# Extract from worktree path: .claude/worktrees/PROJ-123-work → PROJ-123
+# Or: .claude/worktrees/reaper-a3f-oauth → reaper-a3f
+# Or: .claude/worktrees/issue-456-ratelimit → #456
 WORKTREE_NAME=$(basename "$WORKTREE_PATH")
 
 # Try Jira pattern: PROJ-123

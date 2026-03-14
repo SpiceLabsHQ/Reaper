@@ -117,16 +117,16 @@ Apply this hierarchy consistently across all integration code:
   agentName: 'integration-engineer',
   targetedTestType: 'integration changes',
   testExamples: `# ✅ CORRECT: Test only your integration code
-(cd "./trees/[TASK_ID]-integration" && npm test -- path/to/stripe-client.test.js)
-(cd "./trees/[TASK_ID]-integration" && npm test -- --testNamePattern="Stripe integration")
+(cd ".claude/worktrees/[TASK_ID]-integration" && npm test -- path/to/stripe-client.test.js)
+(cd ".claude/worktrees/[TASK_ID]-integration" && npm test -- --testNamePattern="Stripe integration")
 
 # ✅ CORRECT: Python - test only your integration module
-(cd "./trees/[TASK_ID]-integration" && pytest tests/integrations/test_stripe.py)
+(cd ".claude/worktrees/[TASK_ID]-integration" && pytest tests/integrations/test_stripe.py)
 
 # ✅ CORRECT: PHP - test only your integration class
-(cd "./trees/[TASK_ID]-integration" && ./vendor/bin/phpunit tests/Integrations/StripeTest.php)`,
-  wrongExamples: `(cd "./trees/[TASK_ID]-integration" && npm test)  # DON'T DO THIS
-(cd "./trees/[TASK_ID]-integration" && pytest)     # DON'T DO THIS`,
+(cd ".claude/worktrees/[TASK_ID]-integration" && ./vendor/bin/phpunit tests/Integrations/StripeTest.php)`,
+  wrongExamples: `(cd ".claude/worktrees/[TASK_ID]-integration" && npm test)  # DON'T DO THIS
+(cd ".claude/worktrees/[TASK_ID]-integration" && pytest)     # DON'T DO THIS`,
   agentResponsibilities: `- Mock external service responses (RED)
 - Implement integration with proper error handling (GREEN)
 - Refactor for resilience and maintainability (BLUE)
@@ -136,15 +136,15 @@ Apply this hierarchy consistently across all integration code:
 - Confirm idempotency: send the same event twice and verify it is processed only once`,
   cycleTitle: 'Integration TDD Cycle',
   cycleContent: `# Phase 1: RED - Create mocks and write failing tests
-(cd "./trees/[TASK_ID]-integration" && npm test -- path/to/integration.test.js)
+(cd ".claude/worktrees/[TASK_ID]-integration" && npm test -- path/to/integration.test.js)
 # Tests should FAIL, proving integration doesn't exist yet
 
 # Phase 2: GREEN - Implement integration to pass tests
-(cd "./trees/[TASK_ID]-integration" && npm test -- path/to/integration.test.js)
+(cd ".claude/worktrees/[TASK_ID]-integration" && npm test -- path/to/integration.test.js)
 # Tests should PASS with mocked external services
 
 # Phase 3: BLUE - Refactor for resilience
-(cd "./trees/[TASK_ID]-integration" && npm test -- path/to/integration.test.js)
+(cd ".claude/worktrees/[TASK_ID]-integration" && npm test -- path/to/integration.test.js)
 # Tests still PASS after adding retries, circuit breakers, etc.`
 }) %>
 <%- include('partials/artifact-cleanup-coding') %>
@@ -158,7 +158,7 @@ Return a minimal JSON object. The orchestrator verifies all claims via quality g
 ```json
 {
   "task_id": "PROJ-123",
-  "worktree_path": "./trees/PROJ-123-integration",
+  "worktree_path": ".claude/worktrees/PROJ-123-integration",
   "work_completed": "Integrated Stripe payment processing with webhook handlers",
   "files_modified": ["src/payments/stripe-client.js", "src/webhooks/stripe-handler.js", "tests/payments/stripe.test.js"],
   "unfinished": []

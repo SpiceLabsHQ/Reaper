@@ -34,9 +34,9 @@ Before starting work, validate these three requirements:
 - ❌ "DESCRIPTION: add feature" (too vague)
 
 ### 2. WORKTREE_PATH
-- **Required Format**: ./trees/[task-id]-description
-- **If Missing**: EXIT with "ERROR: Worktree path required (e.g., ./trees/PROJ-123-implementation)"
-- **Validation**: Path must exist and be under ./trees/ directory
+- **Required Format**: .claude/worktrees/[task-id]-description
+- **If Missing**: EXIT with "ERROR: Worktree path required (e.g., .claude/worktrees/PROJ-123-implementation)"
+- **Validation**: Path must exist and be under .claude/worktrees/ directory
 - **Check**: Path must be accessible and properly isolated
 
 ### 3. DESCRIPTION (Detailed Feature Requirements)
@@ -180,25 +180,25 @@ feature-developer responsibilities:
 **Test YOUR changes only—not the full suite:**
 ```bash
 # Test only the files you created/modified
-(cd &#34;./trees/[TASK_ID]-implementation&#34; &amp;&amp; npm test -- path/to/your/feature.test.js)
-(cd &#34;./trees/[TASK_ID]-implementation&#34; &amp;&amp; pytest tests/test_your_feature.py)
-(cd &#34;./trees/[TASK_ID]-implementation&#34; &amp;&amp; ./vendor/bin/phpunit tests/YourFeatureTest.php)
+(cd &#34;.claude/worktrees/[TASK_ID]-implementation&#34; &amp;&amp; npm test -- path/to/your/feature.test.js)
+(cd &#34;.claude/worktrees/[TASK_ID]-implementation&#34; &amp;&amp; pytest tests/test_your_feature.py)
+(cd &#34;.claude/worktrees/[TASK_ID]-implementation&#34; &amp;&amp; ./vendor/bin/phpunit tests/YourFeatureTest.php)
 ```
 **Avoid full suite runs:**
 ```bash
-(cd &#34;./trees/[TASK_ID]-implementation&#34; &amp;&amp; npm test)  # Runs full suite -- don&#39;t
-(cd &#34;./trees/[TASK_ID]-implementation&#34; &amp;&amp; pytest)     # Runs full suite -- don&#39;t
+(cd &#34;.claude/worktrees/[TASK_ID]-implementation&#34; &amp;&amp; npm test)  # Runs full suite -- don&#39;t
+(cd &#34;.claude/worktrees/[TASK_ID]-implementation&#34; &amp;&amp; pytest)     # Runs full suite -- don&#39;t
 ```
 ### TDD Red-Green-Refactor Cycle
 ```bash
 # RED - Tests FAIL (feature doesn&#39;t exist yet)
-(cd &#34;./trees/[TASK_ID]-implementation&#34; &amp;&amp; npm test -- path/to/feature-test.js)
+(cd &#34;.claude/worktrees/[TASK_ID]-implementation&#34; &amp;&amp; npm test -- path/to/feature-test.js)
 
 # GREEN - Tests PASS (feature works)
-(cd &#34;./trees/[TASK_ID]-implementation&#34; &amp;&amp; npm test -- path/to/feature-test.js)
+(cd &#34;.claude/worktrees/[TASK_ID]-implementation&#34; &amp;&amp; npm test -- path/to/feature-test.js)
 
 # BLUE - Tests still PASS (refactored cleanly)
-(cd &#34;./trees/[TASK_ID]-implementation&#34; &amp;&amp; npm test -- path/to/feature-test.js)
+(cd &#34;.claude/worktrees/[TASK_ID]-implementation&#34; &amp;&amp; npm test -- path/to/feature-test.js)
 ```
 **The test-runner agent handles full suite validation**—focus on your changes only.
 
@@ -372,7 +372,7 @@ Return this structure. The orchestrator verifies all claims via quality gates.
 ```json
 {
   "task_id": "PROJ-123",
-  "worktree_path": "./trees/PROJ-123-implementation",
+  "worktree_path": ".claude/worktrees/PROJ-123-implementation",
   "work_completed": "Implemented OAuth2 authentication with Google and GitHub providers",
   "files_modified": ["src/auth/oauth.js", "src/auth/providers.js", "tests/auth/oauth.test.js"],
   "unfinished": []

@@ -31,7 +31,7 @@ if [ -n "${TASK_ID}" ]; then
 fi
 
 # Ensure we're in the main repository
-if [[ "$PWD" == *"/trees/"* ]]; then
+if [[ "$PWD" == *"/.claude/worktrees/"* ]]; then
   echo "Error: Run this command from the main repository, not from within a worktree"
   exit 1
 fi
@@ -166,14 +166,14 @@ render_gauge() {
 # ── Collect worktree list ─────────────────────────────
 WORKTREE_LIST=()
 if [ -n "${TASK_ID}" ]; then
-  if [ -d "trees" ] && ls trees/${TASK_ID}-* >/dev/null 2>&1; then
-    for worktree in trees/${TASK_ID}-*; do
+  if [ -d ".claude/worktrees" ] && ls .claude/worktrees/${TASK_ID}-* >/dev/null 2>&1; then
+    for worktree in .claude/worktrees/${TASK_ID}-*; do
       WORKTREE_LIST+=("$worktree")
     done
   fi
 else
-  if [ -d "trees" ]; then
-    for worktree in trees/*; do
+  if [ -d ".claude/worktrees" ]; then
+    for worktree in .claude/worktrees/*; do
       [ -d "$worktree" ] && WORKTREE_LIST+=("$worktree")
     done
   fi
@@ -397,11 +397,11 @@ for entry in "${SORTED_FLEET[@]}"; do
 done
 
 # Disk usage
-if [ -d "trees" ] && [ "${VERBOSE}" = "true" ]; then
+if [ -d ".claude/worktrees" ] && [ "${VERBOSE}" = "true" ]; then
   echo ""
   echo "  DISK USAGE"
   echo "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  du -sh trees/* 2>/dev/null | sort -h
+  du -sh .claude/worktrees/* 2>/dev/null | sort -h
 fi
 ```
 

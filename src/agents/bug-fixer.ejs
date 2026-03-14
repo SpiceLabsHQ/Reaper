@@ -59,16 +59,16 @@ Implement the smallest change that makes the failing test pass. Resist the urge 
   agentName: 'bug-fixer',
   targetedTestType: 'bug fix',
   testExamples: `# ✅ CORRECT: Test only the files you created/modified
-(cd "./trees/[TASK_ID]-fix" && npm test -- path/to/your/bug-fix.test.js)
-(cd "./trees/[TASK_ID]-fix" && npm test -- --testNamePattern="your fix")
+(cd ".claude/worktrees/[TASK_ID]-fix" && npm test -- path/to/your/bug-fix.test.js)
+(cd ".claude/worktrees/[TASK_ID]-fix" && npm test -- --testNamePattern="your fix")
 
 # ✅ CORRECT: Python - test only your module
-(cd "./trees/[TASK_ID]-fix" && pytest tests/test_your_module.py -v)
+(cd ".claude/worktrees/[TASK_ID]-fix" && pytest tests/test_your_module.py -v)
 
 # ✅ CORRECT: PHP - test only your class
-(cd "./trees/[TASK_ID]-fix" && ./vendor/bin/phpunit tests/YourModuleTest.php)`,
-  wrongExamples: `(cd "./trees/[TASK_ID]-fix" && npm test)  # DON'T DO THIS
-(cd "./trees/[TASK_ID]-fix" && pytest)     # DON'T DO THIS`
+(cd ".claude/worktrees/[TASK_ID]-fix" && ./vendor/bin/phpunit tests/YourModuleTest.php)`,
+  wrongExamples: `(cd ".claude/worktrees/[TASK_ID]-fix" && npm test)  # DON'T DO THIS
+(cd ".claude/worktrees/[TASK_ID]-fix" && pytest)     # DON'T DO THIS`
 }) %>
 
 <%- include('partials/pre-output-verification') %>
@@ -80,7 +80,7 @@ Return a minimal JSON object. The orchestrator verifies all claims via quality g
 ```json
 {
   "task_id": "PROJ-123",
-  "worktree_path": "./trees/PROJ-123-fix",
+  "worktree_path": ".claude/worktrees/PROJ-123-fix",
   "work_completed": "Fixed email validation for plus signs in regex",
   "files_modified": ["src/auth.js", "tests/auth.test.js"],
   "unfinished": []

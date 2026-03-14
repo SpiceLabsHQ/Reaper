@@ -29,7 +29,7 @@ After detecting TASK_SYSTEM, load the corresponding skill from the Platform Skil
 Extract from [ARGUMENTS] using natural language understanding:
 
 1. **Task identifier** -- look for task-like patterns (PROJ-123, repo-a3f, #456, sprint-5-auth). May be absent.
-2. **Worktree path** -- look for an explicit `./trees/...` path. May be absent.
+2. **Worktree path** -- look for an explicit `.claude/worktrees/...` path. May be absent.
 3. **Description** -- all remaining text after extracting the above.
 
 ### Validation Rules
@@ -57,7 +57,7 @@ The orchestrator can start with just a task ID (unlike coding agents) because it
 After parsing, assemble the implementation context:
 - If FETCH_ISSUE succeeded, use the fetched details (and append any user-provided description)
 - If no task system query was possible, use the user description as the full context
-- Set WORKTREE_PATH to the user-specified path, or generate one as `./trees/[TASK_ID]-work`
+- Set WORKTREE_PATH to the user-specified path, or generate one as `.claude/worktrees/[TASK_ID]-work`
 
 ## Plan File Discovery
 
@@ -189,6 +189,15 @@ This inspection runs once at launch. The TREE_FLAG value is fixed for the sessio
 
 Execute ALL work units from the plan. Do not present work to the user or proceed to the Completion section until every work unit in the TodoWrite plan is marked completed.
 
+### Session Worktree Setup
+
+Before executing any work units, deploy reaper:branch-manager to create the **session worktree** -- a named, persistent worktree at WORKTREE_PATH that owns the feature branch and real dependencies. This is the first layer of the two-layer worktree model:
+
+1. **Layer 1 -- Session worktree**: Created once per takeoff session at `.claude/worktrees/[TASK-ID]-work`. Holds the feature branch, installed dependencies, and serves as the merge target for agent work. Created by reaper:branch-manager.
+2. **Layer 2 -- Agent worktrees**: Ephemeral copies created automatically by Claude Code when agents deploy with `isolation: "worktree"`. Agents receive a fresh worktree and symlink vendor directories from the session worktree.
+
+After the session worktree is created, run a single dependency install in it (e.g., `npm install`, `composer install`, `pip install`, `bundle install` -- detect from project config). This is the only install for the entire session. Agent worktrees symlink these dependencies rather than reinstalling.
+
 ### Branch-Manager Session Tracking
 
 To reduce per-unit token overhead, reuse a single branch-manager agent session across all git operations within this takeoff run. Track the session using a variable named `BRANCH_MANAGER_SESSION_ID`:
@@ -208,12 +217,37 @@ For each work unit in the plan, repeat this cycle:
      ███░░░░░░░  TAKING OFF  Step X.Y: [unit name]
    ```
    This is distinct from the Preflight Card (which uses `TAXIING` to show work is queued). The TAKING OFF gauge fires once per work unit, immediately before the agent is deployed, giving the developer a clear signal that this specific unit is now launching.
-3. Deploy the specified coding agent using the deployment template below
-4. **Transition to ON APPROACH**: When the coding agent completes, the work unit enters the ON APPROACH state (coding done, quality gates not yet started). This is a transient state before gates begin.
-5. Run quality gates on the completed work (see Dynamic Gate Selection and Quality Gate Protocol below)
+3. Deploy the specified coding agent using the deployment template below, with `isolation: "worktree"` to give the agent an ephemeral worktree copy managed by Claude Code. Include the following instructions in the agent prompt:
+
+   **Vendor symlink instruction** (include verbatim in the agent prompt):
+   ```
+   VENDOR SYMLINKS: Before installing dependencies, check the session worktree at
+   [WORKTREE_PATH] for existing vendor directories and symlink them into your
+   worktree to avoid redundant installs. Detect and symlink any that exist:
+   node_modules, vendor, .venv, .bundle, target, .gradle, Pods.
+   Example: ln -s [WORKTREE_PATH]/node_modules ./node_modules
+   Note: Projects may automate this via a WorktreeCreate hook — if deps are already
+   present after worktree creation, skip manual symlinking.
+   ```
+
+   **No-commit instruction** (include verbatim in the agent prompt):
+   ```
+   GIT POLICY: Do NOT run git add, git commit, git push, or any git write operations.
+   The orchestrator owns all commits. Return your worktreePath and files_modified when done.
+   ```
+
+4. **Transition to ON APPROACH**: When the coding agent completes, the work unit enters the ON APPROACH state (coding done, quality gates not yet started). Capture the agent's returned `worktreePath` -- this is the path to the ephemeral agent worktree where changes live. This is a transient state before gates begin.
+5. Run quality gates on the completed work (see Dynamic Gate Selection and Quality Gate Protocol below). **Gate-specific isolation rules:**
+   - **test-runner (Gate 1)**: Deploy directly in the agent worktree (`worktreePath` returned by the coding agent) with no `isolation` parameter. The agent worktree contains the code changes and has access to dependencies via the symlinks established during agent setup.
+   - **Code reviewers (Gate 2 SME)**: Deploy with `isolation: "worktree"` for read-only review in an auto-cleaned ephemeral worktree.
+   - **security-auditor (Gate 2)**: Deploy with `isolation: "worktree"` for read-only analysis in an auto-cleaned ephemeral worktree.
 6. **Render Gate Panel**: After all gates for the current unit resolve, render a Gate Panel (from Visual Vocabulary) showing each gate agent with its gate status -- `PASS` for passed, `FAIL` for failed. Include key metrics inline (e.g., test count, coverage percentage, issue count).
 <%- include('partials/work-unit-cleanup') %>
-7. **Commit to feature branch**: After all gates pass, use reaper:branch-manager to commit the current state to the feature branch in WORKTREE_PATH. This is a commit-only step -- do not merge to develop. Use conventional commit format based on the work completed (e.g., `feat: implement X`, `fix: resolve Y`). If `BRANCH_MANAGER_SESSION_ID` is set, resume that session via `Task --resume BRANCH_MANAGER_SESSION_ID`; otherwise deploy a fresh reaper:branch-manager agent and store the returned `agent_id` as `BRANCH_MANAGER_SESSION_ID`. If resume fails, fall back to a fresh deployment and update `BRANCH_MANAGER_SESSION_ID`. Always pass `TREE_FLAG: [FLAT_TREE or COMPLEX_TREE — determined at launch]` in the branch-manager prompt context.
+7. **Commit and merge agent work into session branch**: After all gates pass, use reaper:branch-manager to integrate the agent's changes into the session branch only -- do not merge to develop. Direct branch-manager to:
+   a. Commit all changes in the agent worktree (at the `worktreePath` returned by the coding agent) using conventional commit format (e.g., `feat: implement X`, `fix: resolve Y`).
+   b. Fast-forward merge (`--ff-only`) the agent branch into the session branch (the feature branch in WORKTREE_PATH).
+   c. Clean up the agent worktree after successful merge.
+   If `BRANCH_MANAGER_SESSION_ID` is set, resume that session via `Task --resume BRANCH_MANAGER_SESSION_ID`; otherwise deploy a fresh reaper:branch-manager agent and store the returned `agent_id` as `BRANCH_MANAGER_SESSION_ID`. If resume fails, fall back to a fresh deployment and update `BRANCH_MANAGER_SESSION_ID`. Always pass `TREE_FLAG: [FLAT_TREE or COMPLEX_TREE — determined at launch]` in the branch-manager prompt context.
 
    **Branch-manager error handling (commit step)**: Inspect the branch-manager JSON response before continuing:
    - If `status` is `"error"` and `git_state.merge_conflicts_detected` is `true`: render a **Merge Conflict Card** (see below), surface all entries from `blocking_issues[]` to the user, and **pause the workflow**. Do NOT auto-resolve or auto-retry. Await explicit user instruction before proceeding.
@@ -281,9 +315,9 @@ When multiple work units share a group number and have no mutual dependencies, d
 
 ### Strategy Notes
 
-- **very_small_direct**: Deploy reaper:branch-manager to create a feature branch and shared worktree (e.g., `./trees/TASK-ID-work`), then deploy a single coding agent. Quality gates still apply.
-- **medium_single_branch**: Deploy reaper:branch-manager to create a single shared worktree (e.g., `./trees/TASK-ID-work`) on a feature branch. Agents work within that worktree sequentially or in parallel. File assignments must not overlap for parallel work. Worktree cleanup happens at Completion after all units pass gates.
-- **large_multi_worktree**: Each agent gets its own worktree. Deploy reaper:branch-manager to create isolated worktrees and merge completed worktrees. Remove each per-unit worktree immediately after gates pass (via branch-manager).
+- **very_small_direct**: Deploy reaper:branch-manager to create a feature branch and session worktree (e.g., `.claude/worktrees/TASK-ID-work`) with dependency installation. Then deploy a single coding agent with `isolation: "worktree"`. Quality gates still apply.
+- **medium_single_branch**: Deploy reaper:branch-manager to create a single session worktree (e.g., `.claude/worktrees/TASK-ID-work`) on a feature branch with dependency installation. Coding agents deploy with `isolation: "worktree"` sequentially or in parallel. File assignments must not overlap for parallel work. Worktree cleanup happens at Completion after all units pass gates.
+- **large_multi_worktree**: A session worktree holds the feature branch. Each coding agent deploys with `isolation: "worktree"` for an ephemeral copy. Deploy reaper:branch-manager to create the session worktree and merge completed agent branches. Remove each per-unit agent worktree immediately after gates pass (via branch-manager).
 
 ### Context Hygiene for Long Sessions
 
@@ -478,7 +512,7 @@ For **medium_single_branch** and **very_small_direct** strategies: resume the br
 >  **8. Classify files and select gate profile** (Dynamic Gate Selection)
 >  **9. Run quality gates** through the profile sequence
 >  **10. Auto-iterate** on gate failures (differential retry limits)
->  **11. Deploy branch-manager to commit** to the feature branch (commit-only, do not merge)
+>  **11. Deploy branch-manager** to commit in agent worktree, --ff-only merge to session branch, cleanup
 >  **--> Check TodoWrite: pending units remain? Loop to step 6**
 
 12. Extract learning patterns from multi-iteration gates
