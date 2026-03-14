@@ -1138,6 +1138,128 @@ describe('Contract: test-runner validation does not declare PLAN_CONTEXT or TEST
 });
 
 // ---------------------------------------------------------------------------
+// Contract: test-runner uses synchronous concurrent execution protocol (not background polling)
+// ---------------------------------------------------------------------------
+
+describe('Contract: test-runner uses synchronous concurrent execution protocol', () => {
+  const filePath = path.join(AGENTS_DIR, 'test-runner.md');
+  const relative = 'agents/test-runner.md';
+
+  it(`${relative} must not reference run_in_background`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      !content.includes('run_in_background'),
+      `${relative} must not reference run_in_background — use synchronous concurrent execution instead`
+    );
+  });
+
+  it(`${relative} must not reference TaskOutput`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      !content.includes('TaskOutput'),
+      `${relative} must not reference TaskOutput — use file-based output capture instead`
+    );
+  });
+
+  it(`${relative} must not reference polling`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      !content.match(/\bpoll\b/i),
+      `${relative} must not reference polling — synchronous wait replaces polling`
+    );
+  });
+
+  it(`${relative} must describe concurrent & subprocesses with wait`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('wait'),
+      `${relative} must describe using wait for concurrent subprocess completion`
+    );
+    assert.ok(
+      content.includes('&'),
+      `${relative} must describe background subprocesses with &`
+    );
+  });
+
+  it(`${relative} must describe task-scoped output filenames`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('TASK_ID') ||
+        content.includes('task_id') ||
+        content.includes('${TASK}'),
+      `${relative} must include task ID in output filenames to prevent collisions`
+    );
+    assert.ok(
+      content.match(/stdout.*log|stderr.*log|output.*log/i),
+      `${relative} must describe log file output capture`
+    );
+  });
+
+  it(`${relative} must describe printing output file paths before execution`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.match(/print.*path|echo.*path|output.*file.*path/i) ||
+        content.match(/before.*launch|before.*execut/i),
+      `${relative} must describe printing output file paths before launching commands`
+    );
+  });
+
+  it(`${relative} must describe discrete exit code capture`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('$?') ||
+        content.match(/exit.code/i) ||
+        content.match(/EXIT_CODE/),
+      `${relative} must describe capturing discrete exit codes per command`
+    );
+  });
+
+  it(`${relative} must specify timeout=600000`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('timeout=600000'),
+      `${relative} must specify timeout=600000 for the synchronous Bash call`
+    );
+  });
+
+  it(`${relative} tool call budget must account for both Bash and Read tools`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // Budget must mention Read calls (not just Bash calls) since Step 2 uses Read tool
+    assert.ok(
+      content.match(/Read\b.*call/i) || content.match(/call.*Read\b/i),
+      `${relative} tool call budget must mention Read tool calls — Step 2 uses Read, not Bash`
+    );
+    // Budget must not say "Bash tool calls total" since the workflow uses both Bash and Read
+    assert.ok(
+      !content.match(/\d+-\d+ Bash tool calls total/),
+      `${relative} tool call budget must not claim all calls are Bash — the workflow uses both Bash and Read tools`
+    );
+  });
+
+  it(`${relative} must show conditional bash logic for lint skip in template`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // The bash template must show actual if/else conditional syntax (not just a comment),
+    // because Haiku follows templates literally. Look for bash if-then patterns like:
+    // if [ "$LINT_COMMAND" != "skip" ]; then ... fi
+    assert.ok(
+      content.match(/if\s*\[.*skip.*\]/) ||
+        content.match(/if\s*\[\[.*skip.*\]\]/),
+      `${relative} bash template must show conditional [ ] or [[ ]] test for LINT_COMMAND skip — a comment is not enough for Haiku`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Contract: takeoff Step 3.5 passes lightweight PLAN_CONTEXT reference (ADR-0012)
 // ---------------------------------------------------------------------------
 
