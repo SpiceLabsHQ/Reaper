@@ -179,20 +179,22 @@ Commit patterns found (1+ match in last 10 commits)?
 
 ### Platform Skill Routing
 
-After detection, load the corresponding skill for platform-specific operations:
+After detection, **immediately invoke the Skill tool** with the corresponding skill name before doing anything else. This is mandatory — do not attempt to use abstract operations without loading the skill first.
 
-| TASK_SYSTEM | Skill |
+| TASK_SYSTEM | Skill to invoke |
 |-------------|-------|
 | GitHub | `reaper:issue-tracker-github` |
 | Beads | `reaper:issue-tracker-beads` |
 | Jira | `reaper:issue-tracker-jira` |
 | markdown_only | `reaper:issue-tracker-planfile` |
 
-The loaded skill provides platform-specific command mappings for all abstract operations below.
+**Example:** If `TASK_SYSTEM` = `Beads`, call: `Skill(skill: "reaper:issue-tracker-beads")`
+
+The skill returns the exact CLI commands for every abstract operation below. **Do not guess CLI syntax** — the skill is the single source of truth for platform-specific commands.
 
 ### Abstract Operations
 
-Use these operations to interact with whatever task system is detected. The LLM maps each operation to the appropriate system commands or markdown equivalents.
+The operations below are abstract. Their concrete implementations come exclusively from the loaded skill. Never fabricate commands — invoke the skill, read its output, and follow the mappings it provides.
 
 | Operation | Purpose |
 |-----------|---------|
