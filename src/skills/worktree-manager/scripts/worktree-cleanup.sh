@@ -291,7 +291,7 @@ check_open_file_handles() {
 
     # Run lsof to detect open file handles in the worktree directory
     local lsof_output
-    lsof_output=$(lsof +D "$abs_worktree_path" 2>/dev/null) || true
+    lsof_output=$(lsof +d "$abs_worktree_path" 2>/dev/null) || true
 
     if [[ -n "$lsof_output" ]]; then
         # Extract process info (PID and command name)

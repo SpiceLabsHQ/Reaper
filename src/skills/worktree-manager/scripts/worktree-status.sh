@@ -295,7 +295,7 @@ EOF
             log_ok "Dependencies installed"
         elif [[ "$deps_installed" == "false" ]]; then
             log_warn "Dependencies not installed"
-            echo "  Run: (cd $worktree_path && npm install)"
+            echo "  Run: (cd $worktree_path && npm install --prefer-offline)"
         else
             log_step "Dependency status unknown"
         fi
