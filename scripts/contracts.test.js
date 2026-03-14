@@ -6167,3 +6167,238 @@ describe('Contract: takeoff Per-Unit Cycle branch-manager handles commit-merge-c
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Contract: coding agents prohibit positive git commit/add/push instructions
+//
+// The architecture's core safety property: coding agents never commit. Each
+// agent that includes the git-prohibitions partial must mention git commit,
+// git add, and git push ONLY in prohibition context (e.g., "NEVER run",
+// "do NOT", "must not"). No positive/instructional usage is allowed.
+// ---------------------------------------------------------------------------
+
+describe('Contract: coding agents prohibit positive git commit/add/push instructions', () => {
+  // All agents that include the git-prohibitions partial
+  const agentsWithGitProhibitions = [
+    'bug-fixer',
+    'feature-developer',
+    'refactoring-dev',
+    'integration-engineer',
+    'deployment-engineer',
+    'performance-engineer',
+    'incident-responder',
+  ];
+
+  const prohibitionContext =
+    /do not|don't|never|prohibit|must not|should not|forbidden|not authorized|not allowed|❌/i;
+
+  const gitCommands = [
+    { pattern: /git commit/gi, label: 'git commit' },
+    { pattern: /git add/gi, label: 'git add' },
+    { pattern: /git push/gi, label: 'git push' },
+  ];
+
+  for (const agentName of agentsWithGitProhibitions) {
+    const filePath = agentFilePath(agentName);
+    const relative = `agents/${agentName}.md`;
+
+    for (const { pattern, label } of gitCommands) {
+      it(`${relative} uses "${label}" only in prohibition context`, () => {
+        assert.ok(fs.existsSync(filePath), `${relative} not found`);
+        const content = fs.readFileSync(filePath, 'utf8');
+        const prose = stripCodeBlocks(content);
+        const lines = prose.split('\n').filter((line) => pattern.test(line));
+
+        // Filter out lines that are in a prohibition context
+        const positiveUsages = lines.filter(
+          (line) => !prohibitionContext.test(line)
+        );
+
+        assert.strictEqual(
+          positiveUsages.length,
+          0,
+          `${relative} has positive (non-prohibited) "${label}" instructions — ` +
+            `found: ${positiveUsages.map((l) => l.trim()).join('; ')}`
+        );
+      });
+    }
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Contract: branch-manager JSON response schema operation names are scoped
+// to the JSON Response Format section (not loose full-file includes)
+// ---------------------------------------------------------------------------
+
+describe('Contract: branch-manager operation names appear in JSON Response Format section', () => {
+  const filePath = agentFilePath('branch-manager');
+  const relative = 'agents/branch-manager.md';
+
+  /**
+   * Extracts the JSON Response Format section from branch-manager content.
+   * Starts at "## JSON Response Format" and ends at the next ## heading.
+   * @param {string} content - Full markdown content
+   * @returns {string} The JSON Response Format section text
+   */
+  function getJsonResponseSection(content) {
+    const startMarker = '## JSON Response Format';
+    const startIndex = content.indexOf(startMarker);
+    if (startIndex === -1) {
+      return '';
+    }
+    const rest = content.slice(startIndex + startMarker.length);
+    const nextSectionMatch = rest.match(/\n## [^#]/);
+    if (nextSectionMatch) {
+      return content.slice(
+        startIndex,
+        startIndex + startMarker.length + nextSectionMatch.index
+      );
+    }
+    return content.slice(startIndex);
+  }
+
+  it(`${relative} has a JSON Response Format section`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getJsonResponseSection(content);
+    assert.ok(
+      section.length > 0,
+      `${relative} must contain a "## JSON Response Format" section`
+    );
+  });
+
+  it(`${relative} JSON Response Format section contains commit_agent_worktree operation`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getJsonResponseSection(content);
+    assert.ok(
+      section.includes('commit_agent_worktree'),
+      `${relative} JSON Response Format section must include commit_agent_worktree operation (ADR-0022)`
+    );
+  });
+
+  it(`${relative} JSON Response Format section contains ff_merge_agent_to_session operation`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getJsonResponseSection(content);
+    assert.ok(
+      section.includes('ff_merge_agent_to_session'),
+      `${relative} JSON Response Format section must include ff_merge_agent_to_session operation (ADR-0022)`
+    );
+  });
+
+  it(`${relative} JSON Response Format section contains cleanup_agent_worktree operation`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getJsonResponseSection(content);
+    assert.ok(
+      section.includes('cleanup_agent_worktree'),
+      `${relative} JSON Response Format section must include cleanup_agent_worktree operation (ADR-0022)`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: no ./trees/ path references in templates or generated files
+//
+// After the migration to .claude/worktrees/, the old ./trees/ path must not
+// appear in any template source or generated output. ADR docs and this test
+// file are excluded (they reference the old path historically).
+// ---------------------------------------------------------------------------
+
+describe('Contract: no ./trees/ path references in templates or generated files', () => {
+  /**
+   * Collects all template source files (src/**\/*.ejs) and generated output
+   * files (agents/*.md, commands/*.md, skills/**\/*.md, skills/**\/*.sh).
+   * @returns {{ file: string, relative: string }[]}
+   */
+  function collectFilesToCheck() {
+    const srcDir = path.join(ROOT, 'src');
+    const results = [];
+
+    // Template source files
+    const ejsFiles = collectFiles(srcDir, (name) => name.endsWith('.ejs'));
+    for (const file of ejsFiles) {
+      results.push({ file, relative: path.relative(ROOT, file) });
+    }
+
+    // Generated agent files
+    const agentFiles = collectFiles(AGENTS_DIR, (name) => name.endsWith('.md'));
+    for (const file of agentFiles) {
+      results.push({ file, relative: path.relative(ROOT, file) });
+    }
+
+    // Generated command files
+    const commandFiles = collectFiles(COMMANDS_DIR, (name) =>
+      name.endsWith('.md')
+    );
+    for (const file of commandFiles) {
+      results.push({ file, relative: path.relative(ROOT, file) });
+    }
+
+    // Generated skill files (.md and .sh)
+    const skillFiles = collectFiles(
+      SKILLS_DIR,
+      (name) => name.endsWith('.md') || name.endsWith('.sh')
+    );
+    for (const file of skillFiles) {
+      results.push({ file, relative: path.relative(ROOT, file) });
+    }
+
+    return results;
+  }
+
+  const filesToCheck = collectFilesToCheck();
+
+  for (const { file, relative } of filesToCheck) {
+    it(`${relative} does not contain ./trees/ path references`, () => {
+      const content = fs.readFileSync(file, 'utf8');
+      const lines = content.split('\n');
+      const violations = [];
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (/\.\/trees\//.test(line)) {
+          // Skip lines that are in a migration/prohibition context comment
+          if (
+            /migrat|old path|deprecated|previously|no longer|replaced by/i.test(
+              line
+            )
+          ) {
+            continue;
+          }
+          violations.push(`  line ${i + 1}: ${line.trim()}`);
+        }
+      }
+
+      assert.strictEqual(
+        violations.length,
+        0,
+        `${relative} contains ./trees/ path references (should use .claude/worktrees/):\n${violations.join('\n')}`
+      );
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Contract: guard extractFullPerUnitCycle end boundary
+//
+// The extractFullPerUnitCycle helper depends on "### Continuation Rule" as
+// its end boundary. If that heading is removed or renamed, the extractor
+// silently falls back to a weaker ## boundary. This guard ensures the
+// heading exists in takeoff.md so dependent tests remain reliable.
+// ---------------------------------------------------------------------------
+
+describe('Contract: takeoff.md contains Continuation Rule heading (extractFullPerUnitCycle boundary guard)', () => {
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
+
+  it(`${relative} must contain '### Continuation Rule' heading (extractFullPerUnitCycle depends on it)`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert.ok(
+      content.includes('### Continuation Rule'),
+      `${relative} must contain '### Continuation Rule' heading (extractFullPerUnitCycle depends on it)`
+    );
+  });
+});

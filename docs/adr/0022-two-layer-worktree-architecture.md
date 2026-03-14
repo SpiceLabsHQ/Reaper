@@ -116,6 +116,14 @@ This flow means the session worktree accumulates commits from all agents via fas
 - Agent worktree paths are auto-assigned by Claude Code and are not predictable. The orchestrator cannot reference a specific agent worktree by path before the agent is deployed. This is acceptable because the orchestrator communicates with agents through their prompts and responses, not by directly accessing their worktree paths. However, it means gate agents must be deployed into the same agent worktree (or given its path) to validate changes before the worktree is cleaned up.
 - The `.claude/worktrees/` path is inside the `.claude/` directory, which is typically gitignored. Session worktrees at this path will not appear in `git status` from root, reducing visibility of active sessions. The `status-worktrees` command must be updated to scan `.claude/worktrees/` instead of (or in addition to) `./trees/`.
 - Migration from `./trees/` to `.claude/worktrees/` requires updating all references across agents, commands, skills, and documentation. During the transition, both path conventions may coexist, creating potential confusion about which worktrees follow the old single-layer model and which follow the new two-layer model.
+- **Vendor directory lateral movement.** A misbehaving agent that modifies files inside a symlinked vendor directory (e.g., `node_modules/`) poisons the shared dependency tree for all concurrent agents. This is a lateral movement vector across agent trust boundaries, not just a reliability concern -- one compromised or buggy agent can affect the execution environment of every other agent sharing the same session worktree's dependencies.
+- **Security scanning gap.** Security scanning tools running from the project root will skip `.claude/worktrees/` contents because the directory is gitignored. Any security scans must target session worktrees explicitly (e.g., `trivy fs .claude/worktrees/TASK-ID-work/`) rather than relying on root-level scanning.
+
+---
+
+## Dependencies
+
+This architecture depends on Claude Code's `isolation: worktree` mode for subagent execution. If this feature is removed or its behavior changes (e.g., worktrees are no longer created at predictable filesystem paths, or agent worktrees are cleaned up before the orchestrator can access them), the two-layer model must be re-evaluated.
 
 ---
 

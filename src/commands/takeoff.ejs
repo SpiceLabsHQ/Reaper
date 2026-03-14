@@ -236,7 +236,7 @@ For each work unit in the plan, repeat this cycle:
    The orchestrator owns all commits. Return your worktreePath and files_modified when done.
    ```
 
-4. **Transition to ON APPROACH**: When the coding agent completes, the work unit enters the ON APPROACH state (coding done, quality gates not yet started). Capture the agent's returned `worktreePath` -- this is the path to the ephemeral agent worktree where changes live. This is a transient state before gates begin.
+4. **Transition to ON APPROACH**: When the coding agent completes, the work unit enters the ON APPROACH state (coding done, quality gates not yet started). Capture the agent's returned `worktreePath` -- this is the path to the ephemeral agent worktree where changes live. This is a transient state before gates begin. Verify the returned `worktreePath` is a valid directory (`test -d`) before deploying gate agents. If the path is missing or invalid, render a FAULT gauge and halt the work unit.
 5. Run quality gates on the completed work (see Dynamic Gate Selection and Quality Gate Protocol below). **Gate-specific isolation rules:**
    - **test-runner (Gate 1)**: Deploy directly in the agent worktree (`worktreePath` returned by the coding agent) with no `isolation` parameter. The agent worktree contains the code changes and has access to dependencies via the symlinks established during agent setup.
    - **Code reviewers (Gate 2 SME)**: Deploy with `isolation: "worktree"` for read-only review in an auto-cleaned ephemeral worktree.
