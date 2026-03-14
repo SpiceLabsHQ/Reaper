@@ -163,21 +163,21 @@ All four skills expose the same abstract operations:
 
 ## Worktree Manager (1 skill)
 
-The worktree-manager skill provides safe git worktree lifecycle management. It is loaded by `reaper:branch-manager` during worktree creation and removal, and by the `takeoff` command during integration cleanup. You never invoke it directly.
+The worktree-manager skill provides safe git worktree lifecycle management for session worktrees. In the two-layer architecture ([ADR-0022](adr/0022-two-layer-worktree-architecture.md)), it manages the persistent session worktrees at `.claude/worktrees/` -- agent worktrees are handled automatically by Claude Code's `isolation: worktree` mode. It is loaded by `reaper:branch-manager` during session setup and teardown. You never invoke it directly.
 
 ### `worktree-manager`
 
-**Purpose**: Safe git worktree lifecycle management. Prevents the CWD deletion error that permanently breaks Claude's shell session when a worktree is removed while the shell is inside it.
+**Purpose**: Safe session worktree lifecycle management. Prevents the CWD deletion error that permanently breaks Claude's shell session when a worktree is removed while the shell is inside it.
 
-**Invoked by**: `reaper:branch-manager` (for worktree creation and removal during integration), and `takeoff` (during cleanup after a work unit completes). Never invoked directly.
+**Invoked by**: `reaper:branch-manager` (for session worktree creation at takeoff start and removal at session end). Never invoked directly.
 
-**What it produces**: Shell scripts that handle the full worktree lifecycle -- create, list, status-check, and cleanup -- with built-in CWD safety guards. The cleanup script ensures Claude's shell always navigates to the project root before removing a worktree.
+**What it produces**: Shell scripts that handle the session worktree lifecycle -- create, list, status-check, and cleanup -- with built-in CWD safety guards. The cleanup script ensures Claude's shell always navigates to the project root before removing a worktree.
 
 **Available scripts** (located at `skills/worktree-manager/scripts/`):
 
 | Script                | Purpose                                                                 |
 | --------------------- | ----------------------------------------------------------------------- |
-| `worktree-create.sh`  | Create a new worktree with a feature branch off `develop`               |
+| `worktree-create.sh`  | Create a new session worktree with a feature branch off `develop`       |
 | `worktree-list.sh`    | List all worktrees with optional JSON output and verbose status         |
 | `worktree-status.sh`  | Check health of a specific worktree                                     |
 | `worktree-cleanup.sh` | Safely remove a worktree; requires `--keep-branch` or `--delete-branch` |
@@ -186,7 +186,7 @@ The worktree-manager skill provides safe git worktree lifecycle management. It i
 
 ```bash
 # Correct: cd to project root first, then clean up
-cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./trees/PROJ-123 --delete-branch
+cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh .claude/worktrees/PROJ-123 --delete-branch
 ```
 
 Protected branches (`develop`, `main`, `master`) are never deleted by the cleanup script regardless of the flag passed.

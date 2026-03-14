@@ -126,11 +126,11 @@ When `reaper:workflow-planner` is invoked for a new task, it routes to the `reap
 
 ### Strategy Selection
 
-| Strategy                 | Score Range | Typical Use Case                                      | Environment                   |
-| ------------------------ | ----------- | ----------------------------------------------------- | ----------------------------- |
-| **Small Direct**         | 0-10        | Config changes, simple fixes, single-file docs        | Current branch                |
-| **Medium Branch**        | 11-35       | Multi-file features, no file overlap between units    | Feature branch                |
-| **Large Multi-Worktree** | >35         | Complex features, file overlap, high integration risk | Isolated `./trees/` worktrees |
+| Strategy                 | Score Range | Typical Use Case                                      | Environment                             |
+| ------------------------ | ----------- | ----------------------------------------------------- | --------------------------------------- |
+| **Small Direct**         | 0-10        | Config changes, simple fixes, single-file docs        | Current branch                          |
+| **Medium Branch**        | 11-35       | Multi-file features, no file overlap between units    | Feature branch                          |
+| **Large Multi-Worktree** | >35         | Complex features, file overlap, high integration risk | Isolated `.claude/worktrees/` worktrees |
 
 Two conditions force Large Multi-Worktree regardless of score:
 
@@ -145,7 +145,7 @@ A content override exists for the opposite direction: if a task involves five or
 
 **Medium Branch** -- Multiple agents work sequentially or in parallel on a single feature branch. File assignments are exclusive -- no two agents touch the same file. If an agent detects that its assigned files were modified unexpectedly, it exits immediately. Quality gates run once on the full changeset after all agents complete.
 
-**Large Multi-Worktree** -- Each work stream gets its own isolated worktree under `./trees/`. Agents work independently without risk of conflict. A review branch serves as the consolidation target. After each worktree's gates pass, `reaper:branch-manager` merges it into the review branch. A final integration test runs on the consolidated result before presenting to you.
+**Large Multi-Worktree** -- Each work stream gets its own isolated worktree under `.claude/worktrees/`. Agents work independently without risk of conflict. A review branch serves as the consolidation target. After each worktree's gates pass, `reaper:branch-manager` merges it into the review branch. A final integration test runs on the consolidated result before presenting to you.
 
 ### Strategy Escalation
 
@@ -161,48 +161,60 @@ Partial work is committed before escalation so nothing is lost.
 
 ## Worktree Lifecycle
 
-Worktrees are Reaper's isolation mechanism for complex work. Each worktree is a full, independent copy of the repository with its own branch, working directory, and installed dependencies.
+Reaper uses a two-layer worktree architecture to separate expensive session setup from cheap per-agent isolation. See [ADR-0022](adr/0022-two-layer-worktree-architecture.md) for the full architectural rationale.
+
+### Two Layers
+
+**Session worktrees** (Layer 1) are persistent, orchestrator-owned worktrees created once per takeoff session. They hold the feature branch and real dependency installations (`node_modules/`, `vendor/`, `.venv/`, etc.). Located at `.claude/worktrees/TASK-ID-desc`.
+
+**Agent worktrees** (Layer 2) are ephemeral, auto-managed by Claude Code's `isolation: worktree` mode. Each agent gets its own isolated filesystem view. Agent worktrees symlink vendor directories from the session worktree, so dependencies are installed once and shared across all agents in the session.
 
 ### Creation
 
-When the workflow-planner selects Large Multi-Worktree strategy, the orchestrator creates worktrees using the `worktree-manager` skill:
+When takeoff starts, the orchestrator creates a session worktree using `reaper:branch-manager`:
 
 ```
-./trees/PROJ-123-webhook-retry/
-  (full project copy)
+.claude/worktrees/PROJ-123-webhook-retry/
+  (full project copy with installed dependencies)
   on branch: feature/PROJ-123-webhook-retry
 ```
 
-The naming convention is `./trees/TASK-ID-description`. The branch is created from `develop` (or your configured base branch) and named `feature/TASK-ID-description`.
+The naming convention is `.claude/worktrees/TASK-ID-description`. The branch is created from `develop` (or your configured base branch) and named `feature/TASK-ID-description`.
+
+Agent worktrees are created automatically by Claude Code when each agent is deployed -- the orchestrator does not manage them.
 
 ### Isolation
 
-Each worktree operates independently. An agent working in one worktree cannot see or affect changes in another. This means:
+Each agent operates in its own ephemeral worktree, which provides natural concurrent isolation:
 
 - No merge conflicts during development
-- Agents can work in parallel without coordination
-- A failure in one worktree does not contaminate others
-- Each worktree can be tested independently
+- Agents can work in parallel without file assignment coordination
+- A failure in one agent worktree does not contaminate others
+- Each agent worktree can be tested independently via symlinked dependencies
 
 ### Development
 
-Coding agents receive their worktree path and work exclusively inside it. They follow TDD methodology, create tests before implementation, and stay within their assigned file boundaries.
+Coding agents work inside their Claude Code-managed agent worktrees. They follow TDD methodology, create tests before implementation, and stay within their assigned file boundaries. Dependencies are available through symlinks to the session worktree.
 
 ### Quality Gates
 
-Tests and reviews run inside each worktree. The test-runner executes the full test suite within the worktree context. The SME reviewer (via code-review skill) and security-auditor analyze the worktree's changes against the base branch.
+Tests and reviews run inside each agent worktree. The test-runner executes the full test suite within the agent worktree context. The SME reviewer (via code-review skill) and security-auditor analyze the worktree's changes against the base branch.
 
-### Merge
+### Commit and Merge
 
-After a worktree passes all gates, `reaper:branch-manager` merges the feature branch into the review branch (or directly into develop for simpler strategies). Conflict detection runs before the merge -- if conflicts are found, the branch-manager resolves them or escalates.
+Coding agents never commit. After all gates pass for a work unit, the orchestrator directs `reaper:branch-manager` to commit in the agent worktree, then fast-forward merge (`--ff-only`) into the session worktree's feature branch. This maintains a linear history on the feature branch.
+
+After all work units complete, the session branch is merged into the review branch (or directly into develop for simpler strategies) using the isolated merge pattern from [ADR-0014](adr/0014-isolated-merge-worktree.md).
 
 ### Cleanup
 
-After a successful merge, the `worktree-manager` skill safely removes the worktree directory and optionally deletes the feature branch. This cleanup uses a dedicated script that handles the critical requirement of changing the shell's working directory before deletion -- without this, removing the current directory breaks the shell for the rest of the session.
+Session worktrees are removed by `reaper:branch-manager` at the end of the takeoff session. Agent worktrees are cleaned up automatically by Claude Code's isolation teardown -- the orchestrator does not manage agent worktree cleanup.
+
+The `worktree-manager` skill handles session worktree removal safely, ensuring the shell's working directory is changed before deletion to avoid breaking the session.
 
 ```
 Before cleanup:
-  ./trees/PROJ-123-webhook-retry/  (worktree + branch)
+  .claude/worktrees/PROJ-123-webhook-retry/  (session worktree + branch)
 
 After cleanup:
   (directory removed, branch deleted)
@@ -210,7 +222,7 @@ After cleanup:
 
 ### Running Tasks in Parallel
 
-Worktree isolation is not just for Reaper's internal multi-agent strategies -- you can use it directly. Because each worktree is a fully independent repository copy on its own branch, you can open multiple Claude Code sessions simultaneously, each working in its own worktree without any coordination required.
+Worktree isolation is not just for Reaper's internal multi-agent strategies -- you can use it directly. Because each session worktree is a fully independent repository copy on its own branch, you can open multiple Claude Code sessions simultaneously, each working in its own session worktree without any coordination required.
 
 The practical pattern:
 

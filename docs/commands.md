@@ -80,11 +80,12 @@ Vague inputs like "fix bug" are rejected. Either provide a task ID or a detailed
 4. **Planning.** When no plan exists, Reaper deploys `reaper:workflow-planner` to analyze the task, select a complexity strategy, and decompose into work units.
 5. **Work package validation.** Each unit is capped at 5 files, 500 lines, and 2 hours. Oversized packages are split.
 6. **Execution loop.** For each work unit:
-   - Deploys the appropriate coding agent (`reaper:feature-developer`, `reaper:bug-fixer`, or `reaper:refactoring-dev`)
+   - Creates a session worktree at `.claude/worktrees/TASK-ID-desc` with installed dependencies (once per session)
+   - Deploys each coding agent with Claude Code's `isolation: worktree`, giving it an ephemeral agent worktree that symlinks dependencies from the session worktree
    - Classifies the changeset and selects a gate profile
    - Runs quality gates (test-runner + SME reviewer via code-review skill + security-auditor for application code; different SME reviewers for infrastructure, database, or prompt work)
    - Auto-iterates on failures up to per-gate retry limits
-   - Commits on each gate pass for restore points
+   - Commits in the agent worktree after gates pass, then fast-forward merges to the session branch
 7. **Presentation.** Completed work is presented with a summary of what was built, which gates passed, and how to test it.
 
 Takeoff works autonomously through the full cycle without asking permission at each step. It only stops to present finished work and ask for your review.
@@ -93,11 +94,11 @@ Takeoff works autonomously through the full cycle without asking permission at e
 
 Takeoff selects a strategy based on the number of work units:
 
-| Work units | Strategy               | Behavior                                            |
-| ---------- | ---------------------- | --------------------------------------------------- |
-| 1          | `very_small_direct`    | Single agent, no worktree isolation                 |
-| 2--4       | `medium_single_branch` | Sequential or parallel agents on one branch         |
-| 5+         | `large_multi_worktree` | Each agent gets its own worktree, merged at the end |
+| Work units | Strategy               | Behavior                                                     |
+| ---------- | ---------------------- | ------------------------------------------------------------ |
+| 1          | `very_small_direct`    | Single agent, no worktree isolation                          |
+| 2--4       | `medium_single_branch` | Sequential or parallel agents on one branch                  |
+| 5+         | `large_multi_worktree` | Session worktree with per-agent isolation, merged at the end |
 
 ### Quality gate profiles
 
@@ -242,22 +243,22 @@ The "last mile" command. Takes uncommitted work in a worktree, generates convent
 
 ```
 /reaper:ship
-/reaper:ship ./trees/PROJ-123-work
-/reaper:ship ./trees/PROJ-123-work main
+/reaper:ship .claude/worktrees/PROJ-123-work
+/reaper:ship .claude/worktrees/PROJ-123-work main
 ```
 
 ### Arguments
 
-| Position | Meaning       | Default                                                                   |
-| -------- | ------------- | ------------------------------------------------------------------------- |
-| 1        | Worktree path | Auto-detected (session context, cwd, or single worktree under `./trees/`) |
-| 2        | Target branch | `develop`                                                                 |
+| Position | Meaning       | Default                                                                             |
+| -------- | ------------- | ----------------------------------------------------------------------------------- |
+| 1        | Worktree path | Auto-detected (session context, cwd, or single worktree under `.claude/worktrees/`) |
+| 2        | Target branch | `develop`                                                                           |
 
 If multiple worktrees exist and none is specified, Reaper lists them and asks which one to ship.
 
 ### What happens
 
-1. **Worktree resolution.** Checks session context, current directory, explicit argument, then auto-detects from `./trees/`.
+1. **Worktree resolution.** Checks session context, current directory, explicit argument, then auto-detects from `.claude/worktrees/`.
 2. **Validation.** Confirms the path is a valid git worktree, the branch is not protected (`main`, `master`, `develop`), and there is something to commit or push.
 3. **Task ID extraction.** Parses the worktree directory name for Jira (`PROJ-123`), Beads (`reaper-a3f`), or GitHub issue (`issue-456`) patterns. Used in commit footers and PR body.
 4. **Repo host detection.** Reads the git remote URL to determine GitHub, Bitbucket, GitLab, or Azure DevOps.
@@ -296,7 +297,7 @@ Monitor progress across isolated worktrees. Shows implementation status, uncommi
 
 ### Output
 
-For each worktree under `./trees/`:
+For each worktree under `.claude/worktrees/`:
 
 - **Task ID** extracted from directory name
 - **Branch** name
