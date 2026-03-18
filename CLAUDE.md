@@ -60,7 +60,7 @@ Use specialized agents for all development work. Subagents: skip this section.
 - Always work in `.claude/worktrees/` worktrees — never work directly in the root directory
 - Always request explicit user approval before merging to `main`
 - Always let hooks run to completion — never skip them (`--no-verify`, `HUSKY=0`)
-- Always use real task IDs from `bd list` and report actual test results — never fabricate either
+- Always use real issue numbers from `gh issue list` and report actual test results — never fabricate either
 - Always edit source templates in `src/` — never edit generated files directly
 - Always read source files before modifying them — verify paths exist before referencing them
 - Never set environment variables inline with commands (use subshells instead)
@@ -82,23 +82,23 @@ Typical flow: `flight-plan` -> approve -> `/clear` -> `takeoff`
 | `/reaper:claude-sync`             | Suggest CLAUDE.md updates        |
 | `/reaper:configure-quality-gates` | Detect runners, write QG section |
 
-Takeoff auto-fetches details: Beads (`reaper-xxx`) via `bd show`, Jira (`PROJ-123`) via `acli jira workitem view`. Description-only also works.
+Takeoff auto-fetches details: GitHub Issues (`#21`) via `gh issue view`, Jira (`PROJ-123`) via `acli jira workitem view`. Description-only also works.
 
 ### Commit Standards
 
-Commits are enforced by commitlint with Beads reference requirement:
+Commits are enforced by commitlint with a GitHub issue reference requirement:
 
 ```
 <type>(<scope>): <subject>    # max 72 chars
 
 <body>
 
-Ref: reaper-xxx               # Required for non-chore commits
+Closes #N                     # Required for non-chore, non-docs commits (or Fixes #N)
 ```
 
 **Types:** feat, fix, docs, style, refactor, perf, test, chore, ci
 
-Use `bd list` to find issue IDs, or `bd create` to create one.
+Use `gh issue list` to find issue numbers, or `gh issue create` to create one.
 
 ### Testing & Quality
 
@@ -213,20 +213,19 @@ Common sections in `src/partials/*.ejs`. Include via: `<%- include('partials/out
 
 Key parameterized partials: `visual-vocabulary` (by context: takeoff, ship, status-worktrees, flight-plan, squadron, start, functional; respects `Reaper: disable ASCII art` opt-out), `output-requirements` (by agent type), `tdd-testing-protocol`, `quality-gate-protocol`.
 
-## Beads Issue Tracking
+## GitHub Issues
 
-This project uses Beads for lightweight git-based issue tracking:
+This project uses GitHub Issues for issue tracking:
 
 ```bash
-bd list                    # List all issues
-bd show reaper-xxx         # View issue details
-bd create "Title"          # Create new issue
-bd update reaper-xxx --status "In Progress"
-bd close reaper-xxx        # Mark complete
-bd sync                    # Sync with git remote
+gh issue list                        # List all open issues
+gh issue view 21                     # View issue details
+gh issue create --title "Title"      # Create new issue
+gh issue edit 21 --add-label "in-progress"
+gh issue close 21                    # Mark complete
 ```
 
-**Before starting work:** Run `bd show reaper-xxx` to read the issue details and update status to "In Progress". **After merge to develop:** Update to "In Review" and add a completion comment.
+**Before starting work:** Run `gh issue view <N>` to read the issue details. **After merge to develop:** Close the issue or add a comment noting the PR that resolves it.
 
 ## Quality Gates
 

@@ -1,53 +1,60 @@
 /**
- * Commitlint configuration with conventional commits + Beads issue reference
+ * Commitlint configuration with conventional commits + GitHub issue reference
  *
- * Requires a "Ref: reaper-xxx" footer in all commits except chores.
- * This ensures all non-chore work is tracked in Beads.
+ * Requires a GitHub issue reference footer (e.g. "Closes #123", "Fixes #456")
+ * in all commits except chore and docs.
+ *
+ * Uses commitlint's built-in parser which recognises GitHub closing keywords
+ * (Closes, Fixes, Resolves, etc.) and populates the `references` array with
+ * an `action` field when such a keyword is found.
  */
-module.exports = {
-  extends: ['@commitlint/config-conventional'],
-  plugins: ['beads-ref'],
-  rules: {
-    // Require Beads reference for non-chore commits
-    'beads-ref': [2, 'always'],
-  },
-};
 
 /**
- * Custom plugin to validate Beads issue reference in footer
+ * Commit types that are exempt from the GitHub issue reference requirement.
  */
-const beadsRefPlugin = {
+const EXEMPT_TYPES = new Set(['chore', 'docs']);
+
+/**
+ * Custom plugin to validate GitHub issue reference in commit footer.
+ *
+ * A valid reference is one where the parser recognises a closing keyword
+ * (Closes, Fixes, Resolves, etc.) before the issue number — indicated by
+ * `reference.action !== null` in the parsed references array.
+ */
+const githubRefPlugin = {
   rules: {
-    'beads-ref': ({ type, raw }) => {
-      // Chore commits are exempt
-      if (type === 'chore') {
-        return [
-          true,
-          'Chore commits are exempt from Beads reference requirement',
-        ];
+    'github-ref-required': ({ type, references }) => {
+      if (EXEMPT_TYPES.has(type)) {
+        return [true, `${type} commits are exempt from GitHub issue reference requirement`];
       }
 
-      // Check for Ref: footer with one or more Beads issue IDs (comma-separated).
-      // Each ID must match reaper-[a-z0-9.]+ and the entire value must consist only
-      // of such IDs separated by ", " — no extra tokens or wrong-prefix IDs allowed.
-      const refPattern = /^Ref:\s+reaper-[a-z0-9.]+(,\s+reaper-[a-z0-9.]+)*$/m;
-      const hasRef = refPattern.test(raw);
+      const hasActionRef = Array.isArray(references) && references.some((r) => r.action !== null);
 
-      if (!hasRef) {
+      if (!hasActionRef) {
         return [
           false,
-          `Commit must include a Beads issue reference in footer.\n` +
-            `Expected format: Ref: reaper-xxx\n` +
-            `For squash commits: Ref: reaper-xxx, reaper-yyy\n` +
-            `Tip: Use 'bd list' to see available issues, or 'bd create' to make one.\n` +
-            `Note: chore commits are exempt from this requirement.`,
+          'Commit must include a GitHub issue reference in the footer.\n' +
+            'Expected format: Closes #123, Fixes #456, or Resolves #789\n' +
+            'Tip: Use "gh issue list" to see open issues.\n' +
+            'Note: chore and docs commits are exempt from this requirement.',
         ];
       }
 
-      return [true, 'Valid Beads reference found'];
+      return [true, 'Valid GitHub issue reference found'];
     },
   },
 };
 
-// Register the plugin
-module.exports.plugins = [beadsRefPlugin];
+module.exports = {
+  extends: ['@commitlint/config-conventional'],
+  parserPreset: {
+    parserOpts: {
+      issuePrefixes: ['#'],
+    },
+  },
+  plugins: [githubRefPlugin],
+  rules: {
+    // Require a GitHub issue reference for non-exempt commits
+    'github-ref-required': [2, 'always'],
+  },
+};

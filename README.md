@@ -74,7 +74,7 @@ When you know exactly what to build, takeoff is all you need. Most of the time, 
 
 Describe what you want and Reaper breaks it into takeoff-sized tasks.
 
-Give it a feature, a problem, or a goal -- Reaper decomposes it into parallelizable work units with dependency mapping. After your approval, issues are created in your task system (Beads, Jira, or markdown fallback) and each unit is ready for `/reaper:takeoff`.
+Give it a feature, a problem, or a goal -- Reaper decomposes it into parallelizable work units with dependency mapping. After your approval, issues are created in your task system (GitHub Issues, Jira, or markdown fallback) and each unit is ready for `/reaper:takeoff`.
 
 ```
 > /reaper:flight-plan Add user notification preferences with email, SMS, push
@@ -84,7 +84,7 @@ Give it a feature, a problem, or a goal -- Reaper decomposes it into paralleliza
   2. PROJ-51  Preferences API + storage        (parallel with 1)
   3. PROJ-52  Preferences dashboard UI          (blocked by 2)
 
-  Approve this plan? Issues will be created in Beads.
+  Approve this plan? Issues will be created in GitHub.
 ```
 
 Approve the plan, run `/clear` for fresh context, then `/reaper:takeoff PROJ-50` to start executing.

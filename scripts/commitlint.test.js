@@ -2,280 +2,265 @@ const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 
 /**
- * Extract the beads-ref rule function from commitlint config.
+ * Extract the github-ref-required rule function from commitlint config.
  *
- * The config exports plugins as an array containing the beadsRefPlugin object.
- * The plugin has a `rules` property with the `beads-ref` rule function.
+ * The config exports plugins as an array containing the githubRefPlugin object.
+ * The plugin has a `rules` property with the `github-ref-required` rule function.
  */
 const commitlintConfig = require('../commitlint.config');
-const beadsRefPlugin = commitlintConfig.plugins.find(
+const githubRefPlugin = commitlintConfig.plugins.find(
   (plugin) =>
     plugin &&
     typeof plugin === 'object' &&
     plugin.rules &&
-    plugin.rules['beads-ref']
+    plugin.rules['github-ref-required']
 );
-const beadsRefRule = beadsRefPlugin.rules['beads-ref'];
+const githubRefRule = githubRefPlugin.rules['github-ref-required'];
 
-describe('commitlint beads-ref rule', () => {
+describe('commitlint github-ref-required rule', () => {
   describe('chore commits (exempt)', () => {
     it('should return [true, ...] for chore commits without a ref', () => {
-      const result = beadsRefRule({ type: 'chore', raw: 'chore: update deps' });
+      const result = githubRefRule({
+        type: 'chore',
+        references: [],
+        raw: 'chore: update deps',
+      });
       assert.strictEqual(result[0], true);
     });
 
     it('should return [true, ...] for chore commits even with a ref', () => {
-      const result = beadsRefRule({
+      const result = githubRefRule({
         type: 'chore',
-        raw: 'chore: update deps\n\nRef: reaper-abc',
+        references: [{ action: 'Closes', issue: '123', prefix: '#' }],
+        raw: 'chore: update deps\n\nCloses #123',
       });
       assert.strictEqual(result[0], true);
     });
   });
 
-  describe('non-chore commits with valid ref', () => {
-    it('should return [true, ...] for feat with valid Ref: reaper-abc', () => {
-      const result = beadsRefRule({
-        type: 'feat',
-        raw: 'feat(auth): add login\n\nRef: reaper-abc',
+  describe('docs commits (exempt)', () => {
+    it('should return [true, ...] for docs commits without a ref', () => {
+      const result = githubRefRule({
+        type: 'docs',
+        references: [],
+        raw: 'docs: update readme',
       });
       assert.strictEqual(result[0], true);
     });
 
-    it('should return [true, ...] for fix with valid Ref: reaper-123', () => {
-      const result = beadsRefRule({
+    it('should return [true, ...] for docs commits even with a ref', () => {
+      const result = githubRefRule({
+        type: 'docs',
+        references: [{ action: 'Closes', issue: '42', prefix: '#' }],
+        raw: 'docs: update readme\n\nCloses #42',
+      });
+      assert.strictEqual(result[0], true);
+    });
+  });
+
+  describe('non-exempt commits with valid GitHub issue reference', () => {
+    it('should return [true, ...] for feat with Closes #123', () => {
+      const result = githubRefRule({
+        type: 'feat',
+        references: [{ action: 'Closes', issue: '123', prefix: '#' }],
+        raw: 'feat(auth): add login\n\nCloses #123',
+      });
+      assert.strictEqual(result[0], true);
+    });
+
+    it('should return [true, ...] for fix with Fixes #456', () => {
+      const result = githubRefRule({
         type: 'fix',
-        raw: 'fix(api): correct response\n\nRef: reaper-123',
+        references: [{ action: 'Fixes', issue: '456', prefix: '#' }],
+        raw: 'fix(api): correct response\n\nFixes #456',
       });
       assert.strictEqual(result[0], true);
     });
 
-    it('should return [true, ...] for Ref: reaper-a1b2c3 (mixed alphanumeric)', () => {
-      const result = beadsRefRule({
+    it('should return [true, ...] for refactor with Resolves #789', () => {
+      const result = githubRefRule({
+        type: 'refactor',
+        references: [{ action: 'Resolves', issue: '789', prefix: '#' }],
+        raw: 'refactor: clean up code\n\nResolves #789',
+      });
+      assert.strictEqual(result[0], true);
+    });
+
+    it('should return [true, ...] for feat with Close #1', () => {
+      const result = githubRefRule({
         type: 'feat',
-        raw: 'feat: new feature\n\nRef: reaper-a1b2c3',
+        references: [{ action: 'Close', issue: '1', prefix: '#' }],
+        raw: 'feat: new feature\n\nClose #1',
+      });
+      assert.strictEqual(result[0], true);
+    });
+
+    it('should return [true, ...] for fix with Fix #99', () => {
+      const result = githubRefRule({
+        type: 'fix',
+        references: [{ action: 'Fix', issue: '99', prefix: '#' }],
+        raw: 'fix: resolve bug\n\nFix #99',
+      });
+      assert.strictEqual(result[0], true);
+    });
+
+    it('should return [true, ...] for feat with Resolve #7', () => {
+      const result = githubRefRule({
+        type: 'feat',
+        references: [{ action: 'Resolve', issue: '7', prefix: '#' }],
+        raw: 'feat: new feature\n\nResolve #7',
+      });
+      assert.strictEqual(result[0], true);
+    });
+
+    it('should return [true, ...] for test type with Closes #5', () => {
+      const result = githubRefRule({
+        type: 'test',
+        references: [{ action: 'Closes', issue: '5', prefix: '#' }],
+        raw: 'test: add coverage\n\nCloses #5',
+      });
+      assert.strictEqual(result[0], true);
+    });
+
+    it('should return [true, ...] for perf type with Fixes #100', () => {
+      const result = githubRefRule({
+        type: 'perf',
+        references: [{ action: 'Fixes', issue: '100', prefix: '#' }],
+        raw: 'perf: improve speed\n\nFixes #100',
       });
       assert.strictEqual(result[0], true);
     });
   });
 
-  describe('non-chore commits without ref', () => {
-    it('should return [false, ...] for feat commit without any ref', () => {
-      const result = beadsRefRule({
+  describe('non-exempt commits without valid GitHub issue reference', () => {
+    it('should return [false, ...] for feat commit with no references', () => {
+      const result = githubRefRule({
         type: 'feat',
+        references: [],
         raw: 'feat(auth): add login',
       });
       assert.strictEqual(result[0], false);
     });
 
-    it('should return [false, ...] for fix commit without any ref', () => {
-      const result = beadsRefRule({
+    it('should return [false, ...] for fix commit with no references', () => {
+      const result = githubRefRule({
         type: 'fix',
-        raw: 'fix: correct typo in readme',
+        references: [],
+        raw: 'fix: correct typo',
       });
       assert.strictEqual(result[0], false);
     });
 
-    it('should return [false, ...] for docs commit without any ref', () => {
-      const result = beadsRefRule({
-        type: 'docs',
-        raw: 'docs: update readme',
-      });
-      assert.strictEqual(result[0], false);
-    });
-  });
-
-  describe('invalid ref formats', () => {
-    it('should return [false, ...] when ref uses wrong prefix (Refs: instead of Ref:)', () => {
-      const result = beadsRefRule({
-        type: 'feat',
-        raw: 'feat: add feature\n\nRefs: reaper-abc',
+    it('should return [false, ...] for refactor commit with no references', () => {
+      const result = githubRefRule({
+        type: 'refactor',
+        references: [],
+        raw: 'refactor: clean up code',
       });
       assert.strictEqual(result[0], false);
     });
 
-    it('should return [false, ...] when ref has uppercase ID (reaper-ABC)', () => {
-      const result = beadsRefRule({
-        type: 'feat',
-        raw: 'feat: add feature\n\nRef: reaper-ABC',
+    it('should return [false, ...] for style commit with no references', () => {
+      const result = githubRefRule({
+        type: 'style',
+        references: [],
+        raw: 'style: fix indentation',
       });
       assert.strictEqual(result[0], false);
     });
 
-    it('should return [false, ...] when ref has wrong project prefix', () => {
-      const result = beadsRefRule({
-        type: 'feat',
-        raw: 'feat: add feature\n\nRef: other-abc',
-      });
-      assert.strictEqual(result[0], false);
-    });
-
-    it('should return [false, ...] when ref is missing the ID after reaper-', () => {
-      const result = beadsRefRule({
-        type: 'feat',
-        raw: 'feat: add feature\n\nRef: reaper-',
+    it('should return [false, ...] for ci commit with no references', () => {
+      const result = githubRefRule({
+        type: 'ci',
+        references: [],
+        raw: 'ci: update pipeline',
       });
       assert.strictEqual(result[0], false);
     });
   });
 
-  describe('case sensitivity of Ref: prefix', () => {
-    it('should return [false, ...] for lowercase ref: prefix', () => {
-      const result = beadsRefRule({
+  describe('references without an action (action: null) are rejected', () => {
+    it('should return [false, ...] when reference has no action (bare mention)', () => {
+      // A bare "#123" in message body has action: null
+      const result = githubRefRule({
         type: 'feat',
-        raw: 'feat: add feature\n\nref: reaper-abc',
+        references: [{ action: null, issue: '123', prefix: '#' }],
+        raw: 'feat: add feature\n\nsome text #123',
       });
       assert.strictEqual(result[0], false);
     });
 
-    it('should return [false, ...] for uppercase REF: prefix', () => {
-      const result = beadsRefRule({
-        type: 'feat',
-        raw: 'feat: add feature\n\nREF: reaper-abc',
-      });
-      assert.strictEqual(result[0], false);
-    });
-
-    it('should return [true, ...] for correctly capitalized Ref: prefix', () => {
-      const result = beadsRefRule({
-        type: 'feat',
-        raw: 'feat: add feature\n\nRef: reaper-abc',
-      });
-      assert.strictEqual(result[0], true);
-    });
-  });
-
-  describe('multiline raw commit messages', () => {
-    it('should return [true, ...] when ref is on a later line in the body', () => {
-      const result = beadsRefRule({
-        type: 'feat',
-        raw: 'feat: add auth\n\nAdded OAuth2 login flow.\n\nRef: reaper-abc',
-      });
-      assert.strictEqual(result[0], true);
-    });
-
-    it('should return [true, ...] when ref is on the last line after multiple paragraphs', () => {
-      const result = beadsRefRule({
+    it('should return [false, ...] when all references have null action', () => {
+      const result = githubRefRule({
         type: 'fix',
-        raw: 'fix: resolve race condition\n\nThis was caused by concurrent access.\n\nThe fix adds a mutex lock.\n\nRef: reaper-x9z',
+        references: [
+          { action: null, issue: '1', prefix: '#' },
+          { action: null, issue: '2', prefix: '#' },
+        ],
+        raw: 'fix: repair\n\nrelated to #1, see #2',
       });
-      assert.strictEqual(result[0], true);
+      assert.strictEqual(result[0], false);
     });
 
-    it('should return [true, ...] when ref appears mid-message (multiline flag)', () => {
-      const result = beadsRefRule({
+    it('should return [true, ...] when at least one reference has an action', () => {
+      const result = githubRefRule({
         type: 'feat',
-        raw: 'feat: new feature\n\nRef: reaper-abc\n\nAdditional context here.',
+        references: [
+          { action: null, issue: '1', prefix: '#' },
+          { action: 'Closes', issue: '2', prefix: '#' },
+        ],
+        raw: 'feat: add feature\n\nrelated to #1\n\nCloses #2',
       });
       assert.strictEqual(result[0], true);
     });
   });
 
-  describe('comma-separated refs on a single Ref: line', () => {
-    it('should return [true, ...] for two refs (Ref: reaper-a, reaper-b)', () => {
-      const result = beadsRefRule({
+  describe('multiple references', () => {
+    it('should return [true, ...] when multiple action references are present', () => {
+      const result = githubRefRule({
         type: 'feat',
-        raw: 'feat: squash two units\n\nRef: reaper-a, reaper-b',
+        references: [
+          { action: 'Closes', issue: '1', prefix: '#' },
+          { action: 'Fixes', issue: '2', prefix: '#' },
+        ],
+        raw: 'feat: squash two issues\n\nCloses #1\nFixes #2',
       });
       assert.strictEqual(result[0], true);
     });
 
-    it('should return [true, ...] for three refs (Ref: reaper-a, reaper-b, reaper-c)', () => {
-      const result = beadsRefRule({
-        type: 'fix',
-        raw: 'fix: consolidate fixes\n\nRef: reaper-a, reaper-b, reaper-c',
-      });
-      assert.strictEqual(result[0], true);
-    });
-
-    it('should return [true, ...] for four refs (Ref: reaper-a, reaper-b, reaper-c, reaper-d)', () => {
-      const result = beadsRefRule({
+    it('should return [false, ...] when no references have an action', () => {
+      const result = githubRefRule({
         type: 'feat',
-        raw: 'feat: merge four work units\n\nRef: reaper-a, reaper-b, reaper-c, reaper-d',
-      });
-      assert.strictEqual(result[0], true);
-    });
-
-    it('should return [true, ...] for mixed alphanumeric refs in a comma list', () => {
-      const result = beadsRefRule({
-        type: 'feat',
-        raw: 'feat: squash work\n\nRef: reaper-abc, reaper-123, reaper-a1b2',
-      });
-      assert.strictEqual(result[0], true);
-    });
-
-    it('should return [false, ...] when any ref in the list has wrong prefix', () => {
-      const result = beadsRefRule({
-        type: 'feat',
-        raw: 'feat: squash work\n\nRef: reaper-abc, other-xyz',
+        references: [
+          { action: null, issue: '1', prefix: '#' },
+          { action: null, issue: '2', prefix: '#' },
+        ],
+        raw: 'feat: squash\n\nref #1, ref #2',
       });
       assert.strictEqual(result[0], false);
-    });
-
-    it('should return [false, ...] when any ref in the list has uppercase ID', () => {
-      const result = beadsRefRule({
-        type: 'feat',
-        raw: 'feat: squash work\n\nRef: reaper-abc, reaper-XYZ',
-      });
-      assert.strictEqual(result[0], false);
-    });
-
-    it('should return [false, ...] when a ref in the list is missing ID after hyphen', () => {
-      const result = beadsRefRule({
-        type: 'feat',
-        raw: 'feat: squash work\n\nRef: reaper-abc, reaper-',
-      });
-      assert.strictEqual(result[0], false);
-    });
-
-    it('should return [true, ...] for comma list in multiline message', () => {
-      const result = beadsRefRule({
-        type: 'feat',
-        raw: 'feat: squash multiple units\n\nBody text here.\n\nRef: reaper-e3q, reaper-x9z',
-      });
-      assert.strictEqual(result[0], true);
     });
   });
 
-  describe('various valid reaper ID formats', () => {
-    it('should accept short alphabetic IDs (reaper-abc)', () => {
-      const result = beadsRefRule({
+  describe('error message content', () => {
+    it('should return a helpful error message when rule fails', () => {
+      const result = githubRefRule({
         type: 'feat',
-        raw: 'feat: feature\n\nRef: reaper-abc',
+        references: [],
+        raw: 'feat: add feature',
       });
-      assert.strictEqual(result[0], true);
+      assert.strictEqual(result[0], false);
+      assert.ok(typeof result[1] === 'string', 'error message should be a string');
+      assert.ok(result[1].length > 0, 'error message should not be empty');
     });
 
-    it('should accept purely numeric IDs (reaper-123)', () => {
-      const result = beadsRefRule({
+    it('should return a truthy message when rule passes', () => {
+      const result = githubRefRule({
         type: 'feat',
-        raw: 'feat: feature\n\nRef: reaper-123',
+        references: [{ action: 'Closes', issue: '1', prefix: '#' }],
+        raw: 'feat: add feature\n\nCloses #1',
       });
       assert.strictEqual(result[0], true);
-    });
-
-    it('should accept mixed alphanumeric IDs (reaper-a1b2c3)', () => {
-      const result = beadsRefRule({
-        type: 'feat',
-        raw: 'feat: feature\n\nRef: reaper-a1b2c3',
-      });
-      assert.strictEqual(result[0], true);
-    });
-
-    it('should accept single character IDs (reaper-x)', () => {
-      const result = beadsRefRule({
-        type: 'feat',
-        raw: 'feat: feature\n\nRef: reaper-x',
-      });
-      assert.strictEqual(result[0], true);
-    });
-
-    it('should accept long IDs (reaper-abcdef123456)', () => {
-      const result = beadsRefRule({
-        type: 'feat',
-        raw: 'feat: feature\n\nRef: reaper-abcdef123456',
-      });
-      assert.strictEqual(result[0], true);
+      assert.ok(typeof result[1] === 'string', 'success message should be a string');
     });
   });
 });
