@@ -265,22 +265,22 @@ This prefix is required because Reaper is a Claude Code plugin, and plugin agent
 ```bash
 # Planning (mandatory for 3+ steps)
 Task --subagent_type reaper:workflow-planner \
-  --prompt "TASK: reaper-a3f, DESCRIPTION: Analyze feature for parallel work opportunities"
+  --prompt "TASK: #42, DESCRIPTION: Analyze feature for parallel work opportunities"
 
 # Bug fix
 Task --subagent_type reaper:bug-fixer \
-  --prompt "TASK: reaper-b2e, DESCRIPTION: Fix null pointer in payment processing"
+  --prompt "TASK: #43, DESCRIPTION: Fix null pointer in payment processing"
 
 # Feature
 Task --subagent_type reaper:feature-developer \
-  --prompt "TASK: reaper-c4d, DESCRIPTION: Add user profile API with validation"
+  --prompt "TASK: #44, DESCRIPTION: Add user profile API with validation"
 
 # Worktree setup
 Task --subagent_type reaper:branch-manager \
-  --prompt "TASK: reaper-a3f, WORKTREE: .claude/worktrees/reaper-a3f-oauth, DESCRIPTION: Create worktree"
+  --prompt "TASK: #42, WORKTREE: .claude/worktrees/gh42-oauth, DESCRIPTION: Create worktree"
 
 # Quality (mandatory before merge)
 Task --subagent_type reaper:test-runner \
-  --prompt "TASK: reaper-a3f, WORKTREE: .claude/worktrees/reaper-a3f-oauth, DESCRIPTION: Run full suite"
+  --prompt "TASK: #42, WORKTREE: .claude/worktrees/gh42-oauth, DESCRIPTION: Run full suite"
 # Gate 2 SME dispatch (with skill injection) is automated by takeoff — do not construct manually.
 ```
