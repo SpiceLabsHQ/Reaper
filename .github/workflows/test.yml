@@ -32,5 +32,11 @@ jobs:
       - name: Run contract tests
         run: node --test scripts/contracts.test.js
 
+      - name: Install Claude CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Validate Claude plugin
+        run: claude plugin validate .
+
       - name: Run all tests with coverage
         run: node --test --experimental-test-coverage --test-coverage-lines=70 --test-coverage-branches=70 --test-coverage-functions=70 scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js scripts/visual-vocabulary.test.js scripts/contracts.test.js scripts/release-verify.test.js scripts/hooks.test.js scripts/gh-project-set-status.test.js
