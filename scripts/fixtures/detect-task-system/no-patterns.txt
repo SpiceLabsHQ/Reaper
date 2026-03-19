@@ -1,0 +1,29 @@
+===COMMIT===
+chore: update deps
+
+===COMMIT===
+refactor: extract helper
+
+===COMMIT===
+docs: update readme
+
+===COMMIT===
+style: fix formatting
+
+===COMMIT===
+chore: bump version
+
+===COMMIT===
+fix: typo in error message
+
+===COMMIT===
+chore: cleanup
+
+===COMMIT===
+docs: add examples
+
+===COMMIT===
+chore: remove unused imports
+
+===COMMIT===
+style: consistent quotes

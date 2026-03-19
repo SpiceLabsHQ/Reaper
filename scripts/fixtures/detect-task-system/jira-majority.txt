@@ -1,0 +1,29 @@
+===COMMIT===
+Fixes PROJ-123
+
+===COMMIT===
+Closes ENG-456
+
+===COMMIT===
+Ref: PROJ-124
+
+===COMMIT===
+Resolves ENG-457
+
+===COMMIT===
+chore: update deps
+
+===COMMIT===
+chore: cleanup
+
+===COMMIT===
+refactor: extract helper
+
+===COMMIT===
+docs: update readme
+
+===COMMIT===
+style: fix formatting
+
+===COMMIT===
+chore: bump version

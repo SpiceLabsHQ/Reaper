@@ -6,32 +6,63 @@
 #   1. Recency-weighted commit scan (newest commit = highest weight)
 #   2. Existing plan files in .claude/plans/
 #   3. Unknown — LLM should ask the user
+#
+# Test seams:
+#   DETECT_FIXTURE    Path to fixture file replacing git log output
+#   DETECT_PLANS_DIR  Override plans directory (default: .claude/plans)
 
 GITHUB_SCORE=0
 BEADS_SCORE=0
 JIRA_SCORE=0
 
-HASHES=$(git log --format="%H" -10 2>/dev/null) || HASHES=""
+get_log_data() {
+  if [ -n "${DETECT_FIXTURE:-}" ]; then
+    cat "$DETECT_FIXTURE"
+  else
+    git log --format="===COMMIT===%n%B" -10 2>/dev/null || true
+  fi
+}
 
-if [ -n "$HASHES" ]; then
-  WEIGHT=10
-  while IFS= read -r hash; do
-    [ -z "$hash" ] && continue
-    BODY=$(git log --format="%B" -n 1 "$hash" 2>/dev/null) || continue
+PLANS_DIR="${DETECT_PLANS_DIR:-.claude/plans}"
 
-    if echo "$BODY" | grep -qE '(Fixes|Closes|Resolves):?\s+#[0-9]+'; then
-      GITHUB_SCORE=$((GITHUB_SCORE + WEIGHT))
-    fi
-    if echo "$BODY" | grep -qE '(Ref|Closes|Resolves):?\s+[a-z][a-z0-9]*-[a-f0-9]{2,}'; then
-      BEADS_SCORE=$((BEADS_SCORE + WEIGHT))
-    fi
-    if echo "$BODY" | grep -qE '(Ref|Fixes|Closes|Resolves):?\s+[A-Z]{2,}-[0-9]+'; then
-      JIRA_SCORE=$((JIRA_SCORE + WEIGHT))
-    fi
+# Body-buffering loop: accumulate each commit body, score on separator
+COMMIT_NUM=0
+WEIGHT=10
+CURRENT_BODY=""
 
-    WEIGHT=$((WEIGHT - 1))
-  done <<< "$HASHES"
-fi
+score_commit() {
+  [ -z "$CURRENT_BODY" ] && return
+  if echo "$CURRENT_BODY" | grep -qE '(Fixes|Closes|Resolves):?\s+#[0-9]+'; then
+    GITHUB_SCORE=$((GITHUB_SCORE + WEIGHT))
+  fi
+  if echo "$CURRENT_BODY" | grep -qE '(Ref|Closes|Resolves):?\s+[a-z][a-z0-9]*-[a-f0-9]{2,}'; then
+    BEADS_SCORE=$((BEADS_SCORE + WEIGHT))
+  fi
+  if echo "$CURRENT_BODY" | grep -qE '(Ref|Fixes|Closes|Resolves):?\s+[A-Z]{2,}-[0-9]+'; then
+    JIRA_SCORE=$((JIRA_SCORE + WEIGHT))
+  fi
+}
+
+while IFS= read -r line; do
+  if [ "$line" = "===COMMIT===" ]; then
+    if [ $COMMIT_NUM -gt 0 ]; then
+      score_commit
+      WEIGHT=$((WEIGHT - 1))
+    fi
+    COMMIT_NUM=$((COMMIT_NUM + 1))
+    CURRENT_BODY=""
+  else
+    if [ -n "$CURRENT_BODY" ]; then
+      CURRENT_BODY="${CURRENT_BODY}
+${line}"
+    else
+      CURRENT_BODY="$line"
+    fi
+  fi
+done < <(get_log_data)
+
+# Score the final commit
+score_commit
 
 # Find the maximum score
 MAX_SCORE=0
@@ -54,7 +85,7 @@ if [ $MAX_SCORE -gt 0 ]; then
 fi
 
 # Fallback: check for existing plan files
-if compgen -G ".claude/plans/*.md" > /dev/null 2>&1; then
+if compgen -G "${PLANS_DIR}/*.md" > /dev/null 2>&1; then
   echo "markdown_only"
   exit 0
 fi

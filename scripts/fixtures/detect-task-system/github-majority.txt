@@ -1,0 +1,29 @@
+===COMMIT===
+Fixes #42
+
+===COMMIT===
+Fixes #41
+
+===COMMIT===
+Closes #40
+
+===COMMIT===
+Resolves #39
+
+===COMMIT===
+Fixes #38
+
+===COMMIT===
+chore: update deps
+
+===COMMIT===
+chore: cleanup
+
+===COMMIT===
+refactor: extract helper
+
+===COMMIT===
+docs: update readme
+
+===COMMIT===
+style: fix formatting

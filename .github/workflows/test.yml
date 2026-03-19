@@ -24,7 +24,7 @@ jobs:
         run: npm ci
 
       - name: Run unit tests
-        run: node --test scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js scripts/visual-vocabulary.test.js scripts/release-verify.test.js scripts/hooks.test.js scripts/gh-project-set-status.test.js
+        run: node --test scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js scripts/visual-vocabulary.test.js scripts/release-verify.test.js scripts/hooks.test.js scripts/gh-project-set-status.test.js scripts/detect-task-system.test.js
 
       - name: Build templates
         run: npm run build
@@ -39,4 +39,4 @@ jobs:
         run: claude plugin validate .
 
       - name: Run all tests with coverage
-        run: node --test --experimental-test-coverage --test-coverage-lines=70 --test-coverage-branches=70 --test-coverage-functions=70 scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js scripts/visual-vocabulary.test.js scripts/contracts.test.js scripts/release-verify.test.js scripts/hooks.test.js scripts/gh-project-set-status.test.js
+        run: node --test --experimental-test-coverage --test-coverage-lines=70 --test-coverage-branches=70 --test-coverage-functions=70 scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js scripts/visual-vocabulary.test.js scripts/contracts.test.js scripts/release-verify.test.js scripts/hooks.test.js scripts/gh-project-set-status.test.js scripts/detect-task-system.test.js
