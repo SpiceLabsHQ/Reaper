@@ -12,7 +12,7 @@ fi
 npm run lint
 
 # Run unit tests (excludes contract tests — those run post-build)
-node --test scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js scripts/visual-vocabulary.test.js
+node --test scripts/build.test.js scripts/commitlint.test.js scripts/panel-selection-keywords.test.js scripts/visual-vocabulary.test.js scripts/detect-task-system.test.js
 
 # Build templates and stage output
 npm run build
