@@ -422,9 +422,13 @@ describe('Contract: consumer routing table references all issue-tracker skills',
  * These verify the detection mechanism is properly rendered in consumers.
  */
 const DETECTION_KEYWORDS = [
-  { keyword: 'git log', label: 'commit-based detection (git log)' },
+  {
+    keyword: 'detect-task-system.sh',
+    label: 'script-based detection (detect-task-system.sh)',
+  },
   { keyword: 'TASK_SYSTEM', label: 'output variable (TASK_SYSTEM)' },
   { keyword: 'markdown_only', label: 'fallback detection (markdown_only)' },
+  { keyword: 'unknown', label: 'unknown system fallback (unknown)' },
 ];
 
 describe('Contract: consumer detection content contains mechanism keywords', () => {

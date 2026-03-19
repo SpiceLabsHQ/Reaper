@@ -139,30 +139,15 @@ Do not read source code files to understand implementation details -- that is th
 
 ### Detection
 
-Detect the active task system from recent commit history.
+**Active task system:** !`./scripts/detect-task-system.sh`
 
-**Output variable:** `TASK_SYSTEM` — one of: `Beads`, `Jira`, `GitHub`, `markdown_only`
+**Output variable:** `TASK_SYSTEM` — set this to the detected value above.
 
-#### Commit History Pattern Scan
+Possible values: `GitHub`, `Beads`, `Jira`, `markdown_only`, `unknown`
 
-Run `git log --format="%B" -10` and scan commit bodies for issue reference patterns:
+If the detected value is **`unknown`**: ask the user which task system they're using before proceeding. Once confirmed, set `TASK_SYSTEM` to the user's answer and continue.
 
-| System | Pattern | Examples |
-|--------|---------|----------|
-| Beads | `(Ref|Closes|Resolves):?\s+[a-z][a-z0-9]*-[a-f0-9]{2,}` | `Ref: reaper-a3f`, `Closes myapp-bc12` |
-| Jira | `(Ref|Fixes|Closes|Resolves):?\s+[A-Z]{2,}-\d+` | `Ref: PROJ-123`, `Fixes ENG-456` |
-| GitHub Issues | `(Fixes|Closes|Resolves):?\s+#\d+` | `Fixes #456`, `Closes #42` |
-
-**Mixed/ambiguous rule:** If multiple systems match, the system with the highest count wins. Equal counts = `markdown_only`.
-
-#### Fallback Chain
-
-```
-Commit patterns found (1+ match in last 10 commits)?
-  |-- Yes (single system) --> DONE
-  |-- Mixed --> Highest count wins; tie = markdown_only
-  +-- No patterns --> markdown_only
-```
+If the detected value is **`markdown_only`**: inform the user that no task tracker was detected and the plan file will be the primary deliverable.
 
 ### Platform Skill Routing
 
