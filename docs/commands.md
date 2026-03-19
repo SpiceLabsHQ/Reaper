@@ -74,7 +74,7 @@ Vague inputs like "fix bug" are rejected. Either provide a task ID or a detailed
 
 ### What happens
 
-1. **Task system detection.** Reaper checks for Beads (`.beads/` directory) or Jira (`acli` CLI), falling back to markdown-only mode if neither is found.
+1. **Task system detection.** Reaper inspects recent commit history for tracker-specific patterns (Beads IDs like `reaper-a3f`, Jira keys like `PROJ-123`, or GitHub issue references like `#456`), falling back to markdown-only mode if none are found.
 2. **Plan file discovery.** Searches `.claude/plans/` for a matching plan from a prior `/reaper:flight-plan` session. If found, it skips planning and uses the existing work breakdown.
 3. **Pre-planned detection.** If the task already has child issues with acceptance criteria (from flight-plan), Reaper extracts the full dependency tree and skips the planner.
 4. **Planning.** When no plan exists, Reaper deploys `reaper:workflow-planner` to analyze the task, select a complexity strategy, and decompose into work units.
@@ -147,13 +147,13 @@ For work that spans multiple files, concerns, or days. Flight-plan assembles a s
 
 ### What happens
 
-1. **Task system detection.** Same as takeoff -- checks for Beads, Jira, or falls back to markdown-only mode.
+1. **Task system detection.** Same as takeoff -- inspects recent commit history for tracker patterns, falling back to markdown-only mode if none are found.
 2. **Codebase research.** Launches parallel Explore agents to investigate affected files, architecture patterns, module dependencies, and integration points.
 3. **Work decomposition.** Analyzes the request and research findings to produce work units, each constrained to 5 files, ~500 lines, and 1--2 hours. Every unit follows TDD methodology (tests before implementation).
 4. **Plan file creation.** Writes a structured plan to `.claude/plans/reaper-[semantic-name].md` containing input, research, work units, dependencies (as a Mermaid flowchart), and assumptions.
 5. **Flight briefing.** Presents a summary with work unit count, critical path, parallelization percentage, and key assumptions. Asks for approval.
 6. **Iterative refinement.** If you request changes, Reaper updates the plan and re-presents. The flow is conversational, not an interview.
-7. **Issue creation.** After approval, creates an epic and child issues in Beads or Jira with TDD-structured descriptions and dependency relationships.
+7. **Issue creation.** After approval, creates an epic and child issues in your detected task system (Beads, Jira, or GitHub Issues) with TDD-structured descriptions and dependency relationships.
 8. **Verification.** Deploys `reaper:workflow-planner` as a verification subagent to confirm all issues meet orchestratability criteria (clear scope, acceptance criteria, correct dependencies, no circular blockers).
 
 In markdown-only mode (no task system detected), the plan file itself becomes the deliverable.

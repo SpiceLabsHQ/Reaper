@@ -2,9 +2,9 @@ name: Tests
 
 on:
   push:
-    branches: [develop, beads-sync]
+    branches: [develop]
   pull_request:
-    branches: [develop, beads-sync]
+    branches: [develop]
 
 jobs:
   test:

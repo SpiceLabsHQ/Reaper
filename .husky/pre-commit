@@ -1,8 +1,11 @@
 # Format staged files only and re-stage to prevent working tree drift
 STAGED=$(git diff --cached --name-only)
+STAGED_EXISTING=$(git diff --cached --name-only --diff-filter=d)
 if [ -n "$STAGED" ]; then
-    echo "$STAGED" | xargs npx prettier --write --ignore-unknown 2>/dev/null || true
-    echo "$STAGED" | xargs git add --
+    if [ -n "$STAGED_EXISTING" ]; then
+        echo "$STAGED_EXISTING" | xargs npx prettier --write --ignore-unknown 2>/dev/null || true
+        echo "$STAGED_EXISTING" | xargs git add --
+    fi
 fi
 
 # Lint check (fail fast before tests)
