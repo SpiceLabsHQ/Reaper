@@ -2,6 +2,43 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.13.0](https://github.com/SpiceLabsHQ/Reaper/compare/v1.12.1...v1.13.0) (2026-03-24)
+
+
+### Features
+
+* **agent:** add two-layer worktree protocol to branch-manager ([8818584](https://github.com/SpiceLabsHQ/Reaper/commit/88185847430f637ad204b39445f86ff8177805ef))
+* **agent:** replace test-runner background polling with synchronous concurrent execution ([be8c786](https://github.com/SpiceLabsHQ/Reaper/commit/be8c786db999c7e4ecd380ba9583228621c3bc3f))
+* **agent:** replace test-runner background polling with synchronous concurrent execution ([874867c](https://github.com/SpiceLabsHQ/Reaper/commit/874867c36bc03ead6d01d3b83d74a35a57504d71))
+* **issue-tracking:** switch from Beads to GitHub Issues ([2b9d191](https://github.com/SpiceLabsHQ/Reaper/commit/2b9d191e4f47c6d7f59588cc30065713212889de)), closes [#gh16](https://github.com/SpiceLabsHQ/Reaper/issues/gh16)
+* **takeoff:** add two-layer worktree orchestration and migrate all path references ([ff131c7](https://github.com/SpiceLabsHQ/Reaper/commit/ff131c7996517f2debe362644d3bb444a593b202))
+* **worktree:** migrate worktree paths to .claude/worktrees/ and add ADR-0022 ([af592bd](https://github.com/SpiceLabsHQ/Reaper/commit/af592bd2a44e681b2efddc3c72ecff1cc145b86c))
+
+
+### Bug Fixes
+
+* **agent:** clean up worktrees immediately after merge, not at session end ([5c582ec](https://github.com/SpiceLabsHQ/Reaper/commit/5c582ec624f45b062e469e576029c86fcc03ac15))
+* **agents:** quote description frontmatter to pass claude plugin validate ([d33e7e4](https://github.com/SpiceLabsHQ/Reaper/commit/d33e7e4aece8cb9b5eb014a3f8dcacc1aa1195f3)), closes [#22](https://github.com/SpiceLabsHQ/Reaper/issues/22)
+* **commands:** replace LLM-interpreted task system detection with shell script ([c9671c5](https://github.com/SpiceLabsHQ/Reaper/commit/c9671c582fe4367b6f4f7f028818f546116a853b)), closes [#14](https://github.com/SpiceLabsHQ/Reaper/issues/14) [#14](https://github.com/SpiceLabsHQ/Reaper/issues/14)
+* **commands:** use CLAUDE_PLUGIN_ROOT in inline script path ([d9f3aa4](https://github.com/SpiceLabsHQ/Reaper/commit/d9f3aa43af6890d5045d98b1069aaa0af40560d8)), closes [#29](https://github.com/SpiceLabsHQ/Reaper/issues/29)
+* **contracts:** add review panel remediation — prohibitions, schema scoping, path guard, ADR risks ([8a02264](https://github.com/SpiceLabsHQ/Reaper/commit/8a02264223d53b81b6b5202a4deac5368c61f924))
+* **partial:** mandate Skill tool invocation for issue-tracker operations ([9b1d55b](https://github.com/SpiceLabsHQ/Reaper/commit/9b1d55ba01e2b58bfbcfdd860ad89359a21c0ad0))
+* **takeoff:** route skills through subagents instead of direct invocation ([55a20a5](https://github.com/SpiceLabsHQ/Reaper/commit/55a20a5da9c25d5af86a47e371cd36f37b4e8922))
+* **worktree:** use non-recursive lsof and prefer-offline npm install ([77f0181](https://github.com/SpiceLabsHQ/Reaper/commit/77f0181019b3540046acf02a4b27414149a21bc8))
+
+
+### Documentation
+
+* **adr:** add ADR-0023 — commands for user-invocable plugin entries ([21b55b1](https://github.com/SpiceLabsHQ/Reaper/commit/21b55b1ad6777d2037e50a1b6b06ca0442d36865))
+* update Quick Reference examples to use GitHub issue numbers ([9b7fc40](https://github.com/SpiceLabsHQ/Reaper/commit/9b7fc40483769417e21d26c9af8fb9cf8ade4e24)), closes [#16](https://github.com/SpiceLabsHQ/Reaper/issues/16)
+* update workflow, skills, and commands docs for two-layer worktree model ([eea4448](https://github.com/SpiceLabsHQ/Reaper/commit/eea4448d032649c91ad5fcc76414e6da4a8f76e3))
+
+
+### Tests
+
+* **contracts:** add two-layer worktree architecture contract tests ([de4ef92](https://github.com/SpiceLabsHQ/Reaper/commit/de4ef92d24bb1650c49eee8bcd2ea7ea159e776e))
+* **scripts:** add fixture-based tests for detect-task-system.sh ([a71ae5f](https://github.com/SpiceLabsHQ/Reaper/commit/a71ae5f4772b3bafaba37ae4f2f8cf37b424dc77)), closes [#14](https://github.com/SpiceLabsHQ/Reaper/issues/14)
+
 ## [1.12.1](https://github.com/SpiceLabsHQ/Reaper/compare/v1.12.0...v1.12.1) (2026-02-23)
 
 
