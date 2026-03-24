@@ -139,7 +139,7 @@ Do not read source code files to understand implementation details -- that is th
 
 ### Detection
 
-**Active task system:** !`./scripts/detect-task-system.sh`
+**Active task system:** !`${CLAUDE_PLUGIN_ROOT}/scripts/detect-task-system.sh`
 
 **Output variable:** `TASK_SYSTEM` — set this to the detected value above.
 

@@ -152,7 +152,7 @@ Generate an execution plan with parent/child issue structure for autonomous exec
 
 ### Detection
 
-**Active task system:** !`./scripts/detect-task-system.sh`
+**Active task system:** !`${CLAUDE_PLUGIN_ROOT}/scripts/detect-task-system.sh`
 
 **Output variable:** `TASK_SYSTEM` — set this to the detected value above.
 
