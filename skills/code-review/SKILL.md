@@ -1,7 +1,8 @@
 ---
 name: code-review
 description: Universal Gate 2 code review protocol for Reaper's quality gate pipeline. Guides a reviewer through plan verification, scope creep detection, completeness checks, and structured JSON output.
-allowed-tools: Read, Grep, Bash
+user-invocable: false
+allowed-tools: Read, Grep, Bash(git diff:*), Bash(git merge-base:*)
 ---
 
 # Code Review Skill

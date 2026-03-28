@@ -1,0 +1,21 @@
+### Work Unit Size Limits
+
+Use the per-type limits below when validating work unit packages. Each limit defines the maximum scope a single coding agent can handle without context degradation. If a work unit exceeds its type's limits, split it before dispatching.
+
+| Work Type | Max Files | Max LOC |
+|-----------|-----------|---------|
+| `application_code` | 5 files | 500 LOC |
+| `test_code_unit` | 5 files | 1000 LOC |
+| `test_code_integration` | 5 files | 800 LOC |
+| `database_migration` | 3 files | 200 LOC |
+| `infrastructure_config` | 5 files | 400 LOC |
+| `api_specification` | 3 files | 300 LOC |
+| `agent_prompt` | 3 files | no LOC limit |
+| `documentation` | 10 files | no LOC limit |
+| `ci_cd_pipeline` | 5 files | 300 LOC |
+| `configuration` | 5 files | 300 LOC |
+| `architecture_review` | 10 files | no LOC limit |
+
+**Validation rule**: For each work unit, determine its work type using the Work Type Detection Patterns (see Quality Gate Protocol). Look up the corresponding row in the table above. If the unit's file count exceeds Max Files, or its estimated LOC exceeds Max LOC (where a limit applies), instruct the planner to split the unit.
+
+**No-LOC-limit types** (`agent_prompt`, `documentation`, `architecture_review`): enforce only the file count limit. These work types consist of prose or declarative content where line counts are not a reliable proxy for complexity.

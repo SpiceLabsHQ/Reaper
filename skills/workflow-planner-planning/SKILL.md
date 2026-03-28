@@ -1,7 +1,8 @@
 ---
 name: workflow-planner-planning
 description: Planning process skill for workflow-planner. Handles grounding, input validation, strategy selection, and work package decomposition. Always executes within reaper:workflow-planner.
-allowed-tools: Read, Glob, Grep, WebFetch, WebSearch, Bash(bd show:*), Bash(bd dep tree:*), Bash(bd dep:*), Bash(bd list:*), Bash(bd update:*), Bash(bd create:*), Bash(bd close:*), Bash(acli jira workitem view:*), Bash(acli jira workitem search:*), Bash(acli jira workitem update:*), Bash(gh issue:*), Bash(gh project:*), Bash(gh api:*)
+user-invocable: false
+allowed-tools: Read, Glob, Grep, WebFetch, WebSearch, Bash(bd show:*), Bash(bd dep tree:*), Bash(bd dep:*), Bash(bd list:*), Bash(bd update:*), Bash(bd create:*), Bash(bd close:*), Bash(acli jira workitem view:*), Bash(acli jira workitem search:*), Bash(acli jira workitem update:*), Bash(gh issue view:*), Bash(gh issue create:*), Bash(gh issue edit:*), Bash(gh issue close:*), Bash(gh issue list:*), Bash(gh project list:*), Bash(gh project item-add:*), Bash(gh project item-edit:*), Bash(git status:*), Bash(*skills/issue-tracker-github/scripts/gh-link-sub-issues.sh *), Bash(*skills/issue-tracker-github/scripts/gh-list-sub-issues.sh *)
 ---
 
 # Workflow Planner — Planning Process
@@ -18,6 +19,17 @@ Before creating any implementation plan, read the project's existing codebase to
 - Existing code patterns and abstractions that new work should follow
 
 Ground all decomposition, file assignments, and strategy selection in the project's actual structure. Do not assign files to work packages speculatively — verify file paths exist and understand their current content before including them in a plan.
+
+### File Classification
+
+For each candidate file identified during grounding, classify it using the following procedure:
+
+1. **Scan candidate files**: List all files that will be touched by the planned work (modified, created, or deleted).
+2. **Pattern-match to work_type**: Apply the Work Type Detection Patterns (see JSON Planning Report — field reference) to each file's path to assign a `work_type`.
+3. **Count importers for application_code files**: For each file classified as `application_code`, run a targeted Grep (one call per candidate file) to count non-test files that import it. Record complexity as:
+   - `"high"` — 3 or more non-test importers
+   - `"low"` — fewer than 3 non-test importers
+4. **Record per-file metadata**: Store `work_type` and (for `application_code`) `complexity` for each file. Use this metadata when building work units and evaluating size limits.
 
 ## Cross-Domain Specialist Routing
 
@@ -52,14 +64,16 @@ Provide: task ID with complete details OR description with objective, files, dep
 
 Analyze work complexity using these scoring dimensions, then select strategy from the decision table.
 
+**Same-file overlap**: The identical file path appears in `assigned_files` of two or more work units. Directory proximity alone is not overlap.
+
 ### Complexity Scoring Dimensions
 
 | Dimension | Scoring Rules |
 |-----------|--------------|
-| **File Impact** | New file: +1, Modify small (<100 LOC): +1, medium (100-500): +2, large (>500): +3, high-complexity (auth/payment/core logic): +2 bonus |
+| **File Impact** | New file: +1, Modify small (<100 LOC): +1, medium (100-500): +2, large (>500): +3, complexity:high signal (from File Classification): +2 |
 | **Dependencies** | External API integrations: x3, DB schema changes: x2, third-party library changes: x2, cross-module deps: x1 |
 | **Testing** | Unit test files: x1, integration scenarios: x2, mocking required: +2, E2E tests: x3 |
-| **Integration Risk** | File overlap between work units: x3, shared interface changes: x2, cross-cutting concerns: x2 |
+| **Integration Risk** | Same-file overlap (identical path in 2+ units): x3, shared interface changes: x2, cross-cutting concerns: x2 |
 | **Uncertainty** | Unfamiliar tech: +4, unclear requirements: +3, missing docs: +2, research needed: +3 |
 
 **Single-document override:** If all work units' assigned files converge on the same 1-2 files, override to very_small_direct regardless of score or unit count. A single agent editing one file sequentially is faster and cheaper than parallel agents that cannot claim exclusive ownership. This override takes precedence over all other overrides below.
@@ -71,11 +85,11 @@ Analyze work complexity using these scoring dimensions, then select strategy fro
 | Total Score | Conditions | Strategy |
 |-------------|------------|----------|
 | any | All work units target ≤2 unique files | **very_small_direct** (single-document override) |
-| 0-10 | No file overlap, 1-2 files | **very_small_direct** |
-| 11-35 | No file overlap, <=5 work units | **medium_single_branch** |
+| 0-10 | No same-file overlap, 1-2 files | **very_small_direct** |
+| 11-35 | No same-file overlap, <=8 work units | **medium_single_branch** |
 | >35 | - | **large_multi_worktree** |
-| any | File overlap between work units | **large_multi_worktree** (required) |
-| any | Any work unit >5 files or >500 LOC | **large_multi_worktree** (required) |
+| any | Same file path in assigned_files of 2+ units | **large_multi_worktree** (required) |
+| any | Any work unit exceeds work_type max files or max LOC (see per-type limits table) | **large_multi_worktree** (required) |
 
 ### Dirty-Root Safety Check (Post-Selection)
 
@@ -94,7 +108,7 @@ The planner uses the scoring framework internally for strategy selection but ret
 
 ### Strategy 1: Very Small Direct
 
-**When**: Score <=10, 1-2 files, no file overlap. Also selected by single-document override when all work units converge on ≤2 files. Content override applies if 5+ repetitive items detected.
+**When**: Score <=10, 1-2 files, no same-file overlap. Also selected by single-document override when all work units converge on ≤2 files. Content override applies if 5+ repetitive items detected.
 
 **Workflow**:
 1. Work directly on feature branch (no worktree isolation)
@@ -104,7 +118,7 @@ The planner uses the scoring framework internally for strategy selection but ret
 
 ### Strategy 2: Medium Single Branch
 
-**When**: Score 11-35 (or lower with 5+ repetitive items), no file overlap, 2-5 work units.
+**When**: Score 11-35 (or lower with 5+ repetitive items), no same-file overlap, 2–8 work units.
 
 **Workflow**:
 1. Deploy reaper:branch-manager to create a single shared worktree: `.claude/worktrees/TASK-ID-work` on `feature/TASK-ID-description`
@@ -123,7 +137,7 @@ Task --subagent_type reaper:feature-developer "TASK_ID: PROJ-123, WORKTREE: .cla
 
 ### Strategy 3: Large Multi-Worktree
 
-**When**: Score >35, file overlap, >5 work units, high integration complexity.
+**When**: Score >35, same-file overlap, >8 work units, high integration complexity.
 
 **Workflow**:
 1. Create review branch: `feature/TASK-ID-review` (consolidation target)
@@ -153,7 +167,8 @@ When runtime conditions exceed the current strategy's assumptions, escalate:
 | From | To | Trigger |
 |------|----|---------|
 | Strategy 1 | Strategy 2 | Work expands beyond 1-2 files; parallel opportunities discovered |
-| Strategy 2 | Strategy 3 | File overlap discovered; agents report conflicts; work units exceed limits; >3 quality gate failures |
+| Strategy 2 | Strategy 3 | Same-file overlap discovered; agents report conflicts; work units exceed limits; >3 quality gate failures |
+| Strategy 2 (guardrail) | Strategy 3 | >2 gate failures in Strategy 2 session with >5 units → escalate remaining to Strategy 3 |
 | Any | Re-plan | Context windows routinely exhausted; requirements fundamentally change; approach infeasible |
 
 **Escalation workflow:**
@@ -169,10 +184,29 @@ The `risks` array in the JSON planning report should surface escalation-relevant
 ## Work Package Size Constraints
 
 ### Limits
-- **Files**: 3-5 max per package
-- **LOC**: ~500 lines per work unit
-- **Scope**: Single responsibility, explainable in <3 lines
-- **Dependencies**: Max 2-3 direct
+
+### Work Unit Size Limits
+
+Use the per-type limits below when validating work unit packages. Each limit defines the maximum scope a single coding agent can handle without context degradation. If a work unit exceeds its type's limits, split it before dispatching.
+
+| Work Type | Max Files | Max LOC |
+|-----------|-----------|---------|
+| `application_code` | 5 files | 500 LOC |
+| `test_code_unit` | 5 files | 1000 LOC |
+| `test_code_integration` | 5 files | 800 LOC |
+| `database_migration` | 3 files | 200 LOC |
+| `infrastructure_config` | 5 files | 400 LOC |
+| `api_specification` | 3 files | 300 LOC |
+| `agent_prompt` | 3 files | no LOC limit |
+| `documentation` | 10 files | no LOC limit |
+| `ci_cd_pipeline` | 5 files | 300 LOC |
+| `configuration` | 5 files | 300 LOC |
+| `architecture_review` | 10 files | no LOC limit |
+
+**Validation rule**: For each work unit, determine its work type using the Work Type Detection Patterns (see Quality Gate Protocol). Look up the corresponding row in the table above. If the unit's file count exceeds Max Files, or its estimated LOC exceeds Max LOC (where a limit applies), instruct the planner to split the unit.
+
+**No-LOC-limit types** (`agent_prompt`, `documentation`, `architecture_review`): enforce only the file count limit. These work types consist of prose or declarative content where line counts are not a reliable proxy for complexity.
+
 
 ### Decomposition Rules
 1. Break large features into micro-features (e.g., "Add user auth" becomes "login form" + "auth validation" + "session management")
@@ -182,7 +216,7 @@ The `risks` array in the JSON planning report should surface escalation-relevant
 5. Every work unit must leave all tests green upon completion — TDD Red-Green-Blue is an internal workflow within a work unit, not a decomposition boundary between work units
 
 ### Red Flags (Too Large)
-Any work unit that touches >5 files, needs >3 lines to describe, has multiple unrelated responsibilities, or estimates >500 LOC.
+Any work unit that exceeds its work_type max files or max LOC (see per-type limits table), needs >3 lines to describe, or has multiple unrelated responsibilities.
 
 ## Issue Hierarchy and Dependencies
 
@@ -206,23 +240,19 @@ When given a task ID, use QUERY_DEPENDENCY_TREE to retrieve the full dependency 
 
 Use CREATE_ISSUE with `parent=PARENT_ID` to create subtasks with hierarchy in a single step. Do not use ADD_DEPENDENCY for hierarchy -- ADD_DEPENDENCY is only for `blocks` (execution order) and `related` (informational links).
 
-### Work Type Classification
-
-For each work unit, classify its `work_type` based on the `assigned_files`. The `work_type` must be one of: `application_code`, `infrastructure_config`, `database_migration`, `api_specification`, `agent_prompt`, `documentation`, `ci_cd_pipeline`, `test_code`, `configuration`. If files span multiple work types, use the dominant type (the one with the most files). If uncertain, default to `application_code`.
-
 ## File Assignment Protocol
 
 Assign exclusive files per work unit when paths are known. Include them in `assigned_files`. All file assignments are implicitly exclusive — the orchestrator enforces ownership boundaries.
 
 When exact paths are uncertain, describe the target area in the `brief` field so the executing agent can discover files.
 
-File overlap between work units is a risk. Surface it in the `risks` array (e.g., "File overlap in src/auth/ between WORK-001 and WORK-002") and consider escalating to Strategy 3.
+Same-file overlap between work units is a risk. Surface it in the `risks` array (e.g., "Same-file overlap: src/auth/login.js appears in both WORK-001 and WORK-002") and consider escalating to Strategy 3.
 
 ## Parallel Safety
 
 - Assign exclusive files per agent; agents exit if assigned files are modified by others
 - Conflict detection: check file timestamps before write
-- Any file overlap detected at runtime: escalate to Strategy 3
+- Any same-file overlap detected at runtime: escalate to Strategy 3
 
 ## Anti-Patterns
 
@@ -249,6 +279,7 @@ All planning responses must return this compressed structure. The planner still 
       "id": "WORK-001",
       "title": "Implement login form",
       "work_type": "application_code",
+      "complexity": "high",
       "group": 1,
       "prerequisites": [],
       "assigned_files": ["src/auth/LoginForm.js", "tests/auth/LoginForm.test.js"],
@@ -256,7 +287,7 @@ All planning responses must return this compressed structure. The planner still 
       "acceptance_criteria": ["Form renders with email and password fields", "Validation rejects empty fields", "Submit dispatches auth action"]
     }
   ],
-  "risks": ["File overlap in src/auth/ between WORK-001 and WORK-002", "External OAuth API may require sandbox credentials"]
+  "risks": ["Same-file overlap: src/auth/login.js in both WORK-001 and WORK-002", "External OAuth API may require sandbox credentials"]
 }
 ```
 
@@ -264,7 +295,10 @@ All planning responses must return this compressed structure. The planner still 
 - `strategy`: One of `very_small_direct`, `medium_single_branch`, `large_multi_worktree`
 - `units[].id`: Unique identifier for the work unit
 - `units[].title`: Short descriptive title
-- `units[].work_type`: One of `application_code`, `infrastructure_config`, `database_migration`, `api_specification`, `agent_prompt`, `documentation`, `ci_cd_pipeline`, `test_code`, `configuration`
+- `units[].work_type`: One of `application_code`, `infrastructure_config`, `database_migration`, `api_specification`, `agent_prompt`, `documentation`, `ci_cd_pipeline`, `test_code_unit`, `test_code_integration`, `configuration`
+  - `test_code_unit`: unit tests (files under `tests/`, `__tests__/`, or `spec/` with no external I/O)
+  - `test_code_integration`: integration tests (anything touching DB, network, or filesystem, or named `*.integration.*` / `*.e2e.*`)
+- `units[].complexity`: Conditional — only present when `work_type` is `application_code`. One of `"high"` (≥3 non-test importers) or `"low"` (<3 non-test importers). Derived from File Classification step 3.
 - `units[].group`: Execution group number (units in the same group can run in parallel)
 - `units[].prerequisites`: Array of unit IDs that must complete before this unit starts
 - `units[].assigned_files`: Array of file paths this unit owns exclusively

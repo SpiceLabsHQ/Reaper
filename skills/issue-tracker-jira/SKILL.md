@@ -1,7 +1,8 @@
 ---
 name: issue-tracker-jira
 description: Jira issue tracking integration for Reaper's abstract task operations. Maps FETCH_ISSUE, CREATE_ISSUE, and other operations to acli jira CLI commands.
-allowed-tools: Bash, Read, Grep
+user-invocable: false
+allowed-tools: Read, Grep, Bash(acli jira workitem view:*), Bash(acli jira workitem search:*), Bash(acli jira workitem create:*), Bash(acli jira workitem update:*), Bash(acli jira workitem link:*)
 ---
 
 # Jira Issue Tracker

@@ -1,7 +1,7 @@
 ---
 name: worktree-manager
 description: Full lifecycle worktree management with safe cleanup that prevents CWD errors. Use when creating, listing, checking, or removing git worktrees.
-allowed-tools: Bash, Read, Grep
+allowed-tools: Read, Grep, Bash(*skills/worktree-manager/scripts/worktree-create.sh *), Bash(*skills/worktree-manager/scripts/worktree-list.sh *), Bash(*skills/worktree-manager/scripts/worktree-status.sh *), Bash(*skills/worktree-manager/scripts/worktree-cleanup.sh *)
 ---
 
 # Worktree Manager

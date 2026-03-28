@@ -1,7 +1,8 @@
 ---
 name: issue-tracker-beads
 description: Beads issue tracking integration for Reaper's abstract task operations. Maps FETCH_ISSUE, CREATE_ISSUE, and other operations to bd CLI commands.
-allowed-tools: Bash, Read, Grep
+user-invocable: false
+allowed-tools: Read, Grep, Bash(bd show:*), Bash(bd create:*), Bash(bd update:*), Bash(bd dep:*), Bash(bd close:*), Bash(bd list:*), Bash(bd ready:*), Bash(bd blocked:*), Bash(bd stats:*), Bash(bd sync:*)
 ---
 
 # Beads Issue Tracker

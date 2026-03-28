@@ -1,5 +1,6 @@
 ---
 description: Dispatch agents through quality gates until work lands on your desk.
+allowed-tools: Bash(*detect-task-system.sh), Skill(reaper:issue-tracker-github), Skill(reaper:issue-tracker-beads), Skill(reaper:issue-tracker-jira), Skill(reaper:issue-tracker-planfile)
 ---
 <%- include('partials/mission-header', { command: 'TAKEOFF', subtitle: 'scanning mission parameters' }) %>
 
@@ -97,7 +98,7 @@ When flattening, preserve the grouping structure for TodoWrite: use the intermed
 
 Dependencies determine execution ORDER, not whether a task is included. Every non-closed leaf must appear in the plan.
 
-Select strategy based on the count of non-closed **leaf-level** work units: 1 uses very_small_direct, 2-4 uses medium_single_branch, 5+ uses large_multi_worktree.
+Select strategy based on the count of non-closed **leaf-level** work units: 1 uses very_small_direct, 2-8 uses medium_single_branch, 9+ uses large_multi_worktree.
 
 **File-convergence exception**: If all leaf-level work units target the same 1-2 files (based on assigned_files or acceptance criteria), override to very_small_direct regardless of unit count. Parallel agents cannot claim exclusive file ownership when all units touch the same files.
 
@@ -117,13 +118,13 @@ If the plan file has Research but no Work Units, dispatch `reaper:workflow-plann
 
 ## Work Package Validation
 
-After obtaining work units (from pre-planned extraction, plan file, or workflow-planner), validate each package:
+After obtaining work units (from pre-planned extraction, plan file, or workflow-planner), validate each package against the per-type limits below:
 
-- Maximum 5 files per work unit
-- Maximum 500 lines of code per work unit
-- Maximum 2 hours estimated per work unit
+<%- include('partials/work-unit-limits') %>
 
-If any package exceeds these limits, use `Task --resume WORKFLOW_PLANNER_SESSION_ID` with instructions to split the oversized packages into smaller, context-safe units.
+Additionally, no work unit should exceed 2 hours estimated time.
+
+If any package exceeds its type's limits, use `Task --resume WORKFLOW_PLANNER_SESSION_ID` with instructions to split the oversized packages into smaller, context-safe units.
 
 <%- include('partials/todowrite-plan-protocol') %>
 

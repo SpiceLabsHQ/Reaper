@@ -1,7 +1,8 @@
 ---
 name: issue-tracker-github
 description: GitHub Issues and Projects integration for Reaper's abstract task operations. Maps FETCH_ISSUE, CREATE_ISSUE, and other operations to gh CLI commands.
-allowed-tools: Bash, Read, Grep
+user-invocable: false
+allowed-tools: Read, Grep, Bash(gh issue view:*), Bash(gh issue create:*), Bash(gh issue edit:*), Bash(gh issue close:*), Bash(gh issue list:*), Bash(gh project list:*), Bash(gh project item-add:*), Bash(gh project item-edit:*), Bash(*skills/issue-tracker-github/scripts/gh-link-sub-issues.sh *), Bash(*skills/issue-tracker-github/scripts/gh-list-sub-issues.sh *), Bash(*skills/issue-tracker-github/scripts/gh-project-set-status.sh *)
 ---
 
 # GitHub Issue Tracker
@@ -148,8 +149,7 @@ GitHub renders task list progress automatically. Use labels for grouping (e.g., 
    ```
 2. Append the new issue to the tracking issue's task list:
    ```bash
-   BODY=$(gh issue view <parent-number> --json body -q .body)
-   gh issue edit <parent-number> --body "$BODY
+   gh issue edit <parent-number> --body "$(gh issue view <parent-number> --json body -q .body)
    - [ ] #<new-number> Implement login"
    ```
 
@@ -174,9 +174,8 @@ GitHub has no native dependency links. Use structured cross-references in issue 
 **ADD_DEPENDENCY (blocks):**
 
 ```bash
-BODY=$(gh issue view <dependent> --json body -q .body)
 gh issue edit <dependent> --body "**Blocked by:** #<blocker>
-$BODY"
+$(gh issue view <dependent> --json body -q .body)"
 ```
 
 **ADD_DEPENDENCY (related):**

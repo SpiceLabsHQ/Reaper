@@ -1,6 +1,7 @@
 ---
 name: issue-tracker-planfile
 description: Markdown plan file management for projects without an issue tracker. Maps Reaper's abstract task operations to local plan file read/write operations.
+user-invocable: false
 allowed-tools: Read, Write, Edit, Grep, Glob
 ---
 

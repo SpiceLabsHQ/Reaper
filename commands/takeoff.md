@@ -1,5 +1,6 @@
 ---
 description: Dispatch agents through quality gates until work lands on your desk.
+allowed-tools: Bash(*detect-task-system.sh), Skill(reaper:issue-tracker-github), Skill(reaper:issue-tracker-beads), Skill(reaper:issue-tracker-jira), Skill(reaper:issue-tracker-planfile)
 ---
 ## Mission Header
 
@@ -357,7 +358,7 @@ When flattening, preserve the grouping structure for TodoWrite: use the intermed
 
 Dependencies determine execution ORDER, not whether a task is included. Every non-closed leaf must appear in the plan.
 
-Select strategy based on the count of non-closed **leaf-level** work units: 1 uses very_small_direct, 2-4 uses medium_single_branch, 5+ uses large_multi_worktree.
+Select strategy based on the count of non-closed **leaf-level** work units: 1 uses very_small_direct, 2-8 uses medium_single_branch, 9+ uses large_multi_worktree.
 
 **File-convergence exception**: If all leaf-level work units target the same 1-2 files (based on assigned_files or acceptance criteria), override to very_small_direct regardless of unit count. Parallel agents cannot claim exclusive file ownership when all units touch the same files.
 
@@ -377,13 +378,34 @@ If the plan file has Research but no Work Units, dispatch `reaper:workflow-plann
 
 ## Work Package Validation
 
-After obtaining work units (from pre-planned extraction, plan file, or workflow-planner), validate each package:
+After obtaining work units (from pre-planned extraction, plan file, or workflow-planner), validate each package against the per-type limits below:
 
-- Maximum 5 files per work unit
-- Maximum 500 lines of code per work unit
-- Maximum 2 hours estimated per work unit
+### Work Unit Size Limits
 
-If any package exceeds these limits, use `Task --resume WORKFLOW_PLANNER_SESSION_ID` with instructions to split the oversized packages into smaller, context-safe units.
+Use the per-type limits below when validating work unit packages. Each limit defines the maximum scope a single coding agent can handle without context degradation. If a work unit exceeds its type's limits, split it before dispatching.
+
+| Work Type | Max Files | Max LOC |
+|-----------|-----------|---------|
+| `application_code` | 5 files | 500 LOC |
+| `test_code_unit` | 5 files | 1000 LOC |
+| `test_code_integration` | 5 files | 800 LOC |
+| `database_migration` | 3 files | 200 LOC |
+| `infrastructure_config` | 5 files | 400 LOC |
+| `api_specification` | 3 files | 300 LOC |
+| `agent_prompt` | 3 files | no LOC limit |
+| `documentation` | 10 files | no LOC limit |
+| `ci_cd_pipeline` | 5 files | 300 LOC |
+| `configuration` | 5 files | 300 LOC |
+| `architecture_review` | 10 files | no LOC limit |
+
+**Validation rule**: For each work unit, determine its work type using the Work Type Detection Patterns (see Quality Gate Protocol). Look up the corresponding row in the table above. If the unit's file count exceeds Max Files, or its estimated LOC exceeds Max LOC (where a limit applies), instruct the planner to split the unit.
+
+**No-LOC-limit types** (`agent_prompt`, `documentation`, `architecture_review`): enforce only the file count limit. These work types consist of prose or declarative content where line counts are not a reliable proxy for complexity.
+
+
+Additionally, no work unit should exceed 2 hours estimated time.
+
+If any package exceeds its type's limits, use `Task --resume WORKFLOW_PLANNER_SESSION_ID` with instructions to split the oversized packages into smaller, context-safe units.
 
 ## TodoWrite Plan Persistence
 

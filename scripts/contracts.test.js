@@ -292,15 +292,6 @@ describe('Contract: issue-tracker skill frontmatter', () => {
       );
     });
 
-    it(`${relative} is NOT user-invocable`, () => {
-      const content = fs.readFileSync(filePath, 'utf8');
-      const fm = extractFrontmatter(content);
-      assert.ok(fm !== null, `${relative} is missing frontmatter`);
-      assert.ok(
-        !frontmatterHasField(fm, 'user-invocable'),
-        `${relative} must NOT have "user-invocable" field (platform skills are loaded by orchestrator)`
-      );
-    });
   }
 });
 
@@ -2087,17 +2078,6 @@ describe('Contract: code-review skill', () => {
     );
   });
 
-  it(`${relative} is NOT user-invocable`, () => {
-    assert.ok(fs.existsSync(filePath), `${relative} not found`);
-    const content = fs.readFileSync(filePath, 'utf8');
-    const fm = extractFrontmatter(content);
-    assert.ok(fm !== null, `${relative} is missing frontmatter`);
-    assert.ok(
-      !frontmatterHasField(fm, 'user-invocable'),
-      `${relative} must NOT have "user-invocable" field (loaded by orchestrator, not user-invocable)`
-    );
-  });
-
   it(`${relative} documents that orchestrator computes all_checks_passed`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
@@ -3328,7 +3308,9 @@ describe('Contract: flight-plan does not hardcode platform skill names outside P
     // The Phase 1 routing table is the only legitimate place to name this skill.
     // Count total occurrences — exactly one is expected (the table row in Phase 1).
     // Any additional occurrence means the skill has leaked into later phases (scope boundary violation).
-    const occurrences = (content.match(/reaper:issue-tracker-planfile/g) || [])
+    // Strip frontmatter before counting — allowed-tools entries are infrastructure config, not logic.
+    const body = content.replace(/^---\n[\s\S]*?\n---\n/, '');
+    const occurrences = (body.match(/reaper:issue-tracker-planfile/g) || [])
       .length;
     assert.ok(
       occurrences <= 1,
@@ -6403,6 +6385,232 @@ describe('Contract: takeoff.md contains Continuation Rule heading (extractFullPe
     assert.ok(
       content.includes('### Continuation Rule'),
       `${relative} must contain '### Continuation Rule' heading (extractFullPerUnitCycle depends on it)`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: work-unit-limits partial exists and contains per-type limits table
+// ---------------------------------------------------------------------------
+
+describe('Contract: work-unit-limits partial exists with per-type limits table', () => {
+  const sourcePath = path.join(ROOT, 'src', 'partials', 'work-unit-limits.ejs');
+  const sourceRelative = 'src/partials/work-unit-limits.ejs';
+
+  it(`${sourceRelative} file exists`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} must exist`);
+  });
+
+  it(`${sourceRelative} contains a markdown table with work_type column`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    assert.ok(
+      /work_type|Work Type/i.test(content),
+      `${sourceRelative} must contain a work_type column header`
+    );
+  });
+
+  it(`${sourceRelative} contains max files column`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    assert.ok(
+      /max.*files|files.*max/i.test(content),
+      `${sourceRelative} must contain a max files column`
+    );
+  });
+
+  it(`${sourceRelative} contains max LOC column`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    assert.ok(
+      /max.*LOC|LOC.*max|max.*lines|lines.*max/i.test(content),
+      `${sourceRelative} must contain a max LOC or max lines column`
+    );
+  });
+
+  it(`${sourceRelative} covers application_code work type`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    assert.ok(
+      content.includes('application_code'),
+      `${sourceRelative} must include application_code work type`
+    );
+  });
+
+  it(`${sourceRelative} covers test_code_unit work type`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    assert.ok(
+      content.includes('test_code_unit'),
+      `${sourceRelative} must include test_code_unit work type`
+    );
+  });
+
+  it(`${sourceRelative} covers test_code_integration work type`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    assert.ok(
+      content.includes('test_code_integration'),
+      `${sourceRelative} must include test_code_integration work type`
+    );
+  });
+
+  it(`${sourceRelative} covers database_migration work type`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    assert.ok(
+      content.includes('database_migration'),
+      `${sourceRelative} must include database_migration work type`
+    );
+  });
+
+  it(`${sourceRelative} covers documentation work type`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    assert.ok(
+      content.includes('documentation'),
+      `${sourceRelative} must include documentation work type`
+    );
+  });
+
+  it(`${sourceRelative} covers agent_prompt work type`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    assert.ok(
+      content.includes('agent_prompt'),
+      `${sourceRelative} must include agent_prompt work type`
+    );
+  });
+
+  it(`${sourceRelative} test_code_unit has LOC limit of 1000`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    const lines = content.split('\n');
+    const unitLine = lines.find((l) => l.includes('test_code_unit'));
+    assert.ok(unitLine !== undefined, `${sourceRelative} must have a test_code_unit row`);
+    assert.ok(
+      unitLine.includes('1000'),
+      `${sourceRelative} test_code_unit row must specify 1000 LOC limit (found: "${unitLine.trim()}")`
+    );
+  });
+
+  it(`${sourceRelative} database_migration has LOC limit of 200`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    const lines = content.split('\n');
+    const migLine = lines.find((l) => l.includes('database_migration'));
+    assert.ok(migLine !== undefined, `${sourceRelative} must have a database_migration row`);
+    assert.ok(
+      migLine.includes('200'),
+      `${sourceRelative} database_migration row must specify 200 LOC limit (found: "${migLine.trim()}")`
+    );
+  });
+
+  it(`${sourceRelative} documentation has no LOC limit (files-only or unlimited)`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    const lines = content.split('\n');
+    const docLine = lines.find((l) => l.includes('documentation'));
+    assert.ok(docLine !== undefined, `${sourceRelative} must have a documentation row`);
+    assert.ok(
+      /no.{0,10}limit|unlimited|--|n\/a/i.test(docLine),
+      `${sourceRelative} documentation row must indicate no LOC limit (found: "${docLine.trim()}")`
+    );
+  });
+
+  it(`${sourceRelative} application_code has LOC limit of 500`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    const lines = content.split('\n');
+    const appLine = lines.find((l) => l.includes('application_code'));
+    assert.ok(appLine !== undefined, `${sourceRelative} must have an application_code row`);
+    assert.ok(
+      appLine.includes('500'),
+      `${sourceRelative} application_code row must specify 500 LOC limit (found: "${appLine.trim()}")`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: takeoff Work Package Validation references work-unit-limits partial
+// ---------------------------------------------------------------------------
+
+describe('Contract: takeoff Work Package Validation uses work-type-aware limits', () => {
+  const sourcePath = path.join(ROOT, 'src', 'commands', 'takeoff.ejs');
+  const sourceRelative = 'src/commands/takeoff.ejs';
+  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
+  const relative = 'commands/takeoff.md';
+
+  it(`${sourceRelative} includes work-unit-limits partial`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    assert.ok(
+      content.includes("include('partials/work-unit-limits'") ||
+        content.includes('include("partials/work-unit-limits"'),
+      `${sourceRelative} must include the work-unit-limits partial`
+    );
+  });
+
+  it(`${sourceRelative} does not hardcode "Maximum 5 files"`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    assert.ok(
+      !content.includes('Maximum 5 files'),
+      `${sourceRelative} must not hardcode "Maximum 5 files" — use work-type-aware limits from partial instead`
+    );
+  });
+
+  it(`${sourceRelative} does not hardcode "Maximum 500 lines"`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    assert.ok(
+      !content.includes('Maximum 500 lines'),
+      `${sourceRelative} must not hardcode "Maximum 500 lines" — use work-type-aware limits from partial instead`
+    );
+  });
+
+  it(`${relative} Work Package Validation section references per-type limits`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    // The generated output should contain a table covering multiple work types
+    assert.ok(
+      content.includes('application_code') && content.includes('database_migration'),
+      `${relative} Work Package Validation must reference per-type limits covering multiple work types`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: takeoff strategy thresholds updated (2-8 medium, 9+ large)
+// ---------------------------------------------------------------------------
+
+describe('Contract: takeoff strategy selection thresholds (2-8 medium_single_branch, 9+ large_multi_worktree)', () => {
+  const sourcePath = path.join(ROOT, 'src', 'commands', 'takeoff.ejs');
+  const sourceRelative = 'src/commands/takeoff.ejs';
+
+  it(`${sourceRelative} uses "2-8" threshold for medium_single_branch (not "2-4")`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    assert.ok(
+      content.includes('2-8') && content.includes('medium_single_branch'),
+      `${sourceRelative} must use "2-8 uses medium_single_branch" threshold`
+    );
+    assert.ok(
+      !content.match(/2-4\s+uses\s+medium_single_branch/),
+      `${sourceRelative} must not use the old "2-4 uses medium_single_branch" threshold`
+    );
+  });
+
+  it(`${sourceRelative} uses "9+" threshold for large_multi_worktree (not "5+")`, () => {
+    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    assert.ok(
+      content.includes('9+') && content.includes('large_multi_worktree'),
+      `${sourceRelative} must use "9+ uses large_multi_worktree" threshold`
+    );
+    assert.ok(
+      !content.match(/5\+\s+uses\s+large_multi_worktree/),
+      `${sourceRelative} must not use the old "5+ uses large_multi_worktree" threshold`
     );
   });
 });
