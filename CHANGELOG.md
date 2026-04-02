@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.15.0](https://github.com/SpiceLabsHQ/Reaper/compare/v1.14.0...v1.15.0) (2026-04-02)
+
+
+### Features
+
+* **skills:** inject live repo labels and linked projects into issue-tracker-github ([6f92ccf](https://github.com/SpiceLabsHQ/Reaper/commit/6f92ccf2be6a6a2dc6f4f9d17792bad741fb4d7c)), closes [#45](https://github.com/SpiceLabsHQ/Reaper/issues/45)
+
 ## 1.14.0 (2026-03-28)
 
 
