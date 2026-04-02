@@ -2,12 +2,18 @@
 name: issue-tracker-github
 description: GitHub Issues and Projects integration for Reaper's abstract task operations. Maps FETCH_ISSUE, CREATE_ISSUE, and other operations to gh CLI commands.
 user-invocable: false
-allowed-tools: Read, Grep, Bash(gh issue view:*), Bash(gh issue create:*), Bash(gh issue edit:*), Bash(gh issue close:*), Bash(gh issue list:*), Bash(gh project list:*), Bash(gh project item-add:*), Bash(gh project item-edit:*), Bash(*skills/issue-tracker-github/scripts/gh-link-sub-issues.sh *), Bash(*skills/issue-tracker-github/scripts/gh-list-sub-issues.sh *), Bash(*skills/issue-tracker-github/scripts/gh-project-set-status.sh *)
+allowed-tools: Read, Grep, Bash(gh issue view:*), Bash(gh issue create:*), Bash(gh issue edit:*), Bash(gh issue close:*), Bash(gh issue list:*), Bash(gh label list:*), Bash(gh api:*), Bash(gh project list:*), Bash(gh project item-add:*), Bash(gh project item-edit:*), Bash(*skills/issue-tracker-github/scripts/gh-link-sub-issues.sh *), Bash(*skills/issue-tracker-github/scripts/gh-list-sub-issues.sh *), Bash(*skills/issue-tracker-github/scripts/gh-project-set-status.sh *), Bash(*skills/issue-tracker-github/scripts/gh-repo-projects.sh*)
 ---
 
 # GitHub Issue Tracker
 
 Maps abstract task operations to `gh` CLI commands. See `gh issue --help` and `gh project --help` for full flag details.
+
+## Repo Context
+
+**Available labels:** !`gh label list --json name -q '[.[].name] | join(", ")' 2>/dev/null || echo "none"`
+
+**GitHub Projects:** !`${CLAUDE_PLUGIN_ROOT}/skills/issue-tracker-github/scripts/gh-repo-projects.sh`
 
 ## Safety Rule: Pull Requests
 
@@ -39,13 +45,7 @@ Scripts are in `${CLAUDE_PLUGIN_ROOT}/skills/issue-tracker-github/scripts/`:
 
 ### With GitHub Projects
 
-Detect whether Projects are available:
-
-```bash
-gh project list --owner @me --format json --limit 1
-```
-
-If projects exist, use them for workflow tracking:
+Check the **GitHub Projects** line in [Repo Context](#repo-context) above. If projects are configured, use them for workflow tracking:
 
 ```bash
 # Add issue to project
