@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.15.1](https://github.com/SpiceLabsHQ/Reaper/compare/v1.15.0...v1.15.1) (2026-04-10)
+
+
+### Bug Fixes
+
+* **takeoff,flight-plan:** correct allowed-tools path pattern for detect-task-system.sh ([a6f0ed7](https://github.com/SpiceLabsHQ/Reaper/commit/a6f0ed7d6d53657803f7cd59c4b22083808e2996)), closes [#46](https://github.com/SpiceLabsHQ/Reaper/issues/46)
+
 ## [1.15.0](https://github.com/SpiceLabsHQ/Reaper/compare/v1.14.0...v1.15.0) (2026-04-02)
 
 
