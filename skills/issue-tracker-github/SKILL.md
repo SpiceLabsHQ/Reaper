@@ -1,6 +1,6 @@
 ---
 name: issue-tracker-github
-description: GitHub Issues and Projects integration for Reaper's abstract task operations. Maps FETCH_ISSUE, CREATE_ISSUE, and other operations to gh CLI commands.
+description: Use when interacting with GitHub Issues or GitHub Projects via the `gh` CLI. TRIGGER when about to run `gh issue view/create/edit/close/list`, `gh project ...`, or the bundled `gh-link-sub-issues.sh`/`gh-list-sub-issues.sh`/`gh-project-set-status.sh` scripts; user references a GitHub issue (e.g., "#42", "issue 42", "GH-42"); creating or linking sub-issues; updating GitHub Projects v2 fields; Reaper's task system is detected as github. SKIP for pull request operations (`gh pr ...`), repo/release/auth subcommands, or work targeting Jira/Beads/markdown plan files. Maps Reaper's abstract task operations (FETCH_ISSUE, CREATE_ISSUE, etc.) to `gh` commands.
 user-invocable: false
 allowed-tools: Read, Grep, Bash(gh issue view:*), Bash(gh issue create:*), Bash(gh issue edit:*), Bash(gh issue close:*), Bash(gh issue list:*), Bash(gh label list:*), Bash(gh api:*), Bash(gh project list:*), Bash(gh project item-add:*), Bash(gh project item-edit:*), Bash(*skills/issue-tracker-github/scripts/gh-link-sub-issues.sh *), Bash(*skills/issue-tracker-github/scripts/gh-list-sub-issues.sh *), Bash(*skills/issue-tracker-github/scripts/gh-project-set-status.sh *), Bash(*skills/issue-tracker-github/scripts/gh-repo-projects.sh*)
 ---

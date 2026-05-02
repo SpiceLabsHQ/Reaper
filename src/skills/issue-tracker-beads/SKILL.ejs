@@ -1,6 +1,6 @@
 ---
 name: issue-tracker-beads
-description: Beads issue tracking integration for Reaper's abstract task operations. Maps FETCH_ISSUE, CREATE_ISSUE, and other operations to bd CLI commands.
+description: Use when interacting with Beads issues via the `bd` CLI. TRIGGER when about to run any `bd show/create/update/close/dep/list/ready/blocked/stats/sync`; user references a Beads ID (slug-hash form like "reaper-a3f" or child form "reaper-a3f.2"); creating/updating issues, adding dependencies, or walking the dependency tree in a Beads-tracked repo; Reaper's task system is detected as beads. SKIP for GitHub Issues, Jira, or markdown plan files. Maps Reaper's abstract task operations (FETCH_ISSUE, CREATE_ISSUE, etc.) to `bd` commands.
 user-invocable: false
 allowed-tools: Read, Grep, Bash(bd show:*), Bash(bd create:*), Bash(bd update:*), Bash(bd dep:*), Bash(bd close:*), Bash(bd list:*), Bash(bd ready:*), Bash(bd blocked:*), Bash(bd stats:*), Bash(bd sync:*)
 ---

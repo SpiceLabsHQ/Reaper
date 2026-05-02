@@ -1,6 +1,6 @@
 ---
 name: issue-tracker-jira
-description: Jira issue tracking integration for Reaper's abstract task operations. Maps FETCH_ISSUE, CREATE_ISSUE, and other operations to acli jira CLI commands.
+description: Use when interacting with Jira issues via the `acli jira` CLI. TRIGGER when about to run any `acli jira workitem view/search/create/update/link`; user references a Jira key (e.g., "PROJ-123", "ABC-7"); creating, transitioning, linking, or querying parent/child hierarchy of Jira work items; Reaper's task system is detected as jira. SKIP for GitHub Issues, Beads, markdown plan files, or non-Jira `acli` subcommands. Maps Reaper's abstract task operations (FETCH_ISSUE, CREATE_ISSUE, etc.) to `acli jira workitem` commands.
 user-invocable: false
 allowed-tools: Read, Grep, Bash(acli jira workitem view:*), Bash(acli jira workitem search:*), Bash(acli jira workitem create:*), Bash(acli jira workitem update:*), Bash(acli jira workitem link:*)
 ---
