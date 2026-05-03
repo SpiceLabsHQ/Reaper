@@ -13,7 +13,7 @@ Plugin-provided skills with `user-invocable: true` frontmatter do not reliably a
 
 Plugin-provided commands do appear in the `/` autocomplete menu, namespaced as `/plugin-name:command-name`.
 
-Reaper's user-invocable surface (flight-plan, takeoff, ship, squadron, start, status-worktrees, claude-sync, configure-quality-gates) is the primary interface through which developers interact with Reaper. Discoverability is a first-class UX concern — developers should be able to type `/` and see available commands without prior knowledge.
+Reaper's user-invocable surface (flight-plan, takeoff, ship, squadron, start, status-worktrees, claude-sync, init, doctor) is the primary interface through which developers interact with Reaper. Discoverability is a first-class UX concern — developers should be able to type `/` and see available commands without prior knowledge.
 
 Dynamic context injection (the `` !`command` `` backtick syntax for executing shell commands before Claude receives the prompt) works identically in both commands and skills.
 

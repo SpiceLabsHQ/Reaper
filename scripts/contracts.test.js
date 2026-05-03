@@ -850,10 +850,15 @@ const ALL_COMMANDS = [
   'squadron',
   'claude-sync',
   'start',
-  'configure-quality-gates',
   'init',
   'doctor',
 ];
+
+/**
+ * Commands that have been removed and must NOT reappear in ALL_COMMANDS.
+ * Locks deletions in so a future revert wouldn't silently slip past contracts.
+ */
+const REMOVED_COMMANDS = ['configure-quality-gates'];
 
 /**
  * Resolves the generated command file path from command name.
@@ -863,6 +868,26 @@ const ALL_COMMANDS = [
 function commandFilePath(commandName) {
   return path.join(COMMANDS_DIR, `${commandName}.md`);
 }
+
+describe('Contract: removed commands stay removed', () => {
+  for (const removed of REMOVED_COMMANDS) {
+    it(`ALL_COMMANDS does not include the removed '${removed}' command`, () => {
+      assert.ok(
+        !ALL_COMMANDS.includes(removed),
+        `'${removed}' was deleted and must not reappear in ALL_COMMANDS. ` +
+          `If you need to bring it back, undo the deletion across src/commands/, commands/, and contracts.test.js together.`
+      );
+    });
+
+    it(`commands/${removed}.md is not present on disk`, () => {
+      const filePath = commandFilePath(removed);
+      assert.ok(
+        !fs.existsSync(filePath),
+        `commands/${removed}.md should not exist — the source template src/commands/${removed}.ejs was deleted.`
+      );
+    });
+  }
+});
 
 describe('Contract: command frontmatter', () => {
   assert.ok(
@@ -982,16 +1007,6 @@ const COMMAND_SEMANTIC_CONTRACTS = {
       { pattern: /Mode 2/i, label: 'mode 2 input classification section' },
     ],
   },
-  'configure-quality-gates': {
-    label: 'configure-quality-gates command',
-    commands: () => ['configure-quality-gates'],
-    sections: [
-      { pattern: /detection/i, label: 'detection section' },
-      { pattern: /approval flow/i, label: 'approval flow section' },
-      { pattern: /claude\.md write/i, label: 'claude.md write section' },
-      { pattern: /commit/i, label: 'commit section' },
-    ],
-  },
   init: {
     label: 'init command',
     commands: () => ['init'],
@@ -1058,7 +1073,6 @@ registerCommandSemanticSuite('flight-plan');
 registerCommandSemanticSuite('squadron');
 registerCommandSemanticSuite('claude-sync');
 registerCommandSemanticSuite('start');
-registerCommandSemanticSuite('configure-quality-gates');
 registerCommandSemanticSuite('init');
 registerCommandSemanticSuite('doctor');
 
@@ -3299,7 +3313,6 @@ const PRIMARY_WORKFLOW_COMMANDS = [
   'status-worktrees',
   'start',
   'claude-sync',
-  'configure-quality-gates',
 ];
 
 describe('Contract: user communication contract included in all primary workflow commands', () => {
@@ -4235,17 +4248,6 @@ describe('Contract: commands contain mission banner', () => {
     assert.ok(
       content.includes('REAPER // CLAUDE SYNC'),
       `${relative} is missing mission banner 'REAPER // CLAUDE SYNC'`
-    );
-  });
-
-  it("commands/configure-quality-gates.md contains 'REAPER // CONFIGURE QUALITY GATES'", () => {
-    const filePath = commandFilePath('configure-quality-gates');
-    const relative = 'commands/configure-quality-gates.md';
-    assert.ok(fs.existsSync(filePath), `${relative} not found`);
-    const content = fs.readFileSync(filePath, 'utf8');
-    assert.ok(
-      content.includes('REAPER // CONFIGURE QUALITY GATES'),
-      `${relative} is missing mission banner 'REAPER // CONFIGURE QUALITY GATES'`
     );
   });
 
