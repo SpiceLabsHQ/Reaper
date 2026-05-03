@@ -678,42 +678,9 @@ describe('buildTemplateVars commands', () => {
     const keys = Object.keys(vars);
     assert.deepStrictEqual(
       keys.sort(),
-      [
-        'BUILD_TIMESTAMP',
-        'FILENAME',
-        'RELATIVE_PATH',
-        'SOURCE_TYPE',
-        'renderScript',
-      ].sort(),
+      ['BUILD_TIMESTAMP', 'FILENAME', 'RELATIVE_PATH', 'SOURCE_TYPE'].sort(),
       'Commands should only have base variables'
     );
-  });
-
-  it('exposes renderScript as a callable build-time helper', () => {
-    const vars = buildTemplateVars(
-      'commands',
-      'my-command',
-      'commands/my-command.ejs'
-    );
-    assert.equal(typeof vars.renderScript, 'function');
-  });
-
-  it('renderScript executes a script relative to the project root and returns stdout', () => {
-    // Use the real render-tdd-mandate.sh as the system under test. It exists
-    // in this checkout, and exercising it here ensures the renderScript helper
-    // resolves paths from config.rootDir, executes the script, and returns its
-    // captured stdout.
-    const vars = buildTemplateVars('commands', 'x', 'commands/x.ejs');
-    const out = vars.renderScript(
-      'src/skills/code-review/scripts/render-tdd-mandate.sh'
-    );
-    assert.equal(typeof out, 'string');
-    // With defaults and no project .reaper.yml override, the section should
-    // be present (defaults.yml ships require_tdd: true). The script owns the
-    // ### heading because feature-developer.ejs intentionally has nothing
-    // about TDD around the renderScript invocation -- so when TDD is OFF, no
-    // orphans remain.
-    assert.match(out, /### 2\. TDD Cycle \(Red-Green-Blue\)/);
   });
 });
 

@@ -150,64 +150,58 @@ Break the feature description into discrete, testable units. For each unit, iden
 - Edge cases and error conditions from the acceptance criteria
 - **Impact Scan**: For each file modified or deleted, scan that same file and its direct importers for dangling references, broken imports, and orphaned identifiers pointing to anything you changed or removed. Scope: the modified file and its direct importers only — do not search the entire codebase.
 
-## TDD Protocol
-
 ### 2. TDD Cycle (Red-Green-Blue)
+Follow the TDD cycle defined in the testing protocol below. Write tests for application code only (business logic, APIs, services, UI). Skip dev tooling (build configs, linters, CI scripts). Apply SOLID principles during the refactor phase.
 
-You MUST follow the Red-Green-Blue cycle for every behaviour change. This is
-not negotiable when `workflow.require_tdd` is `true` (the default).
+### 3. Validate
+Run only your tests (not the full suite). Verify 80%+ coverage on the application code you wrote.
 
-1. **RED** -- Write a failing test that captures the expected behaviour. The
-   test must fail for the right reason (missing implementation), not a typo
-   or import error. Run only the test you just authored to confirm RED.
-2. **GREEN** -- Write the minimum production code required to make the test
-   pass. Resist the urge to add un-tested behaviour during GREEN.
-3. **BLUE** -- Refactor for clarity and SOLID compliance with the test still
-   passing. No new behaviour, no new tests during BLUE.
+## TDD Testing Protocol
 
-When test-first is not practical (exploratory work, UI prototyping, spike
-investigations), write tests immediately after implementation instead.
+> **Default Standard**: Override with project-specific testing guidelines when available.
 
 ### Testing Philosophy
-
 **Favor integration tests over unit tests.** Reserve unit tests for:
 - Pure functions with complex logic
 - Edge cases hard to trigger through integration tests
 
 **Avoid brittle tests:**
 - No string/snapshot matching for dynamic content
-- No over-mocking -- test real behavior where feasible
+- No over-mocking—test real behavior where feasible
 - Test public interfaces, not private internals
 
+### Preferred Workflow: Red-Green-Blue
+feature-developer responsibilities:
+- Write failing tests for the feature (RED)
+- Implement feature to pass tests (GREEN)
+- Refactor for SOLID compliance (BLUE)
+- Test YOUR feature in isolation only
+
 ### Targeted Testing Scope
-
-**Test YOUR feature only -- not the full suite:**
-
+**Test YOUR changes only—not the full suite:**
 ```bash
-# RED -- expected to FAIL
-(cd ".claude/worktrees/[TASK_ID]-implementation" && npm test -- path/to/feature.test.js)
-
-# GREEN -- expected to PASS
-(cd ".claude/worktrees/[TASK_ID]-implementation" && npm test -- path/to/feature.test.js)
-
-# BLUE -- still PASS after refactor
-(cd ".claude/worktrees/[TASK_ID]-implementation" && npm test -- path/to/feature.test.js)
+# Test only the files you created/modified
+(cd &#34;.claude/worktrees/[TASK_ID]-implementation&#34; &amp;&amp; npm test -- path/to/your/feature.test.js)
+(cd &#34;.claude/worktrees/[TASK_ID]-implementation&#34; &amp;&amp; pytest tests/test_your_feature.py)
+(cd &#34;.claude/worktrees/[TASK_ID]-implementation&#34; &amp;&amp; ./vendor/bin/phpunit tests/YourFeatureTest.php)
 ```
-
 **Avoid full suite runs:**
-
 ```bash
-(cd ".claude/worktrees/[TASK_ID]-implementation" && npm test)  # Runs full suite -- don't
-(cd ".claude/worktrees/[TASK_ID]-implementation" && pytest)    # Runs full suite -- don't
+(cd &#34;.claude/worktrees/[TASK_ID]-implementation&#34; &amp;&amp; npm test)  # Runs full suite -- don&#39;t
+(cd &#34;.claude/worktrees/[TASK_ID]-implementation&#34; &amp;&amp; pytest)     # Runs full suite -- don&#39;t
 ```
+### TDD Red-Green-Refactor Cycle
+```bash
+# RED - Tests FAIL (feature doesn&#39;t exist yet)
+(cd &#34;.claude/worktrees/[TASK_ID]-implementation&#34; &amp;&amp; npm test -- path/to/feature-test.js)
 
-**The test-runner agent handles full suite validation** -- focus on your
-changes only. Do not pre-empt Gate 1 by running the project-wide suite
-yourself; that is test-runner's role.
+# GREEN - Tests PASS (feature works)
+(cd &#34;.claude/worktrees/[TASK_ID]-implementation&#34; &amp;&amp; npm test -- path/to/feature-test.js)
 
-
-### 3. Validate
-Run only your tests (not the full suite). Verify 80%+ coverage on the application code you wrote.
+# BLUE - Tests still PASS (refactored cleanly)
+(cd &#34;.claude/worktrees/[TASK_ID]-implementation&#34; &amp;&amp; npm test -- path/to/feature-test.js)
+```
+**The test-runner agent handles full suite validation**—focus on your changes only.
 
 ## Artifact Cleanup
 

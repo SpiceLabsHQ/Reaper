@@ -234,32 +234,6 @@ function buildTemplateVars(sourceType, filename, relativePath) {
     SOURCE_TYPE: sourceType,
     RELATIVE_PATH: relativePath,
     BUILD_TIMESTAMP: new Date().toISOString(),
-    /**
-     * Build-time render-script helper.
-     *
-     * Resolves a project-relative script path, executes it, and returns its
-     * stdout for inline insertion into the rendered template. This is the
-     * sanctioned way to embed conditional prompt sections (the convention
-     * documented in docs/skills.md) without inline EJS conditionals.
-     *
-     * The script is expected to read configuration from .reaper.yml via
-     * scripts/config-get.sh and print either the section content or nothing
-     * to stdout. stderr passes through to the build console for visibility.
-     *
-     * @param {string} relPath - Project-relative path to a render-*.sh script
-     *                            (e.g. "src/skills/code-review/scripts/render-foo.sh").
-     * @returns {string} Captured stdout of the render script.
-     */
-    renderScript: function (relPath) {
-      const cp = require('child_process');
-      const p = require('path');
-      const abs = p.resolve(config.rootDir, relPath);
-      return cp.execFileSync(abs, [], {
-        encoding: 'utf8',
-        cwd: config.rootDir,
-        stdio: ['ignore', 'pipe', 'inherit'],
-      });
-    },
   };
 
   // Agent-specific variables

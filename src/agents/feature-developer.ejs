@@ -61,11 +61,35 @@ Break the feature description into discrete, testable units. For each unit, iden
 - Edge cases and error conditions from the acceptance criteria
 - **Impact Scan**: For each file modified or deleted, scan that same file and its direct importers for dangling references, broken imports, and orphaned identifiers pointing to anything you changed or removed. Scope: the modified file and its direct importers only — do not search the entire codebase.
 
-<%- renderScript('src/skills/code-review/scripts/render-tdd-mandate.sh') %>
+### 2. TDD Cycle (Red-Green-Blue)
+Follow the TDD cycle defined in the testing protocol below. Write tests for application code only (business logic, APIs, services, UI). Skip dev tooling (build configs, linters, CI scripts). Apply SOLID principles during the refactor phase.
 
 ### 3. Validate
 Run only your tests (not the full suite). Verify 80%+ coverage on the application code you wrote.
 
+<%- include('partials/tdd-testing-protocol', {
+  agentName: 'feature-developer',
+  targetedTestType: 'changes',
+  testExamples: `# Test only the files you created/modified
+(cd ".claude/worktrees/[TASK_ID]-implementation" && npm test -- path/to/your/feature.test.js)
+(cd ".claude/worktrees/[TASK_ID]-implementation" && pytest tests/test_your_feature.py)
+(cd ".claude/worktrees/[TASK_ID]-implementation" && ./vendor/bin/phpunit tests/YourFeatureTest.php)`,
+  wrongExamples: `(cd ".claude/worktrees/[TASK_ID]-implementation" && npm test)  # Runs full suite -- don't
+(cd ".claude/worktrees/[TASK_ID]-implementation" && pytest)     # Runs full suite -- don't`,
+  agentResponsibilities: `- Write failing tests for the feature (RED)
+- Implement feature to pass tests (GREEN)
+- Refactor for SOLID compliance (BLUE)
+- Test YOUR feature in isolation only`,
+  cycleTitle: 'TDD Red-Green-Refactor Cycle',
+  cycleContent: `# RED - Tests FAIL (feature doesn't exist yet)
+(cd ".claude/worktrees/[TASK_ID]-implementation" && npm test -- path/to/feature-test.js)
+
+# GREEN - Tests PASS (feature works)
+(cd ".claude/worktrees/[TASK_ID]-implementation" && npm test -- path/to/feature-test.js)
+
+# BLUE - Tests still PASS (refactored cleanly)
+(cd ".claude/worktrees/[TASK_ID]-implementation" && npm test -- path/to/feature-test.js)`
+}) %>
 <%- include('partials/artifact-cleanup-coding') %>
 <%- include('partials/file-conflict-detection') %>
 <%- include('partials/no-commits-policy', { workType: 'feature' }) %>
