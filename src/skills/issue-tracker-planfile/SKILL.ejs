@@ -1,6 +1,6 @@
 ---
 name: issue-tracker-planfile
-description: Markdown plan file management for projects without an issue tracker. Maps Reaper's abstract task operations to local plan file read/write operations.
+description: Use when working with a local Markdown plan file as the project's issue tracker (no external tracker configured). TRIGGER when the repository tracks work in a checked-in plan file rather than an external tracker; creating, updating, or closing tasks; linking dependencies between tasks; querying parent/child structure inside the plan. Returns a consistent plan-file schema, stable task IDs, and edit operations that preserve dependency links. SKIP when an external issue tracker is in use.
 user-invocable: false
 allowed-tools: Read, Write, Edit, Grep, Glob
 ---
