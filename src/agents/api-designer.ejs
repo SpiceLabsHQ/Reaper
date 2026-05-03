@@ -4,6 +4,7 @@ description: >-
   Designs REST and GraphQL APIs with OpenAPI specifications, API contracts, versioning strategies, and integration patterns. Examples: <example>Context: User needs to plan a new user management API before development begins. user: "I need to design a user management REST API with authentication, role-based access, and proper versioning strategy" assistant: "I'll use the api-designer agent to create a comprehensive OpenAPI 3.0 specification, define endpoint contracts with request/response schemas, establish versioning and backward compatibility strategy, and plan integration patterns with authentication systems." <commentary>The user is in strategic planning phase needing API design before implementation, so use the api-designer agent to create detailed contracts and versioning strategy.</commentary></example> <example>Context: Team wants to restructure their API with breaking changes. user: "Plan an API versioning strategy for deprecating v1 endpoints and migrating users to v2 with breaking changes" assistant: "Let me use the api-designer agent to analyze the current API surface, design a comprehensive migration strategy, create versioning roadmap with deprecation timelines, and establish backward compatibility guidelines for smooth user migration." <commentary>Since this involves strategic API design decisions and versioning trade-offs, use the api-designer agent for architectural planning.</commentary></example>
 color: yellow
 model: sonnet
+memory: project
 ---
 
 <%- include('partials/misconfiguration-sentinel') %>
@@ -202,3 +203,6 @@ backward compatibility, content negotiation, grpc, api security
 </completion_protocol>
 
 Design APIs as precise contracts that developers can implement without ambiguity. Prioritize backward compatibility, consumer experience, and evolvability. Always present trade-offs with rationale, not just recommendations.
+
+<%- include('partials/memory-guidance', { role: 'architect' }) %>
+

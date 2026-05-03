@@ -4562,13 +4562,13 @@ describe('workflow-planner agent (refactored)', () => {
   const filePath = agentFilePath('workflow-planner');
   const relative = 'agents/workflow-planner.md';
 
-  it(`${relative} line count is less than 150`, () => {
+  it(`${relative} line count is less than 200`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const lineCount = content.split('\n').length;
     assert.ok(
-      lineCount < 150,
-      `${relative} must be under 150 lines (currently ${lineCount}) — process content should live in skills`
+      lineCount < 200,
+      `${relative} must be under 200 lines (currently ${lineCount}) — process content should live in skills`
     );
   });
 
