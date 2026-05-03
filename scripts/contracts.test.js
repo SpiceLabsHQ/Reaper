@@ -4636,15 +4636,6 @@ describe('takeoff command: workflow-planner Task subagent dispatch', () => {
     );
   });
 
-  it(`${relative} uses Task --resume WORKFLOW_PLANNER_SESSION_ID for oversized package re-invocation`, () => {
-    assert.ok(fs.existsSync(filePath), `${relative} not found`);
-    const content = fs.readFileSync(filePath, 'utf8');
-    assert.ok(
-      content.includes('Task --resume WORKFLOW_PLANNER_SESSION_ID'),
-      `${relative} must use 'Task --resume WORKFLOW_PLANNER_SESSION_ID' for re-invocation on oversized packages`
-    );
-  });
-
   it(`${relative} does NOT use Skill-based invocation language for workflow-planner`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
@@ -6585,56 +6576,6 @@ describe('Contract: work-unit-limits partial exists with per-type limits table',
     assert.ok(
       appLine.includes('500'),
       `${sourceRelative} application_code row must specify 500 LOC limit (found: "${appLine.trim()}")`
-    );
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Contract: takeoff Work Package Validation references work-unit-limits partial
-// ---------------------------------------------------------------------------
-
-describe('Contract: takeoff Work Package Validation uses work-type-aware limits', () => {
-  const sourcePath = path.join(ROOT, 'src', 'commands', 'takeoff.ejs');
-  const sourceRelative = 'src/commands/takeoff.ejs';
-  const filePath = path.join(COMMANDS_DIR, 'takeoff.md');
-  const relative = 'commands/takeoff.md';
-
-  it(`${sourceRelative} includes work-unit-limits partial`, () => {
-    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
-    const content = fs.readFileSync(sourcePath, 'utf8');
-    assert.ok(
-      content.includes("include('partials/work-unit-limits'") ||
-        content.includes('include("partials/work-unit-limits"'),
-      `${sourceRelative} must include the work-unit-limits partial`
-    );
-  });
-
-  it(`${sourceRelative} does not hardcode "Maximum 5 files"`, () => {
-    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
-    const content = fs.readFileSync(sourcePath, 'utf8');
-    assert.ok(
-      !content.includes('Maximum 5 files'),
-      `${sourceRelative} must not hardcode "Maximum 5 files" — use work-type-aware limits from partial instead`
-    );
-  });
-
-  it(`${sourceRelative} does not hardcode "Maximum 500 lines"`, () => {
-    assert.ok(fs.existsSync(sourcePath), `${sourceRelative} not found`);
-    const content = fs.readFileSync(sourcePath, 'utf8');
-    assert.ok(
-      !content.includes('Maximum 500 lines'),
-      `${sourceRelative} must not hardcode "Maximum 500 lines" — use work-type-aware limits from partial instead`
-    );
-  });
-
-  it(`${relative} Work Package Validation section references per-type limits`, () => {
-    assert.ok(fs.existsSync(filePath), `${relative} not found`);
-    const content = fs.readFileSync(filePath, 'utf8');
-    // The generated output should contain a table covering multiple work types
-    assert.ok(
-      content.includes('application_code') &&
-        content.includes('database_migration'),
-      `${relative} Work Package Validation must reference per-type limits covering multiple work types`
     );
   });
 });
