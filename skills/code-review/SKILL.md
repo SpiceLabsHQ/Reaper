@@ -90,6 +90,24 @@ Use the `WORK_TYPE` value to look up the specialty file in the map below, then s
 - Security vulnerabilities
 - Files modified outside declared scope (unless pre-authorized)
 
+## Security Gate Enforcement
+
+This review feeds Reaper's quality-gate pipeline alongside the dedicated
+`reaper:security-auditor` agent (Gate 3). Treat the following as authoritative
+during your review:
+
+- **Security vulnerabilities are blocking issues.** Any finding that exposes
+  user data, weakens authentication, leaks secrets, or introduces injection
+  risk MUST be added to `blocking_issues` -- never `non_blocking_notes`.
+- **Do not defer to the security auditor for clear-cut violations.** If a
+  vulnerability is obvious from the diff (hard-coded credentials, missing
+  input validation on a privileged endpoint, broken authorization checks),
+  block the work unit even though Gate 3 will run separately.
+- **Trust but verify.** When `TEST_RUNNER_RESULTS` shows passing tests, you
+  still must inspect security-sensitive code paths -- tests prove behavior,
+  not absence of vulnerabilities.
+
+
 **Non-blocking notes** (`non_blocking_notes`) are observations that do not prevent approval:
 - Style suggestions or readability improvements
 - Optional refactors

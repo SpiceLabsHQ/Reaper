@@ -1,8 +1,110 @@
-# Skill Catalog
+# Skills
+
+## Skills Overview
 
 Skills are reusable behavior modules that agents load at runtime to gain specialized capabilities. Unlike agents -- which have a fixed role -- skills are composable: a single agent can load different skills depending on the task. Reaper ships 8 skills across three categories.
 
 You never invoke skills directly. Commands and agents load them automatically.
+
+A skill lives at `src/skills/<skill-name>/SKILL.ejs` (compiled to `skills/<skill-name>/SKILL.md` by the build) plus an optional `scripts/` subdirectory whose contents are copied verbatim alongside the compiled `SKILL.md`. The build is documented in [build-system.md](build-system.md) and [CLAUDE.md](../CLAUDE.md).
+
+## Conditional Prompt Sections
+
+Some sections of a skill or agent prompt only apply when a project has opted into a particular workflow policy. Reaper exposes those toggles through `.reaper.yml` (see [configuration.md](configuration.md)). The convention for wiring those toggles into prompt content is **render scripts**, not inline EJS conditionals.
+
+### Why not inline EJS conditionals
+
+Inline conditionals like `<% if (workflow_require_security_gate) { %> ... <% } %>` look harmless but cause real problems at scale:
+
+- **Hard to test.** A conditional buried in markdown has no test seam. The only way to verify it is to render the full template, which is slow and couples test cases to surrounding prose.
+- **Logic in markdown.** Templates are supposed to be readable. EJS scriptlets fragment a prompt into machine-readable conditions and human-readable text, and reviewers have to mentally re-render the template every time they read it.
+- **Branch explosion.** Two toggles in one template produce four rendered variants. Once you add a third, no one trusts the diff anymore.
+
+The render-script convention solves all three by moving the policy out of the template.
+
+### The pattern
+
+For each conditional section:
+
+1. **Author a `render-*.sh` script** inside the owning skill at `src/skills/<skill-name>/scripts/render-<section>.sh`. The script reads the relevant key from `.reaper.yml` via `scripts/config-get.sh` and prints the appropriate section to stdout (or nothing).
+2. **Invoke the script from the template** via the `renderScript` build helper. The build resolves the script path against the project root and inlines its stdout into the rendered output.
+3. **Test the script** in `scripts/render-scripts.test.js` (or a sibling) with at least three scenarios per script: toggle ON, toggle OFF, and config-error fallback.
+
+Each script is a single-responsibility unit: one toggle, one section, one decision. That fits naturally with the unit-test workflow and gives reviewers a flat, greppable list of every conditional in the codebase.
+
+### Invocation pattern
+
+In a `.ejs` template:
+
+```ejs
+<%- renderScript('src/skills/code-review/scripts/render-security-gate-section.sh') %>
+```
+
+The `renderScript` helper is defined in `scripts/build.js` and exposed to every template. It executes the script with the project root as cwd, captures stdout, and returns the captured string. stderr passes through to the build console so warnings stay visible.
+
+### Worked example: `render-security-gate-section.sh`
+
+The skill `src/skills/code-review/SKILL.ejs` ends with this line, just after the "Blocking vs. Non-Blocking Issues" section:
+
+```ejs
+<%- renderScript('src/skills/code-review/scripts/render-security-gate-section.sh') %>
+```
+
+The script itself does three things:
+
+1. **Locate `scripts/config-get.sh`** by walking up from its own directory. This makes the script position-independent: it works whether invoked from `src/skills/code-review/scripts/` (the source tree) or from `skills/code-review/scripts/` (the built artifact).
+2. **Resolve `workflow.require_security_gate`** with `config-get.sh`. The reader handles the user/.reaper.yml -> defaults.yml -> hard-error chain; the script just reads the final value.
+3. **Branch on the value:**
+   - `true` (or unset, since `defaults.yml` declares `true`) -> print the security-gate prompt section.
+   - `false` -> print nothing and exit `0`.
+   - Anything else, or if `config-get.sh` errors -> print a `WARN:` line to stderr and emit the section anyway. The safe default is "enforce."
+
+Result: the rendered `skills/code-review/SKILL.md` contains the security-gate section verbatim when the project has not disabled it. Disabling is a single line in `.reaper.yml`:
+
+```yaml
+workflow:
+  require_security_gate: false
+```
+
+The next `npm run build` regenerates the skill without the section.
+
+### File-layout convention
+
+```
+src/
+  skills/
+    <skill-name>/
+      SKILL.ejs                       # template that calls renderScript(...)
+      scripts/
+        render-<section>.sh           # one script per conditional section
+```
+
+The build copies `scripts/` to the output `skills/<skill-name>/scripts/` directory verbatim (no template processing). Tests live in `scripts/<topic>.test.js` at the repo root and cover every render script in tree.
+
+### Testing pattern
+
+Each render script has at least three scenarios in `scripts/render-scripts.test.js`:
+
+| Scenario     | Setup                                          | Expected behaviour                                               |
+| ------------ | ---------------------------------------------- | ---------------------------------------------------------------- |
+| Toggle ON    | `.reaper.yml` sets the workflow key to `true`  | Section text in stdout, exit 0, empty stderr                     |
+| Toggle OFF   | `.reaper.yml` sets the workflow key to `false` | Empty stdout, exit 0                                             |
+| Config error | malformed value or missing defaults file       | Section text in stdout (safe default), `WARN:` on stderr, exit 0 |
+
+The test harness uses `mkdtempSync` for an isolated cwd per case and overrides `REAPER_DEFAULTS_PATH` so tests do not depend on the repo-root `defaults.yml`. See `scripts/render-scripts.test.js` for the working examples.
+
+### Two reference scripts
+
+| Script                                                           | Toggle                           | Consumed by                        |
+| ---------------------------------------------------------------- | -------------------------------- | ---------------------------------- |
+| `src/skills/code-review/scripts/render-security-gate-section.sh` | `workflow.require_security_gate` | `src/skills/code-review/SKILL.ejs` |
+| `src/skills/code-review/scripts/render-tdd-mandate.sh`           | `workflow.require_tdd`           | `src/agents/feature-developer.ejs` |
+
+Both scripts share the same scaffolding: locate `config-get.sh`, read the toggle, branch on the value, fall through to the safe default on error. New conditional sections should follow the same shape.
+
+---
+
+# Skill Catalog
 
 ## Code Review (1 skill)
 
