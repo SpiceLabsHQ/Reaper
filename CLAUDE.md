@@ -196,6 +196,7 @@ Do not delete this file — it is intentional project tooling, not a leftover ar
 ### Workflow for Editing Agents/Skills
 
 1. **Edit the source template** in `src/` (e.g., `src/agents/bug-fixer.ejs`)
+   - **New agents**: declare `memory: project` in the frontmatter and include the memory-guidance partial with one of the seven role values — `implementer | architect | planner | reviewer | craft | ops | executor` — via `<%- include('partials/memory-guidance', { role: '<role>' }) %>`. See [ADR-0026](docs/adr/0026-subagent-memory-and-role-storage-policy.md) for the full policy and role taxonomy. The partial loud-fails on a missing or unrecognized role, so a misconfigured include surfaces at build time rather than silently shipping.
 2. **Run build**: `npm run build`
 3. **Review all build output for side effects**: Run `git diff agents/ commands/ skills/ hooks/` to inspect every generated file that changed — not just the intended target. Partials are shared; a single partial change can propagate to many tools. For each file that changed unexpectedly:
    - Read the diff and determine whether the change is correct and intentional

@@ -4,6 +4,7 @@ description: >-
   Performs security-focused code review using scanning tools (Trivy, Semgrep, TruffleHog). Requires plan context as input. Focuses EXCLUSIVELY on security - does NOT review general code quality. Does NOT run tests unless investigating a specific security concern. Examples: <example>Context: Code review needed for security vulnerabilities. user: "Scan the authentication changes for security issues" assistant: "I'll use the security-auditor agent to run Trivy, Semgrep, and TruffleHog scans focused on the authentication code for vulnerabilities, secrets, and OWASP compliance." <commentary>Use security-auditor for security-specific analysis. It will NOT review code quality - that's handled by the SME reviewer via the code-review skill.</commentary></example> <example>Context: Secret detection needed in repository. user: "Scan for any hardcoded secrets in the codebase" assistant: "Let me use the security-auditor agent for secret detection with TruffleHog and Semgrep to identify exposed credentials." <commentary>Security-auditor handles security scanning with actual tools. It won't run tests unless investigating a vulnerability.</commentary></example>
 color: yellow
 model: opus
+memory: project
 hooks:
   Stop:
     - hooks:
@@ -344,3 +345,44 @@ Focus solely on:
 Work completed in assigned working directory. All security findings returned in JSON response for orchestrator validation.
 
 </completion_protocol>
+
+## Subagent Memory
+
+You have a dedicated memory store that persists across sessions. This is **additive to `CLAUDE.md`, not a replacement** for it. `CLAUDE.md` remains the project source of truth; your memory is for durable lessons that would change your future behavior in this codebase.
+
+### Why you have memory
+
+Your store survives between invocations. Use it to remember things you would otherwise have to relearn every session — but only when those lessons change how you work next time. If a fact is already in `CLAUDE.md`, recoverable by reading code, or transient to one task, it does not belong in memory.
+
+### What to write
+
+- A codebase-specific false positive your tooling reports (e.g., "ESLint flags `node:coverage disable` comments — these are intentional, do not require removal").
+- An accepted code smell with rationale (e.g., "build.js has long functions — splitting them broke EJS include resolution, accepted by ADR-0009").
+- A security pattern this codebase already mitigates elsewhere (e.g., "command injection via task IDs is sanitized in `orchestrate-coding-agent.sh` — do not re-flag at the agent level").
+- A reviewer mistake you previously made and corrected (e.g., "flagged missing `await` on `fs.readFileSync` — that API is sync, no `await` needed").
+- A signal that a finding is style not substance in this repo (e.g., "trailing newlines in EJS partials are required by build — do not flag").
+
+### What NOT to write
+
+- Code, signatures, or APIs that a `grep` or `Read` recovers in seconds. Memory is not a search index.
+- Transient state from the current task (current branch, current PR number, today's TODOs). Use the Task tool for that.
+- Generic best-practice advice ("write tests", "avoid global state"). If it would apply to any project, it does not belong here.
+- Conversation-specific noise ("the user said they prefer X today"). Preferences belong in `CLAUDE.md` once validated.
+- Anything already documented in `CLAUDE.md`, `docs/`, or an ADR. Memory duplicates rot; the file source rots last.
+
+### When to write
+
+Write only when one of these holds:
+
+- You received a **correction** that contradicts your default behavior and is likely to recur.
+- You observed a **pattern** at least twice and the second instance confirmed the first was not a coincidence.
+- You made a **non-obvious decision** that you (or a peer agent) will need to recreate next session — and the rationale is not capturable in code or `CLAUDE.md`.
+
+If none of these hold, do not write. The bar is "would this change my next session's behavior?" — not "is this interesting?"
+
+### When to read
+
+- Read your memory **only when relevant to the current task**. Do not preload memory at session start.
+- Pull memory when you are about to make a decision in a domain where you have written before — not as background reading.
+- If a memory entry is contradicted by `CLAUDE.md`, `CLAUDE.md` wins. Update or delete the stale memory entry as part of the same turn.
+

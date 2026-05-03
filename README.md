@@ -242,6 +242,7 @@ Our team has never hit a usage limit while using this tool. Your mileage may var
 - **Auditability** -- Every piece of code passes through documented quality gates. You can show the receipt.
 - **Consistency** -- TDD, SOLID principles, and security audit on every task. Not just when someone remembers.
 - **Steerability** -- You approve the plan. You approve the output. You control the process. It is not a black box.
+- **Per-agent memory** -- Every Reaper agent carries its own role-tuned memory store that persists across sessions, so recurring patterns surface automatically (see [ADR-0026](docs/adr/0026-subagent-memory-and-role-storage-policy.md)).
 
 This is not always the most token-efficient way to write code. It is the most _reliable_ way to get code that is ready for production.
 

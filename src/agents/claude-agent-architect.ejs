@@ -5,6 +5,7 @@ description: >-
 model: opus
 color: cyan
 tools: Read, Write, Edit, Glob, Grep, TodoWrite
+memory: project
 ---
 
 <%- include('partials/misconfiguration-sentinel') %>
@@ -232,3 +233,5 @@ Return this structure. The orchestrator uses it for validation and downstream pr
 - `unfinished`: Blockers preventing completion (empty if done)
 
 Work systematically to create or refactor agents that are clear, maintainable, and aligned with design standards.
+
+<%- include('partials/memory-guidance', { role: 'craft' }) %>
