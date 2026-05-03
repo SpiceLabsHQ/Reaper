@@ -1,0 +1,145 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/SpiceLabsHQ/Reaper/reaper.schema.json",
+  "title": "Reaper Configuration",
+  "description": "Schema for .reaper.yml — the configuration file that tells Reaper how to test, lint, format, track issues, and orchestrate worktrees in a target project.",
+  "type": "object",
+  "required": ["version", "test", "lint", "tracker"],
+  "additionalProperties": true,
+  "properties": {
+    "version": {
+      "const": 1,
+      "description": "Configuration schema version. Must be 1. Reaper uses this to detect breaking schema changes and emit migration guidance."
+    },
+    "test": {
+      "type": "object",
+      "description": "Commands Reaper invokes to run the project's test suite.",
+      "required": ["cmd"],
+      "additionalProperties": true,
+      "properties": {
+        "cmd": {
+          "type": "string",
+          "description": "Primary test command (e.g. 'npm test', 'pytest', 'go test ./...'). Required."
+        },
+        "cmd_e2e": {
+          "type": "string",
+          "description": "Optional end-to-end test command, when separate from the unit suite."
+        }
+      }
+    },
+    "lint": {
+      "type": "object",
+      "description": "Lint command configuration.",
+      "required": ["cmd"],
+      "additionalProperties": true,
+      "properties": {
+        "cmd": {
+          "type": "string",
+          "description": "Primary lint command (e.g. 'npm run lint', 'ruff check .'). Required."
+        }
+      }
+    },
+    "format": {
+      "type": "object",
+      "description": "Optional auto-format command configuration.",
+      "additionalProperties": true,
+      "properties": {
+        "cmd": {
+          "type": "string",
+          "description": "Auto-format command (e.g. 'npm run format', 'black .')."
+        }
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "description": "Coverage threshold configuration.",
+      "additionalProperties": true,
+      "properties": {
+        "threshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "default": 80,
+          "description": "Minimum coverage percentage required for tests to be considered passing."
+        }
+      }
+    },
+    "tracker": {
+      "type": "object",
+      "description": "Issue tracker configuration. Reaper integrates with one tracker per project.",
+      "required": ["system"],
+      "additionalProperties": true,
+      "properties": {
+        "system": {
+          "type": "string",
+          "enum": ["github", "beads", "jira", "linear", "markdown_only"],
+          "description": "Which tracker Reaper should use. Required."
+        },
+        "repo": {
+          "type": "string",
+          "description": "Repository slug, e.g. 'owner/repo' for GitHub."
+        },
+        "project_id": {
+          "type": "string",
+          "description": "Project board or workspace identifier, when relevant (e.g. GitHub Project number, Jira project key)."
+        },
+        "default_labels": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Labels Reaper applies to issues it creates or updates."
+        }
+      }
+    },
+    "worktrees": {
+      "type": "object",
+      "description": "Worktree management configuration.",
+      "additionalProperties": true,
+      "properties": {
+        "base_path": {
+          "type": "string",
+          "default": ".claude/worktrees",
+          "description": "Base directory under which Reaper creates per-task worktrees."
+        },
+        "naming_pattern": {
+          "type": "string",
+          "default": "{task_id}-{slug}",
+          "description": "Template for worktree directory names. Supports {task_id} and {slug} substitutions."
+        }
+      }
+    },
+    "git": {
+      "type": "object",
+      "description": "Git workflow configuration.",
+      "additionalProperties": true,
+      "properties": {
+        "default_base_branch": {
+          "type": "string",
+          "default": "develop",
+          "description": "Branch new feature branches are cut from and merged back into."
+        }
+      }
+    },
+    "workflow": {
+      "type": "object",
+      "description": "Workflow gating configuration.",
+      "additionalProperties": true,
+      "properties": {
+        "require_security_gate": {
+          "type": "boolean",
+          "default": true,
+          "description": "When true, Reaper runs the security-auditor gate before allowing a merge."
+        },
+        "require_tdd": {
+          "type": "boolean",
+          "default": true,
+          "description": "When true, Reaper enforces the Red-Green-Blue TDD cycle for coding agents."
+        },
+        "skip_gates_for": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of file path globs whose changes bypass quality gates (e.g. docs-only changes)."
+        }
+      }
+    }
+  }
+}

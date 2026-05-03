@@ -1,0 +1,49 @@
+# Reaper bundled defaults.
+#
+# This file is the fallback layer for configuration lookups. The reader
+# resolves keys in this order:
+#
+#   1. The user's .reaper.yml (in cwd)
+#   2. This file (alongside the reader script)
+#   3. A caller-supplied --fallback-script
+#   4. A caller-supplied --default <value>
+#   5. Hard error: "Run /reaper:init to configure missing key 'X'"
+#
+# Keys whose value is `null` here have no sensible global default — they MUST
+# be set in the user's .reaper.yml. The reader treats `null` as "not set" and
+# falls through to the next layer.
+#
+# Do NOT add keys here that are not declared in reaper.schema.json.
+
+version: 1
+
+test:
+  cmd: null
+  cmd_e2e: null
+
+lint:
+  cmd: null
+
+format:
+  cmd: null
+
+coverage:
+  threshold: 80
+
+tracker:
+  system: null
+  repo: null
+  project_id: null
+  default_labels: []
+
+worktrees:
+  base_path: .claude/worktrees
+  naming_pattern: '{task_id}-{slug}'
+
+git:
+  default_base_branch: develop
+
+workflow:
+  require_security_gate: true
+  require_tdd: true
+  skip_gates_for: []

@@ -1,0 +1,28 @@
+version: 1
+test:
+  cmd: npm test
+  cmd_e2e: npm run test:e2e
+lint:
+  cmd: npm run lint
+format:
+  cmd: npm run format
+coverage:
+  threshold: 90
+tracker:
+  system: jira
+  repo: SpiceLabsHQ/Reaper
+  project_id: SPC
+  default_labels:
+    - reaper
+    - automated
+worktrees:
+  base_path: .claude/worktrees
+  naming_pattern: '{task_id}-{slug}'
+git:
+  default_base_branch: main
+workflow:
+  require_security_gate: true
+  require_tdd: true
+  skip_gates_for:
+    - 'docs/**'
+    - '*.md'

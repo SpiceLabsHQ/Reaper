@@ -1,0 +1,9 @@
+version: 1
+test:
+  cmd: npm test
+lint:
+  cmd: npm run lint
+coverage:
+  threshold: 'ninety'
+tracker:
+  system: github
