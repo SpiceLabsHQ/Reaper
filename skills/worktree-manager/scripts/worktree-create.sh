@@ -254,8 +254,11 @@ main() {
     log_step "Base branch: $base_branch"
 
     # Define paths
+    # WORKTREE_BASE_PATH may be supplied via environment by the skill caller
+    # (which resolves it from .reaper.yml). Fall back to the legacy default.
+    local worktree_base="${WORKTREE_BASE_PATH:-.claude/worktrees}"
     local worktree_name="${task_id}-${description}"
-    local worktree_path="./.claude/worktrees/${worktree_name}"
+    local worktree_path="./${worktree_base}/${worktree_name}"
     local branch_name="feature/${worktree_name}"
 
     log_step "Worktree path: $worktree_path"
@@ -293,8 +296,8 @@ main() {
 
     # --- Create Worktree ---
 
-    # Ensure worktrees directory exists
-    mkdir -p .claude/worktrees
+    # Ensure worktrees directory exists (uses WORKTREE_BASE_PATH if provided)
+    mkdir -p "${worktree_base}"
 
     log_step "Creating worktree..."
     if ! git worktree add "$worktree_path" -b "$branch_name" "$base_branch"; then

@@ -1,6 +1,6 @@
 ---
 description: Chart work into flight-ready issues with dependencies mapped.
-allowed-tools: Bash(*scripts/detect-task-system.sh*), Skill(reaper:issue-tracker-github), Skill(reaper:issue-tracker-beads), Skill(reaper:issue-tracker-jira), Skill(reaper:issue-tracker-planfile)
+allowed-tools: Bash(*scripts/config-get.sh*), Bash(*scripts/detect-task-system.sh*), Skill(reaper:issue-tracker-github), Skill(reaper:issue-tracker-beads), Skill(reaper:issue-tracker-jira), Skill(reaper:issue-tracker-planfile)
 ---
 ## Mission Header
 
@@ -153,7 +153,7 @@ Generate an execution plan with parent/child issue structure for autonomous exec
 
 ### Detection
 
-**Active task system:** !`${CLAUDE_PLUGIN_ROOT}/scripts/detect-task-system.sh`
+**Active task system:** !`${CLAUDE_PLUGIN_ROOT}/scripts/config-get.sh tracker.system --fallback-script ${CLAUDE_PLUGIN_ROOT}/scripts/detect-task-system.sh`
 
 **Output variable:** `TASK_SYSTEM` — set this to the detected value above.
 

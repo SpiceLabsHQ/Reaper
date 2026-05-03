@@ -39,11 +39,17 @@ has_changes() {
 count_unmerged() {
     local path="$1"
     local branch="$2"
-    local base="develop"
+    # BASE_BRANCH may be supplied via environment by the skill caller
+    # (which resolves it from .reaper.yml). Fall back to detecting develop/main.
+    local base="${BASE_BRANCH:-}"
 
-    # Try develop first, then main
-    if ! git show-ref --verify --quiet "refs/heads/develop" 2>/dev/null; then
-        base="main"
+    if [[ -z "$base" ]]; then
+        # Try develop first, then main
+        if git show-ref --verify --quiet "refs/heads/develop" 2>/dev/null; then
+            base="develop"
+        else
+            base="main"
+        fi
     fi
 
     git log "${base}..${branch}" --oneline 2>/dev/null | wc -l | tr -d ' '

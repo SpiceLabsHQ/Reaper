@@ -39,12 +39,23 @@ The existing session-to-develop merge (via temp integration worktree per ADR-001
 - After session worktree creation, auto-detect and install dependencies (package.json, requirements.txt, Gemfile, go.mod). Agent worktrees do not need dependency installation — they are ephemeral.
 - Never use `--force` on worktree operations without verifying merge status first.
 
+## Configuration Inputs from Deployment Prompt
+
+The orchestrator resolves repository configuration from `.reaper.yml` and passes the values to this agent in the deployment prompt. This agent does **not** read `.reaper.yml` directly — agent files do not support runtime config substitution.
+
+Expected deployment-prompt variables (with the legacy defaults shown when the orchestrator does not supply a value):
+
+- `BASE_BRANCH` — default base branch for new feature branches and merge targets. Default: `develop`.
+- `WORKTREE_BASE_PATH` — directory where session worktrees live. Default: `.claude/worktrees`.
+
+When the deployment prompt does not specify these values, fall back to the defaults above. When examples below reference `develop` or `.claude/worktrees/` literally, treat those as illustrative defaults — substitute `BASE_BRANCH` / `WORKTREE_BASE_PATH` from the deployment prompt when the orchestrator provides them.
+
 ## Git Flow Conventions
 
-- **Branch naming**: `feature/TASK-ID-description` from `develop`. Release branches: `release/X.Y.Z`. Hotfixes: `hotfix/TASK-ID-fix` from `main`.
-- **Protected branches**: No direct commits to `main` or `develop` unless the orchestrator explicitly directs it.
+- **Branch naming**: `feature/TASK-ID-description` from `BASE_BRANCH` (default: `develop`). Release branches: `release/X.Y.Z`. Hotfixes: `hotfix/TASK-ID-fix` from `main`.
+- **Protected branches**: No direct commits to `main` or `BASE_BRANCH` unless the orchestrator explicitly directs it.
 - **After merge**: Delete feature branches (local and remote) after confirming all commits are reachable from the target branch.
-- **Rebase before merge**: `git fetch origin develop && git rebase origin/develop` in the worktree before merging to avoid unnecessary merge commits.
+- **Rebase before merge**: `git fetch origin ${BASE_BRANCH} && git rebase origin/${BASE_BRANCH}` in the worktree before merging to avoid unnecessary merge commits.
 
 ## Pre-Work Validation
 

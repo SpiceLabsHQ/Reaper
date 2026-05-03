@@ -1,12 +1,21 @@
 ---
 name: worktree-manager
 description: Full lifecycle worktree management with safe cleanup that prevents CWD errors. Use when creating, listing, checking, or removing git worktrees.
-allowed-tools: Read, Grep, Bash(*skills/worktree-manager/scripts/worktree-create.sh *), Bash(*skills/worktree-manager/scripts/worktree-list.sh *), Bash(*skills/worktree-manager/scripts/worktree-status.sh *), Bash(*skills/worktree-manager/scripts/worktree-cleanup.sh *)
+allowed-tools: Read, Grep, Bash(*scripts/config-get.sh*), Bash(*skills/worktree-manager/scripts/worktree-create.sh *), Bash(*skills/worktree-manager/scripts/worktree-list.sh *), Bash(*skills/worktree-manager/scripts/worktree-status.sh *), Bash(*skills/worktree-manager/scripts/worktree-cleanup.sh *)
 ---
 
 # Worktree Manager
 
 Safe git worktree operations that prevent the CWD deletion error that breaks Claude's shell.
+
+## Resolved Configuration
+
+These values are read from `.reaper.yml` at skill-load time. Pass them as arguments (or environment variables when invoking the wrapped scripts) so the scripts themselves remain config-unaware:
+
+- **WORKTREE_BASE_PATH**: !`${CLAUDE_PLUGIN_ROOT}/scripts/config-get.sh worktrees.base_path`
+- **BASE_BRANCH**: !`${CLAUDE_PLUGIN_ROOT}/scripts/config-get.sh git.default_base_branch`
+
+When the resolved values differ from the legacy defaults (`.claude/worktrees`, `develop`), substitute them into the example commands below. The skill caller — never the wrapped script — owns config resolution; pass `--base-branch ${BASE_BRANCH}` to `worktree-create.sh` and use `${WORKTREE_BASE_PATH}/...` paths in worktree-cleanup, worktree-list, and worktree-status invocations.
 
 ## Instructions
 

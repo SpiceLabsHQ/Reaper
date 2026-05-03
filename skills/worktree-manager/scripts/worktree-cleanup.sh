@@ -555,9 +555,11 @@ main() {
         fi
 
         # Warn about unmerged commits (non-blocking)
+        # BASE_BRANCH may be supplied via environment by the skill caller
+        # (which resolves it from .reaper.yml). Fall back to "develop".
         if [[ -n "$branch" ]]; then
             local unmerged_count
-            unmerged_count=$(get_unmerged_count "$abs_worktree_path" "$branch")
+            unmerged_count=$(get_unmerged_count "$abs_worktree_path" "$branch" "${BASE_BRANCH:-develop}")
             if [[ "$unmerged_count" -gt 0 ]]; then
                 log_warn "Branch has $unmerged_count unmerged commit(s)"
                 if [[ "$DELETE_BRANCH" == true ]]; then

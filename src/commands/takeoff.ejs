@@ -1,6 +1,6 @@
 ---
 description: Dispatch agents through quality gates until work lands on your desk.
-allowed-tools: Bash(*scripts/detect-task-system.sh*), Skill(reaper:issue-tracker-github), Skill(reaper:issue-tracker-beads), Skill(reaper:issue-tracker-jira), Skill(reaper:issue-tracker-planfile)
+allowed-tools: Bash(*scripts/config-get.sh*), Bash(*scripts/detect-task-system.sh*), Skill(reaper:issue-tracker-github), Skill(reaper:issue-tracker-beads), Skill(reaper:issue-tracker-jira), Skill(reaper:issue-tracker-planfile)
 ---
 <%- include('partials/mission-header', { command: 'TAKEOFF', subtitle: 'scanning mission parameters' }) %>
 
@@ -58,7 +58,7 @@ The orchestrator can start with just a task ID (unlike coding agents) because it
 After parsing, assemble the implementation context:
 - If FETCH_ISSUE succeeded, use the fetched details (and append any user-provided description)
 - If no task system query was possible, use the user description as the full context
-- Set WORKTREE_PATH to the user-specified path, or generate one as `.claude/worktrees/[TASK_ID]-work`
+- Set WORKTREE_PATH to the user-specified path, or generate one as `${WORKTREE_BASE_PATH}/[TASK_ID]-work` using the resolved value from the Git and Worktree Config section above (default: `.claude/worktrees/[TASK_ID]-work`)
 
 ## Plan File Discovery
 
@@ -140,24 +140,26 @@ This check applies regardless of which source determined the strategy. If the st
 
 ## Quality Gate Config Check
 
-Before announcing the preflight card, check whether your loaded context (CLAUDE.md or any imported files) contains explicit quality gate commands — specifically, a `## Quality Gates` section with `**Test command**:` and `**Lint command**:` fields.
+Quality gate commands are read from `.reaper.yml` at runtime via the config reader. The reader follows a layered resolution chain (user `.reaper.yml` → bundled `defaults.yml` → caller-supplied default → hard error) and writes a `Run /reaper:init …` notice to stderr when a key is missing.
 
-**If quality gate commands are found in context:**
-Use those commands directly when dispatching gate agents. Skip project config inference for test and lint commands.
+**Resolved values (read at command-load time):**
 
-**If quality gate commands are NOT found in context:**
-Emit the following advisory warning card (non-blocking — takeoff continues regardless):
+- **TEST_COMMAND**: !`${CLAUDE_PLUGIN_ROOT}/scripts/config-get.sh test.cmd`
+- **LINT_COMMAND**: !`${CLAUDE_PLUGIN_ROOT}/scripts/config-get.sh lint.cmd`
+- **COVERAGE_THRESHOLD**: !`${CLAUDE_PLUGIN_ROOT}/scripts/config-get.sh coverage.threshold --default 70`
 
-```
-  ADVISORY
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Quality gate commands not configured for this project.
-  Run /reaper:configure-quality-gates to set them up.
-  Continuing with project config inference.
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
+If any of `TEST_COMMAND` or `LINT_COMMAND` resolved to an empty value (the reader exited non-zero and emitted a stderr notice), surface that notice to the user as an advisory and continue. Do not block takeoff on a missing key — the user's stderr notice tells them how to fix it.
 
-Then continue with project config inference as normal. This check requires no tool calls — it operates entirely on loaded context already in scope.
+Pass the resolved values verbatim into every gate-agent deployment prompt as `TEST_COMMAND`, `LINT_COMMAND`, and `COVERAGE_THRESHOLD`. The test-runner and SME reviewer agents use these values directly — they do not re-read `.reaper.yml`.
+
+## Git and Worktree Config
+
+These values are also read from `.reaper.yml` at command-load time and passed verbatim into every branch-manager deployment prompt. Branch-manager does not read `.reaper.yml` directly — agent files do not support runtime substitution.
+
+- **BASE_BRANCH**: !`${CLAUDE_PLUGIN_ROOT}/scripts/config-get.sh git.default_base_branch`
+- **WORKTREE_BASE_PATH**: !`${CLAUDE_PLUGIN_ROOT}/scripts/config-get.sh worktrees.base_path`
+
+When constructing worktree paths in this command, use `${WORKTREE_BASE_PATH}/[TASK_ID]-work` (e.g., the resolved value substituted in place of the legacy hard-coded `.claude/worktrees/` prefix). When directing branch-manager to merge, pass `BASE_BRANCH` in the deployment prompt context so the agent targets the correct branch instead of assuming `develop`.
 
 ## Preflight Announcement
 
@@ -248,7 +250,7 @@ For each work unit in the plan, repeat this cycle:
    a. Commit all changes in the agent worktree (at the `worktreePath` returned by the coding agent) using conventional commit format (e.g., `feat: implement X`, `fix: resolve Y`).
    b. Fast-forward merge (`--ff-only`) the agent branch into the session branch (the feature branch in WORKTREE_PATH).
    c. Clean up the agent worktree after successful merge.
-   If `BRANCH_MANAGER_SESSION_ID` is set, resume that session via `Task --resume BRANCH_MANAGER_SESSION_ID`; otherwise deploy a fresh reaper:branch-manager agent and store the returned `agent_id` as `BRANCH_MANAGER_SESSION_ID`. If resume fails, fall back to a fresh deployment and update `BRANCH_MANAGER_SESSION_ID`. Always pass `TREE_FLAG: [FLAT_TREE or COMPLEX_TREE — determined at launch]` in the branch-manager prompt context.
+   If `BRANCH_MANAGER_SESSION_ID` is set, resume that session via `Task --resume BRANCH_MANAGER_SESSION_ID`; otherwise deploy a fresh reaper:branch-manager agent and store the returned `agent_id` as `BRANCH_MANAGER_SESSION_ID`. If resume fails, fall back to a fresh deployment and update `BRANCH_MANAGER_SESSION_ID`. Always pass these values in the branch-manager prompt context: `TREE_FLAG: [FLAT_TREE or COMPLEX_TREE — determined at launch]`, `BASE_BRANCH: [resolved from .reaper.yml]`, and `WORKTREE_BASE_PATH: [resolved from .reaper.yml]`.
 
    **Branch-manager error handling (commit step)**: Inspect the branch-manager JSON response before continuing:
    - If `status` is `"error"` and `git_state.merge_conflicts_detected` is `true`: render a **Merge Conflict Card** (see below), surface all entries from `blocking_issues[]` to the user, and **pause the workflow**. Do NOT auto-resolve or auto-retry. Await explicit user instruction before proceeding.
@@ -482,11 +484,11 @@ you'd prefer to open a PR instead of merging directly, just say so and I'll run
 |---------------|--------|
 | Feedback or questions | Address concerns, re-run quality gates if changes were made |
 | "looks good" / "nice work" | Ask: "Shall I merge to develop?" |
-| "merge" / "ship it" / "approved" | Use reaper:branch-manager to merge the feature branch to develop. Resume `BRANCH_MANAGER_SESSION_ID` via `Task --resume` if available; fall back to a fresh deployment if the session is stale. Always pass `TREE_FLAG` in the prompt context. |
+| "merge" / "ship it" / "approved" | Use reaper:branch-manager to merge the feature branch to `BASE_BRANCH` (resolved from `.reaper.yml`, default `develop`). Resume `BRANCH_MANAGER_SESSION_ID` via `Task --resume` if available; fall back to a fresh deployment if the session is stale. Always pass `BASE_BRANCH`, `WORKTREE_BASE_PATH`, and `TREE_FLAG` in the prompt context. |
 | "open a PR" / "create PR" | Invoke `/reaper:ship` on the feature worktree to commit, push, and open a PR. |
 | Silence or unclear | Ask: "Any feedback, or ready to merge?" |
 
-**Merge error handling (develop merge)**: After branch-manager completes the merge-to-develop operation, inspect the JSON response before announcing success:
+**Merge error handling (base-branch merge)**: After branch-manager completes the merge-to-`BASE_BRANCH` operation, inspect the JSON response before announcing success:
 
 - If `status` is `"error"` and `git_state.merge_conflicts_detected` is `true`: render a Merge Conflict Card (see Per-Unit Cycle section above), surface all `blocking_issues[]` entries, and pause. Do NOT auto-resolve or retry. Await user instruction.
 - If `status` is `"error"` for any other reason: render a Branch-Manager Error Card (see Per-Unit Cycle section above) with the `message` and `blocking_issues[]` contents, then pause and await user instruction.

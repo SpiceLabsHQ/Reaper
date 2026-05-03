@@ -291,7 +291,6 @@ describe('Contract: issue-tracker skill frontmatter', () => {
         `${relative} frontmatter is missing required "allowed-tools" field`
       );
     });
-
   }
 });
 
@@ -3588,7 +3587,7 @@ describe('Contract: takeoff quality gate config check', () => {
     );
   });
 
-  it(`${relative} Quality Gate Config Check section references configure-quality-gates`, () => {
+  it(`${relative} Quality Gate Config Check section reads values via config-get.sh`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const sectionStart = content.indexOf('## Quality Gate Config Check');
@@ -3604,9 +3603,18 @@ describe('Contract: takeoff quality gate config check', () => {
       ? rest.slice(0, nextHeadingMatch.index)
       : rest;
 
+    // SPC-16: replaces CLAUDE.md context parsing with config-get.sh invocations
     assert.ok(
-      section.includes('configure-quality-gates'),
-      `Quality Gate Config Check section must reference "/reaper:configure-quality-gates" command`
+      section.includes('scripts/config-get.sh test.cmd'),
+      'Quality Gate Config Check must read test.cmd via config-get.sh'
+    );
+    assert.ok(
+      section.includes('scripts/config-get.sh lint.cmd'),
+      'Quality Gate Config Check must read lint.cmd via config-get.sh'
+    );
+    assert.ok(
+      section.includes('scripts/config-get.sh coverage.threshold'),
+      'Quality Gate Config Check must read coverage.threshold via config-get.sh'
     );
   });
 
@@ -3626,12 +3634,12 @@ describe('Contract: takeoff quality gate config check', () => {
       : rest;
 
     assert.ok(
-      /non-blocking|continue|advisory/i.test(section),
+      /non-blocking|continue|advisory|do not block/i.test(section),
       `Quality Gate Config Check section must be non-blocking (takeoff continues regardless)`
     );
   });
 
-  it(`${relative} Quality Gate Config Check section requires no tool calls`, () => {
+  it(`${relative} Quality Gate Config Check section surfaces missing-key notices via stderr`, () => {
     assert.ok(fs.existsSync(filePath), `${relative} not found`);
     const content = fs.readFileSync(filePath, 'utf8');
     const sectionStart = content.indexOf('## Quality Gate Config Check');
@@ -3646,10 +3654,11 @@ describe('Contract: takeoff quality gate config check', () => {
       ? rest.slice(0, nextHeadingMatch.index)
       : rest;
 
-    // The check must not require Bash or Read tool calls — it is prompt-level only
+    // SPC-16 acceptance: missing keys surface as a stderr-driven notice
+    // (config-get.sh writes "Run /reaper:init …" to stderr on missing keys).
     assert.ok(
-      /loaded context|CLAUDE\.md|context/i.test(section),
-      `Quality Gate Config Check must operate on loaded context (no tool calls) — check should inspect CLAUDE.md or loaded context`
+      /stderr|reaper:init/i.test(section),
+      'Quality Gate Config Check must surface missing-key notices (config-get.sh stderr) or direct user to /reaper:init'
     );
   });
 });
@@ -6487,7 +6496,10 @@ describe('Contract: work-unit-limits partial exists with per-type limits table',
     const content = fs.readFileSync(sourcePath, 'utf8');
     const lines = content.split('\n');
     const unitLine = lines.find((l) => l.includes('test_code_unit'));
-    assert.ok(unitLine !== undefined, `${sourceRelative} must have a test_code_unit row`);
+    assert.ok(
+      unitLine !== undefined,
+      `${sourceRelative} must have a test_code_unit row`
+    );
     assert.ok(
       unitLine.includes('1000'),
       `${sourceRelative} test_code_unit row must specify 1000 LOC limit (found: "${unitLine.trim()}")`
@@ -6499,7 +6511,10 @@ describe('Contract: work-unit-limits partial exists with per-type limits table',
     const content = fs.readFileSync(sourcePath, 'utf8');
     const lines = content.split('\n');
     const migLine = lines.find((l) => l.includes('database_migration'));
-    assert.ok(migLine !== undefined, `${sourceRelative} must have a database_migration row`);
+    assert.ok(
+      migLine !== undefined,
+      `${sourceRelative} must have a database_migration row`
+    );
     assert.ok(
       migLine.includes('200'),
       `${sourceRelative} database_migration row must specify 200 LOC limit (found: "${migLine.trim()}")`
@@ -6511,7 +6526,10 @@ describe('Contract: work-unit-limits partial exists with per-type limits table',
     const content = fs.readFileSync(sourcePath, 'utf8');
     const lines = content.split('\n');
     const docLine = lines.find((l) => l.includes('documentation'));
-    assert.ok(docLine !== undefined, `${sourceRelative} must have a documentation row`);
+    assert.ok(
+      docLine !== undefined,
+      `${sourceRelative} must have a documentation row`
+    );
     assert.ok(
       /no.{0,10}limit|unlimited|--|n\/a/i.test(docLine),
       `${sourceRelative} documentation row must indicate no LOC limit (found: "${docLine.trim()}")`
@@ -6523,7 +6541,10 @@ describe('Contract: work-unit-limits partial exists with per-type limits table',
     const content = fs.readFileSync(sourcePath, 'utf8');
     const lines = content.split('\n');
     const appLine = lines.find((l) => l.includes('application_code'));
-    assert.ok(appLine !== undefined, `${sourceRelative} must have an application_code row`);
+    assert.ok(
+      appLine !== undefined,
+      `${sourceRelative} must have an application_code row`
+    );
     assert.ok(
       appLine.includes('500'),
       `${sourceRelative} application_code row must specify 500 LOC limit (found: "${appLine.trim()}")`
@@ -6574,7 +6595,8 @@ describe('Contract: takeoff Work Package Validation uses work-type-aware limits'
     const content = fs.readFileSync(filePath, 'utf8');
     // The generated output should contain a table covering multiple work types
     assert.ok(
-      content.includes('application_code') && content.includes('database_migration'),
+      content.includes('application_code') &&
+        content.includes('database_migration'),
       `${relative} Work Package Validation must reference per-type limits covering multiple work types`
     );
   });
@@ -6612,5 +6634,157 @@ describe('Contract: takeoff strategy selection thresholds (2-8 medium_single_bra
       !content.match(/5\+\s+uses\s+large_multi_worktree/),
       `${sourceRelative} must not use the old "5+ uses large_multi_worktree" threshold`
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Contract: SPC-15/16/17 — .reaper.yml config wiring in templates
+//
+// Verifies:
+// - Generated commands/skills carry the literal `!`config-get.sh KEY`` syntax
+//   (Claude Code substitutes at runtime; the build only passes it through).
+// - The task-system-operations partial reads tracker.system with detect-task-system.sh
+//   as a fallback-script.
+// - The branch-manager agent stays free of `!`...`` (agents don't support runtime
+//   substitution; orchestrator passes resolved values via deployment prompt).
+// ---------------------------------------------------------------------------
+
+describe('Contract: SPC-15/16/17 .reaper.yml config wiring', () => {
+  const TAKEOFF = path.join(COMMANDS_DIR, 'takeoff.md');
+  const SHIP = path.join(COMMANDS_DIR, 'ship.md');
+  const STATUS = path.join(COMMANDS_DIR, 'status-worktrees.md');
+  const FLIGHT_PLAN = path.join(COMMANDS_DIR, 'flight-plan.md');
+  const SKILL = path.join(SKILLS_DIR, 'worktree-manager', 'SKILL.md');
+  const BRANCH_MGR = path.join(AGENTS_DIR, 'branch-manager.md');
+
+  it('SPC-15: task-system-operations partial reads tracker.system via config-get.sh with detect-task-system.sh fallback', () => {
+    // The partial gets inlined into both takeoff.md and flight-plan.md
+    for (const file of [TAKEOFF, FLIGHT_PLAN]) {
+      assert.ok(fs.existsSync(file), `${file} not found`);
+      const content = fs.readFileSync(file, 'utf8');
+      assert.ok(
+        /!`[^`]*config-get\.sh tracker\.system --fallback-script [^`]*detect-task-system\.sh`/.test(
+          content
+        ),
+        `${file} must contain the literal "!\`config-get.sh tracker.system --fallback-script ...detect-task-system.sh\`" syntax (SPC-15)`
+      );
+    }
+  });
+
+  it('SPC-16: takeoff.md reads test.cmd, lint.cmd, coverage.threshold via config-get.sh', () => {
+    assert.ok(fs.existsSync(TAKEOFF), `${TAKEOFF} not found`);
+    const content = fs.readFileSync(TAKEOFF, 'utf8');
+    assert.match(
+      content,
+      /!`[^`]*config-get\.sh test\.cmd`/,
+      'takeoff.md must contain literal !`config-get.sh test.cmd`'
+    );
+    assert.match(
+      content,
+      /!`[^`]*config-get\.sh lint\.cmd`/,
+      'takeoff.md must contain literal !`config-get.sh lint.cmd`'
+    );
+    assert.match(
+      content,
+      /!`[^`]*config-get\.sh coverage\.threshold[^`]*`/,
+      'takeoff.md must contain literal !`config-get.sh coverage.threshold ...`'
+    );
+  });
+
+  it('SPC-17: takeoff.md reads git.default_base_branch and worktrees.base_path via config-get.sh', () => {
+    assert.ok(fs.existsSync(TAKEOFF), `${TAKEOFF} not found`);
+    const content = fs.readFileSync(TAKEOFF, 'utf8');
+    assert.match(
+      content,
+      /!`[^`]*config-get\.sh git\.default_base_branch`/,
+      'takeoff.md must contain literal !`config-get.sh git.default_base_branch`'
+    );
+    assert.match(
+      content,
+      /!`[^`]*config-get\.sh worktrees\.base_path`/,
+      'takeoff.md must contain literal !`config-get.sh worktrees.base_path`'
+    );
+  });
+
+  it('SPC-17: ship.md reads git.default_base_branch via config-get.sh', () => {
+    assert.ok(fs.existsSync(SHIP), `${SHIP} not found`);
+    const content = fs.readFileSync(SHIP, 'utf8');
+    assert.match(
+      content,
+      /!`[^`]*config-get\.sh git\.default_base_branch`/,
+      'ship.md must contain literal !`config-get.sh git.default_base_branch`'
+    );
+  });
+
+  it('SPC-17: status-worktrees.md reads worktrees.base_path via config-get.sh', () => {
+    assert.ok(fs.existsSync(STATUS), `${STATUS} not found`);
+    const content = fs.readFileSync(STATUS, 'utf8');
+    assert.match(
+      content,
+      /!`[^`]*config-get\.sh worktrees\.base_path`/,
+      'status-worktrees.md must contain literal !`config-get.sh worktrees.base_path`'
+    );
+  });
+
+  it('SPC-17: worktree-manager SKILL.md reads worktrees.base_path and git.default_base_branch via config-get.sh', () => {
+    assert.ok(fs.existsSync(SKILL), `${SKILL} not found`);
+    const content = fs.readFileSync(SKILL, 'utf8');
+    assert.match(
+      content,
+      /!`[^`]*config-get\.sh worktrees\.base_path`/,
+      'worktree-manager SKILL.md must contain literal !`config-get.sh worktrees.base_path`'
+    );
+    assert.match(
+      content,
+      /!`[^`]*config-get\.sh git\.default_base_branch`/,
+      'worktree-manager SKILL.md must contain literal !`config-get.sh git.default_base_branch`'
+    );
+  });
+
+  it('SPC-17: branch-manager.md does NOT contain runtime !`...` substitution syntax (agents do not support it)', () => {
+    assert.ok(fs.existsSync(BRANCH_MGR), `${BRANCH_MGR} not found`);
+    const content = fs.readFileSync(BRANCH_MGR, 'utf8');
+    assert.ok(
+      !content.includes('!`'),
+      'branch-manager.md must not contain "!`" runtime-substitution syntax. ' +
+        'Agent files do not support runtime config substitution; the orchestrator ' +
+        'must pass resolved BASE_BRANCH/WORKTREE_BASE_PATH values via the deployment prompt.'
+    );
+  });
+
+  it('SPC-17: branch-manager.md states it receives BASE_BRANCH and WORKTREE_BASE_PATH from the deployment prompt', () => {
+    assert.ok(fs.existsSync(BRANCH_MGR), `${BRANCH_MGR} not found`);
+    const content = fs.readFileSync(BRANCH_MGR, 'utf8');
+    assert.ok(
+      content.includes('BASE_BRANCH') && content.includes('WORKTREE_BASE_PATH'),
+      'branch-manager.md must explicitly reference BASE_BRANCH and WORKTREE_BASE_PATH ' +
+        'as deployment-prompt inputs (so the orchestrator knows what to pass)'
+    );
+    assert.match(
+      content,
+      /deployment prompt/i,
+      'branch-manager.md must instruct that config values arrive via the deployment prompt'
+    );
+  });
+
+  it('SPC-15/16/17: command frontmatter allows config-get.sh invocations where used', () => {
+    for (const [file, label] of [
+      [TAKEOFF, 'takeoff.md'],
+      [SHIP, 'ship.md'],
+      [STATUS, 'status-worktrees.md'],
+      [FLIGHT_PLAN, 'flight-plan.md'],
+    ]) {
+      assert.ok(fs.existsSync(file), `${file} not found`);
+      const content = fs.readFileSync(file, 'utf8');
+      // Each of these files invokes config-get.sh in its body, so the
+      // allowed-tools frontmatter must permit it. Look only inside the
+      // first frontmatter block to avoid false-positives from body text.
+      const frontmatter = content.match(/^---\n([\s\S]*?)\n---/);
+      assert.ok(frontmatter, `${label} must have YAML frontmatter`);
+      assert.ok(
+        /scripts\/config-get\.sh/.test(frontmatter[1]),
+        `${label} frontmatter allowed-tools must permit Bash(*scripts/config-get.sh*)`
+      );
+    }
   });
 });

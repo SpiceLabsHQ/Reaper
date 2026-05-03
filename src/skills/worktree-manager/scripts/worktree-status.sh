@@ -100,7 +100,9 @@ main() {
     local last_commit_author=""
     local deps_installed="unknown"
     local deps_type="none"
-    local base_branch="develop"
+    # BASE_BRANCH may be supplied via environment by the skill caller
+    # (which resolves it from .reaper.yml). Fall back to detecting develop/main.
+    local base_branch="${BASE_BRANCH:-develop}"
 
     # Check existence
     if [[ -d "$worktree_path" ]]; then
@@ -114,11 +116,13 @@ main() {
             branch=$(git -C "$worktree_path" branch --show-current 2>/dev/null || echo "")
             head=$(git -C "$worktree_path" rev-parse --short HEAD 2>/dev/null || echo "")
 
-            # Determine base branch
-            if git show-ref --verify --quiet "refs/heads/develop" 2>/dev/null; then
-                base_branch="develop"
-            elif git show-ref --verify --quiet "refs/heads/main" 2>/dev/null; then
-                base_branch="main"
+            # Determine base branch only when caller did not supply BASE_BRANCH
+            if [[ -z "${BASE_BRANCH:-}" ]]; then
+                if git show-ref --verify --quiet "refs/heads/develop" 2>/dev/null; then
+                    base_branch="develop"
+                elif git show-ref --verify --quiet "refs/heads/main" 2>/dev/null; then
+                    base_branch="main"
+                fi
             fi
 
             # Check for changes

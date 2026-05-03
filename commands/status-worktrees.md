@@ -1,5 +1,6 @@
 ---
 description: Radar sweep your parallel worktrees for progress and drift.
+allowed-tools: Bash(*scripts/config-get.sh*)
 ---
 ## Mission Header
 
@@ -73,6 +74,13 @@ Check the status of git worktrees and parallel development progress
 - `TASK_ID`: Filter by task ID (optional, e.g., PROJ-123, reaper-a3f)
 - `VERBOSE`: Show detailed status including uncommitted changes (true/false, default: false)
 
+## Resolved Configuration
+
+These values are read from `.reaper.yml` at command-load time. Substitute the resolved values into the bash blocks below:
+
+- **WORKTREE_BASE_PATH**: !`${CLAUDE_PLUGIN_ROOT}/scripts/config-get.sh worktrees.base_path`
+- **BASE_BRANCH**: !`${CLAUDE_PLUGIN_ROOT}/scripts/config-get.sh git.default_base_branch`
+
 ## Visual Vocabulary
 
 > **Opt-out**: If the project's CLAUDE.md contains the line `Reaper: disable ASCII art`, emit plain text status labels only. No gauge bars, no box-drawing, no card templates. Use the `functional` context behavior regardless of the `context` parameter.
@@ -144,8 +152,8 @@ if [ -n "${TASK_ID}" ]; then
   fi
 fi
 
-# Ensure we're in the main repository
-if [[ "$PWD" == *"/.claude/worktrees/"* ]]; then
+# Ensure we're in the main repository (uses WORKTREE_BASE_PATH from Resolved Configuration above)
+if [[ "$PWD" == *"/${WORKTREE_BASE_PATH}/"* ]]; then
   echo "Error: Run this command from the main repository, not from within a worktree"
   exit 1
 fi
@@ -243,10 +251,11 @@ determine_fleet_state() {
     [ -f "TASK.md" ] && has_task=true
 
     # Check if there are commits beyond the branch point
+    # BASE_BRANCH resolved above from .reaper.yml (default: develop)
     local branch=$(git branch --show-current 2>/dev/null)
     local commit_count=0
     if [ -n "$branch" ]; then
-      commit_count=$(git rev-list --count develop.."$branch" 2>/dev/null || echo "0")
+      commit_count=$(git rev-list --count "${BASE_BRANCH}".."$branch" 2>/dev/null || echo "0")
     fi
 
     if [ $staged -gt 0 ] || [ $unstaged -gt 0 ] || [ $untracked -gt 0 ] || [ "$commit_count" -gt 0 ]; then
@@ -278,16 +287,17 @@ render_gauge() {
 }
 
 # ── Collect worktree list ─────────────────────────────
+# WORKTREE_BASE_PATH resolved above from .reaper.yml (default: .claude/worktrees)
 WORKTREE_LIST=()
 if [ -n "${TASK_ID}" ]; then
-  if [ -d ".claude/worktrees" ] && ls .claude/worktrees/${TASK_ID}-* >/dev/null 2>&1; then
-    for worktree in .claude/worktrees/${TASK_ID}-*; do
+  if [ -d "${WORKTREE_BASE_PATH}" ] && ls ${WORKTREE_BASE_PATH}/${TASK_ID}-* >/dev/null 2>&1; then
+    for worktree in ${WORKTREE_BASE_PATH}/${TASK_ID}-*; do
       WORKTREE_LIST+=("$worktree")
     done
   fi
 else
-  if [ -d ".claude/worktrees" ]; then
-    for worktree in .claude/worktrees/*; do
+  if [ -d "${WORKTREE_BASE_PATH}" ]; then
+    for worktree in ${WORKTREE_BASE_PATH}/*; do
       [ -d "$worktree" ] && WORKTREE_LIST+=("$worktree")
     done
   fi
@@ -510,12 +520,12 @@ for entry in "${SORTED_FLEET[@]}"; do
   fi
 done
 
-# Disk usage
-if [ -d ".claude/worktrees" ] && [ "${VERBOSE}" = "true" ]; then
+# Disk usage (uses WORKTREE_BASE_PATH from Resolved Configuration above)
+if [ -d "${WORKTREE_BASE_PATH}" ] && [ "${VERBOSE}" = "true" ]; then
   echo ""
   echo "  DISK USAGE"
   echo "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  du -sh .claude/worktrees/* 2>/dev/null | sort -h
+  du -sh ${WORKTREE_BASE_PATH}/* 2>/dev/null | sort -h
 fi
 ```
 
