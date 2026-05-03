@@ -1,6 +1,6 @@
 ---
 description: Chart work into flight-ready issues with dependencies mapped.
-allowed-tools: Bash(*scripts/config-get.sh*), Bash(*scripts/detect-task-system.sh*), Skill(reaper:issue-tracker-github), Skill(reaper:issue-tracker-beads), Skill(reaper:issue-tracker-jira), Skill(reaper:issue-tracker-planfile)
+allowed-tools: Bash(*scripts/config-get.sh*), Bash(*scripts/detect-task-system.sh*), Skill(reaper:issue-tracker-github), Skill(reaper:issue-tracker-beads), Skill(reaper:issue-tracker-jira), Skill(reaper:issue-tracker-linear), Skill(reaper:issue-tracker-planfile)
 ---
 ## Mission Header
 
