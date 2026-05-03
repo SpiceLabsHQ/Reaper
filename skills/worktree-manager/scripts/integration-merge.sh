@@ -332,11 +332,11 @@ check_root_clean() {
 
 setup_integration_worktree() {
     log_step "Creating integration branch: $INTEGRATION_BRANCH from $REVIEW_BRANCH"
-    git -C "$ROOT" branch "$INTEGRATION_BRANCH" "$REVIEW_BRANCH"
+    git -C "$ROOT" branch -- "$INTEGRATION_BRANCH" "$REVIEW_BRANCH"
     OPS_EXECUTED+=("git branch $INTEGRATION_BRANCH $REVIEW_BRANCH")
 
     log_step "Creating integration worktree: $INTEGRATION_WORKTREE"
-    git -C "$ROOT" worktree add "$INTEGRATION_WORKTREE" "$INTEGRATION_BRANCH"
+    git -C "$ROOT" worktree add -- "$INTEGRATION_WORKTREE" "$INTEGRATION_BRANCH"
     OPS_EXECUTED+=("git worktree add $INTEGRATION_WORKTREE $INTEGRATION_BRANCH")
 
     INTEGRATION_WORKTREE_ABS=$(cd "$ROOT/$INTEGRATION_WORKTREE" && pwd)
@@ -344,7 +344,7 @@ setup_integration_worktree() {
 
 cleanup_integration_worktree() {
     log_step "Removing integration worktree: $INTEGRATION_WORKTREE"
-    git -C "$ROOT" worktree remove "$INTEGRATION_WORKTREE"
+    git -C "$ROOT" worktree remove -- "$INTEGRATION_WORKTREE"
     OPS_EXECUTED+=("git worktree remove $INTEGRATION_WORKTREE")
 
     log_step "Deleting integration branch: $INTEGRATION_BRANCH"
@@ -354,7 +354,7 @@ cleanup_integration_worktree() {
     # (which may be on develop or any other branch in root), not against the
     # review branch. -D is safe here because the commit is reachable from the
     # review branch we just advanced.
-    git -C "$ROOT" branch -D "$INTEGRATION_BRANCH"
+    git -C "$ROOT" branch -D -- "$INTEGRATION_BRANCH"
     OPS_EXECUTED+=("git branch -D $INTEGRATION_BRANCH")
 }
 
@@ -499,14 +499,14 @@ advance_review_branch() {
     if [[ "$ROOT_BRANCH" == "$REVIEW_BRANCH" ]]; then
         log_step "Root is on review branch - using ff-only merge from root to advance HEAD/index/working tree atomically"
         OPS_EXECUTED+=("git -C $ROOT merge --ff-only $INTEGRATION_BRANCH")
-        if ! git -C "$ROOT" merge --ff-only "$INTEGRATION_BRANCH"; then
+        if ! git -C "$ROOT" merge --ff-only -- "$INTEGRATION_BRANCH"; then
             log_fail "Failed to advance review branch via ff-only merge from root"
             exit 1
         fi
     else
         log_step "Root is on a different branch - advancing review branch ref via git branch -f"
         OPS_EXECUTED+=("git -C $ROOT branch -f $REVIEW_BRANCH $INTEGRATION_BRANCH")
-        if ! git -C "$ROOT" branch -f "$REVIEW_BRANCH" "$INTEGRATION_BRANCH"; then
+        if ! git -C "$ROOT" branch -f -- "$REVIEW_BRANCH" "$INTEGRATION_BRANCH"; then
             log_fail "Failed to advance review branch ref"
             exit 1
         fi
