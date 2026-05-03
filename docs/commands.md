@@ -352,31 +352,31 @@ Reaper offers to apply high-priority suggestions directly to `CLAUDE.md`, create
 
 ---
 
-## /reaper:configure-quality-gates
+## /reaper:init
 
-**Detect and configure quality gate test and lint commands for this project.**
+**Detect runners and write a validated `.reaper.yml` for this project.**
 
-Scans the project to identify the test runner and linter in use, confirms the commands with you, and writes a `## Quality Gates` section to `CLAUDE.md`. Run this once per project so automated quality gate checks know which commands to execute.
+The first command you run in a new project. Init scans your repo to detect test runners, linters, formatters, and tracker conventions, asks a few questions to fill in the gaps, and writes a `.reaper.yml` file at the repo root. Run it once per project so every other Reaper component knows how to test, lint, and track work.
 
 ### Usage
 
 ```
-/reaper:configure-quality-gates
+/reaper:init
 ```
 
-No arguments. Everything is resolved by detection and interactive confirmation.
+No arguments. Detection and interactive confirmation handle everything.
 
 ### What happens
 
-1. **Detection.** Scans the project root for ecosystem configuration files and identifies candidate test and lint commands. Works through each ecosystem in order and collects every candidate found.
-2. **Existing configuration check.** If a `## Quality Gates` section already exists in `CLAUDE.md`, shows the current values and asks whether to keep them or update.
-3. **Approval flow.** Presents detected commands and asks you to confirm, enter custom commands, or skip lint. A final confirmation step shows the resolved commands before anything is written.
-4. **CLAUDE.md write.** Appends or updates the `## Quality Gates` section in `CLAUDE.md` with the confirmed commands. No other files are modified.
-5. **Commit.** Commits the change with `chore(config): add quality gate commands to CLAUDE.md`.
+1. **Detection.** Scans the project root for ecosystem markers (`package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `Makefile`) and identifies candidate test, lint, and format commands. Inspects recent commits for tracker patterns (GitHub issue refs, Jira keys, Beads IDs).
+2. **Existing config check.** If `.reaper.yml` already exists, shows current values and asks whether to keep, edit, or replace them. If a legacy `## Quality Gates` block exists in `CLAUDE.md`, init reads it as a starting point.
+3. **Interactive prompts.** For each required key (`test.cmd`, `lint.cmd`, `tracker.system`, etc.), shows the detected candidates and asks you to confirm, edit, or supply a custom value.
+4. **Validation.** Runs `scripts/config-validate.sh` against the proposed config before writing. If validation fails, init shows the errors and re-prompts for the offending keys.
+5. **Write.** Writes `.reaper.yml` at the repo root. Does not modify `CLAUDE.md` or any other file.
 
 ### Supported ecosystems
 
-| Ecosystem               | Detection                                   | Test command                | Lint command                       |
+| Ecosystem               | Detection                                   | Default test command        | Default lint command               |
 | ----------------------- | ------------------------------------------- | --------------------------- | ---------------------------------- |
 | JavaScript / TypeScript | `package.json` scripts                      | `npm test` or `test` script | `npm run lint` or `lint` script    |
 | Python                  | `pytest.ini`, `pyproject.toml`, `setup.cfg` | `pytest`                    | `ruff check .` or `pylint .`       |
@@ -386,24 +386,44 @@ No arguments. Everything is resolved by detection and interactive confirmation.
 
 When multiple ecosystems are detected, all candidates are shown and the most specific (language-native over Makefile) is recommended.
 
-### CLAUDE.md format written
-
-```markdown
-## Quality Gates
-
-The following commands are used during automated quality gates:
-
-**Test command**: `<test-command>`
-**Lint command**: `<lint-command>`
-```
-
-Use `lint: skip` to suppress the missing-lint warning when the project has no linter.
-
 ### Scope
 
-- Writes only to `CLAUDE.md` -- no other files are modified
-- Does not run the detected commands or validate that they work
-- Does not configure CI or any external system
+- Writes only `.reaper.yml` -- no other files are modified.
+- Does not run the detected commands; use `/reaper:doctor` to verify they actually work.
+- Does not configure CI or any external system.
+
+Full schema reference: [docs/configuration.md](configuration.md).
+
+---
+
+## /reaper:doctor
+
+**Validate `.reaper.yml` and surface drift between declared config and reality.**
+
+Run any time you suspect Reaper isn't picking up the config you expect — after editing `.reaper.yml`, after a tooling upgrade, or as a routine health check. Doctor validates the file against `reaper.schema.json` and runs drift probes to verify each declared command resolves on disk.
+
+### Usage
+
+```
+/reaper:doctor
+```
+
+No arguments. Doctor runs the full check unconditionally.
+
+### What happens
+
+1. **Schema validation.** Calls `scripts/config-validate.sh` and reports schema errors and unknown-key warnings.
+2. **Drift probes.** For each command-style key (`test.cmd`, `lint.cmd`, `format.cmd`), checks that the executable resolves on `PATH` or as a `package.json` / `Makefile` script. For `tracker.repo`, checks that the slug looks well-formed.
+3. **Resolution trace.** For each top-level key, shows where the resolved value came from (user `.reaper.yml`, bundled `defaults.yml`, or unset) so you can see exactly which layer is in play.
+4. **Report.** Prints a structured summary: errors first (must be fixed), warnings second (informational), and a green check if everything resolves cleanly.
+
+### What doctor does NOT do
+
+- Modify `.reaper.yml` (use `/reaper:init` for that).
+- Actually execute the test or lint commands (only checks they exist).
+- Touch CI configuration or external systems.
+
+Doctor produces its entire output from a shell script — no agent reasoning is involved — so it's deterministic and fast.
 
 ---
 

@@ -159,6 +159,12 @@ A PostToolUse hook formats code on every file write. It detects your project's f
 
 Full formatter list: [docs/auto-formatting.md](docs/auto-formatting.md)
 
+### Configuration
+
+Reaper reads project-level configuration from a `.reaper.yml` file at your repo root -- test command, lint command, coverage threshold, tracker, base branch, and so on. Run `/reaper:init` once per project to detect your runners and write a validated config. Run `/reaper:doctor` any time to verify the file still matches reality.
+
+Full schema reference: [docs/configuration.md](docs/configuration.md)
+
 ### Customization
 
 To disable Reaper's ASCII art and box-drawing output, add the line `Reaper: disable ASCII art` to your target project's `CLAUDE.md` -- Reaper will fall back to plain text status labels everywhere.

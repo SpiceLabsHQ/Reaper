@@ -4,6 +4,20 @@ _The full orchestration lifecycle, step by step._
 
 Reaper turns a description of what you want into tested, reviewed, gate-passed code. This document covers the end-to-end pipeline, from planning through quality gates to merge.
 
+## First Run
+
+Run this once per project before invoking any other Reaper command:
+
+```
+/reaper:init
+```
+
+The init wizard detects your test runner, lint command, formatter, and tracker conventions, asks a few questions to fill in the gaps, and writes a validated `.reaper.yml` at the repo root. Every other Reaper component reads project facts (test command, coverage threshold, base branch, tracker system) from this file -- so without it, takeoff and the quality gates have nothing to consult.
+
+If `.reaper.yml` already exists, init shows the current values and offers to keep, edit, or replace them. After it writes the file, run `/reaper:doctor` any time to validate the schema and check that each declared command actually resolves.
+
+Full reference: [configuration.md](configuration.md).
+
 ## The Recommended Cycle
 
 Most work follows the same arc: plan, execute, review, ship.

@@ -4,6 +4,10 @@ _Claude gets picky so you don't have to be._
 
 Every task Reaper executes passes through mandatory quality gates before you see it. No half-finished work reaches your review queue. The gate pipeline runs automatically after each coding agent completes its work, and failures loop back to the coding agent with specific issues to fix -- without your involvement.
 
+## Where the gate commands come from
+
+Quality gate commands are read from `.reaper.yml` at takeoff time via `scripts/config-get.sh`. The test-runner reads `test.cmd`, the lint check reads `lint.cmd`, and coverage enforcement reads `coverage.threshold`. Run `/reaper:init` to configure these once per project; run `/reaper:doctor` to verify the file still validates and each command resolves on disk. Full schema reference: [configuration.md](configuration.md).
+
 ## The Three-Layer Pipeline
 
 Quality validation runs in two sequential phases (three agent layers). Gate 1 must pass before Gate 2 begins. Gate 2 agents run in parallel.

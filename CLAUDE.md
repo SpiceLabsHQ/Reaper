@@ -71,16 +71,17 @@ The user, and only the user, may override any of these rules explicitly.
 
 Typical flow: `flight-plan` -> approve -> `/clear` -> `takeoff`
 
-| Command                           | Purpose                          |
-| --------------------------------- | -------------------------------- |
-| `/reaper:start [desc]`            | Orientation / getting started    |
-| `/reaper:flight-plan <desc>`      | Plan with work breakdown         |
-| `/reaper:takeoff <TASK-ID\|desc>` | Execute task autonomously        |
-| `/reaper:ship <worktree>`         | Commit, push, open PR            |
-| `/reaper:squadron <question>`     | Collaborative design session     |
-| `/reaper:status-worktrees`        | Check worktree status            |
-| `/reaper:claude-sync`             | Suggest CLAUDE.md updates        |
-| `/reaper:configure-quality-gates` | Detect runners, write QG section |
+| Command                           | Purpose                             |
+| --------------------------------- | ----------------------------------- |
+| `/reaper:start [desc]`            | Orientation / getting started       |
+| `/reaper:flight-plan <desc>`      | Plan with work breakdown            |
+| `/reaper:takeoff <TASK-ID\|desc>` | Execute task autonomously           |
+| `/reaper:ship <worktree>`         | Commit, push, open PR               |
+| `/reaper:squadron <question>`     | Collaborative design session        |
+| `/reaper:status-worktrees`        | Check worktree status               |
+| `/reaper:claude-sync`             | Suggest CLAUDE.md updates           |
+| `/reaper:init`                    | Detect runners, write `.reaper.yml` |
+| `/reaper:doctor`                  | Validate `.reaper.yml`, check drift |
 
 Takeoff auto-fetches details: GitHub Issues (`#21`) via `gh issue view`, Jira (`PROJ-123`) via `acli jira workitem view`. Description-only also works.
 
@@ -232,10 +233,7 @@ gh issue close 21                    # Mark complete
 
 ## Quality Gates
 
-The following commands are used during automated quality gates:
-
-**Test command**: `npm run test:coverage`
-**Lint command**: `npm run lint`
+Quality gate commands (test, lint, coverage threshold) are read from [`.reaper.yml`](.reaper.yml) at the repo root via `scripts/config-get.sh`. That file is the single source of truth — `reaper:test-runner` and `reaper:branch-manager` consult it at takeoff time. Run `/reaper:init` to (re)configure it; run `/reaper:doctor` to validate it. Full reference: [`docs/configuration.md`](docs/configuration.md).
 
 ## Reference
 
