@@ -85,6 +85,42 @@ You do not choose which agent runs. Reaper handles dispatch automatically based 
 
 The dispatch layer matches task characteristics to agent capabilities. A bug report routes to `bug-fixer`. A new feature routes to `feature-developer`. The routing is deterministic -- same input, same agent.
 
+## Subagent Memory
+
+Every Reaper agent declares `memory: project` in its frontmatter and includes a shared memory-guidance partial parameterized by role. The Claude Agent SDK reads that field, points the agent at `.claude/agent-memory/<agent-name>/`, and auto-injects the first 200 lines (or 25 KB) of `MEMORY.md` into the agent's system prompt on every dispatch. The result is durable, role-tuned cross-session learning that supplements (rather than duplicates) `CLAUDE.md`.
+
+Memory is stored under the project scope so it can be shared with the team via version control — committing `.claude/agent-memory/` propagates accumulated learnings the same way you propagate any other repo artifact. Projects that want per-developer silos can `.gitignore` the directory without changing any frontmatter.
+
+### Role taxonomy
+
+The shared partial accepts one of seven role values. Each role tailors what an agent should record; the _what NOT to write_, _when to write_, and _when to read_ guidance is shared across all roles.
+
+| Role          | Agents                                                                                                                                                                | What this role records                                                                                            |
+| :------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------- |
+| `implementer` | bug-fixer, feature-developer, refactoring-dev                                                                                                                         | Recurring root-cause classes, debugging traps, validated fix shapes, project-specific test patterns               |
+| `architect`   | api-designer, cloud-architect, database-architect, event-architect, observability-architect, frontend-architect, data-engineer, test-strategist, compliance-architect | Trade-off decisions and the constraints that drove them, conventions for future architects, non-obvious couplings |
+| `planner`     | workflow-planner                                                                                                                                                      | Decomposition heuristics that worked here, recurring risk patterns, parallelization signals, scope-creep traps    |
+| `reviewer`    | principal-engineer, security-auditor, performance-engineer                                                                                                            | Codebase-specific tooling false positives, accepted code smells with rationale, mitigations already in place      |
+| `craft`       | ai-prompt-engineer, claude-agent-architect, technical-writer                                                                                                          | Prompt anti-patterns the repo keeps re-introducing, doc style decisions, token-waste patterns, house conventions  |
+| `ops`         | deployment-engineer, integration-engineer, incident-responder                                                                                                         | Recurring incident root causes, production quirks, validated runbook steps, deployment failure modes, blind spots |
+| `executor`    | test-runner, branch-manager                                                                                                                                           | Usually nothing — flagged only on recurring orchestrator misuse patterns that cost cycles to clean up             |
+
+Total: 3 + 9 + 1 + 3 + 3 + 3 + 2 = 24 agents. Every Reaper-shipped agent appears in exactly one row.
+
+### How to opt out
+
+Memory is per-agent and overridable. To disable memory on a specific agent, edit its source template under `src/agents/`:
+
+- **Change the scope** -- replace `memory: project` with `memory: local` (developer-private, conventionally `.gitignore`d) or `memory: user` (shared across all projects on the machine), then rebuild.
+- **Disable entirely** -- remove the `memory:` frontmatter line and delete the `<%- include('partials/memory-guidance', { role: '...' }) %>` line from the same file. The agent reverts to memory-less behavior.
+
+Whole-project opt-out without touching any agent: add `.claude/agent-memory/` to `.gitignore` so accumulated memory stays on the local machine instead of being shared via the repo. The agents continue to read and write their stores; the team simply does not share the contents.
+
+### References
+
+- [ADR-0026: Subagent Memory and Role-Based Storage Policy](adr/0026-subagent-memory-and-role-storage-policy.md) — the authoritative policy, including scope rationale, role definitions, and consequences.
+- [SPC-33 spike: Subagent Memory Frontmatter](research/spc-33-memory-frontmatter-spike.md) — the empirical SDK details confirming that the markdown frontmatter `memory:` key is honored on Reaper's plugin-agent code path.
+
 ---
 
 **Total: 24 agents** across 5 categories (plus work-type-matched SME routing for code review).
