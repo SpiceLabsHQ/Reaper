@@ -1,0 +1,10 @@
+{
+  "name": "fixture-node-project",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src/"
+  }
+}
