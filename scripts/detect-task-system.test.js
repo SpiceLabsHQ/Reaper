@@ -26,17 +26,18 @@ const FIXTURES_DIR = path.resolve(__dirname, 'fixtures/detect-task-system');
  *
  * @param {string} fixtureFile - Filename within fixtures/detect-task-system/
  * @param {string} plansDir    - Path to use as DETECT_PLANS_DIR
+ * @param {string|null} reaperYml - Path to use as DETECT_REAPER_YML (null = unset)
  * @returns {string} The script's stdout, trimmed
  */
-function detect(fixtureFile, plansDir) {
-  const result = spawnSync(SCRIPT, [], {
-    encoding: 'utf8',
-    env: {
-      ...process.env,
-      DETECT_FIXTURE: path.join(FIXTURES_DIR, fixtureFile),
-      DETECT_PLANS_DIR: plansDir,
-    },
-  });
+function detect(fixtureFile, plansDir, reaperYml = null) {
+  const env = {
+    ...process.env,
+    DETECT_FIXTURE: path.join(FIXTURES_DIR, fixtureFile),
+    DETECT_PLANS_DIR: plansDir,
+  };
+  // Always set the seam; null means "no config file" (use /dev/null — not a regular file).
+  env.DETECT_REAPER_YML = reaperYml !== null ? reaperYml : '/dev/null';
+  const result = spawnSync(SCRIPT, [], { encoding: 'utf8', env });
   return result.stdout.trim();
 }
 
@@ -99,6 +100,56 @@ describe('detect-task-system.sh', () => {
   describe('unknown fallback', () => {
     it('returns unknown when no commit patterns and no plan files', () => {
       assert.equal(detect('no-patterns.txt', emptyPlansDir), 'unknown');
+    });
+  });
+
+  describe('.reaper.yml configured value takes priority', () => {
+    let reaperYmlDir;
+
+    before(() => {
+      reaperYmlDir = fs.mkdtempSync(path.join(os.tmpdir(), 'reaper-yml-'));
+    });
+
+    after(() => {
+      fs.rmSync(reaperYmlDir, { recursive: true });
+    });
+
+    function writeYml(system) {
+      const p = path.join(reaperYmlDir, '.reaper.yml');
+      fs.writeFileSync(p, `tracker:\n  system: ${system}\n`);
+      return p;
+    }
+
+    it('returns configured system even when git commits look like Jira', () => {
+      const yml = writeYml('linear');
+      assert.equal(detect('jira-majority.txt', emptyPlansDir, yml), 'linear');
+    });
+
+    it('returns configured system even when git commits look like GitHub', () => {
+      const yml = writeYml('jira');
+      assert.equal(detect('github-majority.txt', emptyPlansDir, yml), 'jira');
+    });
+
+    it('returns configured system even when git commits look like Beads', () => {
+      const yml = writeYml('GitHub');
+      assert.equal(detect('beads-majority.txt', emptyPlansDir, yml), 'GitHub');
+    });
+
+    it('falls through to git detection when .reaper.yml has no tracker.system', () => {
+      const p = path.join(reaperYmlDir, '.reaper.yml');
+      fs.writeFileSync(p, `version: 1\n`);
+      assert.equal(detect('jira-majority.txt', emptyPlansDir, p), 'Jira');
+    });
+
+    it('falls through to git detection when DETECT_REAPER_YML path does not exist', () => {
+      assert.equal(
+        detect(
+          'github-majority.txt',
+          emptyPlansDir,
+          '/nonexistent/.reaper.yml'
+        ),
+        'GitHub'
+      );
     });
   });
 });

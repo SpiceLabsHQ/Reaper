@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Detect the active task system from recent commit history and project files.
-# Outputs one of: GitHub, Beads, Jira, markdown_only, unknown
+# Outputs one of: GitHub, Beads, Jira, linear, markdown_only, unknown
 #
 # Detection strategy:
+#   0. tracker.system in .reaper.yml — always wins if set
 #   1. Recency-weighted commit scan (newest commit = highest weight)
 #   2. Existing plan files in .claude/plans/
 #   3. Unknown — LLM should ask the user
@@ -10,6 +11,31 @@
 # Test seams:
 #   DETECT_FIXTURE    Path to fixture file replacing git log output
 #   DETECT_PLANS_DIR  Override plans directory (default: .claude/plans)
+#   DETECT_REAPER_YML Path to .reaper.yml (default: <git-root>/.reaper.yml)
+
+# Priority 0: honor explicitly configured tracker.system from .reaper.yml.
+if [ -n "${DETECT_REAPER_YML:-}" ]; then
+  _YML="$DETECT_REAPER_YML"
+else
+  _ROOT=$(git rev-parse --show-toplevel 2>/dev/null || true)
+  _YML="${_ROOT}/.reaper.yml"
+fi
+if [ -f "$_YML" ]; then
+  _CONFIGURED=$(awk '
+    /^tracker:/ { in_tracker=1; next }
+    in_tracker && /^[[:space:]]+system:/ {
+      gsub(/.*system:[[:space:]]*/, "")
+      gsub(/[[:space:]]*$/, "")
+      gsub(/["\047]/, "")
+      print; exit
+    }
+    /^[^[:space:]]/ { in_tracker=0 }
+  ' "$_YML" 2>/dev/null) || true
+  if [ -n "$_CONFIGURED" ]; then
+    echo "$_CONFIGURED"
+    exit 0
+  fi
+fi
 
 GITHUB_SCORE=0
 BEADS_SCORE=0
