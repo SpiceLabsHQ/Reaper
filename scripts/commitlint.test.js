@@ -249,7 +249,10 @@ describe('commitlint github-ref-required rule', () => {
         raw: 'feat: add feature',
       });
       assert.strictEqual(result[0], false);
-      assert.ok(typeof result[1] === 'string', 'error message should be a string');
+      assert.ok(
+        typeof result[1] === 'string',
+        'error message should be a string'
+      );
       assert.ok(result[1].length > 0, 'error message should not be empty');
     });
 
@@ -260,7 +263,192 @@ describe('commitlint github-ref-required rule', () => {
         raw: 'feat: add feature\n\nCloses #1',
       });
       assert.strictEqual(result[0], true);
-      assert.ok(typeof result[1] === 'string', 'success message should be a string');
+      assert.ok(
+        typeof result[1] === 'string',
+        'success message should be a string'
+      );
+    });
+
+    it('error message should mention both GitHub and Linear formats', () => {
+      const result = githubRefRule({
+        type: 'feat',
+        references: [],
+        raw: 'feat: add feature',
+      });
+      assert.strictEqual(result[0], false);
+      assert.match(result[1], /GitHub/i);
+      assert.match(result[1], /Linear/i);
+    });
+  });
+
+  describe('Linear-format issue references (TEAM-N)', () => {
+    it('should return [true, ...] for feat with Closes SPC-10', () => {
+      const result = githubRefRule({
+        type: 'feat',
+        references: [],
+        raw: 'feat(config): add reader\n\nCloses SPC-10',
+      });
+      assert.strictEqual(result[0], true);
+    });
+
+    it('should return [true, ...] for fix with Fixes ABC-7', () => {
+      const result = githubRefRule({
+        type: 'fix',
+        references: [],
+        raw: 'fix(api): correct response\n\nFixes ABC-7',
+      });
+      assert.strictEqual(result[0], true);
+    });
+
+    it('should return [true, ...] for refactor with Resolves PROJ-100', () => {
+      const result = githubRefRule({
+        type: 'refactor',
+        references: [],
+        raw: 'refactor: clean up code\n\nResolves PROJ-100',
+      });
+      assert.strictEqual(result[0], true);
+    });
+
+    it('should return [true, ...] for feat with Close SPC-1 (singular)', () => {
+      const result = githubRefRule({
+        type: 'feat',
+        references: [],
+        raw: 'feat: new feature\n\nClose SPC-1',
+      });
+      assert.strictEqual(result[0], true);
+    });
+
+    it('should return [true, ...] for fix with Fix LIN-99 (singular)', () => {
+      const result = githubRefRule({
+        type: 'fix',
+        references: [],
+        raw: 'fix: resolve bug\n\nFix LIN-99',
+      });
+      assert.strictEqual(result[0], true);
+    });
+
+    it('should return [true, ...] case-insensitive (closes spc-10)', () => {
+      const result = githubRefRule({
+        type: 'feat',
+        references: [],
+        raw: 'feat: thing\n\ncloses spc-10',
+      });
+      assert.strictEqual(result[0], true);
+    });
+
+    it('should return [true, ...] for multi-letter team key (TEAM2-5)', () => {
+      const result = githubRefRule({
+        type: 'feat',
+        references: [],
+        raw: 'feat: thing\n\nCloses TEAM2-5',
+      });
+      assert.strictEqual(result[0], true);
+    });
+
+    it('should return [false, ...] for bare Linear key without action keyword', () => {
+      const result = githubRefRule({
+        type: 'feat',
+        references: [],
+        raw: 'feat: add feature\n\nrelated to SPC-10',
+      });
+      assert.strictEqual(result[0], false);
+    });
+
+    it('should return [false, ...] for action keyword without team key', () => {
+      const result = githubRefRule({
+        type: 'feat',
+        references: [],
+        raw: 'feat: add feature\n\ncloses the loop',
+      });
+      assert.strictEqual(result[0], false);
+    });
+
+    it('should return [false, ...] for malformed Linear key (no hyphen)', () => {
+      const result = githubRefRule({
+        type: 'feat',
+        references: [],
+        raw: 'feat: add feature\n\nCloses SPC10',
+      });
+      assert.strictEqual(result[0], false);
+    });
+
+    it('should return [false, ...] for malformed Linear key (no digits)', () => {
+      const result = githubRefRule({
+        type: 'feat',
+        references: [],
+        raw: 'feat: add feature\n\nCloses SPC-foo',
+      });
+      assert.strictEqual(result[0], false);
+    });
+  });
+
+  describe('mixed GitHub + Linear references (either or both is sufficient)', () => {
+    it('should return [true, ...] when both Closes #123 and Closes SPC-10 are present', () => {
+      const result = githubRefRule({
+        type: 'feat',
+        references: [{ action: 'Closes', issue: '123', prefix: '#' }],
+        raw: 'feat: cross-tracker work\n\nCloses #123\nCloses SPC-10',
+      });
+      assert.strictEqual(result[0], true);
+    });
+
+    it('should return [true, ...] when GitHub ref is action-null but Linear ref is valid', () => {
+      const result = githubRefRule({
+        type: 'feat',
+        references: [{ action: null, issue: '123', prefix: '#' }],
+        raw: 'feat: add\n\nrelated to #123\nCloses SPC-10',
+      });
+      assert.strictEqual(result[0], true);
+    });
+
+    it('should return [true, ...] when only GitHub ref is present (no Linear)', () => {
+      const result = githubRefRule({
+        type: 'feat',
+        references: [{ action: 'Fixes', issue: '5', prefix: '#' }],
+        raw: 'feat: add\n\nFixes #5',
+      });
+      assert.strictEqual(result[0], true);
+    });
+  });
+
+  describe('exempt types still pass with Linear-only refs', () => {
+    it('chore commits with Linear ref should still pass', () => {
+      const result = githubRefRule({
+        type: 'chore',
+        references: [],
+        raw: 'chore: update deps\n\nCloses SPC-99',
+      });
+      assert.strictEqual(result[0], true);
+    });
+
+    it('docs commits with Linear ref should still pass', () => {
+      const result = githubRefRule({
+        type: 'docs',
+        references: [],
+        raw: 'docs: update readme\n\nResolves SPC-99',
+      });
+      assert.strictEqual(result[0], true);
+    });
+  });
+
+  describe('robustness', () => {
+    it('should not crash when raw is undefined and references is empty', () => {
+      const result = githubRefRule({
+        type: 'feat',
+        references: [],
+        raw: undefined,
+      });
+      assert.strictEqual(result[0], false);
+    });
+
+    it('should not crash when references is undefined', () => {
+      const result = githubRefRule({
+        type: 'feat',
+        references: undefined,
+        raw: 'feat: thing\n\nCloses SPC-10',
+      });
+      // Should still pass via Linear ref fallback
+      assert.strictEqual(result[0], true);
     });
   });
 });

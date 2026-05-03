@@ -1,46 +1,67 @@
 /**
- * Commitlint configuration with conventional commits + GitHub issue reference
+ * Commitlint configuration with conventional commits + issue reference requirement.
  *
- * Requires a GitHub issue reference footer (e.g. "Closes #123", "Fixes #456")
- * in all commits except chore and docs.
+ * Requires an issue reference footer in all commits except chore and docs.
+ * Accepts BOTH formats (one or both is sufficient):
+ *   - GitHub: "Closes #123", "Fixes #456", "Resolves #789"
+ *   - Linear: "Closes SPC-10", "Fixes ABC-7", "Resolves PROJ-100"
  *
- * Uses commitlint's built-in parser which recognises GitHub closing keywords
- * (Closes, Fixes, Resolves, etc.) and populates the `references` array with
- * an `action` field when such a keyword is found.
+ * GitHub refs are detected by commitlint's built-in parser, which populates
+ * `references[].action` when a closing keyword precedes the issue number.
+ * Linear refs are detected by regex on the raw commit message.
  */
 
-/**
- * Commit types that are exempt from the GitHub issue reference requirement.
- */
 const EXEMPT_TYPES = new Set(['chore', 'docs']);
 
-/**
- * Custom plugin to validate GitHub issue reference in commit footer.
- *
- * A valid reference is one where the parser recognises a closing keyword
- * (Closes, Fixes, Resolves, etc.) before the issue number — indicated by
- * `reference.action !== null` in the parsed references array.
- */
+const ACTION_KEYWORDS = [
+  'close',
+  'closes',
+  'closed',
+  'fix',
+  'fixes',
+  'fixed',
+  'resolve',
+  'resolves',
+  'resolved',
+];
+
+// Linear-style action ref: "Closes SPC-10", "Fixes ABC-7", "Resolves PROJ-100".
+// Team key: uppercase letter followed by uppercase alphanumerics, hyphen, digits.
+const LINEAR_REF_REGEX = new RegExp(
+  `\\b(?:${ACTION_KEYWORDS.join('|')})\\s+[A-Z][A-Z0-9]*-\\d+\\b`,
+  'i'
+);
+
 const githubRefPlugin = {
   rules: {
-    'github-ref-required': ({ type, references }) => {
+    'github-ref-required': ({ type, references, raw }) => {
       if (EXEMPT_TYPES.has(type)) {
-        return [true, `${type} commits are exempt from GitHub issue reference requirement`];
-      }
-
-      const hasActionRef = Array.isArray(references) && references.some((r) => r.action !== null);
-
-      if (!hasActionRef) {
         return [
-          false,
-          'Commit must include a GitHub issue reference in the footer.\n' +
-            'Expected format: Closes #123, Fixes #456, or Resolves #789\n' +
-            'Tip: Use "gh issue list" to see open issues.\n' +
-            'Note: chore and docs commits are exempt from this requirement.',
+          true,
+          `${type} commits are exempt from issue reference requirement`,
         ];
       }
 
-      return [true, 'Valid GitHub issue reference found'];
+      const hasGithubRef =
+        Array.isArray(references) && references.some((r) => r.action !== null);
+      const hasLinearRef =
+        typeof raw === 'string' && LINEAR_REF_REGEX.test(raw);
+
+      if (hasGithubRef || hasLinearRef) {
+        return [
+          true,
+          'Valid issue reference (GitHub #N or Linear TEAM-N) found',
+        ];
+      }
+
+      return [
+        false,
+        'Commit must include a GitHub or Linear issue reference in the footer.\n' +
+          '  GitHub format: Closes #123, Fixes #456, or Resolves #789\n' +
+          '  Linear format: Closes SPC-10, Fixes ABC-7, or Resolves PROJ-100\n' +
+          'Either format (or both) is accepted.\n' +
+          'Note: chore and docs commits are exempt from this requirement.',
+      ];
     },
   },
 };
@@ -54,7 +75,7 @@ module.exports = {
   },
   plugins: [githubRefPlugin],
   rules: {
-    // Require a GitHub issue reference for non-exempt commits
+    // Require an issue reference (GitHub #N or Linear TEAM-N) for non-exempt commits
     'github-ref-required': [2, 'always'],
   },
 };

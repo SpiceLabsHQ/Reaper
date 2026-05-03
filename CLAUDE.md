@@ -86,14 +86,17 @@ Takeoff auto-fetches details: GitHub Issues (`#21`) via `gh issue view`, Jira (`
 
 ### Commit Standards
 
-Commits are enforced by commitlint with a GitHub issue reference requirement:
+Commits are enforced by commitlint with an issue reference requirement (GitHub or Linear, one or both):
 
 ```
 <type>(<scope>): <subject>    # max 72 chars
 
 <body>
 
-Closes #N                     # Required for non-chore, non-docs commits (or Fixes #N)
+Closes #N                     # GitHub ref: Closes #N / Fixes #N / Resolves #N
+Closes SPC-N                  # Linear ref: Closes TEAM-N / Fixes TEAM-N / Resolves TEAM-N
+                              # Either format (or both) satisfies the requirement
+                              # for non-chore, non-docs commits.
 ```
 
 **Types:** feat, fix, docs, style, refactor, perf, test, chore, ci
