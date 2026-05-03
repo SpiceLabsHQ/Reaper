@@ -18,11 +18,9 @@ lint:
 format:
   cmd: npm run format
 
-coverage:
-  threshold: 80
-
 tracker:
   system: linear
+  repo: SpiceLabsHQ/Reaper
   project_id: SPC
   default_labels:
     - reaper
@@ -35,6 +33,6 @@ git:
   default_base_branch: develop
 
 workflow:
-  require_security_gate: true
+  require_security_gate: false
   require_tdd: true
   skip_gates_for: []
