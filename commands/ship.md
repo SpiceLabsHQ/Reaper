@@ -1,6 +1,6 @@
 ---
 description: Fast-path from worktree to PR — commit, push, open.
-allowed-tools: Bash(*scripts/config-get.sh*)
+allowed-tools: Bash(*scripts/config-get.sh*), Bash(*skills/worktree-manager/scripts/integration-merge.sh*)
 ---
 ## Mission Header
 

@@ -3996,6 +3996,263 @@ describe('Contract: branch-manager large_multi_worktree merge uses isolated inte
 });
 
 // ---------------------------------------------------------------------------
+// Contract: branch-manager invokes integration-merge.sh as the canonical executor
+// ---------------------------------------------------------------------------
+//
+// The inline 76-line ADR-0014/0019/0020 merge block has been extracted into
+// `src/skills/worktree-manager/scripts/integration-merge.sh` (SPC-29 WORK-001).
+// The branch-manager agent must invoke that script with the strategy it
+// selects via the ADR-0020 three-path heuristic, rather than re-implementing
+// the git operations inline. This contract:
+//
+//   1. Asserts that the agent (generated branch-manager.md) invokes
+//      integration-merge.sh with the required CLI flags (--task-id,
+//      --component, --strategy).
+//   2. Asserts that the script SOURCE (src/skills/worktree-manager/scripts/
+//      integration-merge.sh) still contains all four ADR-0014 invariants:
+//        a. `git worktree add` for the integration worktree
+//        b. a `git -C <integration-worktree>` ... merge|rebase|reset|commit
+//           inside the integration worktree (NOT in root)
+//        c. BOTH `git merge --ff-only` (root-on-review-branch path) AND
+//           `git branch -f` (root-on-other-branch path) — the ADR-0019
+//           conditional ref advance
+//        d. `git worktree remove` for the integration worktree on cleanup
+//
+// This split lets the agent prose stay short while preserving the structural
+// invariants the inline block used to enforce — they are now enforced where
+// they actually execute, in the script source.
+// ---------------------------------------------------------------------------
+
+describe('Contract: branch-manager invokes integration-merge.sh as canonical executor', () => {
+  const filePath = agentFilePath('branch-manager');
+  const relative = 'agents/branch-manager.md';
+
+  function getLargeMultiSection(content) {
+    const start = content.indexOf('large_multi_worktree Workflow');
+    if (start === -1) {
+      return '';
+    }
+    const afterStart = content.slice(start);
+    const nextSection = afterStart.search(/\n## /);
+    return nextSection !== -1 ? afterStart.slice(0, nextSection) : afterStart;
+  }
+
+  it(`${relative} large_multi_worktree Workflow invokes integration-merge.sh`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getLargeMultiSection(content);
+    assert.ok(
+      section.length > 0,
+      `${relative} must have a large_multi_worktree Workflow section`
+    );
+    assert.ok(
+      /integration-merge\.sh/.test(section),
+      `${relative} large_multi_worktree Workflow must invoke ` +
+        `\`skills/worktree-manager/scripts/integration-merge.sh\` as the canonical ` +
+        `executor of the ADR-0014/0019/0020 merge sequence`
+    );
+  });
+
+  it(`${relative} large_multi_worktree Workflow passes --task-id, --component, --strategy to integration-merge.sh`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getLargeMultiSection(content);
+    assert.ok(
+      section.length > 0,
+      `${relative} must have a large_multi_worktree Workflow section`
+    );
+    assert.ok(
+      /--task-id/.test(section),
+      `${relative} integration-merge.sh invocation must pass --task-id`
+    );
+    assert.ok(
+      /--component/.test(section),
+      `${relative} integration-merge.sh invocation must pass --component`
+    );
+    assert.ok(
+      /--strategy/.test(section),
+      `${relative} integration-merge.sh invocation must pass --strategy ` +
+        `(merge|rebase-ff|squash) — the script does not infer strategy`
+    );
+  });
+
+  it(`${relative} large_multi_worktree Workflow passes --squash-message when strategy is squash`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getLargeMultiSection(content);
+    assert.ok(
+      section.length > 0,
+      `${relative} must have a large_multi_worktree Workflow section`
+    );
+    // The agent must construct ${SQUASH_COMMIT_MESSAGE} and pass it via --squash-message
+    // so the script can validate the squash precondition (exit 2 otherwise).
+    assert.ok(
+      /--squash-message/.test(section),
+      `${relative} large_multi_worktree Workflow must pass --squash-message to ` +
+        `integration-merge.sh when --strategy=squash (script exits 2 otherwise)`
+    );
+    assert.ok(
+      /SQUASH_COMMIT_MESSAGE/.test(section),
+      `${relative} large_multi_worktree Workflow must reference the ` +
+        `\${SQUASH_COMMIT_MESSAGE} variable so the agent constructs a ` +
+        `commitlint-compliant message before invoking the script`
+    );
+  });
+
+  it(`${relative} large_multi_worktree Workflow surfaces script exit codes (0/1/2/3/4)`, () => {
+    assert.ok(fs.existsSync(filePath), `${relative} not found`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const section = getLargeMultiSection(content);
+    assert.ok(
+      section.length > 0,
+      `${relative} must have a large_multi_worktree Workflow section`
+    );
+    // The agent must teach how to surface each script exit code in its JSON response.
+    // Exit 3 (merge conflict — integration worktree retained) is the most failure-mode
+    // sensitive: the agent must NOT self-remediate.
+    assert.ok(
+      /Exit 3.*conflict|conflict.*Exit 3|exit 3.*merge.*conflict|merge.*conflict.*retain/i.test(
+        section
+      ),
+      `${relative} large_multi_worktree Workflow must explain that exit 3 from ` +
+        `integration-merge.sh indicates a merge conflict and the integration worktree ` +
+        `is retained for inspection (Protocol #11 — do not self-remediate)`
+    );
+    assert.ok(
+      /Exit 4|exit 4/.test(section),
+      `${relative} large_multi_worktree Workflow must explain script exit 4 ` +
+        `(post-cleanup root-dirty assertion fail; ADR-0019 violation)`
+    );
+  });
+});
+
+describe('Contract: integration-merge.sh source contains the ADR-0014 invariants', () => {
+  const scriptPath = path.join(
+    ROOT,
+    'src',
+    'skills',
+    'worktree-manager',
+    'scripts',
+    'integration-merge.sh'
+  );
+  const relative = 'src/skills/worktree-manager/scripts/integration-merge.sh';
+
+  it(`${relative} exists and is executable`, () => {
+    assert.ok(fs.existsSync(scriptPath), `${relative} not found`);
+    const stat = fs.statSync(scriptPath);
+    // Owner-execute bit must be set (chmod +x). Mode is a numeric POSIX mode;
+    // the executable bit for owner is 0o100.
+    assert.ok(
+      (stat.mode & 0o100) === 0o100,
+      `${relative} must have the owner-executable bit set (chmod +x)`
+    );
+  });
+
+  it(`${relative} uses 'git worktree add' to create the integration worktree (ADR-0014)`, () => {
+    assert.ok(fs.existsSync(scriptPath), `${relative} not found`);
+    const content = fs.readFileSync(scriptPath, 'utf8');
+    assert.ok(
+      /git -C "\$ROOT" worktree add|git worktree add.*INTEGRATION_WORKTREE|git -C \$ROOT worktree add/.test(
+        content
+      ),
+      `${relative} must use 'git worktree add' to create an isolated integration ` +
+        `worktree (ADR-0014 invariant — never \`git checkout\` in root)`
+    );
+  });
+
+  it(`${relative} runs merge/rebase/reset/commit inside the integration worktree via 'git -C' (ADR-0014)`, () => {
+    assert.ok(fs.existsSync(scriptPath), `${relative} not found`);
+    const content = fs.readFileSync(scriptPath, 'utf8');
+    // The script must run mutations inside the integration worktree, not in root.
+    // Match `git -C "$INTEGRATION_WORKTREE_ABS" ... (merge|rebase|reset|commit)`
+    // or the same with a different quoting style.
+    assert.ok(
+      /git -C "?\$INTEGRATION_WORKTREE_ABS"? (merge|rebase|reset|commit)/.test(
+        content
+      ),
+      `${relative} must run merge/rebase/reset/commit inside the integration ` +
+        `worktree via 'git -C "$INTEGRATION_WORKTREE_ABS" ...' (ADR-0014 — ` +
+        `never run mutations in root)`
+    );
+  });
+
+  it(`${relative} implements the ADR-0019 conditional ref advance with BOTH 'git merge --ff-only' and 'git branch -f'`, () => {
+    assert.ok(fs.existsSync(scriptPath), `${relative} not found`);
+    const content = fs.readFileSync(scriptPath, 'utf8');
+    // ADR-0019 requires both branches of the conditional:
+    //   - root on review branch  -> `git -C "$ROOT" merge --ff-only ...`
+    //     (atomically advances HEAD/index/working tree; prevents index staleness)
+    //   - root on other branch    -> `git -C "$ROOT" branch -f <review> <integration>`
+    //     (pointer-only advance is safe)
+    assert.ok(
+      /git -C "?\$ROOT"? merge --ff-only/.test(content),
+      `${relative} must use 'git -C "$ROOT" merge --ff-only ...' on the ` +
+        `root-is-on-review-branch path (ADR-0019 — atomic HEAD/index/working ` +
+        `tree advance)`
+    );
+    assert.ok(
+      /git -C "?\$ROOT"? branch -f/.test(content),
+      `${relative} must use 'git -C "$ROOT" branch -f ...' on the ` +
+        `root-is-on-other-branch path (ADR-0019 — pointer-only advance)`
+    );
+  });
+
+  it(`${relative} cleans up the integration worktree via 'git worktree remove' (ADR-0014)`, () => {
+    assert.ok(fs.existsSync(scriptPath), `${relative} not found`);
+    const content = fs.readFileSync(scriptPath, 'utf8');
+    assert.ok(
+      /git -C "?\$ROOT"? worktree remove/.test(content),
+      `${relative} must use 'git -C "$ROOT" worktree remove ...' to clean up ` +
+        `the integration worktree after merge (ADR-0014 invariant)`
+    );
+  });
+
+  it(`${relative} performs the ADR-0019 post-cleanup root-cleanliness assertion`, () => {
+    assert.ok(fs.existsSync(scriptPath), `${relative} not found`);
+    const content = fs.readFileSync(scriptPath, 'utf8');
+    // After cleanup, the script must re-check root status and exit 4 if dirty.
+    // This is the Step 8 / ADR-0019 postcondition.
+    assert.ok(
+      /assert_root_clean_post_cleanup|post.cleanup.*clean|clean.*post.?cleanup|exit 4/i.test(
+        content
+      ),
+      `${relative} must perform the ADR-0019 post-cleanup root-cleanliness ` +
+        `assertion (exit 4 if root is dirty after cleanup)`
+    );
+  });
+
+  it(`${relative} accepts --task-id, --component, --strategy CLI flags`, () => {
+    assert.ok(fs.existsSync(scriptPath), `${relative} not found`);
+    const content = fs.readFileSync(scriptPath, 'utf8');
+    assert.ok(
+      /--task-id\b/.test(content),
+      `${relative} must accept --task-id flag`
+    );
+    assert.ok(
+      /--component\b/.test(content),
+      `${relative} must accept --component flag`
+    );
+    assert.ok(
+      /--strategy\b/.test(content),
+      `${relative} must accept --strategy flag (merge|rebase-ff|squash)`
+    );
+  });
+
+  it(`${relative} requires --squash-message when --strategy=squash (precondition exit 2)`, () => {
+    assert.ok(fs.existsSync(scriptPath), `${relative} not found`);
+    const content = fs.readFileSync(scriptPath, 'utf8');
+    // The script must enforce the squash-message precondition with exit 2.
+    assert.ok(
+      /strategy.*squash.*squash.message|SQUASH_MESSAGE.*squash|squash.*SQUASH_MESSAGE/is.test(
+        content
+      ),
+      `${relative} must enforce the precondition that --strategy=squash ` +
+        `requires --squash-message (exit 2)`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Contract: branch-manager stop-and-report doctrine and explicit prohibitions
 // ---------------------------------------------------------------------------
 //

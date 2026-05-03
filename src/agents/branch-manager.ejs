@@ -189,87 +189,103 @@ medium_single_branch uses a session worktree as a shared worktree coordination p
    - Orchestrator deploys branch-manager with the agent worktree path, session worktree path (`.claude/worktrees/[TASK_ID]-[COMPONENT]`), and confirmation of gates passed and user authorization
    - Execute Agent Worktree Operations (commit, ff-only merge into session branch, cleanup) as described above
    - Merge session branch to review branch using an isolated integration worktree — never `git checkout` in root.
-     The merge path is determined by two inputs from the orchestrator deployment prompt:
-     the FLAT_TREE/COMPLEX_TREE flag (set by takeoff at launch) and the commit count for this work unit.
+     The full ADR-0014/0019/0020 sequence (integration-worktree creation, strategy execution, conditional ref advance, cleanup, and post-cleanup root-cleanliness assertion) is implemented by the canonical executor script `${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/integration-merge.sh`. See the worktree-manager SKILL "Available Scripts" table and the ADR-0014 Implementation Note for cross-references. The branch-manager's responsibility is to:
+       1. Run the Step 0 pre-merge precondition check on root (the script also enforces this; the agent inspects first so it can return `status: error` per Protocol #11 with a clear diagnostic before invoking the executor).
+       2. Compute the commit count and select the strategy via the ADR-0020 three-path heuristic (TREE_FLAG + commit count) — strategy selection lives in the agent, not the script.
+       3. Construct a commitlint-compliant `${SQUASH_COMMIT_MESSAGE}` (conventional format with `Ref:` footer) when the selected strategy is `squash`, and pass it via `--squash-message`.
+       4. Invoke the script with the chosen strategy and surface its exit code in the JSON response.
+
+     Step 0 — Pre-merge precondition check (inspect root before touching anything):
      ```
-     # Step 0: Pre-merge precondition check — inspect root before touching anything
      ROOT="$(git rev-parse --show-toplevel)"
      ROOT_STATUS="$(git -C "$ROOT" status --porcelain)"
      ROOT_BRANCH="$(git -C "$ROOT" branch --show-current)"
-     # Hard-fail: uncommitted changes in root would be corrupted by the index manipulation below
+     # Hard-fail: uncommitted changes in root would be corrupted by the merge sequence
      if [ -n "$ROOT_STATUS" ]; then
        # Return status:error — do not proceed (Protocol #11)
        echo "ERROR: root has uncommitted changes; aborting merge to prevent index pollution"
        exit 1
      fi
-     # Informational: root is checked out to the review branch being advanced.
-     # This case is handled correctly below — git merge --ff-only from root will
+     # Informational advisory warning: root is checked out to the review branch being advanced.
+     # The script handles this correctly below — git merge --ff-only from root will
      # atomically advance HEAD, index, and working tree, preventing index staleness.
      if [ "$ROOT_BRANCH" = "feature/[TASK_ID]-review" ]; then
-       echo "INFO: root is checked out to the review branch — will use --ff-only from root to advance HEAD, index, and working tree atomically"
+       echo "WARNING: root is checked out to the review branch — script will use --ff-only from root to advance HEAD, index, and working tree atomically"
      fi
+     ```
 
-     # Determine commit-count for this work unit (used by Path 1 and Path 2 heuristic)
+     Determine commit count and select the ADR-0020 strategy. The mapping is:
+     - **Path 3 (COMPLEX_TREE):** `--strategy merge` — preserves sub-parent grouping by creating a `git merge --no-ff` merge commit inside the integration worktree.
+     - **Path 1 (commit-count == 1, FLAT_TREE):** `--strategy rebase-ff` — single commit replayed onto the review tip, then fast-forward.
+     - **Path 2 (commit-count > 1, FLAT_TREE):** `--strategy squash` — multi-commit work collapsed to one conventional commit; `--squash-message` is required.
+     ```
+     # Determine commit count for this work unit (used by Path 1 vs Path 2 selection)
      COMMIT_COUNT="$(git rev-list --count feature/[TASK_ID]-review..feature/[TASK_ID]-[COMPONENT])"
 
-     git branch [TASK_ID]-integration-temp feature/[TASK_ID]-review
-     git worktree add .claude/worktrees/[TASK_ID]-integration [TASK_ID]-integration-temp
-
-     # ADR-0020 three-path merge strategy:
+     # ADR-0020 three-path heuristic: pick a strategy from TREE_FLAG + COMMIT_COUNT.
      #   Path 1 (commit-count=1, FLAT_TREE or any): rebase + --ff-only — linear single commit
      #   Path 2 (commit-count>1, FLAT_TREE): rebase + squash to one conventional commit + --ff-only
-     #   Path 3 (COMPLEX_TREE): existing --no-ff per sub-parent — preserves sub-parent grouping
-
+     #   Path 3 (COMPLEX_TREE): --no-ff per sub-parent — preserves sub-parent grouping
      if [ "$TREE_FLAG" = "COMPLEX_TREE" ]; then
-       # Path 3: COMPLEX_TREE — retain --no-ff to preserve sub-parent grouping in history
-       git -C .claude/worktrees/[TASK_ID]-integration merge --no-ff feature/[TASK_ID]-[COMPONENT]
-
+       STRATEGY="merge"
      elif [ "$COMMIT_COUNT" -eq 1 ]; then
-       # Path 1: Single-commit unit + FLAT_TREE (or any flag) — rebase + fast-forward
-       # Rebase replays the single commit onto the current review branch tip, then
-       # --ff-only advances the integration branch pointer without a merge commit.
-       git -C .claude/worktrees/[TASK_ID]-integration rebase feature/[TASK_ID]-review feature/[TASK_ID]-[COMPONENT]
-       git -C .claude/worktrees/[TASK_ID]-integration merge --ff-only feature/[TASK_ID]-[COMPONENT]
-
+       STRATEGY="rebase-ff"
      else
-       # Path 2: Multi-commit unit + FLAT_TREE — rebase + squash to one conventional commit
-       # Rebase onto the review branch tip first, then collapse all N commits into one
-       # using reset --soft so the working tree is preserved and we can make a single commit.
-       git -C .claude/worktrees/[TASK_ID]-integration rebase feature/[TASK_ID]-review feature/[TASK_ID]-[COMPONENT]
-       git -C .claude/worktrees/[TASK_ID]-integration reset --soft "HEAD~${COMMIT_COUNT}"
-       # Squash commit message (conventional format, commitlint-compliant):
+       STRATEGY="squash"
+       # Construct ${SQUASH_COMMIT_MESSAGE} (conventional format, commitlint-compliant):
        # <type>(<scope>): <subject derived from parent issue title>
        #
        # Squashes work across N components: component-a, component-b.
        #
        # Ref: reaper-parent, reaper-child-1, reaper-child-2
-       git -C .claude/worktrees/[TASK_ID]-integration commit -m "${SQUASH_COMMIT_MESSAGE}"
-       git -C .claude/worktrees/[TASK_ID]-integration merge --ff-only feature/[TASK_ID]-[COMPONENT]
+       # (commitlint validates the message via the husky pre-commit hook in the
+       # integration worktree.)
      fi
 
-     # On success: advance the review branch ref.
-     # If root is on the branch being advanced, use --ff-only from root to update
-     # HEAD, index, and working tree atomically — preventing index staleness.
-     # If root is on a different branch, a pointer-only advance is safe.
-     if [ "$ROOT_BRANCH" = "feature/[TASK_ID]-review" ]; then
-       git -C "$ROOT" merge --ff-only [TASK_ID]-integration-temp
+     # Invoke the canonical executor. The script enforces the ADR-0014 invariants:
+     #   - `git worktree add` for the integration worktree
+     #   - every `git -C .claude/worktrees/.../integration ... rebase|merge|reset|commit`
+     #   - the ADR-0019 conditional ref advance: `git merge --ff-only` when root is on
+     #     the review branch, otherwise `git branch -f`
+     #   - `git worktree remove` for the integration worktree on cleanup
+     #   - `git branch -D` (force) for the integration temp branch on cleanup
+     # It also performs the Step 8 post-cleanup root-cleanliness assertion.
+     # Branch-manager does NOT re-run those operations; the script is the canonical executor.
+     #
+     # NOTE on internal correctness: for the rebase-ff and squash strategies the
+     # script captures the integration worktree's HEAD post-strategy and re-anchors
+     # the integration branch via `git update-ref` before the conditional ref
+     # advance. This is a deliberate correction of a latent bug in the prior
+     # inline block (which advanced the review branch to the stale integration-temp
+     # ref). Caller-visible contract is unchanged.
+     #
+     # NOTE on cleanup: the script uses `git branch -D` (force) instead of
+     # `git branch -d` because `-d` checks ancestry against the current HEAD
+     # branch in root (which may be develop, not the review branch we just
+     # advanced). The integration commit IS reachable from the advanced review
+     # branch, so the force delete is safe.
+     if [ "$STRATEGY" = "squash" ]; then
+       ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/integration-merge.sh \
+         --task-id [TASK_ID] \
+         --component [COMPONENT] \
+         --strategy "$STRATEGY" \
+         --squash-message "${SQUASH_COMMIT_MESSAGE}"
      else
-       git branch -f feature/[TASK_ID]-review [TASK_ID]-integration-temp
+       ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/integration-merge.sh \
+         --task-id [TASK_ID] \
+         --component [COMPONENT] \
+         --strategy "$STRATEGY"
      fi
-     # Cleanup integration worktree and temp branch
-     git worktree remove .claude/worktrees/[TASK_ID]-integration
-     git branch -d [TASK_ID]-integration-temp
-
-     # Step 8: Post-merge cleanliness assertion — root must be clean after cleanup
-     POST_STATUS="$(git -C "$ROOT" status --porcelain)"
-     if [ -n "$POST_STATUS" ]; then
-       # Return status:error per Protocol #11 — stop and report; do not self-remediate
-       echo "ERROR: root is dirty after merge cleanup (unexpected index pollution); aborting"
-       echo "$POST_STATUS"
-       exit 1
-     fi
+     SCRIPT_EXIT=$?
      ```
-   - If the merge produces conflicts, they surface inside `.claude/worktrees/[TASK_ID]-integration`, not in root
+
+     Surface the script's exit code in the JSON response per the contract below:
+     - **Exit 0 (ok):** parse the script's single-line JSON stdout summary; include `ops_executed` in `commands_executed`; `status: success`.
+     - **Exit 1 (usage):** internal contract bug — return `status: error` with the script's stderr and ask the orchestrator to retry with corrected arguments. Do not self-remediate.
+     - **Exit 2 (precondition fail):** return `status: error`. Common causes: missing `--squash-message` for squash strategy, missing review branch / component branch, or root dirty (your Step 0 should have caught this earlier).
+     - **Exit 3 (merge conflict):** the integration worktree at `.claude/worktrees/[TASK_ID]-[COMPONENT]-integration` is **retained** for inspection — conflicts surface there, not in root. Return `status: error` with the script's "AI REMEDIATION GUIDE" stderr block included in `blocking_issues`. Do NOT attempt to resolve conflicts autonomously (Protocol #11). The orchestrator decides whether to resolve manually or abort.
+     - **Exit 4 (post-cleanup root-dirty assertion fail):** ADR-0019 violation — root tree is dirty after cleanup. Return `status: error` with the script's diagnostic block. Do NOT self-remediate (Protocol #11).
+     - If the merge produces conflicts, they surface inside `.claude/worktrees/[TASK_ID]-[COMPONENT]-integration`, not in root
    - Immediately after a successful merge verification, clean up the component session worktree and its branch using the worktree-manager skill. Navigate to the project root first (never remove from inside the worktree), then invoke the cleanup script with `--delete-branch`:
      ```
      cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh .claude/worktrees/[TASK_ID]-[COMPONENT] --delete-branch
