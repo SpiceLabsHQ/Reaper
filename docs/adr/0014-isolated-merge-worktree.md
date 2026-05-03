@@ -99,6 +99,18 @@ All future branch-manager merge steps must follow this pattern. Direct `git chec
 
 ---
 
+## Implementation Note
+
+The canonical executor of the sequence described above is `skills/worktree-manager/scripts/integration-merge.sh`. Branch-manager invokes this single script instead of issuing the temp-branch / `git worktree add` / merge / ref-advance / cleanup commands individually. The script preserves all three contracts established by this ADR family:
+
+- **ADR-0014 (this document)**: the integration worktree is created inside the configured worktree base (default `.claude/worktrees/`), the merge runs there, and the root working tree is never used as the merge surface. On merge conflict the integration worktree is retained for inspection (exit code 3); on clean success it is removed and the temp branch is deleted.
+- **ADR-0019 (root-cleanliness assertion)**: the script runs the pre-merge and post-merge `git status --porcelain` checks inside itself, choosing `git merge --ff-only` from root when root is on the review branch and `git branch -f` otherwise. A post-cleanup assertion failure exits with code 4 and emits a remediation-guide block on stderr -- the script never self-remediates.
+- **ADR-0020 (three-path strategy)**: the merge path is supplied by branch-manager via `--strategy <merge|rebase-ff|squash>` (with `--squash-message` required when squashing). The script does not re-derive the strategy from the issue tree; it executes the path takeoff selected at launch.
+
+Wrapping these steps in a single script is purely an allowlistability and UX concern -- it eliminates the per-`git`-command auto-classifier prompts that would otherwise appear when branch-manager runs the sequence as discrete shell commands -- not a behavior change. The script emits a single JSON line on stdout summarizing the operation so the orchestrator can parse the result deterministically.
+
+---
+
 ## Related Decisions
 
 - **ADR-0010: No Commits by Coding Agents** -- Established that `reaper:branch-manager` is the sole agent authorized to commit and merge. This ADR specifies how branch-manager must perform those merge operations.

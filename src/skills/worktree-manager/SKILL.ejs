@@ -1,7 +1,7 @@
 ---
 name: worktree-manager
 description: Full lifecycle worktree management with safe cleanup that prevents CWD errors. Use when creating, listing, checking, or removing git worktrees.
-allowed-tools: Read, Grep, Bash(*scripts/config-get.sh*), Bash(*skills/worktree-manager/scripts/worktree-create.sh *), Bash(*skills/worktree-manager/scripts/worktree-list.sh *), Bash(*skills/worktree-manager/scripts/worktree-status.sh *), Bash(*skills/worktree-manager/scripts/worktree-cleanup.sh *)
+allowed-tools: Read, Grep, Bash(*scripts/config-get.sh*), Bash(*skills/worktree-manager/scripts/worktree-create.sh *), Bash(*skills/worktree-manager/scripts/worktree-list.sh *), Bash(*skills/worktree-manager/scripts/worktree-status.sh *), Bash(*skills/worktree-manager/scripts/worktree-cleanup.sh *), Bash(*skills/worktree-manager/scripts/integration-merge.sh *)
 ---
 
 # Worktree Manager
@@ -46,6 +46,7 @@ All scripts are located in `${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/script
 | `worktree-list.sh` | `[--json] [--verbose]` |
 | `worktree-status.sh` | `<worktree-path>` |
 | `worktree-cleanup.sh` | `<worktree-path> --keep-branch\|--delete-branch [--force] [--dry-run] [--timeout <sec>] [--network-timeout <sec>] [--skip-lock-check]` |
+| `integration-merge.sh` | `--task-id <id> --component <suffix> --strategy <merge\|rebase-ff\|squash> [--review-branch <name>] [--squash-message <text>] [--worktree-base <path>]` |
 
 ### Safe Worktree Removal
 
@@ -126,4 +127,13 @@ cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-m
 ### Custom network timeout for slow remotes
 ```bash
 cd "$(git rev-parse --show-toplevel)" && ${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/worktree-cleanup.sh ./.claude/worktrees/PROJ-123-auth-feature --delete-branch --network-timeout 60
+```
+
+### Merge a component branch into the review branch (ADR-0014 + ADR-0019 + ADR-0020)
+```bash
+${CLAUDE_PLUGIN_ROOT}/skills/worktree-manager/scripts/integration-merge.sh \
+  --task-id PROJ-123 --component auth-api --strategy rebase-ff
+# Creates ./.claude/worktrees/PROJ-123-integration, rebases feature/PROJ-123-auth-api
+# onto feature/PROJ-123-review, fast-forwards the review branch, then cleans up.
+# Emits a single JSON summary line on stdout. Exit 3 retains the worktree on conflict.
 ```
