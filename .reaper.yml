@@ -1,0 +1,40 @@
+# Reaper project configuration.
+#
+# This file is the single source of truth for Reaper's quality gate commands,
+# tracker integration, worktree layout, and workflow defaults. Generated and
+# validated against reaper.schema.json (JSON Schema draft-07).
+#
+# Run /reaper:doctor to validate this file.
+# Run /reaper:init to (re)configure it interactively.
+
+version: 1
+
+test:
+  cmd: npm run test:coverage
+
+lint:
+  cmd: npm run lint
+
+format:
+  cmd: npm run format
+
+coverage:
+  threshold: 80
+
+tracker:
+  system: linear
+  project_id: SPC
+  default_labels:
+    - reaper
+
+worktrees:
+  base_path: .claude/worktrees
+  naming_pattern: '{task_id}-{slug}'
+
+git:
+  default_base_branch: develop
+
+workflow:
+  require_security_gate: true
+  require_tdd: true
+  skip_gates_for: []
