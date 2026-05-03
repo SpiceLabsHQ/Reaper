@@ -1,0 +1,7 @@
+version: 1
+test:
+  cmd: npm run nonexistent-script
+lint:
+  cmd: npm run lint
+tracker:
+  system: github

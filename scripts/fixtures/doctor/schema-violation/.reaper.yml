@@ -1,0 +1,7 @@
+version: 2
+test:
+  cmd: npm test
+lint:
+  cmd: npm run lint
+tracker:
+  system: github

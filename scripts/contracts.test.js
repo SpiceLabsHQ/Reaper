@@ -851,6 +851,8 @@ const ALL_COMMANDS = [
   'claude-sync',
   'start',
   'configure-quality-gates',
+  'init',
+  'doctor',
 ];
 
 /**
@@ -990,6 +992,31 @@ const COMMAND_SEMANTIC_CONTRACTS = {
       { pattern: /commit/i, label: 'commit section' },
     ],
   },
+  init: {
+    label: 'init command',
+    commands: () => ['init'],
+    sections: [
+      { pattern: /Detection/i, label: 'detection section' },
+      {
+        pattern: /CLAUDE\.md Migration/i,
+        label: 'claude.md migration section',
+      },
+      { pattern: /Approval Flow/i, label: 'approval flow section' },
+      { pattern: /Re-run Behavior/i, label: 're-run behavior section' },
+      { pattern: /Write & Validate/i, label: 'write and validate section' },
+      { pattern: /Completion Card/i, label: 'completion card section' },
+    ],
+  },
+  doctor: {
+    label: 'doctor command',
+    commands: () => ['doctor'],
+    sections: [
+      { pattern: /What This Checks/i, label: 'what this checks section' },
+      { pattern: /Validation/i, label: 'validation reference' },
+      { pattern: /Drift/i, label: 'drift reference' },
+      { pattern: /Run/i, label: 'run section' },
+    ],
+  },
 };
 
 /**
@@ -1032,6 +1059,8 @@ registerCommandSemanticSuite('squadron');
 registerCommandSemanticSuite('claude-sync');
 registerCommandSemanticSuite('start');
 registerCommandSemanticSuite('configure-quality-gates');
+registerCommandSemanticSuite('init');
+registerCommandSemanticSuite('doctor');
 
 // ---------------------------------------------------------------------------
 // Contract: takeoff materializes PLAN_CONTEXT before Gate 2 dispatch

@@ -1,0 +1,12 @@
+===COMMIT===
+feat(api): add user profile endpoint
+
+Closes #42
+===COMMIT===
+fix(auth): handle expired tokens
+
+Fixes #41
+===COMMIT===
+chore: bump deps
+
+Closes #40

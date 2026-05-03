@@ -1,0 +1,7 @@
+{
+  "name": "doctor-unreachable-fixture",
+  "private": true,
+  "scripts": {
+    "lint": "echo fake-lint"
+  }
+}

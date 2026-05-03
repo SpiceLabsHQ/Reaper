@@ -1,0 +1,8 @@
+{
+  "name": "doctor-drift-fixture",
+  "private": true,
+  "scripts": {
+    "test": "echo fake-test",
+    "lint": "echo fake-lint"
+  }
+}

@@ -1,0 +1,18 @@
+version: 1
+test:
+  cmd: npm test
+lint:
+  cmd: npm run lint
+coverage:
+  threshold: 80
+tracker:
+  system: github
+  repo: SpiceLabsHQ/Reaper
+worktrees:
+  base_path: .claude/worktrees
+  naming_pattern: '{task_id}-{slug}'
+git:
+  default_base_branch: develop
+workflow:
+  require_security_gate: true
+  require_tdd: true

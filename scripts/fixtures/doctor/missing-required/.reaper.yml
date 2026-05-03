@@ -1,0 +1,6 @@
+version: 1
+test:
+  cmd: npm test
+lint:
+  cmd: npm run lint
+tracker: {}
