@@ -157,7 +157,7 @@ Generate an execution plan with parent/child issue structure for autonomous exec
 
 **Output variable:** `TASK_SYSTEM` — set this to the detected value above.
 
-Possible values: `GitHub`, `Beads`, `Jira`, `markdown_only`, `unknown`
+Possible values: `GitHub`, `Beads`, `Jira`, `Linear`, `markdown_only`, `unknown`
 
 If the detected value is **`unknown`**: ask the user which task system they're using before proceeding. Once confirmed, set `TASK_SYSTEM` to the user's answer and continue.
 
@@ -169,9 +169,10 @@ After detection, **immediately invoke the Skill tool** with the corresponding sk
 
 | TASK_SYSTEM | Skill to invoke |
 |-------------|-------|
-| GitHub | `reaper:issue-tracker-github` |
 | Beads | `reaper:issue-tracker-beads` |
+| GitHub | `reaper:issue-tracker-github` |
 | Jira | `reaper:issue-tracker-jira` |
+| Linear | `reaper:issue-tracker-linear` |
 | markdown_only | `reaper:issue-tracker-planfile` |
 
 **Example:** If `TASK_SYSTEM` = `Beads`, call: `Skill(skill: "reaper:issue-tracker-beads")`

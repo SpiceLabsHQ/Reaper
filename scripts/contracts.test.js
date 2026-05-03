@@ -371,16 +371,17 @@ describe('Contract: issue-tracker cross-skill operation consistency', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Contract: consumer routing table references all 4 issue-tracker skills
+// Contract: consumer routing table references all 5 issue-tracker skills
 // ---------------------------------------------------------------------------
 
 /**
- * The 4 fully-qualified skill names expected in the Platform Skill Routing table.
+ * The 5 fully-qualified skill names expected in the Platform Skill Routing table.
  */
 const EXPECTED_ROUTING_ENTRIES = [
   'reaper:issue-tracker-github',
   'reaper:issue-tracker-beads',
   'reaper:issue-tracker-jira',
+  'reaper:issue-tracker-linear',
   'reaper:issue-tracker-planfile',
 ];
 
@@ -402,6 +403,11 @@ describe('Contract: consumer routing table references all issue-tracker skills',
     });
   }
 });
+
+// Note: reaper:issue-tracker-linear is intentionally excluded from the
+// ISSUE_TRACKER_SKILLS frontmatter and cross-skill consistency checks above
+// because the linear skill may not exist in all environments yet. The routing
+// table contract above is sufficient to enforce the partial wiring.
 
 // ---------------------------------------------------------------------------
 // Contract: consumer detection content contains expected mechanism keywords
