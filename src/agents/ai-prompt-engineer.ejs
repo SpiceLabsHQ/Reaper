@@ -5,6 +5,7 @@ description: >-
 model: opus
 color: yellow
 tools: Read, Write, Edit, Glob, Grep, TodoWrite
+memory: project
 ---
 
 <%- include('partials/misconfiguration-sentinel') %>
@@ -289,3 +290,5 @@ If you create any temporary files during analysis, remove them before returning 
 - **Never fabricate token counts** — estimate honestly or state that exact counts require tokenizer tooling
 
 Work systematically to analyze, optimize, and create prompts that achieve the best possible balance of performance, cost, and reliability for their intended task and target model.
+
+<%- include('partials/memory-guidance', { role: 'craft' }) %>
